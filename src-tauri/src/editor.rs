@@ -383,6 +383,91 @@ pub fn files_from_args(args: &[String]) -> Vec<String> {
     out
 }
 
+// ---- preview-only files (images, PDF): shown, never read as text, never edited
+
+pub const MAX_PREVIEW_BYTES: u64 = 50 * 1024 * 1024;
+const BINARY_PREVIEW: &[&str] = &["png", "jpg", "jpeg", "gif", "webp", "bmp", "ico", "avif", "pdf"];
+
+/// Whether a file can only be previewed (the text editor cannot hold it).
+pub fn is_binary_preview(path: &str) -> bool {
+    Path::new(path)
+        .extension()
+        .map(|e| e.to_string_lossy().to_lowercase())
+        .is_some_and(|e| BINARY_PREVIEW.contains(&e.as_str()))
+}
+
+pub fn read_preview_bytes_capped(path: &Path, cap: u64) -> Result<Vec<u8>, String> {
+    if !is_binary_preview(&path.to_string_lossy()) {
+        return Err("Only images and PDF files can be read for preview.".into());
+    }
+    let meta = std::fs::metadata(path).map_err(|e| {
+        if e.kind() == std::io::ErrorKind::NotFound {
+            format!("The file was not found: {}", path.display())
+        } else {
+            format!("Cannot read {}: {e}", path.display())
+        }
+    })?;
+    if meta.len() > cap {
+        return Err(format!("This file is too large to preview (limit {} MB).", cap / 1024 / 1024));
+    }
+    std::fs::read(path).map_err(|e| format!("Cannot read {}: {e}", path.display()))
+}
+
+pub fn read_preview_bytes(path: &Path) -> Result<Vec<u8>, String> {
+    read_preview_bytes_capped(path, MAX_PREVIEW_BYTES)
+}
+
+impl Store {
+    /// Like `open_path`, but images and PDFs open as preview-only editors.
+    pub fn open_any(&mut self, path: &str, now: i64) -> Result<Doc, String> {
+        if !is_binary_preview(path) {
+            return self.open_path(path, now);
+        }
+        if let Some(i) = self.entries.iter().position(|e| e.path.as_deref().is_some_and(|p| same_path(p, path))) {
+            self.entries[i].binned_at = None;
+            let id = self.entries[i].id.clone();
+            return self.load_any(&id, now);
+        }
+        if !Path::new(path).is_file() {
+            return Err(format!("The file was not found: {path}"));
+        }
+        let entry = Entry {
+            id: uuid::Uuid::new_v4().to_string(),
+            path: Some(path.to_string()),
+            title: file_title(path),
+            dirty: false,
+            eol: "lf".into(),
+            encoding: "binary".into(),
+            last_used: now,
+            binned_at: None,
+        };
+        let doc = Self::doc(&entry, String::new());
+        self.entries.push(entry);
+        self.persist()?;
+        Ok(doc)
+    }
+
+    /// Like `load_doc`, but a preview-only editor has no text to load.
+    pub fn load_any(&mut self, id: &str, now: i64) -> Result<Doc, String> {
+        let i = self.index_of(id)?;
+        if self.entries[i].path.as_deref().is_some_and(is_binary_preview) {
+            self.entries[i].last_used = now;
+            self.persist()?;
+            return Ok(Self::doc(&self.entries[i], String::new()));
+        }
+        self.load_doc(id, now)
+    }
+
+    /// Like `save`, but refuses a preview-only editor.
+    pub fn save_any(&mut self, id: &str, content: &str, path: Option<&str>, now: i64) -> Result<Doc, String> {
+        let i = self.index_of(id)?;
+        if self.entries[i].path.as_deref().is_some_and(is_binary_preview) {
+            return Err("This file is shown as a preview only and cannot be edited here.".into());
+        }
+        self.save(id, content, path, now)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -614,5 +699,54 @@ mod tests {
         assert!(files_from_args(&a(&["lc.exe", "--background"])).is_empty());
         assert!(files_from_args(&a(&["lc.exe", "--edit"])).is_empty(), "a flag with no file");
         assert!(files_from_args(&a(&["lc.exe", "--edit", "--background"])).is_empty(), "not a file");
+    }
+
+    // ---- preview-only files (images, PDF)
+
+    #[test]
+    fn which_files_are_preview_only() {
+        for f in ["a.png", "A.JPG", "b.jpeg", "c.gif", "d.webp", "e.bmp", "f.ico", "g.avif", "h.pdf", "C:/x/y.PNG"] {
+            assert!(is_binary_preview(f), "{f}");
+        }
+        for f in ["a.svg", "a.txt", "a.html", "a.md", "png", "a.png.txt", ""] {
+            assert!(!is_binary_preview(f), "{f}");
+        }
+    }
+
+    #[test]
+    fn images_and_pdfs_open_as_preview_only_without_being_read_as_text() {
+        let (d, mut s) = store();
+        let png = file(&d, "pic.png", &[0x89, 0x50, 0x4E, 0x47, 0, 0, 0, 1]);
+        let doc = s.open_any(&png, T0).unwrap();
+        assert_eq!((doc.content.as_str(), doc.dirty, doc.title.as_str()), ("", false, "pic.png"));
+        assert_eq!(s.open_any(&png, T0 + 1).unwrap().id, doc.id, "same file, same editor");
+        assert_eq!(s.load_any(&doc.id, T0 + 2).unwrap().content, "");
+        assert!(s.save_any(&doc.id, "x", None, T0 + 3).unwrap_err().contains("preview"));
+        assert_eq!(std::fs::read(&png).unwrap().len(), 8, "the file is never touched");
+        s.close(&doc.id, T0 + 4).unwrap();
+        assert!(s.list(T0 + 4).open.is_empty(), "nothing unsaved, so closing forgets it");
+    }
+
+    #[test]
+    fn text_files_go_through_open_any_exactly_as_before() {
+        let (d, mut s) = store();
+        let p = file(&d, "a.txt", b"hello");
+        let doc = s.open_any(&p, T0).unwrap();
+        assert_eq!(doc.content, "hello");
+        s.snapshot(&doc.id, "typed", T0 + 1).unwrap();
+        assert_eq!(s.load_any(&doc.id, T0 + 2).unwrap().content, "typed");
+        assert_eq!(s.save_any(&doc.id, "typed", None, T0 + 3).unwrap().content, "typed");
+        assert_eq!(std::fs::read_to_string(&p).unwrap(), "typed");
+    }
+
+    #[test]
+    fn preview_bytes_only_for_previewable_files_and_within_the_cap() {
+        let d = TempDir::new().unwrap();
+        let png = file(&d, "p.png", &[1, 2, 3, 4]);
+        let txt = file(&d, "t.txt", b"secret");
+        assert_eq!(read_preview_bytes(Path::new(&png)).unwrap(), vec![1, 2, 3, 4]);
+        assert!(read_preview_bytes(Path::new(&txt)).unwrap_err().contains("preview"), "not a general file reader");
+        assert!(read_preview_bytes_capped(Path::new(&png), 3).unwrap_err().contains("too large"));
+        assert!(read_preview_bytes(&d.path().join("gone.png")).unwrap_err().contains("not found"));
     }
 }

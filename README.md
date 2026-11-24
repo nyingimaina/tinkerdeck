@@ -6,7 +6,7 @@ The full requirements are in [BRS-app-launcher.md](BRS-app-launcher.md).
 
 ## Install
 
-Run `installer\output\LiteCommander-Setup-1.6.0.exe`. It adds a Start Menu shortcut (and an optional desktop shortcut) and an uninstaller. It installs per user, without admin rights, unless you choose otherwise.
+Run `installer\output\LiteCommander-Setup-1.7.0.exe`. It adds a Start Menu shortcut (and an optional desktop shortcut) and an uninstaller. It installs per user, without admin rights, unless you choose otherwise.
 
 Requires Windows 10 version 1809 or newer (ConPTY) and the WebView2 runtime (already present on Windows 11).
 
@@ -74,7 +74,7 @@ Safety: the control channel listens on `127.0.0.1` only and needs a per-launch t
 
 ## Text editor
 
-The **Editor** button in the header opens a light text editor for any file, with highlighting for most languages. Unsaved text is kept automatically (snapshotted as you type) and returns after a restart; closing a tab with unsaved text sends it to the **Bin**. Editors unused for 7 days move to the Bin, and the Bin is emptied after 30 days. The installer can add **Edit with Lite Commander** to the Explorer right-click menu for every file (Windows 11: under "Show more options"). The editor code is only loaded when you open a file, and files over 5 MB or binary files are not opened.
+The **Editor** button in the header opens a light text editor for any file, with highlighting for most languages. Unsaved text is kept automatically (snapshotted as you type) and returns after a restart; closing a tab with unsaved text sends it to the **Bin**. Editors unused for 7 days move to the Bin, and the Bin is emptied after 30 days. The installer can add **Edit with Lite Commander** to the Explorer right-click menu for every file (Windows 11: under "Show more options"). HTML, Markdown and SVG files have a **Raw | Preview** switch, and images and PDFs open as previews. The editor code is only loaded when you open a file, and text files over 5 MB are not opened.
 
 ## Adding an app (no typing needed)
 

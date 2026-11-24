@@ -66,3 +66,22 @@ pub fn editor_take_pending(s: E) -> Vec<String> {
 pub fn editor_touch(s: E, id: String) {
     s.store.lock().touch(&id, now());
 }
+
+// Preview-aware commands: images and PDFs open as preview-only editors; everything else is as before.
+#[tauri::command]
+pub fn editor_open_any(s: E, path: String) -> Result<Doc, String> {
+    s.store.lock().open_any(&path, now())
+}
+#[tauri::command]
+pub fn editor_load_any(s: E, id: String) -> Result<Doc, String> {
+    s.store.lock().load_any(&id, now())
+}
+#[tauri::command]
+pub fn editor_save_any(s: E, id: String, content: String, path: Option<String>) -> Result<Doc, String> {
+    s.store.lock().save_any(&id, &content, path.as_deref(), now())
+}
+/// The raw bytes of an image or PDF, for the preview pane. Refuses anything else.
+#[tauri::command]
+pub fn editor_read_bytes(path: String) -> Result<tauri::ipc::Response, String> {
+    crate::editor::read_preview_bytes(std::path::Path::new(&path)).map(tauri::ipc::Response::new)
+}

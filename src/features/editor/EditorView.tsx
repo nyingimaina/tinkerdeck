@@ -2,17 +2,21 @@ import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import type { AppDef } from "../../state/model";
 import { groupTabs } from "../../state/editorGroups";
 import { detectKind } from "../../state/fileKinds";
+import { isBinaryPreview, previewKind } from "../../state/previews";
 import { binDaysLeft, BIN_DAYS, encodingLabel, eolLabel } from "../../state/editor";
 import type { EditorController } from "../../state/useEditor";
 import styles from "./EditorView.module.css";
 
 // The editor itself (CodeMirror and the language modules) is fetched only when a file is on screen.
 const CodeSurface = lazy(() => import("./CodeSurface"));
+// Rendered previews (markdown, html, svg, images, PDF) are likewise fetched only when asked for.
+const PreviewPane = lazy(() => import("./PreviewPane"));
 
 const daysText = (n: number) => `${n} ${n === 1 ? "day" : "days"} left`;
 
 export function EditorView({ editor, theme, apps = [] }: { editor: EditorController; theme: string; apps?: AppDef[] }) {
   const [binOpen, setBinOpen] = useState(false);
+  const [modes, setModes] = useState<Record<string, "raw" | "preview">>({});
   const E = useRef(editor);
   E.current = editor;
   const activeTab = editor.tabs.find((t) => t.id === editor.activeId) ?? null;
@@ -23,7 +27,10 @@ export function EditorView({ editor, theme, apps = [] }: { editor: EditorControl
       if (e.defaultPrevented || !(e.ctrlKey || e.metaKey) || e.altKey) return;
       const k = e.key.toLowerCase();
       const id = E.current.activeId;
-      if (k === "s" && id) void (e.shiftKey ? E.current.saveAs(id) : E.current.save(id));
+      const title = E.current.tabs.find((t) => t.id === id)?.title ?? "";
+      if (k === "s" && id) {
+        if (!isBinaryPreview(title)) void (e.shiftKey ? E.current.saveAs(id) : E.current.save(id));
+      }
       else if (k === "n" && !e.shiftKey) void E.current.newDoc();
       else if (k === "o") void E.current.openDialog();
       else if (k === "w" && id) void E.current.close(id);
@@ -37,6 +44,16 @@ export function EditorView({ editor, theme, apps = [] }: { editor: EditorControl
   const now = Math.floor(Date.now() / 1000);
   const a = editor.active;
   const kind = detectKind(activeTab?.title ?? "", a?.content);
+  const pk = activeTab ? previewKind(activeTab.title) : null;
+  const binary = !!activeTab && isBinaryPreview(activeTab.title);
+  const mode = binary ? "preview" : pk && activeTab ? (modes[activeTab.id] ?? "raw") : "raw";
+  const setMode = (m: "raw" | "preview") => activeTab && setModes((prev) => ({ ...prev, [activeTab.id]: m }));
+  const preview =
+    pk && activeTab ? (
+      <Suspense fallback={<div className={styles.loading}>Loading preview…</div>}>
+        <PreviewPane kind={pk} title={activeTab.title} path={activeTab.path} content={a?.content ?? ""} />
+      </Suspense>
+    ) : null;
 
   return (
     <div className={styles.root}>
@@ -47,12 +64,12 @@ export function EditorView({ editor, theme, apps = [] }: { editor: EditorControl
         <button onClick={() => void editor.openDialog()} title="Open files (Ctrl+O)">
           Open…
         </button>
-        <button onClick={() => editor.activeId && void editor.save(editor.activeId)} disabled={!editor.activeId} title="Save (Ctrl+S)">
+        <button onClick={() => editor.activeId && void editor.save(editor.activeId)} disabled={!editor.activeId || binary} title="Save (Ctrl+S)">
           Save
         </button>
         <button
           onClick={() => editor.activeId && void editor.saveAs(editor.activeId)}
-          disabled={!editor.activeId}
+          disabled={!editor.activeId || binary}
           title="Save as (Ctrl+Shift+S)"
         >
           Save as…
@@ -139,6 +156,16 @@ export function EditorView({ editor, theme, apps = [] }: { editor: EditorControl
           </nav>
 
           <div className={styles.editorCol}>
+            {pk && !binary && (
+              <div className={styles.modes} role="toolbar" aria-label="View">
+                <button aria-pressed={mode === "raw"} onClick={() => setMode("raw")}>
+                  Raw
+                </button>
+                <button aria-pressed={mode === "preview"} onClick={() => setMode("preview")}>
+                  Preview
+                </button>
+              </div>
+            )}
             <div className={styles.surface}>
               {a?.error ? (
                 <div className={styles.empty}>
@@ -147,18 +174,25 @@ export function EditorView({ editor, theme, apps = [] }: { editor: EditorControl
                     <button onClick={() => editor.activeId && void editor.close(editor.activeId)}>Close this tab</button>
                   </div>
                 </div>
+              ) : binary && editor.activeId ? (
+                preview
               ) : editor.activeId && a?.loaded ? (
-                <Suspense fallback={<div className={styles.loading}>Loading editor…</div>}>
-                  <CodeSurface
-                    docId={editor.activeId}
-                    value={a.content}
-                    filename={kind.filename}
-                    dark={theme === "dark"}
-                    liveIds={editor.tabs.map((t) => t.id)}
-                    onChange={editor.setContent}
-                    onSave={() => editor.activeId && void editor.save(editor.activeId)}
-                  />
-                </Suspense>
+                <>
+                  <div style={{ display: mode === "preview" ? "none" : "block", height: "100%" }}>
+                    <Suspense fallback={<div className={styles.loading}>Loading editor…</div>}>
+                      <CodeSurface
+                        docId={editor.activeId}
+                        value={a.content}
+                        filename={kind.filename}
+                        dark={theme === "dark"}
+                        liveIds={editor.tabs.map((t) => t.id)}
+                        onChange={editor.setContent}
+                        onSave={() => editor.activeId && void editor.save(editor.activeId)}
+                      />
+                    </Suspense>
+                  </div>
+                  {mode === "preview" && preview}
+                </>
               ) : (
                 <div className={styles.loading}>Opening…</div>
               )}

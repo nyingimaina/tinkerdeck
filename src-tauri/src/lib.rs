@@ -164,6 +164,10 @@ pub fn run() {
             editor_cmds::editor_discard,
             editor_cmds::editor_take_pending,
             editor_cmds::editor_touch,
+            editor_cmds::editor_open_any,
+            editor_cmds::editor_load_any,
+            editor_cmds::editor_save_any,
+            editor_cmds::editor_read_bytes,
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {

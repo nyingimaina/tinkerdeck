@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.0
+
+**Preview**
+- Files the window can render get a **Raw | Preview** switch: HTML (in an empty sandbox: no scripts, no outside resources), Markdown (sanitised), SVG (shown as an image). Preview follows what you are typing, and switching back keeps your undo history.
+- Images (PNG, JPG, GIF, WebP, BMP, ICO, AVIF) and PDFs open straight into a preview. They are never read as text, never edited, and files up to 50 MB are shown.
+- The preview code (including the Markdown renderer) is only loaded when you ask for a preview.
+
+**Explorer**
+- The installer now also lists Lite Commander under **Open with** for every file type, next to the **Edit with Lite Commander** right-click entry. On Windows 11 the right-click entry is under "Show more options".
+
 ## 1.6.0
 
 **Editor: organised by app, with language icons**

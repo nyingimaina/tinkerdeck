@@ -3,7 +3,7 @@
 ; Expects the release build at src-tauri\target\release\lite-commander.exe
 
 #define AppName "Lite Commander"
-#define AppVersion "1.6.0"
+#define AppVersion "1.7.0"
 #define AppPublisher "Nyingi"
 #define AppExe "lite-commander.exe"
 #define CliExe "lcmd.exe"
@@ -39,7 +39,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Shortcuts:"; Flags: unchecked
-Name: "editmenu"; Description: "Add &Edit with Lite Commander to the right-click menu of files"; GroupDescription: "Text editor:"
+Name: "editmenu"; Description: "Add &Edit with Lite Commander to the right-click menu and Open with list of every file type"; GroupDescription: "Text editor:"
 Name: "registermcp"; Description: "Make Lite Commander &discoverable by LLM tools found on this PC (Claude, Cursor, VS Code, ...)"; GroupDescription: "Command line:"
 
 [Files]
@@ -61,6 +61,11 @@ Root: HKCU; Subkey: "Environment"; ValueType: expandsz; ValueName: "Path"; Value
 Root: HKCU; Subkey: "Software\Classes\*\shell\LiteCommander.Edit"; ValueType: string; ValueName: ""; ValueData: "Edit with Lite Commander"; Flags: uninsdeletekey; Tasks: editmenu
 Root: HKCU; Subkey: "Software\Classes\*\shell\LiteCommander.Edit"; ValueType: string; ValueName: "Icon"; ValueData: """{app}\lite-commander.ico"""; Tasks: editmenu
 Root: HKCU; Subkey: "Software\Classes\*\shell\LiteCommander.Edit\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExe}"" --edit ""%1"""; Tasks: editmenu
+
+; Also list Lite Commander under "Open with" for every file type (Applications registration)
+Root: HKCU; Subkey: "Software\Classes\Applications\{#AppExe}"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "{#AppName}"; Flags: uninsdeletekey; Tasks: editmenu
+Root: HKCU; Subkey: "Software\Classes\Applications\{#AppExe}\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\lite-commander.ico"; Tasks: editmenu
+Root: HKCU; Subkey: "Software\Classes\Applications\{#AppExe}\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExe}"" --edit ""%1"""; Tasks: editmenu
 
 [Run]
 ; after a self-update (the app passes /update=1 and has already exited) start it again, as the normal user

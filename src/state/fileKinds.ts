@@ -48,6 +48,8 @@ const DEFS: Record<string, Def> = {
   docker: { label: "Dockerfile", icon: "🐳", ext: "dockerfile", exts: ["dockerfile"] },
   make: { label: "Makefile", icon: "🔨", ext: "mk", exts: ["mk"] },
   git: { label: "Git", icon: "🙈", ext: "gitignore", exts: ["gitignore", "gitattributes"] },
+  image: { label: "Image", icon: "🖼️", ext: "png", exts: ["png", "jpg", "jpeg", "gif", "webp", "bmp", "ico", "avif"] },
+  pdf: { label: "PDF", icon: "📕", ext: "pdf", exts: ["pdf"] },
   text: { label: "Plain text", icon: "📄", ext: "txt", exts: ["txt", "text"] },
 };
 

@@ -170,3 +170,84 @@ describe("EditorView: grouped by app, with language icons", () => {
     expect(c.close).toHaveBeenCalledWith("b");
   });
 });
+
+const previewLoads = vi.hoisted(() => ({ count: 0 }));
+vi.mock("./PreviewPane", () => {
+  previewLoads.count += 1;
+  return {
+    default: (p: { kind: string; content: string; path: string | null }) => (
+      <div data-testid="preview">
+        {p.kind}:{p.content}:{p.path ?? "-"}
+      </div>
+    ),
+  };
+});
+
+describe("EditorView: Raw and Preview", () => {
+  const md = (content = "# Hi") =>
+    controller({
+      tabs: [tab("m", { title: "README.md", path: "C:/x/README.md" })],
+      activeId: "m",
+      active: { content, loaded: true, error: null } as never,
+    });
+  const img = () =>
+    controller({
+      tabs: [tab("i", { title: "logo.png", path: "C:/x/logo.png", encoding: "binary" })],
+      activeId: "i",
+      active: { content: "", loaded: true, error: null } as never,
+    });
+
+  beforeEach(() => {
+    previewLoads.count = 0;
+  });
+
+  it("offers Raw and Preview for markdown, html and svg, and not for code", () => {
+    for (const [title, path] of [["a.md", "C:/a.md"], ["a.html", "C:/a.html"], ["a.svg", "C:/a.svg"]]) {
+      const { unmount } = render(
+        <EditorView editor={controller({ tabs: [tab("x", { title, path })], activeId: "x" })} theme="light" />,
+      );
+      expect(screen.getByRole("button", { name: "Raw" }), title).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Preview" }), title).toBeTruthy();
+      unmount();
+    }
+    render(<EditorView editor={controller()} theme="light" />);
+    expect(screen.queryByRole("button", { name: "Preview" })).toBeNull();
+  });
+
+  it("starts on Raw, shows the live text in Preview, and keeps the editor alive underneath", async () => {
+    const { rerender } = render(<EditorView editor={md("# Hi")} theme="light" />);
+    expect(screen.getByRole("button", { name: "Raw" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.queryByTestId("preview")).toBeNull();
+    expect(previewLoads.count, "the preview code is not loaded until asked for").toBe(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    expect((await screen.findByTestId("preview")).textContent).toBe("markdown:# Hi:C:/x/README.md");
+    expect(screen.getByRole("button", { name: "Preview" }).getAttribute("aria-pressed")).toBe("true");
+    const surface = screen.getByTestId("surface");
+    expect((surface.parentElement as HTMLElement).style.display, "hidden, not destroyed (keeps undo history)").toBe("none");
+
+    rerender(<EditorView editor={md("# Changed")} theme="light" />);
+    expect(screen.getByTestId("preview").textContent).toContain("# Changed");
+
+    fireEvent.click(screen.getByRole("button", { name: "Raw" }));
+    expect(screen.queryByTestId("preview")).toBeNull();
+    expect((screen.getByTestId("surface").parentElement as HTMLElement).style.display).not.toBe("none");
+  });
+
+  it("images and PDFs are preview only: no text editor, no Raw, nothing to save", async () => {
+    render(<EditorView editor={img()} theme="light" />);
+    expect((await screen.findByTestId("preview")).textContent).toBe("image::C:/x/logo.png");
+    expect(screen.queryByTestId("surface")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Raw" })).toBeNull();
+    expect((screen.getByRole("button", { name: "Save" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: "Save as…" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText("Image", { selector: "[data-role=language]" })).toBeTruthy();
+  });
+
+  it("Ctrl+S does nothing for a preview-only file", () => {
+    const c = img();
+    render(<EditorView editor={c} theme="light" />);
+    fireEvent.keyDown(window, { key: "s", ctrlKey: true });
+    expect(c.save).not.toHaveBeenCalled();
+  });
+});

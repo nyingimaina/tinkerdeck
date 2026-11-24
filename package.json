@@ -1,7 +1,7 @@
 {
   "name": "lite-commander",
   "private": true,
-  "version": "1.6.0",
+  "version": "1.7.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -24,9 +24,11 @@
     "@tauri-apps/plugin-dialog": "^2.0.0",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
+    "dompurify": "^3.5.0",
     "framer-motion": "^14.14.0",
     "jattac-web-poller": "^1.0.0",
     "jattac.libs.web.zest-tabs": "^0.5.0",
+    "marked": "^18.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

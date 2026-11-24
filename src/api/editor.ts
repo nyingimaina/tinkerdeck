@@ -6,16 +6,18 @@ import type { EditorDoc, EditorListing } from "../state/editor";
 
 export const editorApi = {
   list: () => invoke<EditorListing>("editor_list"),
-  open: (path: string) => invoke<EditorDoc>("editor_open", { path }),
+  open: (path: string) => invoke<EditorDoc>("editor_open_any", { path }),
   newDoc: () => invoke<EditorDoc>("editor_new"),
-  load: (id: string) => invoke<EditorDoc>("editor_load", { id }),
+  load: (id: string) => invoke<EditorDoc>("editor_load_any", { id }),
   snapshot: (id: string, content: string) => invoke<void>("editor_snapshot", { id, content }),
-  save: (id: string, content: string, path: string | null) => invoke<EditorDoc>("editor_save", { id, content, path }),
+  save: (id: string, content: string, path: string | null) => invoke<EditorDoc>("editor_save_any", { id, content, path }),
   close: (id: string) => invoke<void>("editor_close", { id }),
   restore: (id: string) => invoke<EditorDoc>("editor_restore", { id }),
   discard: (id: string) => invoke<void>("editor_discard", { id }),
   takePending: () => invoke<string[]>("editor_take_pending"),
   touch: (id: string) => invoke<void>("editor_touch", { id }),
+  /** Raw bytes of an image or PDF, for the preview pane. */
+  readBytes: async (path: string): Promise<Uint8Array> => new Uint8Array(await invoke<ArrayBuffer>("editor_read_bytes", { path })),
   pickOpenPaths: async (): Promise<string[]> => {
     const r = await open({ multiple: true, directory: false });
     return r == null ? [] : Array.isArray(r) ? r : [r];

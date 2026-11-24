@@ -1,0 +1,47 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: rgba(3, 6, 16, 0.55);
+}
+.dialog {
+  width: min(460px, 92vw);
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.dialog h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.body {
+  color: var(--muted);
+  line-height: 1.5;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+.btn {
+  height: 34px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #04121f;
+  font-weight: 600;
+}
+.danger {
+  background: color-mix(in srgb, var(--red) 24%, var(--panel-2));
+  border-color: color-mix(in srgb, var(--red) 60%, var(--border));
+}

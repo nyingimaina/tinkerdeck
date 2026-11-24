@@ -1,0 +1,127 @@
+.nav {
+  position: relative;
+  width: 190px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+}
+.head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 8px 8px 12px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.add {
+  display: flex;
+  gap: 2px;
+}
+.head button,
+.menu button {
+  min-width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 15px;
+}
+.head button:hover,
+.menu button:hover {
+  background: var(--hover);
+}
+.menu {
+  position: absolute;
+  top: 34px;
+  right: 6px;
+  z-index: 30;
+  min-width: 170px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.menu button {
+  display: block;
+  width: 100%;
+  padding: 0 10px;
+  font-size: 13px;
+  text-align: left;
+}
+.note {
+  margin: 6px 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.list {
+  flex: 1;
+  margin: 0;
+  padding: 0 4px;
+  overflow-y: auto;
+  list-style: none;
+}
+.list li {
+  display: flex;
+  align-items: center;
+}
+.item {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+}
+.item:hover,
+.active {
+  background: var(--hover);
+}
+.active {
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.name {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+.shell {
+  margin-left: auto;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.close {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+}
+.close:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--red);
+}
+.notice {
+  margin: 6px 8px 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--amber) 16%, var(--panel));
+  font-size: 12px;
+}

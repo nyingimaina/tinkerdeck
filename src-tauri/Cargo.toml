@@ -1,0 +1,51 @@
+[package]
+name = "lite-commander"
+version = "1.2.0"
+description = "Lite Commander: save apps made of terminals, start and stop them reliably."
+edition = "2021"
+default-run = "lite-commander"
+
+[[bin]]
+name = "lite-commander"
+path = "src/main.rs"
+
+[[bin]]
+name = "lcmd"
+path = "src/bin/lcmd/main.rs"
+
+[lib]
+name = "lite_commander_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-single-instance = "2"
+portable-pty = "0.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v4"] }
+parking_lot = "0.12"
+anyhow = "1"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = [
+  "Win32_Foundation",
+  "Win32_Security",
+  "Win32_System_JobObjects",
+  "Win32_System_Console",
+  "Win32_System_Threading",
+] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+panic = "unwind"
+lto = true
+codegen-units = 1
+opt-level = "s"
+strip = true

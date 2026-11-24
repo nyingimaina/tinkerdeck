@@ -1,0 +1,130 @@
+.sidebar {
+  width: 240px;
+  flex: none;
+  overflow-y: auto;
+  padding: 10px 8px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+}
+.group {
+  margin-bottom: 6px;
+}
+.appRow {
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius);
+}
+.selected {
+  background: var(--panel-2);
+}
+.chevron {
+  width: 26px;
+  height: 30px;
+  flex: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px;
+}
+.appName,
+.termRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  border-radius: var(--radius);
+}
+.appName {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  padding: 0 8px 0 0;
+  justify-content: space-between;
+  font-weight: 600;
+}
+.termRow {
+  width: 100%;
+  height: 28px;
+  padding: 0 8px 0 34px;
+  color: var(--muted);
+}
+.termRow:hover,
+.appName:hover {
+  background: var(--hover);
+}
+.termSelected {
+  background: var(--hover);
+  color: var(--text);
+}
+.nameText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.homeRow {
+  display: block;
+  width: 100%;
+  height: 32px;
+  margin-bottom: 8px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  text-align: left;
+  font-weight: 600;
+}
+.homeRow:hover {
+  background: var(--hover);
+}
+.collapseBtn {
+  float: right;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+}
+.collapseBtn:hover {
+  background: var(--hover);
+}
+.rail {
+  width: 48px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  overflow-y: auto;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+}
+.rail button {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 16px;
+}
+.rail button:hover {
+  background: var(--hover);
+}
+.railOn {
+  background: var(--panel-2) !important;
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.railInitial {
+  font-weight: 700;
+}
+.railDot {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 9px !important;
+  height: 9px !important;
+}

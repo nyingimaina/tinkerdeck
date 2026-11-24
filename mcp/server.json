@@ -1,0 +1,26 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "name": "io.github.nyingimaina/lite-commander",
+  "title": "Lite Commander",
+  "description": "Start, stop and watch a project's local dev terminals (servers, databases, shells), run one-off commands and use git, with cheap plain-text output. Windows desktop app plus the lcmd command line.",
+  "version": "1.2.0",
+  "repository": {
+    "url": "https://github.com/nyingimaina/lite-commander",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/nyingimaina/lite-commander",
+  "packages": [
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/nyingimaina/lite-commander/releases/download/v1.2.0/LiteCommander-Setup-1.2.0.exe",
+      "transport": { "type": "stdio" },
+      "packageArguments": [{ "type": "positional", "value": "mcp" }]
+    }
+  ],
+  "_meta": {
+    "install": "Run the installer (it adds lcmd to PATH and can register the server with detected LLM tools), then `lcmd mcp install`.",
+    "command": "lcmd",
+    "args": ["mcp"],
+    "platform": "windows"
+  }
+}

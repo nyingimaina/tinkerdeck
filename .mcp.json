@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "lite-commander": {
+      "command": "lcmd",
+      "args": ["mcp"]
+    }
+  }
+}

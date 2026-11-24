@@ -1,0 +1,37 @@
+.host {
+  position: absolute;
+  inset: 0;
+  background: var(--term-bg);
+}
+.hidden {
+  display: none;
+}
+.term {
+  position: absolute;
+  inset: 8px 4px 4px 12px;
+}
+.dim {
+  opacity: 0.6;
+}
+.banner {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  max-width: 80%;
+}
+.banner button {
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}

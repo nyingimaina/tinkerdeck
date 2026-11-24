@@ -1,0 +1,88 @@
+:root {
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Cascadia Mono", "Cascadia Code", Consolas, "Courier New", monospace;
+  --radius: 8px;
+  --green: #22c55e;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --grey: #8b93a7;
+  --accent: #38bdf8;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b1020;
+  --panel: #111833;
+  --panel-2: #172044;
+  --border: #243058;
+  --text: #e6ebff;
+  --muted: #8d98c4;
+  --hover: #1b2550;
+  --term-bg: #070b18;
+  --term-fg: #d7defa;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3f5fb;
+  --panel: #ffffff;
+  --panel-2: #eef1fa;
+  --border: #d5dbee;
+  --text: #151b33;
+  --muted: #5d6892;
+  --hover: #e6ebf8;
+  --term-bg: #ffffff;
+  --term-fg: #1b2140;
+  --shadow: 0 10px 30px rgba(30, 40, 90, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  overflow: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 8px;
+}

@@ -12,11 +12,11 @@ interface Options {
   save: (p: { autoCheck?: boolean; skippedVersion?: string | null }) => Promise<void>;
 }
 
-const SIX_HOURS = 6 * 3600 * 1000;
+const ONE_HOUR = 3600 * 1000;
 
 /**
  * Self-update state (BRS 7.13). A quiet check runs while the window is visible (Rust limits it to
- * about once a day); nothing is ever installed without the user pressing the button.
+ * about once an hour); nothing is ever installed without the user pressing the button.
  */
 export function useUpdates({ autoCheck, skippedVersion, save }: Options) {
   const [info, setInfo] = useState<UpdateInfo | null>(null);
@@ -32,8 +32,8 @@ export function useUpdates({ autoCheck, skippedVersion, save }: Options) {
     onResult: (v) => {
       if (v) setInfo(v);
     },
-    intervalMs: SIX_HOURS,
-    maxIntervalMs: SIX_HOURS,
+    intervalMs: ONE_HOUR,
+    maxIntervalMs: ONE_HOUR,
     maxErrors: 3,
   });
 

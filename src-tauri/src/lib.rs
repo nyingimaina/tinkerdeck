@@ -5,6 +5,8 @@ mod brief;
 mod commands;
 mod config;
 mod detect;
+mod editor;
+mod editor_cmds;
 mod engine;
 mod git;
 mod ipc;
@@ -38,6 +40,10 @@ pub fn run() {
             if args.iter().any(|a| a == "--background") {
                 return;
             }
+            // "Edit with Lite Commander" from Explorer while the app is already running
+            for f in editor::files_from_args(&args) {
+                let _ = app.emit("editor-open", f);
+            }
             if let Some(w) = app.get_webview_window("main") {
                 let _ = w.unminimize();
                 let _ = w.show();
@@ -68,6 +74,7 @@ pub fn run() {
             rt.spawn_flusher();
             let state = Arc::new(AppState { config: Mutex::new(config), rt, config_dir: dir.clone(), job_warning });
             app.manage(state.clone());
+            app.manage(editor_cmds::new_state(&dir, &std::env::args().collect::<Vec<_>>()));
             if let Some(w) = app.get_webview_window("main") {
                 let _ = w.set_title(&model::window_title(env!("CARGO_PKG_VERSION")));
                 // `lcmd` starts the app hidden when nothing is running yet (BRS 7.12)
@@ -146,6 +153,17 @@ pub fn run() {
             commands::check_update,
             commands::download_update,
             commands::apply_update,
+            editor_cmds::editor_list,
+            editor_cmds::editor_open,
+            editor_cmds::editor_new,
+            editor_cmds::editor_load,
+            editor_cmds::editor_snapshot,
+            editor_cmds::editor_save,
+            editor_cmds::editor_close,
+            editor_cmds::editor_restore,
+            editor_cmds::editor_discard,
+            editor_cmds::editor_take_pending,
+            editor_cmds::editor_touch,
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {

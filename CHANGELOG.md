@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.5.0
+
+**Text editor** (Editor button in the header)
+- Edit any text file, with highlighting for most languages (CodeMirror 6; each language is loaded only when a file of that type is opened). Tabs, find and replace (Ctrl+F), undo per tab, Ctrl+S / Ctrl+N / Ctrl+O / Ctrl+W, light and dark themes.
+- **Nothing you type is lost, even unsaved:** text is snapshotted to disk after a short pause and is back after a restart or crash, like Notepad++. Closing a tab with unsaved text sends it to the bin instead of discarding it.
+- **Tidy rotation:** an editor not used for 7 days moves to the **Bin**; after 30 days in the bin it is forgotten. Restore or delete for good from the Bin button.
+- **Explorer menu:** right-click any file, then **Edit with Lite Commander** (on Windows 11 under "Show more options"). It opens in the running app, or starts it. Optional in the installer; removed on uninstall.
+- Light on resources: the editor is not loaded until you open a file, files over 5 MB are refused, and binary files are not opened. Line endings (CRLF or LF) and encodings (UTF-8, UTF-8 with BOM, UTF-16, Latin-1) are kept exactly as they were; saving is atomic.
+
+**Updates**
+- Lite Commander now looks for a new version about once an hour (was once a day) while its window is visible and again whenever you come back to it, so a release is found without restarting.
+
 ## 1.4.0
 
 **Cheaper and more useful for LLMs** (documented parameter by parameter in `README-LLM.md`; tests fail if a tool, parameter or flag is undocumented)

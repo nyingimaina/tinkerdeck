@@ -9,6 +9,7 @@ import { Sidebar } from "./features/apps/Sidebar";
 import { GitBar } from "./features/git/GitBar";
 import { GitDrawer, type GitTab } from "./features/git/GitDrawer";
 import { HomeScreen } from "./features/home/HomeScreen";
+import { EditorView } from "./features/editor/EditorView";
 import { ConsoleNav } from "./features/terminals/ConsoleNav";
 import { TabStrip } from "./features/terminals/TabStrip";
 import { TerminalHost } from "./features/terminals/TerminalHost";
@@ -25,6 +26,7 @@ import {
   type AppDef,
   type TermState,
 } from "./state/model";
+import { useEditor } from "./state/useEditor";
 import { useGit } from "./state/useGit";
 import { useLauncher } from "./state/useLauncher";
 import { useUpdates } from "./state/useUpdates";
@@ -47,7 +49,7 @@ const readCollapsed = () => {
 
 export function App() {
   const L = useLauncher();
-  const [view, setView] = useState<"home" | "app">("home");
+  const [view, setView] = useState<"home" | "app" | "editor">("home");
   const [editing, setEditing] = useState<Editing | null>(null);
   const [pendingSave, setPendingSave] = useState<{ apps: AppDef[]; ids: string[] } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<AppDef | null>(null);
@@ -79,6 +81,9 @@ export function App() {
     skippedVersion: L.config?.update?.skippedVersion,
     save: L.setUpdateSettings,
   });
+
+  // the text editor (BRS 7.14): files sent from Explorer's "Edit with Lite Commander" land here
+  const editor = useEditor({ onOpened: () => setView("editor") });
 
   const refreshAll = () => {
     setRefreshKey((k) => k + 1);
@@ -299,6 +304,14 @@ export function App() {
             ))}
           </select>
         </label>
+        <button
+          onClick={() => setView((v) => (v === "editor" ? "home" : "editor"))}
+          aria-label="Editor"
+          aria-pressed={view === "editor"}
+          title="Text editor"
+        >
+          ✎ Editor
+        </button>
         <button onClick={refreshAll} aria-label="Refresh everything" title="Refresh everything now (F5)">
           ⟳
         </button>
@@ -359,7 +372,9 @@ export function App() {
         )}
 
         <main className={styles.main}>
-          {apps.length === 0 || (!app && !showHome) ? (
+          {view === "editor" ? (
+            <EditorView editor={editor} theme={config.theme} />
+          ) : apps.length === 0 || (!app && !showHome) ? (
             <EmptyState
               title="No apps yet. An app groups the terminals you run together."
               buttonLabel="Add your first app"

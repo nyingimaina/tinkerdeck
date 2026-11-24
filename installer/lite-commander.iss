@@ -3,7 +3,7 @@
 ; Expects the release build at src-tauri\target\release\lite-commander.exe
 
 #define AppName "Lite Commander"
-#define AppVersion "1.4.0"
+#define AppVersion "1.5.0"
 #define AppPublisher "Nyingi"
 #define AppExe "lite-commander.exe"
 #define CliExe "lcmd.exe"
@@ -39,6 +39,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Shortcuts:"; Flags: unchecked
+Name: "editmenu"; Description: "Add &Edit with Lite Commander to the right-click menu of files"; GroupDescription: "Text editor:"
 Name: "registermcp"; Description: "Make Lite Commander &discoverable by LLM tools found on this PC (Claude, Cursor, VS Code, ...)"; GroupDescription: "Command line:"
 
 [Files]
@@ -55,6 +56,11 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{a
 [Registry]
 ; lcmd is always put on the user PATH (unless it is already there), so `lcmd` works in any new terminal
 Root: HKCU; Subkey: "Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{olddata};{app}"; Check: NeedsAddPath(ExpandConstant('{app}'))
+
+; "Edit with Lite Commander" for every file in Explorer (per user; Windows 11 shows it under "Show more options")
+Root: HKCU; Subkey: "Software\Classes\*\shell\LiteCommander.Edit"; ValueType: string; ValueName: ""; ValueData: "Edit with Lite Commander"; Flags: uninsdeletekey; Tasks: editmenu
+Root: HKCU; Subkey: "Software\Classes\*\shell\LiteCommander.Edit"; ValueType: string; ValueName: "Icon"; ValueData: """{app}\lite-commander.ico"""; Tasks: editmenu
+Root: HKCU; Subkey: "Software\Classes\*\shell\LiteCommander.Edit\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExe}"" --edit ""%1"""; Tasks: editmenu
 
 [Run]
 ; after a self-update (the app passes /update=1 and has already exited) start it again, as the normal user

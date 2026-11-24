@@ -22,7 +22,7 @@ pub const PUBLIC_KEY_B64: &str = "SUAQs55am0l03CpZ+VuFU+9k9Q38+mkvajCcL4iFTDc=";
 
 const MAX_MANIFEST_BYTES: u64 = 64 * 1024;
 const MAX_INSTALLER_BYTES: u64 = 300 * 1024 * 1024;
-const AUTO_CHECK_EVERY_SECS: i64 = 20 * 3600;
+const AUTO_CHECK_EVERY_SECS: i64 = 3600;
 const DETACHED_PROCESS: u32 = 0x0000_0008;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -389,9 +389,16 @@ pub(crate) mod tests {
     fn auto_checks_are_rate_limited_and_respect_the_setting() {
         let now = 1_000_000_000;
         assert!(should_auto_check(true, 0, now));
-        assert!(!should_auto_check(true, now - 3600, now));
-        assert!(should_auto_check(true, now - 21 * 3600, now));
+        assert!(!should_auto_check(true, now - 600, now));
+        assert!(should_auto_check(true, now - 3 * 3600, now));
         assert!(!should_auto_check(false, 0, now));
+    }
+
+    #[test]
+    fn a_release_published_hours_after_the_last_check_is_found_without_a_restart() {
+        // regression: a 20 h limit hid a release published an hour after the previous check
+        let now = 1_000_000_000;
+        assert!(should_auto_check(true, now - 2 * 3600, now));
     }
 
     // ---- manifest and signature

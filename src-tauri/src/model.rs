@@ -55,7 +55,7 @@ pub struct AppDef {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateSettings {
-    /// Look for a new version now and then (once a day at most).
+    /// Look for a new version now and then (once an hour at most).
     #[serde(default = "yes")]
     pub auto_check: bool,
     /// A version the user chose to ignore.

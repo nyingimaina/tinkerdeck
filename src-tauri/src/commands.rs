@@ -409,7 +409,7 @@ pub fn set_update_settings(state: S, auto_check: Option<bool>, skipped_version: 
     })
 }
 
-/// Look for a newer signed release. Automatic checks (`force = false`) are limited to one a day and
+/// Look for a newer signed release. Automatic checks (`force = false`) are limited to one an hour and
 /// fail silently; a manual check always asks and reports errors.
 #[tauri::command]
 pub async fn check_update(state: S<'_>, force: bool) -> Result<Option<crate::update::UpdateInfo>, String> {

@@ -3,7 +3,7 @@
 ; Expects the release build at src-tauri\target\release\lite-commander.exe
 
 #define AppName "Lite Commander"
-#define AppVersion "1.5.0"
+#define AppVersion "1.6.0"
 #define AppPublisher "Nyingi"
 #define AppExe "lite-commander.exe"
 #define CliExe "lcmd.exe"

@@ -373,7 +373,7 @@ export function App() {
 
         <main className={styles.main}>
           {view === "editor" ? (
-            <EditorView editor={editor} theme={config.theme} />
+            <EditorView editor={editor} theme={config.theme} apps={apps} />
           ) : apps.length === 0 || (!app && !showHome) ? (
             <EmptyState
               title="No apps yet. An app groups the terminals you run together."

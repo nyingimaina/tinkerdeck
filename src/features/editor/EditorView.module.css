@@ -69,34 +69,6 @@
   color: var(--muted);
   font-size: 12px;
 }
-.tabs {
-  display: flex;
-  overflow-x: auto;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-}
-.tabWrap {
-  display: flex;
-  align-items: center;
-  border-right: 1px solid var(--border);
-  border-bottom: 2px solid transparent;
-}
-.tabWrap[data-active="true"] {
-  border-bottom-color: var(--accent);
-  background: var(--panel-2);
-}
-.tab {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 220px;
-  padding: 7px 4px 7px 12px;
-  border: 0;
-  background: transparent;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 .dot {
   width: 8px;
   height: 8px;
@@ -155,4 +127,74 @@
   background: var(--panel);
   color: var(--muted);
   font-size: 12px;
+}
+.workspace {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+.pane {
+  width: 210px;
+  flex: none;
+  overflow-y: auto;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+.group {
+  padding-top: 6px;
+}
+.groupHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 10px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.count {
+  font-weight: 500;
+}
+.tabWrap {
+  display: flex;
+  align-items: center;
+  border-left: 2px solid transparent;
+}
+.tabWrap:hover {
+  background: var(--hover);
+}
+.tabWrap[data-active="true"] {
+  border-left-color: var(--accent);
+  background: var(--panel-2);
+}
+.tab {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 4px 5px 10px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+.icon {
+  flex: none;
+  font-size: 14px;
+  line-height: 1;
+}
+.name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.editorCol {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }

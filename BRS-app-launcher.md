@@ -353,6 +353,7 @@ Anything that can change outside the app (a branch checked out in VS Code, files
 - **Closing:** a clean editor is forgotten; one with unsaved text goes to the **Bin** (never discarded silently).
 - **Rotation:** an editor unused for 7 days moves to the Bin; a binned editor is forgotten (its snapshot deleted) after 30 days. The Bin lists days left, with Restore and Delete for good. Rotation runs when the editor list is read, which includes app start.
 - **Explorer:** the installer (task, on by default) adds `HKCU\Software\Classes\*\shell\LiteCommander.Edit` ("Edit with Lite Commander") running `lite-commander.exe --edit "<file>"`. A second launch passes the file to the running instance (single-instance plugin) which opens it; a first launch opens it at start. Per user, no admin rights; removed on uninstall.
+- **Organisation:** open editors are listed in a left pane grouped by owning app (the app whose `root` contains the file, deepest wins; case-insensitive, whole folders only); editors with no owner and unsaved documents are under **Misc**, last. Each editor has a language icon and the status bar shows the language, detected from the file name, else from the content (shebang, JSON, HTML, XML, PHP).
 - **Not included (by decision):** language servers and project-wide search; for those use a full IDE.
 
 ## 8. Architecture

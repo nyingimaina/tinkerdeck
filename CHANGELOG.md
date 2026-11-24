@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0
+
+**Editor: organised by app, with language icons**
+- Open editors are listed on the left, grouped under the app whose project folder holds the file (the deepest folder wins). Files with no owning app, and new unsaved documents, live under **Misc**.
+- Every editor shows a language icon (for example TypeScript, Python, Rust, JSON, Dockerfile, .gitignore) and the status bar names the language. A document without a recognisable name is detected from what it contains (shebang, JSON, HTML, XML, PHP) and highlighted to match.
+
 ## 1.5.0
 
 **Text editor** (Editor button in the header)

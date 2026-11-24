@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const loaded = vi.hoisted(() => ({ count: 0 }));
@@ -112,5 +112,61 @@ describe("EditorView", () => {
     expect(screen.getByText(/kept automatically/i)).toBeTruthy();
     expect(screen.getByText("Unix (LF)")).toBeTruthy();
     expect(screen.getByText("UTF-8")).toBeTruthy();
+  });
+});
+
+describe("EditorView: grouped by app, with language icons", () => {
+  const apps = [{ id: "q", name: "Qonsol", root: "E:/q", terminals: [] }];
+  const grouped = () =>
+    controller({
+      tabs: [
+        tab("a", { title: "a.ts", path: "E:/q/src/a.ts" }),
+        tab("b", { title: "b.py", path: "C:/tmp/b.py" }),
+        tab("n", { title: "new 1", path: null }),
+      ],
+      activeId: "a",
+      active: { content: "const a = 1", loaded: true, error: null } as never,
+    });
+
+  it("lists editors under their app, and everything else under Misc", () => {
+    render(<EditorView editor={grouped()} theme="light" apps={apps as never} />);
+    const q = screen.getByRole("group", { name: "Qonsol" });
+    const misc = screen.getByRole("group", { name: "Misc" });
+    expect(within(q).getByRole("tab", { name: /a\.ts/ })).toBeTruthy();
+    expect(within(misc).getByRole("tab", { name: /b\.py/ })).toBeTruthy();
+    expect(within(misc).getByRole("tab", { name: /new 1/ }), "unsaved documents have no owner").toBeTruthy();
+    expect(within(q).queryByRole("tab", { name: /b\.py/ })).toBeNull();
+  });
+
+  it("puts everything under Misc when there are no apps", () => {
+    render(<EditorView editor={grouped()} theme="light" />);
+    expect(screen.getAllByRole("group")).toHaveLength(1);
+    expect(screen.getByRole("group", { name: "Misc" })).toBeTruthy();
+  });
+
+  it("shows a language icon per editor and names the active language", () => {
+    render(<EditorView editor={grouped()} theme="light" apps={apps as never} />);
+    expect(screen.getByRole("img", { name: "TypeScript" }).textContent).toBe("🔷");
+    expect(screen.getByRole("img", { name: "Python" }).textContent).toBe("🐍");
+    expect(screen.getByText("TypeScript", { selector: "[data-role=language]" })).toBeTruthy();
+  });
+
+  it("detects the language of an unnamed document from what is typed in it", () => {
+    const c = controller({
+      tabs: [tab("n", { title: "new 1", path: null })],
+      activeId: "n",
+      active: { content: '{"a": 1}', loaded: true, error: null } as never,
+    });
+    render(<EditorView editor={c} theme="light" />);
+    expect(screen.getByText("JSON", { selector: "[data-role=language]" })).toBeTruthy();
+  });
+
+  it("closes and selects from the grouped list just like before", () => {
+    const c = grouped();
+    render(<EditorView editor={c} theme="light" apps={apps as never} />);
+    fireEvent.click(screen.getByRole("tab", { name: /b\.py/ }));
+    expect(c.select).toHaveBeenCalledWith("b");
+    fireEvent.click(screen.getByLabelText("Close b.py"));
+    expect(c.close).toHaveBeenCalledWith("b");
   });
 });

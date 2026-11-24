@@ -1,6 +1,6 @@
 [package]
 name = "lite-commander"
-version = "1.5.0"
+version = "1.6.0"
 description = "Lite Commander: save apps made of terminals, start and stop them reliably."
 edition = "2021"
 default-run = "lite-commander"

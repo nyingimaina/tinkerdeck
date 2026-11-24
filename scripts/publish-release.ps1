@@ -35,4 +35,4 @@ if ($LASTEXITCODE -ne 0) { throw "Tag v$ver does not exist. Create and push it f
 gh release create "v$ver" $exe "$out\LiteCommander-Setup-$ver.exe.sha256" "$out\latest.json" "$out\latest.json.sig" `
   --title "Lite Commander $ver" --notes-file $notesFile --verify-tag
 if ($LASTEXITCODE -ne 0) { throw "gh release create failed" }
-Write-Host "Published v$ver. Installed copies will offer the update within a day (or at once with 'Check now')."
+Write-Host "Published v$ver. Installed copies will offer the update within an hour (or at once with 'Check now')."

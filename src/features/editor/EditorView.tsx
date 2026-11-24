@@ -1,4 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import type { AppDef } from "../../state/model";
+import { groupTabs } from "../../state/editorGroups";
+import { detectKind } from "../../state/fileKinds";
 import { binDaysLeft, BIN_DAYS, encodingLabel, eolLabel } from "../../state/editor";
 import type { EditorController } from "../../state/useEditor";
 import styles from "./EditorView.module.css";
@@ -8,11 +11,12 @@ const CodeSurface = lazy(() => import("./CodeSurface"));
 
 const daysText = (n: number) => `${n} ${n === 1 ? "day" : "days"} left`;
 
-export function EditorView({ editor, theme }: { editor: EditorController; theme: string }) {
+export function EditorView({ editor, theme, apps = [] }: { editor: EditorController; theme: string; apps?: AppDef[] }) {
   const [binOpen, setBinOpen] = useState(false);
   const E = useRef(editor);
   E.current = editor;
   const activeTab = editor.tabs.find((t) => t.id === editor.activeId) ?? null;
+  const groups = groupTabs(editor.tabs, apps);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -32,6 +36,7 @@ export function EditorView({ editor, theme }: { editor: EditorController; theme:
 
   const now = Math.floor(Date.now() / 1000);
   const a = editor.active;
+  const kind = detectKind(activeTab?.title ?? "", a?.content);
 
   return (
     <div className={styles.root}>
@@ -98,63 +103,80 @@ export function EditorView({ editor, theme }: { editor: EditorController; theme:
           <p className={styles.hint}>You can also right-click any file in Explorer and choose "Edit with Lite Commander".</p>
         </div>
       ) : (
-        <>
-          <div className={styles.tabs} role="tablist">
-            {editor.tabs.map((t) => (
-              <div key={t.id} className={styles.tabWrap} data-active={t.id === editor.activeId}>
-                <button
-                  role="tab"
-                  aria-selected={t.id === editor.activeId}
-                  className={styles.tab}
-                  title={t.path ?? "not saved yet"}
-                  onClick={() => editor.select(t.id)}
-                >
-                  {t.title}
-                  {t.dirty && <span className={styles.dot} role="img" aria-label="unsaved changes kept" />}
-                </button>
-                <button className={styles.close} aria-label={`Close ${t.title}`} onClick={() => void editor.close(t.id)}>
-                  ×
-                </button>
+        <div className={styles.workspace}>
+          <nav className={styles.pane} role="tablist" aria-orientation="vertical" aria-label="Open editors">
+            {groups.map((g) => (
+              <div key={g.appId ?? "misc"} role="group" aria-label={g.name} className={styles.group}>
+                <div className={styles.groupHead}>
+                  <span>{g.name}</span>
+                  <span className={styles.count}>{g.tabs.length}</span>
+                </div>
+                {g.tabs.map((t) => {
+                  const k = detectKind(t.title, t.id === editor.activeId ? a?.content : undefined);
+                  return (
+                    <div key={t.id} className={styles.tabWrap} data-active={t.id === editor.activeId}>
+                      <button
+                        role="tab"
+                        aria-selected={t.id === editor.activeId}
+                        className={styles.tab}
+                        title={t.path ?? "not saved yet"}
+                        onClick={() => editor.select(t.id)}
+                      >
+                        <span role="img" aria-label={k.label} className={styles.icon}>
+                          {k.icon}
+                        </span>
+                        <span className={styles.name}>{t.title}</span>
+                        {t.dirty && <span className={styles.dot} role="img" aria-label="unsaved changes kept" />}
+                      </button>
+                      <button className={styles.close} aria-label={`Close ${t.title}`} onClick={() => void editor.close(t.id)}>
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             ))}
-          </div>
+          </nav>
 
-          <div className={styles.surface}>
-            {a?.error ? (
-              <div className={styles.empty}>
-                <p>{a.error}</p>
-                <div className={styles.emptyButtons}>
-                  <button onClick={() => editor.activeId && void editor.close(editor.activeId)}>Close this tab</button>
+          <div className={styles.editorCol}>
+            <div className={styles.surface}>
+              {a?.error ? (
+                <div className={styles.empty}>
+                  <p>{a.error}</p>
+                  <div className={styles.emptyButtons}>
+                    <button onClick={() => editor.activeId && void editor.close(editor.activeId)}>Close this tab</button>
+                  </div>
                 </div>
-              </div>
-            ) : editor.activeId && a?.loaded ? (
-              <Suspense fallback={<div className={styles.loading}>Loading editor…</div>}>
-                <CodeSurface
-                  docId={editor.activeId}
-                  value={a.content}
-                  filename={activeTab?.title ?? ""}
-                  dark={theme === "dark"}
-                  liveIds={editor.tabs.map((t) => t.id)}
-                  onChange={editor.setContent}
-                  onSave={() => editor.activeId && void editor.save(editor.activeId)}
-                />
-              </Suspense>
-            ) : (
-              <div className={styles.loading}>Opening…</div>
-            )}
-          </div>
+              ) : editor.activeId && a?.loaded ? (
+                <Suspense fallback={<div className={styles.loading}>Loading editor…</div>}>
+                  <CodeSurface
+                    docId={editor.activeId}
+                    value={a.content}
+                    filename={kind.filename}
+                    dark={theme === "dark"}
+                    liveIds={editor.tabs.map((t) => t.id)}
+                    onChange={editor.setContent}
+                    onSave={() => editor.activeId && void editor.save(editor.activeId)}
+                  />
+                </Suspense>
+              ) : (
+                <div className={styles.loading}>Opening…</div>
+              )}
+            </div>
 
-          <div className={styles.status}>
-            <span>Unsaved changes are kept automatically.</span>
-            <span className={styles.spacer} />
-            {activeTab && (
-              <>
-                <span>{eolLabel(activeTab.eol)}</span>
-                <span>{encodingLabel(activeTab.encoding)}</span>
-              </>
-            )}
+            <div className={styles.status}>
+              <span>Unsaved changes are kept automatically.</span>
+              <span className={styles.spacer} />
+              {activeTab && (
+                <>
+                  <span data-role="language">{kind.label}</span>
+                  <span>{eolLabel(activeTab.eol)}</span>
+                  <span>{encodingLabel(activeTab.encoding)}</span>
+                </>
+              )}
+            </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 #![cfg(windows)]
 
 mod ansi;
+mod brief;
 mod commands;
 mod config;
 mod detect;
@@ -11,6 +12,7 @@ mod job;
 mod logger;
 mod model;
 mod paths;
+mod ready;
 mod ring;
 mod runtime;
 mod shells;

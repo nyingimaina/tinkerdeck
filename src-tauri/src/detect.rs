@@ -13,6 +13,8 @@ pub struct Suggestion {
     pub command: String,
     pub stop_command: Option<String>,
     pub kind: String,
+    /// Output text that means "up and listening" (vite, ASP.NET), so `up --wait` can tell.
+    pub ready_pattern: Option<String>,
     /// The single best suggestion for its folder (used by whole-project detection).
     pub primary: bool,
 }
@@ -81,6 +83,7 @@ pub fn folder_suggestions(dir: &Path, rel: &str) -> Vec<Suggestion> {
         command,
         stop_command: stop,
         kind: kind.to_string(),
+        ready_pattern: None,
         primary: false,
     };
 
@@ -89,13 +92,18 @@ pub fn folder_suggestions(dir: &Path, rel: &str) -> Vec<Suggestion> {
         if let Ok(v) = serde_json::from_str::<serde_json::Value>(&text) {
             if let Some(scripts) = v.get("scripts").and_then(|s| s.as_object()) {
                 let pm = package_manager(dir);
+                let is_vite = text.contains("\"vite\"") || scripts.get("dev").and_then(|d| d.as_str()).map(|d| d.contains("vite")).unwrap_or(false);
                 let mut names: Vec<&String> = scripts.keys().collect();
                 names.sort_by_key(|k| {
                     SCRIPT_PRIORITY.iter().position(|p| p == &k.as_str()).unwrap_or(SCRIPT_PRIORITY.len())
                 });
                 for s in names {
                     let label = if SCRIPT_PRIORITY.contains(&s.as_str()) { name.clone() } else { format!("{name}-{s}") };
-                    out.push(mk(&label, script_command(pm, s), None, "node"));
+                    let mut sug = mk(&label, script_command(pm, s), None, "node");
+                    if is_vite && (s == "dev" || s == "serve" || s == "preview") {
+                        sug.ready_pattern = Some("Local:".into());
+                    }
+                    out.push(sug);
                 }
             }
         }
@@ -105,7 +113,9 @@ pub fn folder_suggestions(dir: &Path, rel: &str) -> Vec<Suggestion> {
     if let Some(proj) = first_with_ext(dir, "csproj") {
         let text = std::fs::read_to_string(&proj).unwrap_or_default();
         if text.contains("Microsoft.NET.Sdk.Web") {
-            out.push(mk(&name, "dotnet watch run".into(), None, "dotnet"));
+            let mut watch = mk(&name, "dotnet watch run".into(), None, "dotnet");
+            watch.ready_pattern = Some("Now listening on".into());
+            out.push(watch);
             out.push(mk(&format!("{name}-run"), "dotnet run".into(), None, "dotnet"));
         } else if text.contains("<OutputType>Exe</OutputType>") || text.contains("<OutputType>WinExe</OutputType>") {
             out.push(mk(&name, "dotnet run".into(), None, "dotnet"));
@@ -265,6 +275,21 @@ mod tests {
         write(d.path(), "pnpm-lock.yaml", "");
         assert_eq!(folder_suggestions(d.path(), ".")[0].command, "pnpm dev");
         assert_eq!(package_manager(d.path()), "pnpm");
+    }
+
+    #[test]
+    fn vite_and_aspnet_get_a_ready_pattern_and_others_do_not() {
+        let d = tempdir().unwrap();
+        write(d.path(), "package.json", r#"{"devDependencies":{"vite":"^5"},"scripts":{"dev":"vite","build":"vite build","lint":"eslint ."}}"#);
+        let s = folder_suggestions(d.path(), ".");
+        assert_eq!(s[0].ready_pattern.as_deref(), Some("Local:"));
+        assert!(s.iter().find(|x| x.command == "npm run build").unwrap().ready_pattern.is_none());
+        let n = tempdir().unwrap();
+        write(n.path(), "package.json", r#"{"scripts":{"start":"node server.js"}}"#);
+        assert!(folder_suggestions(n.path(), ".")[0].ready_pattern.is_none());
+        let a = tempdir().unwrap();
+        write(a.path(), "Api.csproj", r#"<Project Sdk="Microsoft.NET.Sdk.Web"></Project>"#);
+        assert_eq!(folder_suggestions(a.path(), ".")[0].ready_pattern.as_deref(), Some("Now listening on"));
     }
 
     #[test]

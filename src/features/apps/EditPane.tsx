@@ -144,6 +144,8 @@ export function EditPane({ initial, isNew, runningTerminalIds, onSave, onCancel,
       cwd: normalizeSlashes(t.cwd) || ".",
       stopCommand: t.stopCommand?.trim() ? t.stopCommand : undefined,
       shell: t.shell || undefined,
+      readyPattern: t.readyPattern?.trim() ? t.readyPattern.trim() : undefined,
+      readyUrl: t.readyUrl?.trim() ? t.readyUrl.trim() : undefined,
       env: parseEnv(envText),
     })),
   });
@@ -391,7 +393,27 @@ export function EditPane({ initial, isNew, runningTerminalIds, onSave, onCancel,
               )}
 
               <details className={styles.advanced}>
-                <summary>Advanced: environment variables</summary>
+                <summary>Advanced: readiness and environment variables</summary>
+                <label className={styles.mini}>
+                  <span>Ready when the output contains (optional)</span>
+                  <input
+                    aria-label={`Terminal ${i + 1} ready text`}
+                    value={t.readyPattern ?? ""}
+                    onChange={(e) => update(i, { readyPattern: e.target.value })}
+                    placeholder="e.g. Local:  or  Now listening on"
+                    className={styles.mono}
+                  />
+                </label>
+                <label className={styles.mini}>
+                  <span>Ready when this local address answers (optional)</span>
+                  <input
+                    aria-label={`Terminal ${i + 1} ready URL`}
+                    value={t.readyUrl ?? ""}
+                    onChange={(e) => update(i, { readyUrl: e.target.value })}
+                    placeholder="e.g. http://localhost:5173/health"
+                    className={styles.mono}
+                  />
+                </label>
                 <textarea
                   aria-label={`Terminal ${i + 1} environment`}
                   value={t.envText}

@@ -4,36 +4,38 @@
 
 Lite Commander runs on the user's own PC. Use it to start a project's servers, wait until they are ready, read their logs, run one-off commands, and work with git, without opening terminals yourself.
 
+The complete, exact reference for every tool and parameter is `README-LLM.md`, installed next to `lcmd.exe` and printed by `lcmd llms`. This file is the short version.
+
 ## Connect (MCP, stdio)
 
 - Command: `lcmd`   Arguments: `mcp`   (full path: `%LOCALAPPDATA%\Programs\Lite Commander\lcmd.exe`)
 - Register with every installed LLM client at once: `lcmd mcp install` (Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, Gemini CLI, opencode). Check with `lcmd mcp status`. Snippet for other clients: `lcmd mcp config`.
 - If the app is not running, `lcmd` starts it hidden. No API key, no network: it listens on 127.0.0.1 only, behind a per-launch token.
 
-A fuller guide is installed next to the program as `README-LLM.md` and printed by `lcmd llms`.
-
 ## Tools (14)
 
-- `lc_status`: all apps and terminal states in one short call (add `git: true` for branches). Start here.
-- `lc_up` / `lc_down`: start or stop every terminal of an app.
-- `lc_start` / `lc_stop` / `lc_restart`: one terminal, or `console` for a shell (`console:2`, with `shell`: powershell.exe, pwsh.exe, cmd.exe, gitbash, wsl.exe).
-- `lc_logs`: plain-text output (no colour codes). Pass the returned cursor as `since` to receive only new output.
-- `lc_wait`: block until a terminal prints a pattern (ready detection, e.g. `Local:`), exits, or is running. Use instead of polling logs.
-- `lc_send`: type into a running terminal.
-- `lc_run`: run one command in the app's folder with a timeout; returns exit code and the end of the output.
-- `lc_git`: status, branches, log, switch, commit, fetch, pull (fast-forward only), push (never forces), sync.
-- `lc_add` / `lc_detect`: add a project folder; terminals (npm scripts, dotnet, docker compose, cargo, go, python) are detected.
+- `lc_status`: all apps and terminal states in one short call. Params: `git` (add branches), `since` (a previous `rev`; same state answers "unchanged"). Start here.
+- `lc_up`: start every terminal of an app in order and wait until each is READY or one fails. Params: `app`, `wait` (default true), `timeout_s`. Ready = its `readyUrl` (local) answers, or its output has its `readyPattern`, or it stayed up 2 s.
+- `lc_down`: stop every terminal of an app.
+- `lc_start` / `lc_stop` / `lc_restart`: one terminal, or `console` for a shell (`console:2`; `shell`: powershell.exe, pwsh.exe, cmd.exe, gitbash, wsl.exe).
+- `lc_logs`: plain-text output (no colour codes). Params: `lines`, `since` (cursor), `new` (only unseen output), `grep` (a|b), `context`, `errors`, `dedupe`, `brief`.
+- `lc_wait`: block until a terminal prints a `pattern`, exits, or is running (`until`, `timeout_s`). Use instead of polling logs.
+- `lc_send`: type into a running terminal (`text`, `enter`).
+- `lc_run`: run one command in the app's folder with a timeout; the reply is brief by default: exit code, then for test/build runners (vitest, jest, dotnet, cargo, pytest, go, tsc, MSBuild, rustc) counts plus only the failures. Params: `command`, `cwd`, `shell`, `timeout_s`, `lines`, `format` (brief|full), `grep`, `context`, `errors`, `dedupe`.
+- `lc_git`: `op` = status, branches, log, switch, commit, fetch, pull (fast-forward only), push (never forces), sync; params `branch`, `message`, `paths`, `all`, `limit`.
+- `lc_add` / `lc_detect`: add a project folder (terminals detected from npm scripts, dotnet, docker compose, cargo, go, python) or preview what would be.
 - `lc_shells`: shells installed on this machine.
 
 ## Cheap workflow
 
-1. `lc_status`  2. `lc_up` (or `lc_start`)  3. `lc_wait` with a ready pattern  4. `lc_logs` with `since`  5. `lc_run` for tests or builds  6. `lc_down` when finished.
+1. `lc_status`  2. `lc_up` (waits for READY)  3. `lc_run` for tests and builds (brief)  4. `lc_logs` with `new: true`, `errors` or `grep`  5. `lc_status` with `since`  6. `lc_down`.
 
 ## Same thing from a shell
 
-`lcmd status`, `lcmd up <app>`, `lcmd wait <app> <terminal> --match "Local:"`, `lcmd logs <app> <terminal> -n 40`, `lcmd run <app> -- npm test`, `lcmd git <app> status`. Add `--json` for raw JSON. `lcmd help` lists everything.
+`lcmd status`, `lcmd up <app> --wait`, `lcmd wait <app> <terminal> --match "Local:"`, `lcmd logs <app> <terminal> --errors`, `lcmd run <app> --brief -- npm test`, `lcmd git <app> status`. Add `--json` for raw JSON. `lcmd help` lists everything.
 
 ## Docs
 
+- [README-LLM.md](installer/llm-readme.md): every tool and parameter, exact
 - [README](README.md): install and usage
 - [Requirements (BRS)](BRS-app-launcher.md): section 7.12 describes the command line and MCP design

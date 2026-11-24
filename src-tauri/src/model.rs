@@ -22,6 +22,12 @@ pub struct TerminalDef {
     /// Shell id for this terminal only (see `shells`); `None` uses the global default.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub shell: Option<String>,
+    /// Ready when the output contains this text (case-insensitive), used by `up` with `wait`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ready_pattern: Option<String>,
+    /// Ready when this local (loopback) URL answers with anything below 500.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ready_url: Option<String>,
 }
 
 fn dot() -> String {
@@ -199,6 +205,8 @@ pub fn console_def_with_id(terminal_id: &str) -> TerminalDef {
         stop_command: None,
         env: BTreeMap::new(),
         shell: shell.filter(|s| crate::shells::known(s).is_some()).map(String::from),
+        ready_pattern: None,
+        ready_url: None,
     }
 }
 

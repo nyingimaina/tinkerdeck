@@ -2,6 +2,7 @@
 //! descriptions and compact results, so the tool list and every call cost an LLM very little.
 
 use serde_json::{json, Value};
+use std::collections::HashMap;
 use std::io::{BufRead, Write};
 
 /// The guide for LLMs: printed by `lcmd llms` and installed next to the exe as README-LLM.md.
@@ -9,9 +10,10 @@ pub const LLM_GUIDE: &str = include_str!("../../../../installer/llm-readme.md");
 
 const PROTOCOL: &str = "2024-11-05";
 
-const INSTRUCTIONS: &str = "Controls the user's local dev apps (Lite Commander). Apps are referred to by name; terminals by name (or \"console\"). \
-Cheap workflow: lc_status, then lc_up/lc_start, then lc_wait with a pattern like \"Local:\" to know when a server is ready, \
-lc_logs (use the returned cursor as `since` to read only new output), lc_run for one-off commands, lc_git for git.";
+const INSTRUCTIONS: &str = "Controls the user's local dev apps (Lite Commander). Address apps and terminals by name (or \"console\"). \
+Cheap workflow: lc_status (note its rev; pass it as since to get \"unchanged\"), lc_up (waits until every terminal is READY or one fails), \
+lc_run (brief by default: counts plus only the failures; format \"full\" for everything), lc_logs (new:true for only unseen output; errors, grep, dedupe, brief to narrow), \
+lc_wait for a pattern, lc_git for git. Every parameter is documented in README-LLM.md next to lcmd.exe (run `lcmd llms` to print it).";
 
 fn tool(name: &str, description: &str, props: Value, required: &[&str]) -> Value {
     json!({ "name": name, "description": description, "inputSchema": { "type": "object", "properties": props, "required": required } })
@@ -21,16 +23,16 @@ pub fn tools() -> Value {
     let app = json!({ "type": "string", "description": "App name, unique prefix or id" });
     let term = json!({ "type": "string", "description": "Terminal name, or \"console\" / \"console:2\"" });
     json!([
-        tool("lc_status", "All apps with their terminals' states (and git branch if git=true). Start here.", json!({ "git": { "type": "boolean" } }), &[]),
-        tool("lc_up", "Start every terminal of an app, in order.", json!({ "app": app }), &["app"]),
+        tool("lc_status", "All apps with their terminals' states (and git branch if git=true). Start here. Reply ends with `rev`; pass it back as `since` to get just \"unchanged\".", json!({ "git": { "type": "boolean", "description": "add branch, dirty, ahead, behind" }, "since": { "type": "string", "description": "rev from the previous reply; same state returns unchanged" } }), &[]),
+        tool("lc_up", "Start every terminal of an app in order and (default) wait until each is READY, or one fails.", json!({ "app": app, "wait": { "type": "boolean", "description": "default true: return when ready or failed" }, "timeout_s": { "type": "integer", "description": "wait limit, default 120" } }), &["app"]),
         tool("lc_down", "Stop every terminal of an app; returns when they are stopped.", json!({ "app": app }), &["app"]),
         tool("lc_start", "Start one terminal (or a console).", json!({ "app": app, "terminal": term, "shell": { "type": "string", "description": "Console only: powershell.exe, pwsh.exe, cmd.exe, gitbash, wsl.exe" } }), &["app", "terminal"]),
         tool("lc_stop", "Stop one terminal and everything it started.", json!({ "app": app, "terminal": term }), &["app", "terminal"]),
         tool("lc_restart", "Stop then start one terminal.", json!({ "app": app, "terminal": term }), &["app", "terminal"]),
-        tool("lc_logs", "Recent plain-text output (no colour codes). Pass the returned cursor as `since` to get only new output.", json!({ "app": app, "terminal": term, "lines": { "type": "integer", "description": "default 60, max 1000" }, "since": { "type": "integer" } }), &["app", "terminal"]),
+        tool("lc_logs", "Recent plain-text output (no colour codes), filterable. `new` or `since` returns only unseen output.", json!({ "app": app, "terminal": term, "lines": { "type": "integer", "description": "default 60, max 1000" }, "since": { "type": "integer", "description": "cursor from a previous reply" }, "new": { "type": "boolean", "description": "only output since your last lc_logs of this terminal" }, "grep": { "type": "string", "description": "keep lines containing this (a|b = either), case-insensitive" }, "context": { "type": "integer", "description": "lines around each grep/errors hit (max 20)" }, "errors": { "type": "boolean", "description": "only error-looking lines" }, "dedupe": { "type": "boolean", "description": "fold lines that differ only in numbers" }, "brief": { "type": "boolean", "description": "summarise test/build output" } }), &["app", "terminal"]),
         tool("lc_wait", "Wait until a terminal prints `pattern` (ready detection), exits, or is running. Prefer this over polling logs.", json!({ "app": app, "terminal": term, "pattern": { "type": "string" }, "until": { "type": "string", "enum": ["exit", "running", "match"] }, "timeout_s": { "type": "integer", "description": "default 60, max 600" } }), &["app", "terminal"]),
         tool("lc_send", "Type text into a running terminal (Enter is added unless enter=false).", json!({ "app": app, "terminal": term, "text": { "type": "string" }, "enter": { "type": "boolean" } }), &["app", "terminal", "text"]),
-        tool("lc_run", "Run one command in the app's folder and get exit code plus the end of its output. No terminal is kept.", json!({ "app": app, "command": { "type": "string" }, "cwd": { "type": "string", "description": "Subfolder, relative to the app root" }, "shell": { "type": "string" }, "timeout_s": { "type": "integer" }, "lines": { "type": "integer" } }), &["app", "command"]),
+        tool("lc_run", "Run one command in the app's folder; returns exit code and a brief result (test/build runners become counts plus only the failures). No terminal is kept.", json!({ "app": app, "command": { "type": "string" }, "cwd": { "type": "string", "description": "Subfolder, relative to the app root" }, "shell": { "type": "string", "description": "powershell.exe, pwsh.exe, cmd.exe, gitbash, wsl.exe" }, "timeout_s": { "type": "integer", "description": "default 60, max 600" }, "lines": { "type": "integer", "description": "tail length for format full" }, "format": { "type": "string", "enum": ["brief", "full"], "description": "default brief" }, "grep": { "type": "string" }, "context": { "type": "integer" }, "errors": { "type": "boolean" }, "dedupe": { "type": "boolean" } }), &["app", "command"]),
         tool("lc_git", "Git for an app. op: status | branches | log | switch | commit | fetch | pull | push | sync. Pull is fast-forward only; push never forces.", json!({ "app": app, "op": { "type": "string", "enum": ["status", "branches", "log", "switch", "commit", "fetch", "pull", "push", "sync"] }, "branch": { "type": "string" }, "message": { "type": "string" }, "paths": { "type": "array", "items": { "type": "string" } }, "all": { "type": "boolean" }, "limit": { "type": "integer" } }), &["app", "op"]),
         tool("lc_add", "Add a project folder as an app; terminals (npm scripts, dotnet, docker compose...) are detected automatically.", json!({ "path": { "type": "string" }, "name": { "type": "string" } }), &["path"]),
         tool("lc_detect", "Preview what lc_add would detect in a folder.", json!({ "path": { "type": "string" } }), &["path"]),
@@ -38,12 +40,36 @@ pub fn tools() -> Value {
     ])
 }
 
+/// State kept for one MCP connection: the last log cursor of each terminal (for `new: true`).
+#[derive(Default)]
+pub struct Session {
+    cursors: HashMap<String, u64>,
+}
+
+fn cursor_key(args: &Value) -> String {
+    let get = |k: &str| args.get(k).and_then(|v| v.as_str()).unwrap_or("").to_lowercase();
+    format!("{}|{}", get("app"), get("terminal"))
+}
+
 /// Engine method and params for a tool call.
 pub fn route(name: &str, args: &Value) -> Result<(String, Value), String> {
     let direct = |m: &str| Ok((m.to_string(), args.clone()));
     match name {
-        "lc_status" => direct("status"),
-        "lc_up" => direct("app.up"),
+        "lc_status" => {
+            // always ask for a revision so the model can say "unchanged" next time
+            let mut a = args.clone();
+            if let Some(o) = a.as_object_mut() {
+                o.entry("since").or_insert(json!(""));
+            }
+            Ok(("status".to_string(), a))
+        }
+        "lc_up" => {
+            let mut a = args.clone();
+            if let Some(o) = a.as_object_mut() {
+                o.entry("wait").or_insert(json!(true));
+            }
+            Ok(("app.up".to_string(), a))
+        }
         "lc_down" => direct("app.down"),
         "lc_start" => direct("term.start"),
         "lc_stop" => direct("term.stop"),
@@ -51,7 +77,16 @@ pub fn route(name: &str, args: &Value) -> Result<(String, Value), String> {
         "lc_logs" => direct("term.logs"),
         "lc_wait" => direct("term.wait"),
         "lc_send" => direct("term.send"),
-        "lc_run" => direct("run"),
+        "lc_run" => {
+            // brief by default: the cheapest honest answer; `format: "full"` opts out
+            let mut a = args.clone();
+            if let Some(o) = a.as_object_mut() {
+                if !o.contains_key("format") && !o.contains_key("brief") && !o.contains_key("grep") && !o.contains_key("errors") && !o.contains_key("dedupe") {
+                    o.insert("format".into(), json!("brief"));
+                }
+            }
+            Ok(("run".to_string(), a))
+        }
         "lc_add" => direct("app.add"),
         "lc_detect" => direct("app.detect"),
         "lc_shells" => direct("shells"),
@@ -71,6 +106,28 @@ pub fn route(name: &str, args: &Value) -> Result<(String, Value), String> {
 pub fn format_result(name: &str, v: &Value) -> String {
     let str_of = |k: &str| v.get(k).and_then(|x| x.as_str()).unwrap_or("");
     match name {
+        "lc_status" if v.get("unchanged").is_some() => format!("unchanged (rev {})", v["rev"].as_str().unwrap_or("")),
+        "lc_status" if v.get("apps").is_some() => format!("{}\n-- rev {}", v["apps"], v["rev"].as_str().unwrap_or("")),
+        "lc_up" if v.get("ready").is_some() => {
+            let secs = v["elapsed_ms"].as_f64().unwrap_or(0.0) / 1000.0;
+            let terms = v["terminals"].as_array().cloned().unwrap_or_default();
+            if v["ready"] == true {
+                let names: Vec<String> = terms.iter().map(|t| format!("{} {}", t["name"].as_str().unwrap_or(""), t["state"].as_str().unwrap_or(""))).collect();
+                format!("READY in {secs:.1}s: {}", names.join(", "))
+            } else {
+                let mut out = match v.get("failed").and_then(|f| f.as_str()) {
+                    Some(f) => format!("NOT READY after {secs:.1}s: {f} failed"),
+                    None => format!("NOT READY after {secs:.1}s (timed out)"),
+                };
+                for t in terms.iter().filter(|t| t["ready"] != true) {
+                    out.push_str(&format!("\n- {} [{}]", t["name"].as_str().unwrap_or(""), t["state"].as_str().unwrap_or("")));
+                    for l in t.get("tail").and_then(|x| x.as_str()).unwrap_or("").lines().take(6) {
+                        out.push_str(&format!("\n    {l}"));
+                    }
+                }
+                out
+            }
+        }
         "lc_logs" => {
             let mut foot = format!("-- cursor {}, {}", v["cursor"], str_of("state"));
             if v["truncated"] == true {
@@ -98,8 +155,14 @@ fn error(id: &Value, code: i64, message: &str) -> Value {
     json!({ "jsonrpc": "2.0", "id": id, "error": { "code": code, "message": message } })
 }
 
-/// Handle one JSON-RPC message; `call` runs an engine method. Notifications return `None`.
+/// Handle one JSON-RPC message with a fresh session (used by the tests); `call` runs an engine method.
+#[cfg(test)]
 pub fn handle(msg: &Value, call: &mut dyn FnMut(&str, Value) -> Result<Value, String>) -> Option<Value> {
+    handle_with(msg, call, &mut Session::default())
+}
+
+/// Like `handle`, with per-connection state (log cursors for `new: true`).
+pub fn handle_with(msg: &Value, call: &mut dyn FnMut(&str, Value) -> Result<Value, String>, session: &mut Session) -> Option<Value> {
     let id = msg.get("id").cloned();
     let method = msg.get("method").and_then(|m| m.as_str()).unwrap_or("");
     let id = id?; // a notification has no id and gets no reply
@@ -118,12 +181,28 @@ pub fn handle(msg: &Value, call: &mut dyn FnMut(&str, Value) -> Result<Value, St
         "tools/call" => {
             let name = msg["params"]["name"].as_str().unwrap_or("");
             let args = msg["params"].get("arguments").cloned().unwrap_or_else(|| json!({}));
-            let (m, params) = match route(name, &args) {
+            let (m, mut params) = match route(name, &args) {
                 Ok(r) => r,
                 Err(e) => return Some(error(&id, -32602, &e)),
             };
+            let key = cursor_key(&args);
+            if name == "lc_logs" {
+                if let Some(o) = params.as_object_mut() {
+                    let wants_new = o.remove("new").and_then(|n| n.as_bool()).unwrap_or(false);
+                    if wants_new && !o.contains_key("since") {
+                        o.insert("since".into(), json!(session.cursors.get(&key).copied().unwrap_or(0)));
+                    }
+                }
+            }
             let (text, is_error) = match call(&m, params) {
-                Ok(v) => (format_result(name, &v), false),
+                Ok(v) => {
+                    if name == "lc_logs" {
+                        if let Some(c) = v.get("cursor").and_then(|c| c.as_u64()) {
+                            session.cursors.insert(key, c);
+                        }
+                    }
+                    (format_result(name, &v), false)
+                }
                 Err(e) => (e, true),
             };
             Some(json!({ "jsonrpc": "2.0", "id": id, "result": { "content": [{ "type": "text", "text": text }], "isError": is_error } }))
@@ -135,6 +214,7 @@ pub fn handle(msg: &Value, call: &mut dyn FnMut(&str, Value) -> Result<Value, St
 /// Serve MCP on stdin/stdout. The engine connection is made lazily, on the first tool call.
 pub fn run_stdio() -> i32 {
     let mut client: Option<crate::client::Client> = None;
+    let mut session = Session::default();
     let stdin = std::io::stdin();
     let mut out = std::io::stdout();
     for line in stdin.lock().lines() {
@@ -144,7 +224,7 @@ pub fn run_stdio() -> i32 {
         }
         let reply = match serde_json::from_str::<Value>(&line) {
             Err(e) => Some(error(&Value::Null, -32700, &format!("Parse error: {e}"))),
-            Ok(msg) => handle(&msg, &mut |method, params| {
+            Ok(msg) => handle_with(&msg, &mut |method, params| {
                 if client.is_none() {
                     client = Some(crate::client::Client::connect(true)?);
                 }
@@ -157,7 +237,7 @@ pub fn run_stdio() -> i32 {
                     Some(r) => r,
                     None => Err("not connected".into()),
                 }
-            }),
+            }, &mut session),
         };
         if let Some(r) = reply {
             if writeln!(out, "{r}").is_err() || out.flush().is_err() {
@@ -232,7 +312,10 @@ mod tests {
         for (tool, args, method) in cases {
             let (_, seen) = run(json!({ "jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": { "name": tool, "arguments": args } }), Ok(json!({})));
             assert_eq!(seen[0].0, method, "{tool}");
-            assert_eq!(seen[0].1, args, "{tool}");
+            // the engine receives everything the caller sent (defaults may be added on top)
+            for (k, v) in args.as_object().unwrap() {
+                assert_eq!(&seen[0].1[k], v, "{tool}: {k}");
+            }
         }
     }
 
@@ -274,16 +357,120 @@ mod tests {
         assert!(format_result("lc_run", &json!({ "exit": null, "timedOut": true, "text": "", "truncated": false })).starts_with("timed out"));
     }
 
+    // ---- documentation must keep up with the functionality (BRS 7.12)
+
+    const LLMS_TXT: &str = include_str!("../../../../llms.txt");
+
     #[test]
-    fn the_llm_guide_documents_every_tool_and_the_discovery_commands() {
+    fn the_guide_documents_every_tool_and_every_parameter_of_every_tool() {
         for t in tools().as_array().unwrap() {
             let name = t["name"].as_str().unwrap();
-            assert!(LLM_GUIDE.contains(&format!("`{name}`")), "README-LLM.md does not mention {name}");
+            assert!(LLM_GUIDE.contains(&format!("`{name}`")), "README-LLM.md does not mention the tool {name}");
+            for key in t["inputSchema"]["properties"].as_object().unwrap().keys() {
+                assert!(LLM_GUIDE.contains(&format!("`{key}`")), "README-LLM.md does not document `{key}` (a parameter of {name})");
+            }
+            if let Some(e) = t["inputSchema"]["properties"]["format"]["enum"].as_array() {
+                for v in e {
+                    assert!(LLM_GUIDE.contains(v.as_str().unwrap()), "enum value {v} of {name} is undocumented");
+                }
+            }
+            if let Some(e) = t["inputSchema"]["properties"]["op"]["enum"].as_array() {
+                for v in e {
+                    assert!(LLM_GUIDE.contains(&format!("`{}`", v.as_str().unwrap())), "git op {v} is undocumented");
+                }
+            }
         }
-        for needle in ["lcmd help", "lcmd status", "lcmd mcp install", "lcmd mcp config", "lcmd doctor", "opencode", "README-LLM.md"] {
+    }
+
+    #[test]
+    fn the_guide_documents_every_command_line_flag_and_command() {
+        let flags: std::collections::BTreeSet<String> = crate::cli::HELP
+            .split_whitespace()
+            .map(|w| w.trim_matches(|c: char| !(c.is_alphanumeric() || c == '-')))
+            .filter(|w| w.starts_with("--") && w.len() > 2)
+            .map(String::from)
+            .collect();
+        assert!(flags.len() >= 15, "expected to find the flags in the help text, found {flags:?}");
+        for f in &flags {
+            assert!(LLM_GUIDE.contains(f.as_str()), "README-LLM.md does not mention the flag {f}");
+        }
+        for cmd in ["status", "up", "down", "add", "detect", "start", "stop", "restart", "logs", "wait", "send", "run", "git", "shells", "doctor", "ping", "update", "ui", "quit", "mcp install", "mcp status", "mcp config", "mcp uninstall", "llms", "version", "help"] {
+            assert!(LLM_GUIDE.contains(&format!("lcmd {cmd}")) || LLM_GUIDE.contains(&format!("{cmd} ")) || LLM_GUIDE.contains(&format!("`{cmd}`")), "README-LLM.md does not mention the command {cmd}");
+            assert!(crate::cli::HELP.contains(cmd), "lcmd help does not mention {cmd}");
+        }
+    }
+
+    #[test]
+    fn the_guide_covers_discovery_ready_checks_and_the_token_saving_rules() {
+        for needle in [
+            "lcmd help", "lcmd status", "lcmd mcp install", "lcmd mcp config", "lcmd doctor", "opencode", "README-LLM.md",
+            "readyPattern", "readyUrl", "READY", "rev", "unchanged", "cursor", "new: true", "format: \"full\"", "fast-forward", "never force",
+        ] {
             assert!(LLM_GUIDE.contains(needle), "guide is missing {needle}");
         }
-        assert!(LLM_GUIDE.len() < 8000, "keep the guide short enough to be cheap to read");
+        assert!(LLM_GUIDE.len() < 16_000, "keep the guide cheap to read, now {} bytes", LLM_GUIDE.len());
+    }
+
+    #[test]
+    fn llms_txt_and_the_server_instructions_name_every_tool() {
+        for t in tools().as_array().unwrap() {
+            let name = t["name"].as_str().unwrap();
+            assert!(LLMS_TXT.contains(name), "llms.txt does not mention {name}");
+        }
+        assert!(LLMS_TXT.contains("README-LLM.md") && LLMS_TXT.contains("lcmd llms"));
+        for word in ["lc_status", "lc_up", "lc_run", "lc_logs"] {
+            assert!(INSTRUCTIONS.contains(word), "server instructions do not mention {word}");
+        }
+        assert!(INSTRUCTIONS.contains("README-LLM.md") || INSTRUCTIONS.contains("lcmd llms"), "instructions must say where the full guide is");
+    }
+
+    #[test]
+    fn token_saving_defaults_are_applied_unless_the_model_overrides_them() {
+        let routed = |name: &str, args: Value| route(name, &args).unwrap().1;
+        assert_eq!(routed("lc_status", json!({}))["since"], "", "status always asks for a revision");
+        assert_eq!(routed("lc_status", json!({ "since": "ab" }))["since"], "ab");
+        assert_eq!(routed("lc_up", json!({ "app": "Shop" }))["wait"], true);
+        assert_eq!(routed("lc_up", json!({ "app": "Shop", "wait": false }))["wait"], false);
+        assert_eq!(routed("lc_run", json!({ "app": "Shop", "command": "npm test" }))["format"], "brief");
+        assert_eq!(routed("lc_run", json!({ "app": "Shop", "command": "x", "format": "full" }))["format"], "full");
+        assert!(routed("lc_run", json!({ "app": "Shop", "command": "x", "grep": "FAIL" })).get("format").is_none(), "a filter replaces the brief default");
+    }
+
+    #[test]
+    fn new_true_reads_only_output_since_the_last_lc_logs_of_that_terminal() {
+        let mut session = Session::default();
+        let mut seen: Vec<Value> = Vec::new();
+        let mut cursor = 100u64;
+        let mut call = |_: &str, p: Value| -> Result<Value, String> {
+            seen.push(p);
+            cursor += 50;
+            Ok(json!({ "text": "x", "cursor": cursor, "state": "running", "truncated": false }))
+        };
+        let msg = |args: Value| json!({ "jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": { "name": "lc_logs", "arguments": args } });
+        handle_with(&msg(json!({ "app": "Shop", "terminal": "api", "new": true })), &mut call, &mut session);
+        handle_with(&msg(json!({ "app": "shop", "terminal": "API", "new": true })), &mut call, &mut session);
+        handle_with(&msg(json!({ "app": "Shop", "terminal": "web", "new": true })), &mut call, &mut session);
+        handle_with(&msg(json!({ "app": "Shop", "terminal": "api", "new": true, "since": 7 })), &mut call, &mut session);
+        handle_with(&msg(json!({ "app": "Shop", "terminal": "api" })), &mut call, &mut session);
+        assert_eq!(seen[0]["since"], 0, "first read starts at the beginning");
+        assert_eq!(seen[1]["since"], 150, "the next read starts where the last one ended (case-insensitive key)");
+        assert_eq!(seen[2]["since"], 0, "another terminal has its own cursor");
+        assert_eq!(seen[3]["since"], 7, "an explicit since wins");
+        assert!(seen[4].get("since").is_none(), "without new or since the whole recent output is returned");
+        assert!(seen.iter().all(|p| p.get("new").is_none()), "`new` is a client-side switch and is never sent to the engine");
+    }
+
+    #[test]
+    fn status_and_up_results_have_short_plain_forms() {
+        assert_eq!(format_result("lc_status", &json!({ "unchanged": true, "rev": "ab12cd34" })), "unchanged (rev ab12cd34)");
+        let s = format_result("lc_status", &json!({ "rev": "ab12cd34", "apps": [{ "app": "Shop", "state": "running" }] }));
+        assert_eq!(s, "[{\"app\":\"Shop\",\"state\":\"running\"}]\n-- rev ab12cd34");
+        let ready = json!({ "ready": true, "elapsed_ms": 4200, "terminals": [{ "name": "api", "state": "running", "ready": true }] });
+        assert_eq!(format_result("lc_up", &ready), "READY in 4.2s: api running");
+        let bad = json!({ "ready": false, "failed": "api", "elapsed_ms": 900, "terminals": [{ "name": "api", "state": "exited:3", "ready": false, "tail": "exit 3\nERROR: boom" }] });
+        let f = format_result("lc_up", &bad);
+        assert!(f.starts_with("NOT READY after 0.9s: api failed") && f.contains("ERROR: boom"), "{f}");
+        assert!(format_result("lc_up", &json!([{ "name": "api", "state": "running" }])).starts_with('['), "a non-wait up keeps the plain list");
     }
 
     #[test]

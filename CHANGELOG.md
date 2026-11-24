@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.0
+
+**Cheaper and more useful for LLMs** (documented parameter by parameter in `README-LLM.md`; tests fail if a tool, parameter or flag is undocumented)
+- **Brief results:** `lc_run` (MCP default) and `lcmd run --brief` recognise vitest, jest, dotnet test, cargo test, pytest, go test, tsc, MSBuild and rustc and return counts plus only the failures instead of the whole log. Unrecognised output returns the error lines on failure, the last lines on success.
+- **Server-side log filters** on `lc_logs`, `lc_run`, `lcmd logs` and `lcmd run`: `grep` (a|b), `context`, `errors`, `dedupe`, `brief`.
+- **Ready-aware `up`:** `lc_up` (MCP default) and `lcmd up --wait` return when every terminal is READY, or as soon as one fails (with its error lines), or at the timeout. A terminal is ready when its local `readyUrl` answers, else its output contains its `readyPattern`, else after 2 s of staying up. Both fields are in the edit form (Advanced); Vite (`Local:`) and ASP.NET (`Now listening on`) are filled in on detection. Only loopback URLs are ever requested.
+- **Cheap polling:** `lc_status` returns a `rev` and answers `unchanged` for a repeated `since`; `lc_logs` with `new: true` remembers your cursor per terminal for the connection.
+- Fuller `lcmd help`, the MCP server instructions and `llms.txt`.
+
 ## 1.3.0
 
 **Self-update**

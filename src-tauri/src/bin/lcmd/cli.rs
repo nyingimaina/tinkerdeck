@@ -29,6 +29,7 @@ pub enum View {
     GitLog,
     Message,
     Update,
+    Ready,
     Lines,
     Plain,
 }
@@ -39,18 +40,26 @@ LLMs and agents: run `lcmd llms` for a guide to everything it can do.
 USAGE  lcmd <command> [options]      add --json to any command for raw JSON
 
 APPS
-  status [--git]                      every app and terminal, one compact view
-  up <app>                            start all terminals of an app, in order
+  status [--git] [--since REV]        every app and terminal, one compact view; with --since REV the
+                                      answer is just `unchanged` when nothing moved
+  up <app> [--wait] [--timeout S]     start all terminals in order; --wait returns when every terminal
+                                      is READY (its ready text/URL, else 2 s of staying up) or one fails
   down <app>                          stop all of them (waits until stopped)
   add <path> [--name N]               add a project folder, terminals auto-detected
   detect <path>                       show what would be detected
 
 TERMINALS  (<terminal> = saved name, or console / console:2)
   start|stop|restart <app> <terminal> [--shell ID]
-  logs <app> <terminal> [-n LINES] [--since CURSOR]
+  logs <app> <terminal> [-n LINES] [--since CURSOR] [--grep A|B] [-C N] [--errors] [--dedupe] [--brief]
   wait <app> <terminal> [--match TEXT] [--for exit|running] [--timeout S]
   send <app> <terminal> <text...> [--no-enter]
-  run <app> [--cwd DIR] [--shell ID] [--timeout S] [-n LINES] -- <command...>
+  run <app> [--cwd DIR] [--shell ID] [--timeout S] [-n LINES] [--brief] [--grep A|B] [-C N]
+        [--errors] [--dedupe] -- <command...>
+
+CHEAP OUTPUT (for LLMs)  --brief  test/build runners (vitest, jest, dotnet, cargo, pytest, go, tsc,
+  msbuild, rustc) become `N failed, M passed` plus only the failures; --grep keeps matching lines
+  (A|B = either), -C adds context, --errors keeps error-looking lines, --dedupe folds lines that
+  differ only in numbers. Use --since CURSOR on logs to read only new output.
 
 GIT
   git <app> status | branches | log [-n N] | switch <branch>
@@ -59,13 +68,16 @@ GIT
 
 OTHER
   shells        installed shells        ping | doctor    check the connection
+  version       print the version       help             this text
   update [check]                look for a newer signed version
   update apply --yes            download, verify and install it (stops running terminals, restarts the app)
   ui            open the window         quit             stop everything and exit
   llms          print the guide for LLMs and agents (also installed as README-LLM.md)
   mcp           run as an MCP server on stdio (for Claude and other LLM clients)
   mcp install [client...|all]   register with the LLM tools on this PC (Claude Code/Desktop,
-                Cursor, Windsurf, VS Code, Gemini CLI); also: uninstall | status | config
+                Cursor, Windsurf, VS Code, Gemini CLI, opencode)
+  mcp status    which of them are registered       mcp uninstall    remove the registration
+  mcp config    JSON snippet for any other MCP client
 
 <app> is a name, a unique prefix, or an id. Exit codes: 0 ok, 1 error, 2 usage; `run` returns the command's own exit code.
 ";
@@ -106,6 +118,30 @@ fn take_num(args: &mut Vec<String>, names: &[&str]) -> Result<Option<u64>, Strin
     }
 }
 
+/// `--grep TEXT`, `-C N`, `--errors`, `--dedupe`, `--brief`: server-side output shaping.
+fn take_filters(args: &mut Vec<String>) -> Result<serde_json::Map<String, Value>, String> {
+    let mut m = serde_json::Map::new();
+    if let Some(g) = take_value(args, &["--grep", "-g"])? {
+        m.insert("grep".into(), json!(g));
+    }
+    if let Some(c) = take_num(args, &["-C", "--context"])? {
+        m.insert("context".into(), json!(c));
+    }
+    for (flag, key) in [("--errors", "errors"), ("--dedupe", "dedupe"), ("--brief", "brief")] {
+        if take_flag(args, flag) {
+            m.insert(key.into(), json!(true));
+        }
+    }
+    Ok(m)
+}
+
+fn with_filters(mut base: Value, filters: serde_json::Map<String, Value>) -> Value {
+    if let Some(o) = base.as_object_mut() {
+        o.extend(filters);
+    }
+    base
+}
+
 pub fn parse(argv: &[String]) -> Result<Parsed, String> {
     let mut args: Vec<String> = argv.to_vec();
     let json = take_flag(&mut args, "--json");
@@ -135,12 +171,21 @@ pub fn parse(argv: &[String]) -> Result<Parsed, String> {
         "shells" => call("shells", json!({}), json, View::Lines),
         "status" => {
             let git = take_flag(&mut args, "--git");
-            call("status", json!({ "git": git }), json, View::Status)
+            let since = take_value(&mut args, &["--since"])?;
+            let mut params = json!({ "git": git });
+            if let Some(s) = since {
+                params["since"] = json!(s);
+            }
+            call("status", params, json, View::Status)
         }
-        "up" | "down" => match args.as_slice() {
-            [app] => call(&format!("app.{cmd}"), json!({ "app": app }), json, View::States),
-            _ => usage(&format!("{cmd} <app>")),
-        },
+        "up" | "down" => {
+            let wait = cmd == "up" && take_flag(&mut args, "--wait");
+            let timeout = take_num(&mut args, &["--timeout", "-t"])?;
+            match args.as_slice() {
+                [app] => call(&format!("app.{cmd}"), json!({ "app": app, "wait": wait, "timeout_s": timeout }), json, if wait { View::Ready } else { View::States }),
+                _ => usage(&format!("{cmd} <app>{}", if cmd == "up" { " [--wait] [--timeout S]" } else { "" })),
+            }
+        }
         "add" => {
             let name = take_value(&mut args, &["--name"])?;
             match args.as_slice() {
@@ -162,9 +207,10 @@ pub fn parse(argv: &[String]) -> Result<Parsed, String> {
         "logs" => {
             let lines = take_num(&mut args, &["-n", "--lines"])?;
             let since = take_num(&mut args, &["--since"])?;
+            let filters = take_filters(&mut args)?;
             match args.as_slice() {
-                [app, term] => call("term.logs", json!({ "app": app, "terminal": term, "lines": lines, "since": since }), json, View::Logs),
-                _ => usage("logs <app> <terminal> [-n LINES] [--since CURSOR]"),
+                [app, term] => call("term.logs", with_filters(json!({ "app": app, "terminal": term, "lines": lines, "since": since }), filters), json, View::Logs),
+                _ => usage("logs <app> <terminal> [-n LINES] [--since CURSOR] [--grep TEXT] [-C N] [--errors] [--dedupe] [--brief]"),
             }
         }
         "wait" => {
@@ -200,8 +246,15 @@ pub fn parse(argv: &[String]) -> Result<Parsed, String> {
                         return usage("run <app> [options] -- <command...>");
                     }
                     let mut split = 1;
-                    while split + 1 < args.len() && ["--cwd", "--shell", "--timeout", "-t", "-n", "--lines"].contains(&args[split].as_str()) {
-                        split += 2;
+                    loop {
+                        let a = args.get(split).map(String::as_str).unwrap_or("");
+                        if split + 1 < args.len() && ["--cwd", "--shell", "--timeout", "-t", "-n", "--lines", "--grep", "-g", "-C", "--context"].contains(&a) {
+                            split += 2;
+                        } else if split + 1 < args.len() && ["--brief", "--errors", "--dedupe"].contains(&a) {
+                            split += 1;
+                        } else {
+                            break;
+                        }
                     }
                     (args[..split].to_vec(), args[split..].to_vec())
                 }
@@ -211,10 +264,11 @@ pub fn parse(argv: &[String]) -> Result<Parsed, String> {
             let shell = take_value(&mut before, &["--shell"])?;
             let timeout = take_num(&mut before, &["--timeout", "-t"])?;
             let lines = take_num(&mut before, &["-n", "--lines"])?;
+            let filters = take_filters(&mut before)?;
             match before.as_slice() {
                 [app] if !command.is_empty() => call(
                     "run",
-                    json!({ "app": app, "command": command.join(" "), "cwd": cwd, "shell": shell, "timeout_s": timeout, "lines": lines }),
+                    with_filters(json!({ "app": app, "command": command.join(" "), "cwd": cwd, "shell": shell, "timeout_s": timeout, "lines": lines }), filters),
                     json,
                     View::Run,
                 ),
@@ -261,7 +315,8 @@ fn s<'a>(v: &'a Value, k: &str) -> &'a str {
 /// Human-readable text for a result. Never fails: unknown shapes fall back to compact JSON.
 pub fn render(view: View, v: &Value) -> String {
     match view {
-        View::Status => v
+        View::Status if v["unchanged"] == true => format!("unchanged (rev {})", s(v, "rev")),
+        View::Status => v.get("apps").unwrap_or(v)
             .as_array()
             .map(|apps| {
                 apps.iter()
@@ -319,6 +374,28 @@ pub fn render(view: View, v: &Value) -> String {
             .as_array()
             .map(|c| c.iter().map(|x| format!("{} {}  ({})", s(x, "hash"), s(x, "subject"), s(x, "author"))).collect::<Vec<_>>().join("\n"))
             .unwrap_or_else(|| v.to_string()),
+        View::Ready => {
+            let secs = v["elapsed_ms"].as_f64().unwrap_or(0.0) / 1000.0;
+            let terms = v["terminals"].as_array().cloned().unwrap_or_default();
+            if v["ready"] == true {
+                let names: Vec<String> = terms.iter().map(|t| format!("{} {}", s(t, "name"), s(t, "state"))).collect();
+                return format!("READY in {secs:.1}s: {}", names.join(", "));
+            }
+            let why = match v.get("failed").and_then(|f| f.as_str()) {
+                Some(f) => format!("NOT READY after {secs:.1}s: {f} failed"),
+                None => format!("NOT READY after {secs:.1}s (timed out)"),
+            };
+            let mut out = why;
+            for t in terms.iter().filter(|t| t["ready"] != true) {
+                out.push_str(&format!("\n- {} [{}]", s(t, "name"), s(t, "state")));
+                if let Some(tail) = t.get("tail").and_then(|x| x.as_str()) {
+                    for l in tail.lines().take(6) {
+                        out.push_str(&format!("\n    {l}"));
+                    }
+                }
+            }
+            out
+        }
         View::Update => {
             if v["applying"] == true {
                 format!("Installing {}: Lite Commander will restart in a moment.", s(v, "version"))
@@ -373,6 +450,9 @@ pub fn exit_code(view: View, v: &Value) -> i32 {
         View::Wait => {
             if v["ok"] == true { 0 } else { 1 }
         }
+        View::Ready => {
+            if v["ready"] == true { 0 } else { 1 }
+        }
         _ => 0,
     }
 }
@@ -399,6 +479,38 @@ mod tests {
         }
         assert_eq!(p(&["--version"]).unwrap(), Parsed::Version);
         assert!(HELP.contains("lcmd mcp") || HELP.contains("mcp "));
+    }
+
+    #[test]
+    fn status_up_logs_and_run_accept_the_token_saving_options() {
+        assert_eq!(call_of(&["status", "--since", "ab12cd34"]).1, json!({ "git": false, "since": "ab12cd34" }));
+        let (m, u, _) = call_of(&["up", "Shop", "--wait", "--timeout", "90"]);
+        assert_eq!((m.as_str(), u["wait"].as_bool(), u["timeout_s"].as_u64()), ("app.up", Some(true), Some(90)));
+        assert_eq!(call_of(&["up", "Shop"]).1["wait"], false);
+        assert!(matches!(p(&["up", "Shop", "--wait"]).unwrap(), Parsed::Call { view: View::Ready, .. }));
+        assert!(matches!(p(&["up", "Shop"]).unwrap(), Parsed::Call { view: View::States, .. }));
+        let (_, l, _) = call_of(&["logs", "Shop", "api", "--grep", "error|warn", "-C", "2", "--errors", "--dedupe", "--brief", "-n", "30"]);
+        assert_eq!((l["grep"].as_str(), l["context"].as_u64(), l["errors"].as_bool(), l["dedupe"].as_bool(), l["brief"].as_bool(), l["lines"].as_u64()), (Some("error|warn"), Some(2), Some(true), Some(true), Some(true), Some(30)));
+        let (_, r, _) = call_of(&["run", "Shop", "--brief", "--", "npm", "test"]);
+        assert_eq!((r["brief"].as_bool(), r["command"].as_str()), (Some(true), Some("npm test")));
+        // without `--` the filter options still lead the command
+        let (_, r2, _) = call_of(&["run", "Shop", "--brief", "--grep", "FAIL", "-C", "1", "npm", "test"]);
+        assert_eq!((r2["brief"].as_bool(), r2["grep"].as_str(), r2["context"].as_u64(), r2["command"].as_str()), (Some(true), Some("FAIL"), Some(1), Some("npm test")));
+        assert!(p(&["logs", "Shop", "api", "--grep"]).unwrap_err().contains("needs a value"));
+    }
+
+    #[test]
+    fn ready_and_unchanged_results_render_for_people_and_set_exit_codes() {
+        let ok = json!({ "ready": true, "elapsed_ms": 4200, "terminals": [{ "name": "api", "state": "running", "ready": true }, { "name": "db", "state": "running", "ready": true }] });
+        assert_eq!(render(View::Ready, &ok), "READY in 4.2s: api running, db running");
+        let bad = json!({ "ready": false, "failed": "api", "elapsed_ms": 900, "terminals": [{ "name": "api", "state": "exited:3", "ready": false, "tail": "exit 3, 1 lines.\nERROR: cannot connect" }] });
+        let r = render(View::Ready, &bad);
+        assert!(r.starts_with("NOT READY after 0.9s: api failed") && r.contains("cannot connect"), "{r}");
+        assert!(render(View::Ready, &json!({ "ready": false, "elapsed_ms": 1000, "terminals": [] })).contains("timed out"));
+        assert_eq!((exit_code(View::Ready, &ok), exit_code(View::Ready, &bad)), (0, 1));
+        assert_eq!(render(View::Status, &json!({ "unchanged": true, "rev": "ab12cd34" })), "unchanged (rev ab12cd34)");
+        let with_rev = json!({ "rev": "x", "apps": [{ "app": "Shop", "state": "stopped", "terminals": [] }] });
+        assert!(render(View::Status, &with_rev).starts_with("Shop [stopped]"));
     }
 
     #[test]
@@ -445,7 +557,7 @@ mod tests {
         assert_eq!(call_of(&["status"]), ("status".into(), json!({ "git": false }), false));
         assert_eq!(call_of(&["status", "--git", "--json"]), ("status".into(), json!({ "git": true }), true));
         assert_eq!(call_of(&["up", "Shop"]).0, "app.up");
-        assert_eq!(call_of(&["down", "Shop"]).1, json!({ "app": "Shop" }));
+        assert_eq!(call_of(&["down", "Shop"]).1["app"], "Shop");
         assert!(p(&["up"]).unwrap_err().contains("Usage"));
         assert!(p(&["up", "a", "b"]).is_err());
     }

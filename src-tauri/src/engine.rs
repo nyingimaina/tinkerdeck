@@ -3,6 +3,8 @@
 //! its output so a model never pays for megabytes of log.
 
 use crate::ansi;
+use crate::brief;
+use crate::ready;
 use crate::commands::AppState;
 use crate::detect;
 use crate::git;
@@ -216,7 +218,14 @@ impl Engine {
                 v
             })
             .collect();
-        Ok(json!(out))
+        let apps = json!(out);
+        // with `since` present the reply carries a revision; the same revision means "nothing changed"
+        let Some(since) = p.get("since") else { return Ok(apps) };
+        let rev = revision(&apps);
+        if since.as_str() == Some(rev.as_str()) {
+            return Ok(json!({ "unchanged": true, "rev": rev }));
+        }
+        Ok(json!({ "rev": rev, "apps": apps }))
     }
 
     // ------------------------------------------------------------ app actions
@@ -224,11 +233,85 @@ impl Engine {
     fn up(&self, p: &Value) -> Result<Value, String> {
         let (app, shell) = self.app(p)?;
         self.root(&app)?;
+        let began = Instant::now();
         for t in &app.terminals {
             self.state.rt.start(&app.id, &app.root, t, &shell); // in listed order, back to back
         }
         let _ = self.state.config.lock().touch_app(&app.id, now());
-        Ok(self.terminal_states(&app))
+        if !flag(p, "wait", false) {
+            return Ok(self.terminal_states(&app));
+        }
+        let timeout = Duration::from_secs(num(p, "timeout_s", 120).clamp(1, MAX_WAIT_S));
+        self.wait_until_ready(&app, began, timeout)
+    }
+
+    /// Wait until every terminal is ready: its pattern appeared, its local URL answers, or (with no
+    /// check configured) it has stayed running for two seconds. A terminal that fails ends the wait at once.
+    fn wait_until_ready(&self, app: &AppDef, began: Instant, timeout: Duration) -> Result<Value, String> {
+        const SETTLE: Duration = Duration::from_secs(2);
+        let rt = &self.state.rt;
+        let report = |ready: bool, failed: Option<&str>| {
+            let terms: Vec<Value> = app
+                .terminals
+                .iter()
+                .map(|t| {
+                    let term = rt.get(&t.id);
+                    let st = term.as_ref().map(|x| x.state()).unwrap_or(TermState::Stopped);
+                    let text = term.as_ref().map(|x| ansi::strip_ansi(&x.output_since(0).0)).unwrap_or_default();
+                    let ok = self.is_ready(t, &st, &text, began, SETTLE).0;
+                    let mut v = json!({ "name": t.name, "state": state_str(&st), "ready": ok });
+                    if !ok && !text.trim().is_empty() {
+                        v["tail"] = json!(brief::brief(&text, match st { TermState::Exited { code } => Some(code), _ => None }, false));
+                    }
+                    v
+                })
+                .collect();
+            let mut out = json!({ "ready": ready, "elapsed_ms": began.elapsed().as_millis() as u64, "terminals": terms });
+            if let Some(f) = failed {
+                out["failed"] = json!(f);
+            }
+            out
+        };
+        loop {
+            let mut all = true;
+            for t in &app.terminals {
+                let term = rt.get(&t.id);
+                let st = term.as_ref().map(|x| x.state()).unwrap_or(TermState::Stopped);
+                let text = term.as_ref().map(|x| ansi::strip_ansi(&x.output_since(0).0)).unwrap_or_default();
+                let (ok, failed) = self.is_ready(t, &st, &text, began, SETTLE);
+                if failed {
+                    return Ok(report(false, Some(&t.name)));
+                }
+                all &= ok;
+            }
+            if all {
+                return Ok(report(true, None));
+            }
+            if began.elapsed() >= timeout {
+                return Ok(report(false, None));
+            }
+            std::thread::sleep(Duration::from_millis(200));
+        }
+    }
+
+    /// (ready, failed) for one terminal.
+    fn is_ready(&self, t: &TerminalDef, st: &TermState, text: &str, began: Instant, settle: Duration) -> (bool, bool) {
+        match st {
+            TermState::FailedToStart { .. } => (false, true),
+            TermState::Exited { code } if *code != 0 => (false, true),
+            TermState::Exited { .. } | TermState::Detached => (true, false), // a one-shot that finished well
+            TermState::Running => {
+                let ok = if let Some(u) = t.ready_url.as_deref().filter(|u| !u.trim().is_empty()) {
+                    ready::http_answers(u.trim())
+                } else if let Some(pat) = t.ready_pattern.as_deref().filter(|x| !x.trim().is_empty()) {
+                    ready::output_has(text, pat)
+                } else {
+                    began.elapsed() >= settle
+                };
+                (ok, false)
+            }
+            _ => (false, false),
+        }
     }
 
     fn down(&self, p: &Value) -> Result<Value, String> {
@@ -286,6 +369,7 @@ impl Engine {
                 cwd: s.cwd,
                 command: s.command,
                 stop_command: s.stop_command,
+                ready_pattern: s.ready_pattern,
                 ..Default::default()
             })
             .collect();
@@ -346,7 +430,11 @@ impl Engine {
             return Ok(json!({ "text": "", "cursor": 0, "truncated": false, "state": "stopped" }));
         };
         let (bytes, cursor, dropped) = t.output_since(since);
-        let (text, cut) = ansi::tail(&ansi::strip_ansi(&bytes), lines, MAX_CHARS);
+        let exit = match t.state() {
+            TermState::Exited { code } => Some(code),
+            _ => None,
+        };
+        let (text, cut) = shape_output(&ansi::strip_ansi(&bytes), p, lines, exit, false);
         Ok(json!({ "text": text, "cursor": cursor, "truncated": cut || dropped, "state": state_str(&t.state()) }))
     }
 
@@ -523,7 +611,7 @@ impl Engine {
             let _ = r.join();
         }
         let raw = buf.lock().clone();
-        let (text, cut) = ansi::tail(&ansi::strip_ansi(&raw), lines, MAX_CHARS);
+        let (text, cut) = shape_output(&ansi::strip_ansi(&raw), p, lines, code, timed_out);
         Ok(json!({ "exit": code, "timedOut": timed_out, "text": text, "truncated": cut, "elapsed_ms": start.elapsed().as_millis() as u64 }))
     }
 
@@ -565,6 +653,33 @@ impl Engine {
             other => Err(format!("Unknown git operation \"{other}\".")),
         }
     }
+}
+
+/// Filters and summaries a model can ask for, so it never pays for output it does not need.
+fn shape_output(plain: &str, p: &Value, lines: usize, exit: Option<i32>, timed_out: bool) -> (String, bool) {
+    if flag(p, "brief", false) || param(p, "format") == Some("brief") {
+        return (brief::brief(plain, exit, timed_out), false);
+    }
+    let opts = brief::FilterOpts {
+        grep: param(p, "grep").map(String::from),
+        context: num(p, "context", 0).min(20) as usize,
+        errors: flag(p, "errors", false),
+        dedupe: flag(p, "dedupe", false),
+    };
+    if opts.is_empty() {
+        return ansi::tail(plain, lines, MAX_CHARS);
+    }
+    ansi::tail(&brief::filter(plain, &opts), lines, MAX_CHARS)
+}
+
+/// A short fingerprint of a JSON value (FNV-1a), used so `status` can answer "unchanged".
+fn revision(v: &Value) -> String {
+    let mut h: u64 = 0xcbf29ce484222325;
+    for b in v.to_string().bytes() {
+        h ^= u64::from(b);
+        h = h.wrapping_mul(0x100000001b3);
+    }
+    format!("{:08x}", h & 0xffff_ffff)
 }
 
 fn now() -> i64 {
@@ -709,6 +824,142 @@ mod tests {
         call(&h, "term.start", json!({ "app": "Shop", "terminal": "bad" })).unwrap();
         let w = call(&h, "term.wait", json!({ "app": "Shop", "terminal": "bad", "timeout_s": 30 })).unwrap();
         assert_eq!((w["ok"].as_bool(), w["state"].as_str()), (Some(false), Some("exited:3")));
+    }
+
+    #[test]
+    fn logs_can_grep_filter_errors_dedupe_and_summarise_on_the_server() {
+        let h = harness(vec![term("noisy", "1..3 | % { \"GET /item/$_ 200\" }; \"ERROR db down\"; \"after the error\"; 1..4 | % { \"retry $_\" }")]);
+        call(&h, "term.start", json!({ "app": "Shop", "terminal": "noisy" })).unwrap();
+        call(&h, "term.wait", json!({ "app": "Shop", "terminal": "noisy", "timeout_s": 30 })).unwrap();
+        let get = |extra: Value| {
+            let mut p = json!({ "app": "Shop", "terminal": "noisy" });
+            for (k, v) in extra.as_object().unwrap() {
+                p[k] = v.clone();
+            }
+            call(&h, "term.logs", p).unwrap()["text"].as_str().unwrap().to_string()
+        };
+        assert_eq!(get(json!({ "grep": "error db" })), "ERROR db down");
+        let errors = get(json!({ "errors": true }));
+        assert!(errors.contains("ERROR db down") && errors.contains("after the error") && !errors.contains("item/1"), "{errors}");
+        let ctx = get(json!({ "grep": "ERROR", "context": 1 }));
+        assert!(ctx.contains("item/3") && ctx.contains("after the error"), "{ctx}");
+        let dd = get(json!({ "dedupe": true }));
+        assert!(dd.contains("(×3 similar)") && dd.contains("(×4 similar)"), "{dd}");
+        let full = get(json!({}));
+        assert!(full.lines().count() > dd.lines().count());
+        let b = get(json!({ "brief": true }));
+        assert!(b.starts_with("exit 0") || b.contains("lines"), "{b}");
+    }
+
+    #[test]
+    fn run_brief_turns_a_failing_test_run_into_counts_and_the_failures_only() {
+        let h = harness(vec![]);
+        let script = "1..300 | % { \"  ✓ case $_ passes 1ms\" }; \" FAIL  src/b.test.ts > b > adds numbers\"; \"AssertionError: expected 3 to be 4\"; \"      Tests  1 failed | 299 passed (300)\"; exit 1";
+        let full = call(&h, "run", json!({ "app": "Shop", "command": script, "lines": 1000 })).unwrap();
+        let brief_r = call(&h, "run", json!({ "app": "Shop", "command": script, "format": "brief" })).unwrap();
+        assert_eq!(brief_r["exit"], 1);
+        let text = brief_r["text"].as_str().unwrap();
+        assert!(text.starts_with("vitest FAILED: 1 failed, 299 passed"), "{text}");
+        assert!(text.contains("b > adds numbers") && text.contains("AssertionError"), "{text}");
+        assert!(text.len() * 20 < full["text"].as_str().unwrap().len(), "brief {} vs full {}", text.len(), full["text"].as_str().unwrap().len());
+        let g = call(&h, "run", json!({ "app": "Shop", "command": script, "grep": "AssertionError", "lines": 5 })).unwrap();
+        assert_eq!(g["text"], "AssertionError: expected 3 to be 4");
+    }
+
+    #[test]
+    fn status_with_since_answers_unchanged_until_something_changes() {
+        let h = harness(vec![term("api", "ping -n 30 127.0.0.1")]);
+        let plain = call(&h, "status", json!({})).unwrap();
+        assert!(plain.is_array(), "without since the shape is unchanged");
+        let first = call(&h, "status", json!({ "since": "" })).unwrap();
+        let rev = first["rev"].as_str().unwrap().to_string();
+        assert_eq!(rev.len(), 8);
+        assert_eq!(first["apps"][0]["app"], "Shop");
+        assert_eq!(call(&h, "status", json!({ "since": rev })).unwrap(), json!({ "unchanged": true, "rev": rev }));
+        call(&h, "term.start", json!({ "app": "Shop", "terminal": "api" })).unwrap();
+        let after = call(&h, "status", json!({ "since": rev })).unwrap();
+        assert!(after.get("unchanged").is_none() && after["rev"] != json!(rev), "{after}");
+        assert_eq!(after["apps"][0]["state"], "running");
+        call(&h, "term.stop", json!({ "app": "Shop", "terminal": "api" })).unwrap();
+    }
+
+    #[test]
+    fn up_with_wait_returns_when_every_terminal_is_ready() {
+        let mut a = term("api", "echo listening-now; ping -n 30 127.0.0.1");
+        a.ready_pattern = Some("LISTENING-NOW".into());
+        let b = term("worker", "ping -n 30 127.0.0.1"); // no check: ready once it has stayed up for 2 s
+        let h = harness(vec![a, b]);
+        let r = call(&h, "app.up", json!({ "app": "Shop", "wait": true, "timeout_s": 60 })).unwrap();
+        assert_eq!(r["ready"], true, "{r}");
+        assert!(r["terminals"].as_array().unwrap().iter().all(|t| t["ready"] == true && t["state"] == "running"), "{r}");
+        assert!(r["elapsed_ms"].as_u64().unwrap() >= 1900, "the no-check terminal needs its settle time: {r}");
+        call(&h, "app.down", json!({ "app": "Shop" })).unwrap();
+    }
+
+    #[test]
+    fn up_with_wait_stops_early_and_explains_when_a_terminal_fails() {
+        let h = harness(vec![term("db", "ping -n 30 127.0.0.1"), term("api", "Write-Output 'ERROR: cannot connect to db'; exit 3")]);
+        let start = Instant::now();
+        let r = call(&h, "app.up", json!({ "app": "Shop", "wait": true, "timeout_s": 60 })).unwrap();
+        assert_eq!((r["ready"].as_bool(), r["failed"].as_str()), (Some(false), Some("api")), "{r}");
+        let api = r["terminals"].as_array().unwrap().iter().find(|t| t["name"] == "api").unwrap();
+        assert_eq!(api["state"], "exited:3");
+        assert!(api["tail"].as_str().unwrap().contains("cannot connect to db"), "{api}");
+        assert!(start.elapsed() < Duration::from_secs(30), "must not wait out the timeout");
+        call(&h, "app.down", json!({ "app": "Shop" })).unwrap();
+    }
+
+    #[test]
+    fn a_terminal_that_has_printed_nothing_has_no_tail_in_the_not_ready_report() {
+        let mut quiet = term("quiet", "ping -n 30 127.0.0.1 > $null");
+        quiet.ready_pattern = Some("never".into());
+        let h = harness(vec![quiet]);
+        let r = call(&h, "app.up", json!({ "app": "Shop", "wait": true, "timeout_s": 2 })).unwrap();
+        assert_eq!(r["ready"], false);
+        assert!(r["terminals"][0].get("tail").is_none(), "no empty noise: {r}");
+        call(&h, "app.down", json!({ "app": "Shop" })).unwrap();
+    }
+
+    #[test]
+    fn up_with_wait_times_out_and_names_who_is_not_ready() {
+        let mut a = term("api", "echo starting; ping -n 30 127.0.0.1");
+        a.ready_pattern = Some("never printed".into());
+        let h = harness(vec![a]);
+        let r = call(&h, "app.up", json!({ "app": "Shop", "wait": true, "timeout_s": 2 })).unwrap();
+        assert_eq!((r["ready"].as_bool(), r["terminals"][0]["ready"].as_bool()), (Some(false), Some(false)), "{r}");
+        assert!(r.get("failed").is_none());
+        assert!(r["terminals"][0]["tail"].as_str().unwrap().contains("starting"), "{r}");
+        call(&h, "app.down", json!({ "app": "Shop" })).unwrap();
+    }
+
+    #[test]
+    fn up_with_wait_honours_a_local_ready_url_and_never_calls_other_hosts() {
+        use crate::update::tests::{ok, serve_with};
+        let s = serve_with(|_| {
+            let mut r = std::collections::HashMap::new();
+            r.insert("/health".to_string(), ok(b"ok".to_vec()));
+            r
+        });
+        let mut a = term("api", "ping -n 30 127.0.0.1");
+        a.ready_url = Some(format!("{}/health", s.base));
+        let h = harness(vec![a]);
+        let r = call(&h, "app.up", json!({ "app": "Shop", "wait": true, "timeout_s": 30 })).unwrap();
+        assert_eq!(r["ready"], true, "{r}");
+        call(&h, "app.down", json!({ "app": "Shop" })).unwrap();
+        let mut outside = term("api", "ping -n 30 127.0.0.1");
+        outside.ready_url = Some("http://example.com/".into());
+        let h2 = harness(vec![outside]);
+        let r2 = call(&h2, "app.up", json!({ "app": "Shop", "wait": true, "timeout_s": 2 })).unwrap();
+        assert_eq!(r2["ready"], false, "a non-local URL is never requested, so it is never ready: {r2}");
+        call(&h2, "app.down", json!({ "app": "Shop" })).unwrap();
+    }
+
+    #[test]
+    fn app_up_without_wait_is_unchanged() {
+        let h = harness(vec![term("a", "ping -n 30 127.0.0.1")]);
+        let up = call(&h, "app.up", json!({ "app": "Shop" })).unwrap();
+        assert!(up.is_array() && up[0]["state"] == "running");
+        call(&h, "app.down", json!({ "app": "Shop" })).unwrap();
     }
 
     #[test]

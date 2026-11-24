@@ -6,7 +6,7 @@ The full requirements are in [BRS-app-launcher.md](BRS-app-launcher.md).
 
 ## Install
 
-Run `installer\output\LiteCommander-Setup-1.3.0.exe`. It adds a Start Menu shortcut (and an optional desktop shortcut) and an uninstaller. It installs per user, without admin rights, unless you choose otherwise.
+Run `installer\output\LiteCommander-Setup-1.4.0.exe`. It adds a Start Menu shortcut (and an optional desktop shortcut) and an uninstaller. It installs per user, without admin rights, unless you choose otherwise.
 
 Requires Windows 10 version 1809 or newer (ConPTY) and the WebView2 runtime (already present on Windows 11).
 
@@ -50,7 +50,10 @@ lcmd status                       # one line per app
 lcmd up Qonsol                    # start everything in order
 lcmd wait Qonsol frontend --match "Local:" --timeout 60
 lcmd logs Qonsol api -n 40        # plain text, no colour codes
-lcmd run Qonsol -- npm test       # one command, exit code and output tail
+lcmd run Qonsol --brief -- npm test   # one command: 'vitest FAILED: 2 failed, 140 passed' plus only the failures
+lcmd up Qonsol --wait             # start everything and return when each terminal is READY (or one fails)
+lcmd logs Qonsol api --errors     # only the error lines (also --grep, -C, --dedupe, --brief, --since)
+lcmd status --since <rev>         # 'unchanged' when nothing moved
 lcmd git Qonsol commit -m "fix: thing" --all
 lcmd help
 ```

@@ -18,6 +18,10 @@ export interface TerminalDef {
   env: Record<string, string>;
   /** Shell id for this terminal only; omitted = the app-wide default. */
   shell?: string;
+  /** `up --wait` treats the terminal as ready once its output contains this text. */
+  readyPattern?: string;
+  /** ...or once this local (loopback) URL answers with anything below 500. */
+  readyUrl?: string;
 }
 
 export interface AppDef {
@@ -203,6 +207,7 @@ export interface Suggestion {
   command: string;
   stopCommand: string | null;
   kind: string;
+  readyPattern?: string | null;
   primary: boolean;
 }
 
@@ -253,6 +258,7 @@ export function suggestionToTerminal(s: Suggestion): TerminalDef {
     cwd: s.cwd || ".",
     command: s.command,
     stopCommand: s.stopCommand ?? undefined,
+    readyPattern: s.readyPattern ?? undefined,
   };
 }
 

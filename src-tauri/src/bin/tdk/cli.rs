@@ -1,4 +1,4 @@
-//! Command-line parsing and human-readable output for `lcmd` (BRS 7.12).
+//! Command-line parsing and human-readable output for `tdk` (BRS 7.12).
 
 use serde_json::{json, Value};
 
@@ -9,11 +9,11 @@ pub enum Parsed {
     Help,
     Version,
     Mcp,
-    /// `lcmd mcp install|uninstall|status|config [clients...]`
+    /// `tdk mcp install|uninstall|status|config [clients...]`
     McpAdmin { action: String, clients: Vec<String> },
     Ui,
     Doctor,
-    /// `lcmd llms`: print the guide that tells an LLM how to discover and use everything.
+    /// `tdk llms`: print the guide that tells an LLM how to discover and use everything.
     Llms,
 }
 
@@ -34,10 +34,10 @@ pub enum View {
     Plain,
 }
 
-pub const HELP: &str = "lcmd: control Lite Commander from the command line (also an MCP server for LLMs)
-LLMs and agents: run `lcmd llms` for a guide to everything it can do.
+pub const HELP: &str = "tdk: control Tinkerdeck from the command line (also an MCP server for LLMs)
+LLMs and agents: run `tdk llms` for a guide to everything it can do.
 
-USAGE  lcmd <command> [options]      add --json to any command for raw JSON
+USAGE  tdk <command> [options]      add --json to any command for raw JSON
 
 APPS
   status [--git] [--since REV]        every app and terminal, one compact view; with --since REV the
@@ -87,7 +87,7 @@ fn call(method: &str, params: Value, json: bool, view: View) -> Result<Parsed, S
 }
 
 fn usage(s: &str) -> Result<Parsed, String> {
-    Err(format!("Usage: lcmd {s}"))
+    Err(format!("Usage: tdk {s}"))
 }
 
 /// Value of `--flag VALUE`, removing both from `args`.
@@ -153,7 +153,7 @@ pub fn parse(argv: &[String]) -> Result<Parsed, String> {
         "mcp" => match args.first().map(String::as_str) {
             None => Ok(Parsed::Mcp),
             Some(a @ ("install" | "uninstall" | "status" | "config")) => Ok(Parsed::McpAdmin { action: a.to_string(), clients: args[1..].to_vec() }),
-            Some(other) => Err(format!("Unknown mcp action \"{other}\". Use: lcmd mcp (serve) | install | uninstall | status | config")),
+            Some(other) => Err(format!("Unknown mcp action \"{other}\". Use: tdk mcp (serve) | install | uninstall | status | config")),
         },
         "ui" => Ok(Parsed::Ui),
         "doctor" => Ok(Parsed::Doctor),
@@ -164,7 +164,7 @@ pub fn parse(argv: &[String]) -> Result<Parsed, String> {
                 let yes = args.iter().any(|a| a == "--yes" || a == "-y");
                 call("update.apply", json!({ "yes": yes }), json, View::Update)
             }
-            Some(other) => Err(format!("Unknown update action \"{other}\". Use: lcmd update [check] | lcmd update apply --yes")),
+            Some(other) => Err(format!("Unknown update action \"{other}\". Use: tdk update [check] | tdk update apply --yes")),
         },
         "ping" => call("ping", json!({}), json, View::Plain),
         "quit" => call("quit", json!({}), json, View::Plain),
@@ -302,7 +302,7 @@ pub fn parse(argv: &[String]) -> Result<Parsed, String> {
                 other => Err(format!("Unknown git operation \"{other}\". Try: status branches log switch commit fetch pull push sync")),
             }
         }
-        other => Err(format!("Unknown command \"{other}\". Run `lcmd help`.")),
+        other => Err(format!("Unknown command \"{other}\". Run `tdk help`.")),
     }
 }
 
@@ -398,12 +398,12 @@ pub fn render(view: View, v: &Value) -> String {
         }
         View::Update => {
             if v["applying"] == true {
-                format!("Installing {}: Lite Commander will restart in a moment.", s(v, "version"))
+                format!("Installing {}: Tinkerdeck will restart in a moment.", s(v, "version"))
             } else if let Some(p) = v.get("staged").and_then(|p| p.as_str()) {
                 format!("Downloaded and verified {} ({p}), not installed.", s(v, "version"))
             } else if v["available"] == true {
                 let notes = s(v, "notes");
-                format!("Update available: {} (you have {}).{}\nRun `lcmd update apply --yes` to install it.", s(v, "version"), s(v, "current"), if notes.is_empty() { String::new() } else { format!("\n\n{notes}") })
+                format!("Update available: {} (you have {}).{}\nRun `tdk update apply --yes` to install it.", s(v, "version"), s(v, "current"), if notes.is_empty() { String::new() } else { format!("\n\n{notes}") })
             } else {
                 format!("Up to date ({}).", s(v, "current"))
             }
@@ -437,7 +437,7 @@ pub fn render(view: View, v: &Value) -> String {
     }
 }
 
-/// Process exit code for a successful call (so scripts can rely on `lcmd run` and `lcmd wait`).
+/// Process exit code for a successful call (so scripts can rely on `tdk run` and `tdk wait`).
 pub fn exit_code(view: View, v: &Value) -> i32 {
     match view {
         View::Run => {
@@ -478,7 +478,7 @@ mod tests {
             assert_eq!(p(a).unwrap(), Parsed::Help);
         }
         assert_eq!(p(&["--version"]).unwrap(), Parsed::Version);
-        assert!(HELP.contains("lcmd mcp") || HELP.contains("mcp "));
+        assert!(HELP.contains("tdk mcp") || HELP.contains("mcp "));
     }
 
     #[test]
@@ -528,7 +528,7 @@ mod tests {
     fn update_results_render_for_people() {
         assert_eq!(render(View::Update, &json!({ "current": "1.2.0", "available": false })), "Up to date (1.2.0).");
         let a = render(View::Update, &json!({ "current": "1.2.0", "available": true, "version": "1.3.0", "notes": "Faster." }));
-        assert!(a.starts_with("Update available: 1.3.0 (you have 1.2.0).") && a.contains("Faster.") && a.contains("lcmd update apply --yes"), "{a}");
+        assert!(a.starts_with("Update available: 1.3.0 (you have 1.2.0).") && a.contains("Faster.") && a.contains("tdk update apply --yes"), "{a}");
         assert!(render(View::Update, &json!({ "applying": true, "version": "1.3.0" })).contains("restart"));
         assert!(render(View::Update, &json!({ "staged": "C:\\x.exe", "version": "1.3.0" })).contains("not installed"));
     }
@@ -549,7 +549,7 @@ mod tests {
         assert_eq!(p(&["doctor"]).unwrap(), Parsed::Doctor);
         assert_eq!(p(&["llms"]).unwrap(), Parsed::Llms);
         assert_eq!(p(&["guide"]).unwrap(), Parsed::Llms);
-        assert!(HELP.contains("lcmd llms"));
+        assert!(HELP.contains("tdk llms"));
     }
 
     #[test]
@@ -633,7 +633,7 @@ mod tests {
         assert_eq!(call_of(&["add", "E:\\code\\Shop", "--name", "Shop"]).1, json!({ "path": "E:\\code\\Shop", "name": "Shop" }));
         assert_eq!(call_of(&["detect", "E:\\x"]).0, "app.detect");
         assert_eq!(call_of(&["shells"]).0, "shells");
-        assert!(p(&["frobnicate"]).unwrap_err().contains("lcmd help"));
+        assert!(p(&["frobnicate"]).unwrap_err().contains("tdk help"));
     }
 
     #[test]

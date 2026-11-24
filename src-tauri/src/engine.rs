@@ -1,4 +1,4 @@
-//! The engine behind `lcmd` and the MCP server (BRS 7.12): small, cheap, LLM-friendly methods over
+//! The engine behind `tdk` and the MCP server (BRS 7.12): small, cheap, LLM-friendly methods over
 //! the same runtime the window uses. Every method takes and returns JSON, never panics, and caps
 //! its output so a model never pays for megabytes of log.
 
@@ -514,10 +514,10 @@ impl Engine {
     }
 
     /// Download, verify and (after the caller's explicit `yes`) install. Installing stops every
-    /// running terminal and restarts Lite Commander, so it is never done unasked.
+    /// running terminal and restarts Tinkerdeck, so it is never done unasked.
     fn update_apply(&self, p: &Value) -> Result<Value, String> {
         if !flag(p, "yes", false) {
-            return Err("Pass yes=true to confirm: updating stops every running terminal and restarts Lite Commander.".into());
+            return Err("Pass yes=true to confirm: updating stops every running terminal and restarts Tinkerdeck.".into());
         }
         let (base, key, prefixes) = self.source();
         let info = match crate::update::cached() {

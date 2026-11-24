@@ -1,4 +1,4 @@
-//! Local control channel for `lcmd` and the MCP server (BRS 7.12).
+//! Local control channel for `tdk` and the MCP server (BRS 7.12).
 //!
 //! Newline-delimited JSON over TCP on 127.0.0.1 only. A random token, written to `engine.json` in
 //! the user's own profile folder, must accompany every request, so only processes running as this

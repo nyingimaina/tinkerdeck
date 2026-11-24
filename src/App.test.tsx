@@ -57,7 +57,7 @@ const baseView = (over: Partial<ConfigView["config"]> = {}, status: Partial<Conf
     apps: [{ id: "a1", name: "Qonsol", root: "E:\\q", terminals: [T("t1", "db"), T("t2", "api")] }],
     ...over,
   },
-  status: { locked: false, permanent: false, message: null, path: "C:\\cfg\\lite-commander.json", ...status },
+  status: { locked: false, permanent: false, message: null, path: "C:\\cfg\\tinkerdeck.json", ...status },
   jobWarning: null,
 });
 
@@ -140,7 +140,7 @@ describe("App", () => {
     h.view = baseView({}, { locked: true, message: "Your saved apps could not be read (bad json)." });
     render(<App />);
     await screen.findByText(/could not be read/);
-    expect(screen.getByText("C:\\cfg\\lite-commander.json")).toBeInTheDocument();
+    expect(screen.getByText("C:\\cfg\\tinkerdeck.json")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Open folder" }));
     expect(h.api.openConfigFolder).toHaveBeenCalled();
     await userEvent.click(screen.getByRole("button", { name: "Continue" }));
@@ -159,7 +159,7 @@ describe("App", () => {
     render(<App />);
     await openApp();
     h.closeCb?.(2);
-    const dlg = await screen.findByRole("dialog", { name: "Quit Lite Commander?" });
+    const dlg = await screen.findByRole("dialog", { name: "Quit Tinkerdeck?" });
     expect(dlg).toHaveTextContent("2 terminals are running");
     expect(screen.getByRole("button", { name: "Stop and quit" })).toHaveFocus();
     await userEvent.click(screen.getByRole("button", { name: "Keep running" }));

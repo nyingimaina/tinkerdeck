@@ -1,7 +1,7 @@
 {
   "mcpServers": {
-    "lite-commander": {
-      "command": "lcmd",
+    "tinkerdeck": {
+      "command": "tdk",
       "args": ["mcp"]
     }
   }

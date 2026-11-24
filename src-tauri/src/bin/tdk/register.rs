@@ -1,4 +1,4 @@
-//! Make the MCP server discoverable: register `lcmd mcp` in the config files of the LLM clients
+//! Make the MCP server discoverable: register `tdk mcp` in the config files of the LLM clients
 //! installed on this machine (BRS 7.12). MCP has no network broadcast; clients find servers in
 //! their own config, so this writes one entry per client, safely: merged, never clobbering, backed
 //! up once, and refusing to touch a file it cannot parse.
@@ -6,7 +6,9 @@
 use serde_json::{json, Map, Value};
 use std::path::{Path, PathBuf};
 
-pub const SERVER_NAME: &str = "lite-commander";
+pub const SERVER_NAME: &str = "tinkerdeck";
+/// The name this server had before the rename. Entries under it point at a program that is gone.
+pub const LEGACY_SERVER_NAME: &str = "lite-commander";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Shape {
@@ -117,6 +119,40 @@ pub fn remove_entry(root: &mut Value, shape: Shape) -> Change {
     }
 }
 
+pub fn remove_legacy_entry(root: &mut Value, shape: Shape) -> Change {
+    let removed = root.get_mut(key(shape)).and_then(|s| s.as_object_mut()).and_then(|s| s.remove(LEGACY_SERVER_NAME));
+    if removed.is_some() {
+        Change::Removed
+    } else {
+        Change::NotPresent
+    }
+}
+
+/// Like `install`, and also removes the entry the old name left behind.
+pub fn install_and_migrate(c: &Client, exe: &str) -> Result<Change, String> {
+    let mut root = read_json(&c.file)?;
+    let legacy = remove_legacy_entry(&mut root, c.shape);
+    let change = add_entry(&mut root, c.shape, exe)?;
+    if change != Change::Unchanged || legacy == Change::Removed {
+        write_json(&c.file, &root)?;
+    }
+    Ok(change)
+}
+
+/// Like `uninstall`, and also clears an entry left by the old name.
+pub fn uninstall_all(c: &Client) -> Result<Change, String> {
+    if !c.file.exists() {
+        return Ok(Change::NotPresent);
+    }
+    let mut root = read_json(&c.file)?;
+    let (a, b) = (remove_entry(&mut root, c.shape), remove_legacy_entry(&mut root, c.shape));
+    if a == Change::Removed || b == Change::Removed {
+        write_json(&c.file, &root)?;
+        return Ok(Change::Removed);
+    }
+    Ok(Change::NotPresent)
+}
+
 pub fn has_entry(root: &Value, shape: Shape) -> bool {
     root.get(key(shape)).and_then(|s| s.get(SERVER_NAME)).is_some()
 }
@@ -125,25 +161,25 @@ fn read_json(path: &Path) -> Result<Value, String> {
     match std::fs::read_to_string(path) {
         Ok(t) if t.trim().is_empty() => Ok(json!({})),
         Ok(t) => serde_json::from_str(t.trim_start_matches('\u{feff}')).map_err(|e| {
-            format!("{} is not plain JSON ({e}); left untouched. Add the server by hand with `lcmd mcp config`.", path.display())
+            format!("{} is not plain JSON ({e}); left untouched. Add the server by hand with `tdk mcp config`.", path.display())
         }),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(json!({})),
         Err(e) => Err(format!("Could not read {}: {e}", path.display())),
     }
 }
 
-/// Atomic write; the original is copied to `<file>.lcmd-backup` the first time only.
+/// Atomic write; the original is copied to `<file>.tdk-backup` the first time only.
 fn write_json(path: &Path, value: &Value) -> Result<(), String> {
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
     }
     if path.exists() {
-        let backup = PathBuf::from(format!("{}.lcmd-backup", path.display()));
+        let backup = PathBuf::from(format!("{}.tdk-backup", path.display()));
         if !backup.exists() {
             std::fs::copy(path, &backup).map_err(|e| format!("Could not back up {}: {e}", path.display()))?;
         }
     }
-    let tmp = PathBuf::from(format!("{}.lcmd-tmp", path.display()));
+    let tmp = PathBuf::from(format!("{}.tdk-tmp", path.display()));
     let text = serde_json::to_string_pretty(value).map_err(|e| e.to_string())?;
     std::fs::write(&tmp, text).map_err(|e| e.to_string())?;
     std::fs::rename(&tmp, path).map_err(|e| {
@@ -152,6 +188,8 @@ fn write_json(path: &Path, value: &Value) -> Result<(), String> {
     })
 }
 
+/// The plain variants are superseded by `install_and_migrate` and `uninstall_all` and kept for tests.
+#[cfg(test)]
 pub fn install(c: &Client, exe: &str) -> Result<Change, String> {
     let mut root = read_json(&c.file)?;
     let change = add_entry(&mut root, c.shape, exe)?;
@@ -161,6 +199,7 @@ pub fn install(c: &Client, exe: &str) -> Result<Change, String> {
     Ok(change)
 }
 
+#[cfg(test)]
 pub fn uninstall(c: &Client) -> Result<Change, String> {
     if !c.file.exists() {
         return Ok(Change::NotPresent);
@@ -215,7 +254,7 @@ mod tests {
     use super::*;
     use tempfile::tempdir;
 
-    const EXE: &str = "C:\\Users\\me\\AppData\\Local\\Programs\\Lite Commander\\lcmd.exe";
+    const EXE: &str = "C:\\Users\\me\\AppData\\Local\\Programs\\Tinkerdeck\\tdk.exe";
 
     #[test]
     fn adds_the_entry_with_the_full_path_and_keeps_everything_else() {
@@ -231,8 +270,8 @@ mod tests {
         let mut root = json!({});
         assert_eq!(add_entry(&mut root, Shape::McpServers, EXE).unwrap(), Change::Added);
         assert_eq!(add_entry(&mut root, Shape::McpServers, EXE).unwrap(), Change::Unchanged);
-        assert_eq!(add_entry(&mut root, Shape::McpServers, "D:\\moved\\lcmd.exe").unwrap(), Change::Updated);
-        assert_eq!(root["mcpServers"][SERVER_NAME]["command"], "D:\\moved\\lcmd.exe");
+        assert_eq!(add_entry(&mut root, Shape::McpServers, "D:\\moved\\tdk.exe").unwrap(), Change::Updated);
+        assert_eq!(root["mcpServers"][SERVER_NAME]["command"], "D:\\moved\\tdk.exe");
     }
 
     #[test]
@@ -317,15 +356,15 @@ mod tests {
         std::fs::write(&file, original).unwrap();
         let c = Client { id: "t", name: "T", file: file.clone(), shape: Shape::McpServers };
         install(&c, EXE).unwrap();
-        let backup = d.path().join("settings.json.lcmd-backup");
+        let backup = d.path().join("settings.json.tdk-backup");
         assert_eq!(std::fs::read_to_string(&backup).unwrap(), original);
-        install(&c, "D:\\other\\lcmd.exe").unwrap(); // update: the backup must stay the original
+        install(&c, "D:\\other\\tdk.exe").unwrap(); // update: the backup must stay the original
         assert_eq!(std::fs::read_to_string(&backup).unwrap(), original);
         let now: Value = serde_json::from_str(&std::fs::read_to_string(&file).unwrap()).unwrap();
         assert_eq!(now["projects"]["a"], 1);
         assert_eq!(now["mcpServers"]["keep"]["command"], "k");
-        assert_eq!(now["mcpServers"][SERVER_NAME]["command"], "D:\\other\\lcmd.exe");
-        assert!(!d.path().join("settings.json.lcmd-tmp").exists());
+        assert_eq!(now["mcpServers"][SERVER_NAME]["command"], "D:\\other\\tdk.exe");
+        assert!(!d.path().join("settings.json.tdk-tmp").exists());
     }
 
     #[test]
@@ -336,9 +375,9 @@ mod tests {
         std::fs::write(&file, jsonc).unwrap();
         let c = Client { id: "t", name: "T", file: file.clone(), shape: Shape::VsCode };
         let e = install(&c, EXE).unwrap_err();
-        assert!(e.contains("left untouched") && e.contains("lcmd mcp config"), "{e}");
+        assert!(e.contains("left untouched") && e.contains("tdk mcp config"), "{e}");
         assert_eq!(std::fs::read_to_string(&file).unwrap(), jsonc);
-        assert!(!d.path().join("mcp.json.lcmd-backup").exists());
+        assert!(!d.path().join("mcp.json.tdk-backup").exists());
     }
 
     #[test]
@@ -397,5 +436,38 @@ mod tests {
         let v: Value = serde_json::from_str(&snippet(EXE)).unwrap();
         assert_eq!(v["mcpServers"][SERVER_NAME]["args"], json!(["mcp"]));
         assert_eq!(v["mcpServers"][SERVER_NAME]["command"], EXE);
+    }
+
+    #[test]
+    fn the_old_lite_commander_entry_is_removed_and_everything_else_is_kept() {
+        let mut root = json!({ "mcpServers": { "other": { "command": "x" }, LEGACY_SERVER_NAME: { "command": "C:\\old\\lcmd.exe", "args": ["mcp"] } } });
+        assert_eq!(remove_legacy_entry(&mut root, Shape::McpServers), Change::Removed);
+        assert!(root["mcpServers"].get(LEGACY_SERVER_NAME).is_none());
+        assert!(root["mcpServers"].get("other").is_some());
+        assert_eq!(remove_legacy_entry(&mut root, Shape::McpServers), Change::NotPresent);
+    }
+
+    #[test]
+    fn installing_replaces_the_old_entry_with_the_new_one_in_a_real_file() {
+        let d = tempdir().unwrap();
+        let file = d.path().join("mcp.json");
+        std::fs::write(&file, r#"{"mcpServers":{"keep":{"command":"k"},"lite-commander":{"command":"C:\\old\\lcmd.exe","args":["mcp"]}}}"#).unwrap();
+        let c = Client { id: "t", name: "T", file: file.clone(), shape: Shape::McpServers };
+        assert_eq!(install_and_migrate(&c, EXE).unwrap(), Change::Added);
+        let now: Value = serde_json::from_str(&std::fs::read_to_string(&file).unwrap()).unwrap();
+        assert!(now["mcpServers"].get("lite-commander").is_none(), "the dead entry is gone");
+        assert_eq!(now["mcpServers"][SERVER_NAME]["command"], EXE);
+        assert_eq!(now["mcpServers"]["keep"]["command"], "k");
+    }
+
+    #[test]
+    fn uninstall_also_clears_a_leftover_old_entry() {
+        let d = tempdir().unwrap();
+        let file = d.path().join("mcp.json");
+        std::fs::write(&file, r#"{"mcpServers":{"lite-commander":{"command":"x"}}}"#).unwrap();
+        let c = Client { id: "t", name: "T", file: file.clone(), shape: Shape::McpServers };
+        assert_eq!(uninstall_all(&c).unwrap(), Change::Removed);
+        let now: Value = serde_json::from_str(&std::fs::read_to_string(&file).unwrap()).unwrap();
+        assert!(now["mcpServers"].get("lite-commander").is_none());
     }
 }

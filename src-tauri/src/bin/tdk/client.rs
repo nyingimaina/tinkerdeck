@@ -1,4 +1,4 @@
-//! Talks to the running Lite Commander engine over its local control channel (BRS 7.12).
+//! Talks to the running Tinkerdeck engine over its local control channel (BRS 7.12).
 
 use serde_json::{json, Value};
 use std::io::{BufRead, BufReader, Write};
@@ -11,7 +11,7 @@ const DETACHED_PROCESS: u32 = 0x0000_0008;
 
 pub fn config_dir() -> PathBuf {
     let appdata = std::env::var_os("APPDATA").map(PathBuf::from).unwrap_or_else(|| PathBuf::from("."));
-    appdata.join("com.litecommander.app")
+    appdata.join("com.tinkerdeck.app")
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -51,11 +51,11 @@ impl Client {
             return Ok(c);
         }
         if !autostart {
-            return Err("Lite Commander is not running. Start it with `lcmd ui`, or run any other lcmd command to start it in the background.".into());
+            return Err("Tinkerdeck is not running. Start it with `tdk ui`, or run any other tdk command to start it in the background.".into());
         }
         let exe = std::env::current_exe().map_err(|e| e.to_string())?;
-        let app = exe.parent().map(|d| d.join("lite-commander.exe")).filter(|p| p.is_file()).ok_or("Could not find lite-commander.exe next to lcmd.exe.")?;
-        spawn_detached(&app, &["--background"]).map_err(|e| format!("Could not start Lite Commander: {e}"))?;
+        let app = exe.parent().map(|d| d.join("tinkerdeck.exe")).filter(|p| p.is_file()).ok_or("Could not find tinkerdeck.exe next to tdk.exe.")?;
+        spawn_detached(&app, &["--background"]).map_err(|e| format!("Could not start Tinkerdeck: {e}"))?;
         let start = Instant::now();
         while start.elapsed() < Duration::from_secs(25) {
             if let Some(c) = Client::try_connect() {
@@ -63,7 +63,7 @@ impl Client {
             }
             std::thread::sleep(Duration::from_millis(250));
         }
-        Err("Started Lite Commander but it did not become ready in 25 seconds.".into())
+        Err("Started Tinkerdeck but it did not become ready in 25 seconds.".into())
     }
 
     /// One request, one reply. Engine errors come back as `Err(message)`.
@@ -76,14 +76,14 @@ impl Client {
         let mut line = String::new();
         let n = self.reader.read_line(&mut line).map_err(|e| format!("Lost the connection: {e}"))?;
         if n == 0 {
-            return Err("Lite Commander closed the connection.".into());
+            return Err("Tinkerdeck closed the connection.".into());
         }
         parse_reply(&line)
     }
 }
 
 pub fn parse_reply(line: &str) -> Result<Value, String> {
-    let v: Value = serde_json::from_str(line.trim()).map_err(|e| format!("Bad reply from Lite Commander: {e}"))?;
+    let v: Value = serde_json::from_str(line.trim()).map_err(|e| format!("Bad reply from Tinkerdeck: {e}"))?;
     if v.get("ok").and_then(|o| o.as_bool()) == Some(true) {
         Ok(v.get("result").cloned().unwrap_or(Value::Null))
     } else {
@@ -94,7 +94,7 @@ pub fn parse_reply(line: &str) -> Result<Value, String> {
 /// Start the window (not hidden) and return.
 pub fn open_ui() -> Result<(), String> {
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
-    let app = exe.parent().map(|d| d.join("lite-commander.exe")).filter(|p| p.is_file()).ok_or("Could not find lite-commander.exe next to lcmd.exe.")?;
+    let app = exe.parent().map(|d| d.join("tinkerdeck.exe")).filter(|p| p.is_file()).ok_or("Could not find tinkerdeck.exe next to tdk.exe.")?;
     spawn_detached(&app, &[]).map_err(|e| e.to_string())
 }
 
@@ -153,6 +153,6 @@ mod tests {
 
     #[test]
     fn the_config_folder_matches_the_app() {
-        assert!(config_dir().ends_with("com.litecommander.app"));
+        assert!(config_dir().ends_with("com.tinkerdeck.app"));
     }
 }

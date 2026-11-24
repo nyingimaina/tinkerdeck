@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.0
+
+**Lite Commander is now Tinkerdeck: a tinkerer's deck.** New name, new icon, same app.
+- **Your apps and settings come with you.** On first start Tinkerdeck copies your saved apps, their backup and your editor files from the old data folder (`%APPDATA%\com.litecommander.app`). The old folder is left untouched.
+- **New names for the command line and MCP tools** (this is why the version is 2.0): the command is `tdk` (was `lcmd`), the MCP server is `tinkerdeck`, and the tools are `td_status`, `td_up`, `td_down`, `td_start`, `td_stop`, `td_restart`, `td_logs`, `td_wait`, `td_send`, `td_run`, `td_git`, `td_add`, `td_detect`, `td_shells`. Parameters and behaviour are unchanged. Installing registers the new server with your LLM tools and removes the old `lite-commander` entries, which would point at a program that no longer exists. Restart your LLM client afterwards.
+- The installer upgrades the existing installation in place: old program files, shortcuts and Explorer entries are replaced by Tinkerdeck's. The Start Menu entry is now **Tinkerdeck**.
+- Environment variables are renamed too: `TINKERDECK_NO_JOB`, `TINKERDECK_UPDATE_BASE`.
+- **Check for updates** button in the header: one click asks now, and tells you whether you are up to date.
+- New icon: a fanned deck of cards with a prompt on the front and a cog.
+- **Themes.** The whole interface (terminals and editor included) now follows a colour theme, chosen from the 🎨 menu in the header. The default is **Tinkerdeck**, the icon's graphite, bone, rose and brass, in a dark and a light version. The blue look of earlier versions is still there as **Classic**. The ☀/☾ button flips between a theme's dark and light twin.
+- **Bring your own: VS Code themes.** Import any VS Code colour theme file (.json, with comments allowed), or press **Find more themes…** to search the open-vsx.org registry and install with one click, or pick from the VS Code, VS Code Insiders, VSCodium, Cursor and Windsurf extensions already on your PC. Workbench colours, the terminal palette and syntax highlighting are all translated; themes that inherit from another file (`include`) work when installed as a whole extension. Imported themes can be removed again.
+
 ## 1.7.0
 
 **Preview**

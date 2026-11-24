@@ -15,9 +15,9 @@ const args = process.argv.slice(2);
 const vi = args.indexOf("--version");
 const version = vi >= 0 ? args[vi + 1] : pkg.version;
 const notesFile = args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--version");
-const keyFile = process.env.LC_UPDATE_KEY_FILE || join(homedir(), ".lite-commander", "update-signing.key");
+const keyFile = process.env.TD_UPDATE_KEY_FILE || join(homedir(), ".lite-commander", "update-signing.key");
 const out = join(root, "installer", "output");
-const installer = join(out, `LiteCommander-Setup-${version}.exe`);
+const installer = join(out, `Tinkerdeck-Setup-${version}.exe`);
 
 if (!existsSync(keyFile)) {
   console.error(`No signing key at ${keyFile}. Run: node scripts/new-update-key.mjs`);
@@ -28,8 +28,8 @@ if (!existsSync(installer)) {
   process.exit(1);
 }
 
-// LC_RELEASE_URL_BASE is for testing against a local server (the app must be started with LITE_COMMANDER_UPDATE_BASE).
-const urlBase = (process.env.LC_RELEASE_URL_BASE || `https://github.com/nyingimaina/lite-commander/releases/download/v${version}`).replace(/\/$/, "");
+// TD_RELEASE_URL_BASE is for testing against a local server (the app must be started with TINKERDECK_UPDATE_BASE).
+const urlBase = (process.env.TD_RELEASE_URL_BASE || `https://github.com/nyingimaina/tinkerdeck/releases/download/v${version}`).replace(/\/$/, "");
 
 const bytes = readFileSync(installer);
 // notes: an explicit file, otherwise this version's section of CHANGELOG.md (what people see in the update dialog)
@@ -43,7 +43,7 @@ const notes = notesFile && existsSync(notesFile) ? readFileSync(notesFile, "utf8
 const manifest = {
   version,
   notes: notes.slice(0, 4000),
-  url: `${urlBase}/LiteCommander-Setup-${version}.exe`,
+  url: `${urlBase}/Tinkerdeck-Setup-${version}.exe`,
   sha256: createHash("sha256").update(bytes).digest("hex"),
   size: statSync(installer).size,
 };

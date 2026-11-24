@@ -9,6 +9,8 @@ import { Sidebar } from "./features/apps/Sidebar";
 import { GitBar } from "./features/git/GitBar";
 import { GitDrawer, type GitTab } from "./features/git/GitDrawer";
 import { HomeScreen } from "./features/home/HomeScreen";
+import { ThemeFinder } from "./features/themes/ThemeFinder";
+import { ThemePicker } from "./features/themes/ThemePicker";
 import { EditorView } from "./features/editor/EditorView";
 import { ConsoleNav } from "./features/terminals/ConsoleNav";
 import { TabStrip } from "./features/terminals/TabStrip";
@@ -28,6 +30,8 @@ import {
 } from "./state/model";
 import { useEditor } from "./state/useEditor";
 import { useGit } from "./state/useGit";
+import { useThemeFinder } from "./themes/useThemeFinder";
+import { useThemes } from "./themes/useThemes";
 import { useLauncher } from "./state/useLauncher";
 import { useUpdates } from "./state/useUpdates";
 import { usePoller } from "./state/usePoller";
@@ -38,7 +42,7 @@ interface Editing {
   isNew: boolean;
 }
 
-const COLLAPSE_KEY = "lc.sidebarCollapsed";
+const COLLAPSE_KEY = "td.sidebarCollapsed";
 const readCollapsed = () => {
   try {
     return localStorage.getItem(COLLAPSE_KEY) === "1";
@@ -58,6 +62,8 @@ export function App() {
   const [gitTab, setGitTab] = useState<GitTab | null>(null);
   const [help, setHelp] = useState(false);
   const [updateOpen, setUpdateOpen] = useState(false);
+  const [finderOpen, setFinderOpen] = useState(false);
+  const [manualCheck, setManualCheck] = useState(false); // the user pressed Check for updates: show its result
   const [folderExists, setFolderExists] = useState<Record<string, boolean>>({});
   const [shells, setShells] = useState<ShellInfo[]>([]);
   const [paneCollapsed, setPaneCollapsed] = useState(readCollapsed);
@@ -82,8 +88,18 @@ export function App() {
     save: L.setUpdateSettings,
   });
 
-  // the text editor (BRS 7.14): files sent from Explorer's "Edit with Lite Commander" land here
+  // the text editor (BRS 7.14): files sent from Explorer's "Edit with Tinkerdeck" land here
   const editor = useEditor({ onOpened: () => setView("editor") });
+
+  const checkForUpdates = async () => {
+    setManualCheck(true);
+    await U.checkNow();
+    window.setTimeout(() => setManualCheck(false), 12000);
+  };
+
+  // colour themes (BRS 7.16): the chosen theme drives the whole look, terminals and editor included
+  const T = useThemes({ kind: L.config?.theme, ready: L.loaded, setKind: L.setTheme });
+  const finder = useThemeFinder({ open: finderOpen, onInstall: T.install });
 
   const refreshAll = () => {
     setRefreshKey((k) => k + 1);
@@ -291,7 +307,7 @@ export function App() {
           ☰
         </button>
         <img src="/icon.svg" alt="" width="24" height="24" />
-        <span className={styles.brand}>Lite Commander</span>
+        <span className={styles.brand}>Tinkerdeck</span>
         <span className={styles.spacer} />
         <label className={styles.shellPick}>
           <span>Shell</span>
@@ -312,14 +328,30 @@ export function App() {
         >
           ✎ Editor
         </button>
+        <button
+          onClick={() => void checkForUpdates()}
+          disabled={U.phase === "checking"}
+          aria-label="Check for updates"
+          title="Check for a new version now"
+        >
+          {U.phase === "checking" ? "Checking…" : "⬆ Updates"}
+        </button>
         <button onClick={refreshAll} aria-label="Refresh everything" title="Refresh everything now (F5)">
           ⟳
         </button>
         <button onClick={() => setHelp(true)} aria-label="Help" title="Help">
           ?
         </button>
+        <ThemePicker
+          themes={T.themes}
+          activeId={T.active.id}
+          onSelect={(id) => void T.select(id)}
+          onRemove={(id) => void T.remove(id)}
+          onImportText={T.importText}
+          onFind={() => setFinderOpen(true)}
+        />
         <button
-          onClick={() => void L.setTheme(config.theme === "dark" ? "light" : "dark")}
+          onClick={() => void T.toggleKind()}
           aria-label="Toggle theme"
           title="Toggle light and dark"
         >
@@ -344,6 +376,27 @@ export function App() {
       {L.jobWarning && <Banner kind="warn">{L.jobWarning}</Banner>}
       {U.visible && U.info && (
         <UpdateBanner info={U.info} onDetails={() => setUpdateOpen(true)} onLater={U.later} onSkip={() => void U.skip()} />
+      )}
+      {manualCheck && U.upToDate && !U.error && !U.visible && (
+        <Banner kind="info" actions={[{ label: "Dismiss", onClick: () => setManualCheck(false) }]}>
+          You have the latest version{typeof __APP_VERSION__ === "string" && __APP_VERSION__ ? ` (${__APP_VERSION__})` : ""}.
+        </Banner>
+      )}
+      {manualCheck && U.error && U.phase === "idle" && (
+        <Banner
+          kind="error"
+          actions={[
+            {
+              label: "Dismiss",
+              onClick: () => {
+                U.clearError();
+                setManualCheck(false);
+              },
+            },
+          ]}
+        >
+          {U.error}
+        </Banner>
       )}
       {L.error && (
         <Banner kind="error" actions={[{ label: "Dismiss", onClick: L.dismissError }]}>
@@ -373,7 +426,7 @@ export function App() {
 
         <main className={styles.main}>
           {view === "editor" ? (
-            <EditorView editor={editor} theme={config.theme} apps={apps} />
+            <EditorView editor={editor} theme={config.theme} apps={apps} palette={T.active} />
           ) : apps.length === 0 || (!app && !showHome) ? (
             <EmptyState
               title="No apps yet. An app groups the terminals you run together."
@@ -441,6 +494,7 @@ export function App() {
                           visible={a.id === app.id && t.id === L.selectedTerminalId}
                           state={L.stateOf(t.id)}
                           theme={config.theme}
+                          palette={T.active}
                           onEdit={() => openEdit(a)}
                         />
                       )),
@@ -452,6 +506,7 @@ export function App() {
                         visible={a.id === app.id && L.selectedTerminalId === c.id}
                         state={L.stateOf(c.id)}
                         theme={config.theme}
+                        palette={T.active}
                         onEdit={() => openEdit(a)}
                       />
                     )),
@@ -491,6 +546,12 @@ export function App() {
         </main>
       </div>
 
+      {finderOpen && (
+        <Dialog title="Find themes" actions={[{ label: "Close", onClick: () => setFinderOpen(false) }]}>
+          <ThemeFinder finder={finder} />
+        </Dialog>
+      )}
+
       {pendingSave && (
         <Dialog
           title="Stop running terminals?"
@@ -520,7 +581,7 @@ export function App() {
             { label: "Cancel", onClick: () => setPendingDelete(null) },
           ]}
         >
-          This removes the app and its terminals from Lite Commander. Anything running is stopped first. Your project files
+          This removes the app and its terminals from Tinkerdeck. Anything running is stopped first. Your project files
           are not touched.
         </Dialog>
       )}
@@ -584,7 +645,7 @@ export function App() {
 
       {L.closeRunning !== null && (
         <Dialog
-          title="Quit Lite Commander?"
+          title="Quit Tinkerdeck?"
           actions={[
             { label: "Stop and quit", kind: "primary", onClick: () => void L.answerClose(true) },
             { label: "Keep running", onClick: L.cancelClose },

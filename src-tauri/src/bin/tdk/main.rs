@@ -1,4 +1,4 @@
-//! `lcmd`: the command line and MCP front end of Lite Commander (BRS 7.12).
+//! `tdk`: the command line and MCP front end of Tinkerdeck (BRS 7.12).
 //! A console program (the window app is a separate GUI exe); it only needs the running engine.
 
 mod cli;
@@ -24,7 +24,7 @@ fn real_main() -> i32 {
             0
         }
         Ok(Parsed::Version) => {
-            println!("lcmd {}", env!("CARGO_PKG_VERSION"));
+            println!("tdk {}", env!("CARGO_PKG_VERSION"));
             0
         }
         Ok(Parsed::Mcp) => mcp::run_stdio(),
@@ -68,7 +68,7 @@ fn real_main() -> i32 {
 }
 
 fn doctor() -> i32 {
-    println!("lcmd {}", env!("CARGO_PKG_VERSION"));
+    println!("tdk {}", env!("CARGO_PKG_VERSION"));
     println!("config folder: {}", client::config_dir().display());
     match client::Client::connect(false).and_then(|mut c| c.call("ping", serde_json::json!({}))) {
         Ok(v) => {
@@ -110,12 +110,12 @@ fn mcp_admin(action: &str, wanted: &[String]) -> i32 {
         return 0;
     }
     if chosen.is_empty() {
-        println!("No supported LLM client found. Use `lcmd mcp config` and paste the snippet into your client's MCP settings.");
+        println!("No supported LLM client found. Use `tdk mcp config` and paste the snippet into your client's MCP settings.");
         return 0;
     }
     let mut failed = false;
     for c in chosen {
-        let r = if action == "uninstall" { register::uninstall(&c) } else { register::install(&c, &exe) };
+        let r = if action == "uninstall" { register::uninstall_all(&c) } else { register::install_and_migrate(&c, &exe) };
         match r {
             Ok(ch) => println!("{:<18} {}  ({})", c.name, register::describe(ch), c.file.display()),
             Err(e) => {
@@ -125,7 +125,7 @@ fn mcp_admin(action: &str, wanted: &[String]) -> i32 {
         }
     }
     if !failed && action == "install" {
-        println!("Restart the client to see the lite-commander tools.");
+        println!("Restart the client to see the tinkerdeck tools.");
     }
     i32::from(failed)
 }

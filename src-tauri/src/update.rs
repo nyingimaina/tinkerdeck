@@ -14,9 +14,12 @@ use std::sync::{Mutex, OnceLock};
 use std::time::Duration;
 
 /// Where the signed manifest lives (`latest` skips drafts and pre-releases).
-pub const OFFICIAL_BASE: &str = "https://github.com/nyingimaina/lite-commander/releases/latest/download";
+pub const OFFICIAL_BASE: &str = "https://github.com/nyingimaina/tinkerdeck/releases/latest/download";
 /// Installers must come from this project's release downloads.
-pub const OFFICIAL_RELEASES_PREFIX: &str = "https://github.com/nyingimaina/lite-commander/releases/download/";
+pub const OFFICIAL_RELEASES_PREFIX: &str = "https://github.com/nyingimaina/tinkerdeck/releases/download/";
+/// Installed copies from before the rename only know this path (GitHub redirects it to the renamed
+/// project), so manifests may still list installers under it.
+pub const LEGACY_RELEASES_PREFIX: &str = "https://github.com/nyingimaina/lite-commander/releases/download/";
 /// Raw ed25519 public key (base64). The matching private key never leaves the maintainer's profile.
 pub const PUBLIC_KEY_B64: &str = "SUAQs55am0l03CpZ+VuFU+9k9Q38+mkvajCcL4iFTDc=";
 
@@ -66,14 +69,15 @@ pub fn is_newer(current: &str, candidate: &str) -> bool {
 
 // ------------------------------------------------------------------ manifest
 
-/// Prefixes an installer URL may start with. `LITE_COMMANDER_UPDATE_BASE` (testing against a local
+/// Prefixes an installer URL may start with. `TINKERDECK_UPDATE_BASE` (testing against a local
 /// server) adds its own; the signature still has to verify, so this cannot be used to inject code.
 pub fn base_url() -> String {
-    std::env::var("LITE_COMMANDER_UPDATE_BASE").ok().filter(|s| !s.trim().is_empty()).map(|s| s.trim_end_matches('/').to_string()).unwrap_or_else(|| OFFICIAL_BASE.to_string())
+    std::env::var("TINKERDECK_UPDATE_BASE").ok().filter(|s| !s.trim().is_empty()).map(|s| s.trim_end_matches('/').to_string()).unwrap_or_else(|| OFFICIAL_BASE.to_string())
 }
 
 pub fn allowed_prefixes() -> Vec<String> {
     let mut v = vec![OFFICIAL_RELEASES_PREFIX.to_string()];
+    v.push(LEGACY_RELEASES_PREFIX.to_string());
     let b = base_url();
     if b != OFFICIAL_BASE {
         v.push(format!("{b}/"));
@@ -120,7 +124,7 @@ fn agent() -> ureq::Agent {
     ureq::AgentBuilder::new()
         .timeout_connect(Duration::from_secs(10))
         .timeout_read(Duration::from_secs(30))
-        .user_agent(concat!("LiteCommander/", env!("CARGO_PKG_VERSION")))
+        .user_agent(concat!("Tinkerdeck/", env!("CARGO_PKG_VERSION")))
         .build()
 }
 
@@ -160,7 +164,7 @@ pub fn should_auto_check(auto: bool, last_checked: i64, now: i64) -> bool {
 // ------------------------------------------------------------------ download
 
 pub fn installer_path(dir: &Path, version: &str) -> PathBuf {
-    dir.join(format!("LiteCommander-Setup-{version}.exe"))
+    dir.join(format!("Tinkerdeck-Setup-{version}.exe"))
 }
 
 /// Check a file against the manifest's size and SHA-256.
@@ -246,7 +250,7 @@ pub fn download(info: &UpdateInfo, dir: &Path, prefixes: &[String], mut progress
 // ------------------------------------------------------------------- install
 
 pub fn installer_args() -> Vec<&'static str> {
-    // /update=1 makes the installer start the app again when it is done (see lite-commander.iss)
+    // /update=1 makes the installer start the app again when it is done (see tinkerdeck.iss)
     vec!["/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CLOSEAPPLICATIONS", "/update=1"]
 }
 
@@ -406,7 +410,7 @@ pub(crate) mod tests {
     #[test]
     fn a_valid_manifest_is_accepted_and_the_checksum_normalised() {
         let p = prefixes("http://127.0.0.1:1");
-        let m = format!(r#"{{"version":"1.3.0","notes":"n","url":"{OFFICIAL_RELEASES_PREFIX}v1.3.0/LiteCommander-Setup-1.3.0.exe","sha256":"{}","size":123}}"#, "AB".repeat(32));
+        let m = format!(r#"{{"version":"1.3.0","notes":"n","url":"{OFFICIAL_RELEASES_PREFIX}v1.3.0/Tinkerdeck-Setup-1.3.0.exe","sha256":"{}","size":123}}"#, "AB".repeat(32));
         let i = parse_manifest(m.as_bytes(), &p).unwrap();
         assert_eq!((i.version.as_str(), i.size), ("1.3.0", 123));
         assert_eq!(i.sha256, "ab".repeat(32));
@@ -421,9 +425,9 @@ pub(crate) mod tests {
         let sha = "a".repeat(64);
         let u = format!("{OFFICIAL_RELEASES_PREFIX}v1/x.exe");
         assert!(good(&u, &sha, 10, "1.0.0").is_ok());
-        assert!(good("http://github.com/nyingimaina/lite-commander/releases/download/v1/x.exe", &sha, 10, "1.0.0").is_err(), "plain http");
-        assert!(good("https://evil.example/nyingimaina/lite-commander/releases/download/x.exe", &sha, 10, "1.0.0").is_err(), "other host");
-        assert!(good("https://github.com/someoneelse/lite-commander/releases/download/v1/x.exe", &sha, 10, "1.0.0").is_err(), "other repo");
+        assert!(good("http://github.com/nyingimaina/tinkerdeck/releases/download/v1/x.exe", &sha, 10, "1.0.0").is_err(), "plain http");
+        assert!(good("https://evil.example/nyingimaina/tinkerdeck/releases/download/x.exe", &sha, 10, "1.0.0").is_err(), "other host");
+        assert!(good("https://github.com/someoneelse/tinkerdeck/releases/download/v1/x.exe", &sha, 10, "1.0.0").is_err(), "other repo");
         assert!(good(&format!("{OFFICIAL_RELEASES_PREFIX}v1/x.msi"), &sha, 10, "1.0.0").is_err(), "not an exe");
         assert!(good(&format!("{OFFICIAL_RELEASES_PREFIX}../../evil/x.exe"), &sha, 10, "1.0.0").is_err(), "path escape");
         assert!(good(&format!("{OFFICIAL_RELEASES_PREFIX}v1@evil.com/x.exe"), &sha, 10, "1.0.0").is_err(), "credentials trick");
@@ -543,7 +547,7 @@ pub(crate) mod tests {
         let mut seen = Vec::new();
         let path = download(&info_for(&s.base, "1.3.0", &installer), dir.path(), &prefixes(&s.base), |d, t| seen.push((d, t))).unwrap();
         assert_eq!(std::fs::read(&path).unwrap(), installer);
-        assert!(path.ends_with("LiteCommander-Setup-1.3.0.exe"));
+        assert!(path.ends_with("Tinkerdeck-Setup-1.3.0.exe"));
         assert!(seen.windows(2).all(|w| w[0].0 <= w[1].0), "progress only moves forward");
         assert_eq!(seen.last(), Some(&(400_000, 400_000)));
         let leftovers: Vec<_> = std::fs::read_dir(dir.path()).unwrap().filter_map(|e| e.ok()).filter(|e| e.file_name().to_string_lossy().ends_with(".part")).collect();
@@ -576,7 +580,7 @@ pub(crate) mod tests {
     fn download_refuses_urls_outside_the_allowed_prefixes_before_any_request() {
         let dir = tempdir().unwrap();
         let mut i = info_for("https://example.com/x", "1.3.0", b"abc");
-        i.url = "https://example.com/LiteCommander-Setup-1.3.0.exe".into();
+        i.url = "https://example.com/Tinkerdeck-Setup-1.3.0.exe".into();
         assert!(download(&i, dir.path(), &[OFFICIAL_RELEASES_PREFIX.to_string()], |_, _| {}).unwrap_err().contains("outside"));
         assert_eq!(std::fs::read_dir(dir.path()).unwrap().count(), 0);
     }
@@ -624,8 +628,8 @@ pub(crate) mod tests {
 
     #[test]
     fn the_official_base_and_prefix_point_at_this_projects_releases() {
-        assert!(OFFICIAL_BASE.starts_with("https://github.com/nyingimaina/lite-commander/releases/"));
-        assert!(OFFICIAL_RELEASES_PREFIX.starts_with("https://github.com/nyingimaina/lite-commander/releases/download/"));
+        assert!(OFFICIAL_BASE.starts_with("https://github.com/nyingimaina/tinkerdeck/releases/"));
+        assert!(OFFICIAL_RELEASES_PREFIX.starts_with("https://github.com/nyingimaina/tinkerdeck/releases/download/"));
     }
 
     #[test]
@@ -637,5 +641,18 @@ pub(crate) mod tests {
         set_cached(Some(i.clone()));
         assert_eq!(cached(), Some(i));
         set_cached(None);
+    }
+
+    #[test]
+    fn installers_listed_under_the_old_project_name_are_still_accepted() {
+        // installed copies from before the rename only know the old path; GitHub redirects it
+        let p = allowed_prefixes();
+        let sha = "a".repeat(64);
+        let parse = |url: &str| parse_manifest(serde_json::json!({ "version": "2.0.0", "url": url, "sha256": sha, "size": 10 }).to_string().as_bytes(), &p);
+        assert!(parse("https://github.com/nyingimaina/lite-commander/releases/download/v2.0.0/Tinkerdeck-Setup-2.0.0.exe").is_ok());
+        assert!(parse("https://github.com/nyingimaina/tinkerdeck/releases/download/v2.0.0/Tinkerdeck-Setup-2.0.0.exe").is_ok());
+        assert!(parse("https://github.com/someoneelse/lite-commander/releases/download/v2.0.0/x.exe").is_err());
+        assert!(parse("http://github.com/nyingimaina/lite-commander/releases/download/v2.0.0/x.exe").is_err());
+        assert!(LEGACY_RELEASES_PREFIX.starts_with("https://github.com/nyingimaina/lite-commander/"));
     }
 }

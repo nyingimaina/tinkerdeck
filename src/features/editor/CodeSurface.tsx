@@ -16,12 +16,16 @@ import {
 import { languages } from "@codemirror/language-data";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
 import { oneDark } from "@codemirror/theme-one-dark";
+import type { Theme } from "../../themes/types";
+import { editorExtension } from "./cmTheme";
 
 interface Props {
   docId: string;
   value: string;
   filename: string;
   dark: boolean;
+  /** The colour theme in use (editor colours and syntax highlighting). Without one the plain dark/light look is used. */
+  palette?: Theme;
   /** Ids still open, so the saved view state of closed ones can be dropped. */
   liveIds: string[];
   onChange: (id: string, text: string) => void;
@@ -30,7 +34,7 @@ interface Props {
 
 const TYPING_MS = 150;
 
-export default function CodeSurface({ docId, value, filename, dark, liveIds, onChange, onSave }: Props) {
+export default function CodeSurface({ docId, value, filename, dark, palette, liveIds, onChange, onSave }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
   const states = useRef(new Map<string, EditorState>());
@@ -41,6 +45,9 @@ export default function CodeSurface({ docId, value, filename, dark, liveIds, onC
   cb.current = { onChange, onSave };
   const darkNow = useRef(dark);
   darkNow.current = dark;
+  const paletteNow = useRef(palette);
+  paletteNow.current = palette;
+  const themeExt = () => (paletteNow.current ? editorExtension(paletteNow.current) : darkNow.current ? oneDark : []);
   const pending = useRef<{ id: string; doc: Text } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -84,7 +91,7 @@ export default function CodeSurface({ docId, value, filename, dark, liveIds, onC
           indentWithTab,
         ]),
         lang.current.of([]),
-        theme.current.of(darkNow.current ? oneDark : []),
+        theme.current.of(themeExt()),
         EditorView.updateListener.of((u) => {
           if (!u.docChanged || !current.current) return;
           pending.current = { id: current.current, doc: u.state.doc };
@@ -117,7 +124,7 @@ export default function CodeSurface({ docId, value, filename, dark, liveIds, onC
       if (current.current) states.current.set(current.current, v.state);
       v.setState(states.current.get(docId) ?? makeState(value));
       current.current = docId;
-      v.dispatch({ effects: theme.current.reconfigure(darkNow.current ? oneDark : []) });
+      v.dispatch({ effects: theme.current.reconfigure(themeExt()) });
       v.focus();
     }
     let live = true;
@@ -139,8 +146,9 @@ export default function CodeSurface({ docId, value, filename, dark, liveIds, onC
   }, [docId, filename]);
 
   useEffect(() => {
-    view.current?.dispatch({ effects: theme.current.reconfigure(dark ? oneDark : []) });
-  }, [dark]);
+    view.current?.dispatch({ effects: theme.current.reconfigure(themeExt()) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dark, palette]);
 
   const live = liveIds.join("|");
   useEffect(() => {

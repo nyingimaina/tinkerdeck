@@ -23,6 +23,6 @@ export const editorApi = {
     return r == null ? [] : Array.isArray(r) ? r : [r];
   },
   pickSavePath: async (defaultName: string): Promise<string | null> => (await save({ defaultPath: defaultName })) ?? null,
-  /** A file arrived from "Edit with Lite Commander" while the app was already running. */
+  /** A file arrived from "Edit with Tinkerdeck" while the app was already running. */
   onOpen: (cb: (path: string) => void): Promise<UnlistenFn> => listen<string>("editor-open", (e) => cb(e.payload)),
 };

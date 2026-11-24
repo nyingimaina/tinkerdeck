@@ -1,12 +1,12 @@
-; Inno Setup 6 script for Lite Commander.
-; Build with:  ISCC.exe installer\lite-commander.iss  (or npm run installer)
-; Expects the release build at src-tauri\target\release\lite-commander.exe
+; Inno Setup 6 script for Tinkerdeck.
+; Build with:  ISCC.exe installer\tinkerdeck.iss  (or npm run installer)
+; Expects the release build at src-tauri\target\release\tinkerdeck.exe
 
-#define AppName "Lite Commander"
-#define AppVersion "1.7.0"
+#define AppName "Tinkerdeck"
+#define AppVersion "2.0.0"
 #define AppPublisher "Nyingi"
-#define AppExe "lite-commander.exe"
-#define CliExe "lcmd.exe"
+#define AppExe "tinkerdeck.exe"
+#define CliExe "tdk.exe"
 
 [Setup]
 ; Stable GUID so upgrades replace the previous install. Do not change it.
@@ -18,8 +18,8 @@ DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 OutputDir=output
-OutputBaseFilename=LiteCommander-Setup-{#AppVersion}
-SetupIconFile=lite-commander.ico
+OutputBaseFilename=Tinkerdeck-Setup-{#AppVersion}
+SetupIconFile=tinkerdeck.ico
 UninstallDisplayIcon={app}\{#AppExe}
 UninstallDisplayName={#AppName}
 Compression=lzma2/ultra
@@ -39,38 +39,46 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Shortcuts:"; Flags: unchecked
-Name: "editmenu"; Description: "Add &Edit with Lite Commander to the right-click menu and Open with list of every file type"; GroupDescription: "Text editor:"
-Name: "registermcp"; Description: "Make Lite Commander &discoverable by LLM tools found on this PC (Claude, Cursor, VS Code, ...)"; GroupDescription: "Command line:"
+Name: "editmenu"; Description: "Add &Edit with Tinkerdeck to the right-click menu and Open with list of every file type"; GroupDescription: "Text editor:"
+Name: "registermcp"; Description: "Make Tinkerdeck &discoverable by LLM tools found on this PC (Claude, Cursor, VS Code, ...)"; GroupDescription: "Command line:"
 
 [Files]
 Source: "..\src-tauri\target\release\{#AppExe}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\src-tauri\target\release\{#CliExe}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "llm-readme.md"; DestDir: "{app}"; DestName: "README-LLM.md"; Flags: ignoreversion
-Source: "lite-commander.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "tinkerdeck.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 ; Start Menu shortcut (always created)
-Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\lite-commander.ico"; Comment: "Start and stop your apps' terminals"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\lite-commander.ico"; Tasks: desktopicon
+Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\tinkerdeck.ico"; Comment: "Start and stop your apps' terminals"
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\tinkerdeck.ico"; Tasks: desktopicon
 
 [Registry]
-; lcmd is always put on the user PATH (unless it is already there), so `lcmd` works in any new terminal
+; tdk is always put on the user PATH (unless it is already there), so `tdk` works in any new terminal
 Root: HKCU; Subkey: "Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{olddata};{app}"; Check: NeedsAddPath(ExpandConstant('{app}'))
 
-; "Edit with Lite Commander" for every file in Explorer (per user; Windows 11 shows it under "Show more options")
-Root: HKCU; Subkey: "Software\Classes\*\shell\LiteCommander.Edit"; ValueType: string; ValueName: ""; ValueData: "Edit with Lite Commander"; Flags: uninsdeletekey; Tasks: editmenu
-Root: HKCU; Subkey: "Software\Classes\*\shell\LiteCommander.Edit"; ValueType: string; ValueName: "Icon"; ValueData: """{app}\lite-commander.ico"""; Tasks: editmenu
-Root: HKCU; Subkey: "Software\Classes\*\shell\LiteCommander.Edit\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExe}"" --edit ""%1"""; Tasks: editmenu
+; "Edit with Tinkerdeck" for every file in Explorer (per user; Windows 11 shows it under "Show more options")
+Root: HKCU; Subkey: "Software\Classes\*\shell\Tinkerdeck.Edit"; ValueType: string; ValueName: ""; ValueData: "Edit with Tinkerdeck"; Flags: uninsdeletekey; Tasks: editmenu
+Root: HKCU; Subkey: "Software\Classes\*\shell\Tinkerdeck.Edit"; ValueType: string; ValueName: "Icon"; ValueData: """{app}\tinkerdeck.ico"""; Tasks: editmenu
+Root: HKCU; Subkey: "Software\Classes\*\shell\Tinkerdeck.Edit\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExe}"" --edit ""%1"""; Tasks: editmenu
 
-; Also list Lite Commander under "Open with" for every file type (Applications registration)
+; Also list Tinkerdeck under "Open with" for every file type (Applications registration)
 Root: HKCU; Subkey: "Software\Classes\Applications\{#AppExe}"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "{#AppName}"; Flags: uninsdeletekey; Tasks: editmenu
-Root: HKCU; Subkey: "Software\Classes\Applications\{#AppExe}\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\lite-commander.ico"; Tasks: editmenu
+Root: HKCU; Subkey: "Software\Classes\Applications\{#AppExe}\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\tinkerdeck.ico"; Tasks: editmenu
 Root: HKCU; Subkey: "Software\Classes\Applications\{#AppExe}\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExe}"" --edit ""%1"""; Tasks: editmenu
+
+[InstallDelete]
+; An upgrade from the product's earlier name ("Lite Commander"): remove the old program files and shortcuts
+Type: files; Name: "{app}\lite-commander.exe"
+Type: files; Name: "{app}\lcmd.exe"
+Type: files; Name: "{app}\lite-commander.ico"
+Type: files; Name: "{autoprograms}\Lite Commander.lnk"
+Type: files; Name: "{autodesktop}\Lite Commander.lnk"
 
 [Run]
 ; after a self-update (the app passes /update=1 and has already exited) start it again, as the normal user
 Filename: "{app}\{#AppExe}"; Flags: nowait runasoriginaluser; Check: IsUpdateRun
-; registers the MCP server in the config of each installed LLM client (merged and backed up, see `lcmd mcp status`)
+; registers the MCP server in the config of each installed LLM client (merged and backed up, see `tdk mcp status`)
 Filename: "{app}\{#CliExe}"; Parameters: "mcp install"; Flags: runhidden; Tasks: registermcp; StatusMsg: "Registering with LLM tools..."
 Filename: "{app}\{#AppExe}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent
 
@@ -78,10 +86,20 @@ Filename: "{app}\{#AppExe}"; Description: "Launch {#AppName}"; Flags: nowait pos
 Filename: "{app}\{#CliExe}"; Parameters: "mcp uninstall"; Flags: runhidden; RunOnceId: "UnregisterMcp"
 
 [UninstallDelete]
-; Saved apps live in %APPDATA%\com.litecommander.app and are deliberately kept on uninstall.
+; Saved apps live in %APPDATA%\com.tinkerdeck.app and are deliberately kept on uninstall.
 Type: filesandordirs; Name: "{app}"
 
 [Code]
+// The earlier name registered its own Explorer entries; take them away so only one remains.
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssInstall then
+  begin
+    RegDeleteKeyIncludingSubkeys(HKCU, 'Software\Classes\*\shell\LiteCommander.Edit');
+    RegDeleteKeyIncludingSubkeys(HKCU, 'Software\Classes\Applications\lite-commander.exe');
+  end;
+end;
+
 function IsUpdateRun(): Boolean;
 begin
   Result := ExpandConstant('{param:update|0}') = '1';
@@ -135,7 +153,7 @@ function InitializeSetup(): Boolean;
 begin
   Result := True;
   if not WebView2Installed() then
-    MsgBox('Microsoft Edge WebView2 Runtime was not found. Lite Commander needs it to show its window.' + #13#10 +
+    MsgBox('Microsoft Edge WebView2 Runtime was not found. Tinkerdeck needs it to show its window.' + #13#10 +
            'Install it from https://developer.microsoft.com/microsoft-edge/webview2/ if the app does not open.',
            mbInformation, MB_OK);
 end;

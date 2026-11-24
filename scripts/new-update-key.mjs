@@ -7,7 +7,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 
-export const defaultKeyFile = () => process.env.LC_UPDATE_KEY_FILE || join(homedir(), ".lite-commander", "update-signing.key");
+export const defaultKeyFile = () => process.env.TD_UPDATE_KEY_FILE || join(homedir(), ".lite-commander", "update-signing.key");
 
 const file = defaultKeyFile();
 if (existsSync(file)) {

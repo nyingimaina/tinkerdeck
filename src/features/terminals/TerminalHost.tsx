@@ -4,6 +4,8 @@ import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
 import { api, attachTerminal } from "../../api/tauri";
 import { isUp, type TermState } from "../../state/model";
+import { terminalTheme } from "../../themes/terminal";
+import type { Theme } from "../../themes/types";
 import styles from "./TerminalHost.module.css";
 
 interface Props {
@@ -12,6 +14,8 @@ interface Props {
   visible: boolean;
   state: TermState;
   theme: "light" | "dark";
+  /** The colour theme in use; without one the plain dark/light colours are used. */
+  palette?: Theme;
   onEdit: () => void;
 }
 
@@ -22,7 +26,7 @@ const LIGHT = { background: "#ffffff", foreground: "#1b2140", cursor: "#0b6bcb",
  * One xterm instance per terminal, created once and kept alive (hidden with CSS)
  * so scrollback and cursor state survive tab switches.
  */
-export function TerminalHost({ appId, terminalId, visible, state, theme, onEdit }: Props) {
+export function TerminalHost({ appId, terminalId, visible, state, theme, palette, onEdit }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const term = useRef<Terminal | null>(null);
   const fit = useRef<FitAddon | null>(null);
@@ -50,7 +54,7 @@ export function TerminalHost({ appId, terminalId, visible, state, theme, onEdit 
       scrollback: 5000,
       cursorBlink: true,
       allowProposedApi: true,
-      theme: theme === "dark" ? DARK : LIGHT,
+      theme: palette ? terminalTheme(palette) : theme === "dark" ? DARK : LIGHT,
     });
     const f = new FitAddon();
     t.loadAddon(f);
@@ -110,8 +114,8 @@ export function TerminalHost({ appId, terminalId, visible, state, theme, onEdit 
   }, [appId, terminalId]);
 
   useEffect(() => {
-    if (term.current) term.current.options.theme = theme === "dark" ? DARK : LIGHT;
-  }, [theme]);
+    if (term.current) term.current.options.theme = palette ? terminalTheme(palette) : theme === "dark" ? DARK : LIGHT;
+  }, [theme, palette]);
 
   useEffect(() => {
     if (visible) {

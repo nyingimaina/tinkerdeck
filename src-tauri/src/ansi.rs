@@ -1,4 +1,4 @@
-//! Turn raw terminal bytes into the plain text an LLM (or a person reading `lcmd logs`) wants:
+//! Turn raw terminal bytes into the plain text an LLM (or a person reading `tdk logs`) wants:
 //! no colour codes, no cursor movement, carriage-return progress bars collapsed to their last state.
 
 /// Strip escape sequences and apply `\r` / backspace / `ESC c` the way a terminal would.

@@ -38,7 +38,7 @@
 .primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #04121f;
+  color: var(--on-accent);
   font-weight: 600;
 }
 .danger {

@@ -12,9 +12,9 @@ Write-Host "==> release build (tauri build, no bundle)"
 npx tauri build --no-bundle
 if ($LASTEXITCODE -ne 0) { throw "tauri build failed" }
 
-Write-Host "==> lcmd (command line and MCP)"
-cargo build --release --manifest-path src-tauri/Cargo.toml --bin lcmd
-if ($LASTEXITCODE -ne 0) { throw "lcmd build failed" }
+Write-Host "==> tdk (command line and MCP)"
+cargo build --release --manifest-path src-tauri/Cargo.toml --bin tdk
+if ($LASTEXITCODE -ne 0) { throw "tdk build failed" }
 
 $iscc = @(
   "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
@@ -24,10 +24,10 @@ $iscc = @(
 if (-not $iscc) { throw "Inno Setup 6 (ISCC.exe) not found" }
 
 Write-Host "==> installer"
-& $iscc "installer\lite-commander.iss"
+& $iscc "installer\tinkerdeck.iss"
 if ($LASTEXITCODE -ne 0) { throw "ISCC failed" }
 Write-Host "==> sign the update manifest"
-$key = if ($env:LC_UPDATE_KEY_FILE) { $env:LC_UPDATE_KEY_FILE } else { "$env:USERPROFILE\.lite-commander\update-signing.key" }
+$key = if ($env:TD_UPDATE_KEY_FILE) { $env:TD_UPDATE_KEY_FILE } else { "$env:USERPROFILE\.lite-commander\update-signing.key" }
 if (Test-Path $key) {
   $ver = (Get-Content package.json -Raw | ConvertFrom-Json).version
   node scripts/sign-release.mjs "installer\output\RELEASE-NOTES-$ver.md"

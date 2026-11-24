@@ -1,50 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <title>Lite Commander</title>
+  <title>Tinkerdeck (small sizes)</title>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1e2a5a"/>
-      <stop offset="1" stop-color="#0a1024"/>
+      <stop offset="0" stop-color="#434853"/>
+      <stop offset="1" stop-color="#0d0f12"/>
     </linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#38bdf8"/>
-      <stop offset="1" stop-color="#34d399"/>
+    <linearGradient id="amber" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fda4af"/>
+      <stop offset="1" stop-color="#be123c"/>
     </linearGradient>
-    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
-      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    <linearGradient id="bone" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fffdf6"/>
+      <stop offset="1" stop-color="#d8d1bc"/>
     </linearGradient>
-    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="9" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
+    <linearGradient id="glyph" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fef9c3"/>
+      <stop offset="1" stop-color="#facc15"/>
+    </linearGradient>
   </defs>
-
-  <!-- app tile -->
-  <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#bg)"/>
-  <clipPath id="tile"><rect x="16" y="16" width="480" height="480" rx="116"/></clipPath>
-  <rect x="16" y="16" width="480" height="240" fill="url(#rim)" clip-path="url(#tile)"/>
-
-  <!-- tab strip: three terminals of one app, each with a status dot -->
-  <g>
-    <rect x="74" y="84" width="112" height="44" rx="16" fill="#ffffff" fill-opacity="0.16"/>
-    <circle cx="102" cy="106" r="9" fill="#34d399"/>
-    <rect x="122" y="100" width="44" height="12" rx="6" fill="#ffffff" fill-opacity="0.75"/>
-
-    <rect x="200" y="84" width="112" height="44" rx="16" fill="#ffffff" fill-opacity="0.09"/>
-    <circle cx="228" cy="106" r="9" fill="#34d399"/>
-    <rect x="248" y="100" width="44" height="12" rx="6" fill="#ffffff" fill-opacity="0.4"/>
-
-    <rect x="326" y="84" width="112" height="44" rx="16" fill="#ffffff" fill-opacity="0.09"/>
-    <circle cx="354" cy="106" r="9" fill="#fbbf24"/>
-    <rect x="374" y="100" width="44" height="12" rx="6" fill="#ffffff" fill-opacity="0.4"/>
-  </g>
-
-  <!-- terminal window -->
-  <rect x="74" y="148" width="364" height="272" rx="34" fill="#070b18" stroke="#ffffff" stroke-opacity="0.14" stroke-width="3"/>
-
-  <!-- prompt chevron and cursor: "command" -->
-  <g filter="url(#glow)">
-    <polyline points="148,226 232,284 148,342" fill="none" stroke="url(#accent)" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
-    <rect x="266" y="326" width="120" height="32" rx="12" fill="url(#accent)"/>
+  <rect x="8" y="8" width="496" height="496" rx="116" fill="url(#bg)"/>
+  <!-- two cards behind, then the front card with a bold prompt -->
+  <rect x="130" y="80" width="252" height="352" rx="40" fill="url(#amber)" transform="rotate(-22 256 440)"/>
+  <rect x="130" y="80" width="252" height="352" rx="40" fill="url(#bone)" transform="rotate(-10 256 440)"/>
+  <g transform="rotate(4 256 440)">
+    <rect x="130" y="80" width="252" height="352" rx="40" fill="#14171c" stroke="#ffffff" stroke-opacity="0.2" stroke-width="6"/>
+    <polyline points="186,210 262,272 186,334" fill="none" stroke="url(#glyph)" stroke-width="52" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="276" y="338" width="76" height="40" rx="16" fill="url(#glyph)"/>
   </g>
 </svg>

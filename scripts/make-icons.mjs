@@ -70,11 +70,11 @@ const icons = join(root, "src-tauri", "icons");
 mkdirSync(icons, { recursive: true });
 mkdirSync(join(root, "public"), { recursive: true });
 writeFileSync(join(icons, "icon.ico"), ico);
-writeFileSync(join(root, "installer", "lite-commander.ico"), ico);
+writeFileSync(join(root, "installer", "tinkerdeck.ico"), ico);
 writeFileSync(join(icons, "32x32.png"), render(small, 32).png);
 writeFileSync(join(icons, "128x128.png"), render(full, 128).png);
 writeFileSync(join(icons, "128x128@2x.png"), render(full, 256).png);
 writeFileSync(join(icons, "icon.png"), render(full, 512).png);
 writeFileSync(join(root, "installer", "icon-preview.png"), render(full, 512).png);
-writeFileSync(join(root, "public", "icon.svg"), full);
+writeFileSync(join(root, "public", "icon.svg"), small); // the header shows it at 24 px
 console.log(`icons written (${ico.length} bytes ico, ${frames.length} sizes)`);

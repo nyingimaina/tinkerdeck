@@ -1,4 +1,4 @@
-//! Loading and saving `lite-commander.json` safely (BRS 5.3).
+//! Loading and saving `tinkerdeck.json` safely (BRS 5.3).
 //!
 //! Rules: never overwrite a file we could not parse; never let a corrupt main
 //! file replace the good `.bak`; saving is locked until the user acknowledges.
@@ -7,7 +7,7 @@ use crate::model::{validate_apps, AppDef, Config, CONFIG_VERSION};
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 
-pub const FILE_NAME: &str = "lite-commander.json";
+pub const FILE_NAME: &str = "tinkerdeck.json";
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -93,7 +93,7 @@ impl ConfigStore {
                 store.locked = true;
                 store.permanent = true;
                 store.message = Some(format!(
-                    "Your saved apps were written by a newer version of Lite Commander (file version {v}). Update the app; nothing will be saved this session."
+                    "Your saved apps were written by a newer version of Tinkerdeck (file version {v}). Update the app; nothing will be saved this session."
                 ));
             }
             Parsed::Bad(reason) => {

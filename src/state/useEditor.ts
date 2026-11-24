@@ -4,7 +4,7 @@ import { errorText } from "../api/tauri";
 import type { EditorDoc, EditorEntry } from "./editor";
 
 const QUIET_MS = 800;
-const ACTIVE_KEY = "lc.editor.active";
+const ACTIVE_KEY = "td.editor.active";
 
 export interface EditorTab {
   id: string;

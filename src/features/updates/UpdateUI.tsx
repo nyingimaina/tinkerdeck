@@ -21,7 +21,7 @@ export function UpdateBanner({ info, onDetails, onLater, onSkip }: BannerProps) 
         { label: "Skip this version", onClick: onSkip },
       ]}
     >
-      Lite Commander <b>{info.version}</b> is available.
+      Tinkerdeck <b>{info.version}</b> is available.
     </Banner>
   );
 }
@@ -59,7 +59,7 @@ export function UpdateDialog({ info, phase, progress, error, runningCount, onIns
       {runningCount > 0 && (
         <p className={styles.warn}>
           {runningCount} terminal{runningCount === 1 ? " is" : "s are"} running. {runningCount === 1 ? "It" : "They"} will be stopped, and
-          after the restart Lite Commander offers to start the apps that were running.
+          after the restart Tinkerdeck offers to start the apps that were running.
         </p>
       )}
       {phase === "downloading" && (
@@ -68,7 +68,7 @@ export function UpdateDialog({ info, phase, progress, error, runningCount, onIns
           <span>Downloading… {pct}%</span>
         </div>
       )}
-      {phase === "installing" && <p role="status">Installing. Lite Commander will close and open again in a moment…</p>}
+      {phase === "installing" && <p role="status">Installing. Tinkerdeck will close and open again in a moment…</p>}
       {error && (
         <p className={styles.error} role="alert">
           {error}

@@ -9,10 +9,10 @@ const MAX_BYTES: u64 = 1024 * 1024;
 
 pub fn init(dir: &std::path::Path) {
     let _ = std::fs::create_dir_all(dir);
-    let path = dir.join("lite-commander.log");
+    let path = dir.join("tinkerdeck.log");
     if let Ok(meta) = std::fs::metadata(&path) {
         if meta.len() > MAX_BYTES {
-            let _ = std::fs::rename(&path, dir.join("lite-commander.log.old"));
+            let _ = std::fs::rename(&path, dir.join("tinkerdeck.log.old"));
         }
     }
     let _ = LOG_PATH.set(path);

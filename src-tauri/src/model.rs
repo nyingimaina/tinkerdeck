@@ -163,7 +163,7 @@ pub fn validate_apps(apps: &[AppDef]) -> Result<(), String> {
 
 /// Title bar text, always carrying the running version.
 pub fn window_title(version: &str) -> String {
-    format!("Lite Commander {version}")
+    format!("Tinkerdeck {version}")
 }
 
 // ---- the built-in Console tab: unsaved interactive shells per app (BRS 7.8, 7.10, 7.11)
@@ -289,11 +289,11 @@ mod tests {
 
     #[test]
     fn window_title_carries_the_version_and_the_build_version_is_semver() {
-        assert_eq!(window_title("1.1.0"), "Lite Commander 1.1.0");
+        assert_eq!(window_title("1.1.0"), "Tinkerdeck 1.1.0");
         let v = env!("CARGO_PKG_VERSION");
         assert_eq!(v.split('.').count(), 3, "{v}");
         assert!(v.split('.').all(|p| p.parse::<u32>().is_ok()), "{v}");
-        assert_eq!(window_title(v), format!("Lite Commander {v}"));
+        assert_eq!(window_title(v), format!("Tinkerdeck {v}"));
     }
 
     #[test]

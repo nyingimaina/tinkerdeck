@@ -27,7 +27,7 @@ const mount = (terminals = [T("1", "web")], detect: unknown[] = []) => {
   return onSave;
 };
 
-describe("readiness fields (used by `lcmd up --wait` and lc_up)", () => {
+describe("readiness fields (used by `tdk up --wait` and td_up)", () => {
   it("can be set per terminal and are saved trimmed", async () => {
     const onSave = mount();
     await userEvent.type(screen.getByLabelText("Terminal 1 ready text"), "  Local:  ");

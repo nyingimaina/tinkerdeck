@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import type { AppDef } from "../../state/model";
+import type { Theme } from "../../themes/types";
 import { groupTabs } from "../../state/editorGroups";
 import { detectKind } from "../../state/fileKinds";
 import { isBinaryPreview, previewKind } from "../../state/previews";
@@ -14,7 +15,7 @@ const PreviewPane = lazy(() => import("./PreviewPane"));
 
 const daysText = (n: number) => `${n} ${n === 1 ? "day" : "days"} left`;
 
-export function EditorView({ editor, theme, apps = [] }: { editor: EditorController; theme: string; apps?: AppDef[] }) {
+export function EditorView({ editor, theme, apps = [], palette }: { editor: EditorController; theme: string; apps?: AppDef[]; palette?: Theme }) {
   const [binOpen, setBinOpen] = useState(false);
   const [modes, setModes] = useState<Record<string, "raw" | "preview">>({});
   const E = useRef(editor);
@@ -117,7 +118,7 @@ export function EditorView({ editor, theme, apps = [] }: { editor: EditorControl
             <button onClick={() => void editor.newDoc()}>New file</button>
             <button onClick={() => void editor.openDialog()}>Open a file…</button>
           </div>
-          <p className={styles.hint}>You can also right-click any file in Explorer and choose "Edit with Lite Commander".</p>
+          <p className={styles.hint}>You can also right-click any file in Explorer and choose "Edit with Tinkerdeck".</p>
         </div>
       ) : (
         <div className={styles.workspace}>
@@ -185,6 +186,7 @@ export function EditorView({ editor, theme, apps = [] }: { editor: EditorControl
                         value={a.content}
                         filename={kind.filename}
                         dark={theme === "dark"}
+                        palette={palette}
                         liveIds={editor.tabs.map((t) => t.id)}
                         onChange={editor.setContent}
                         onSave={() => editor.activeId && void editor.save(editor.activeId)}

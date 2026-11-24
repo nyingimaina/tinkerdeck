@@ -8,7 +8,7 @@ use tauri::State;
 
 pub struct EditorState {
     pub store: Mutex<Store>,
-    /// Files named on the command line of the first launch ("Edit with Lite Commander"), until the UI takes them.
+    /// Files named on the command line of the first launch ("Edit with Tinkerdeck"), until the UI takes them.
     pub pending: Mutex<Vec<String>>,
 }
 

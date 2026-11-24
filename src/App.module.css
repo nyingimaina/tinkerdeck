@@ -46,7 +46,7 @@
 .add {
   background: var(--accent) !important;
   border-color: var(--accent) !important;
-  color: #04121f;
+  color: var(--on-accent);
   font-weight: 600;
 }
 .body {

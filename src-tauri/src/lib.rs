@@ -8,9 +8,11 @@ mod detect;
 mod editor;
 mod editor_cmds;
 mod engine;
+mod gallery;
 mod git;
 mod ipc;
 mod job;
+mod legacy;
 mod logger;
 mod model;
 mod paths;
@@ -19,6 +21,8 @@ mod ring;
 mod runtime;
 mod shells;
 mod state;
+mod themes;
+mod themes_cmds;
 mod update;
 
 use commands::AppState;
@@ -36,11 +40,11 @@ pub fn run() {
     tauri::Builder::default()
         // Single instance first: a second launch focuses the first window (BRS 6.8).
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
-            // `lcmd` starting the engine again with --background must not pop the window up
+            // `tdk` starting the engine again with --background must not pop the window up
             if args.iter().any(|a| a == "--background") {
                 return;
             }
-            // "Edit with Lite Commander" from Explorer while the app is already running
+            // "Edit with Tinkerdeck" from Explorer while the app is already running
             for f in editor::files_from_args(&args) {
                 let _ = app.emit("editor-open", f);
             }
@@ -54,8 +58,16 @@ pub fn run() {
         .setup(|app| {
             let dir = app.path().app_config_dir()?;
             logger::init(&dir);
-            let job_result = if std::env::var_os("LITE_COMMANDER_NO_JOB").is_some() {
-                Err("disabled by LITE_COMMANDER_NO_JOB".to_string())
+            // an installation from before the rename: carry its saved apps and editor files over (copy only)
+            if let Some(old) = legacy::old_dir_beside(&dir) {
+                match legacy::migrate(&dir, &old) {
+                    Ok(true) => logger::log("carried over saved apps and editor files from the previous version's folder"),
+                    Ok(false) => {}
+                    Err(e) => logger::log(&format!("could not carry over the previous version's data: {e}")),
+                }
+            }
+            let job_result = if std::env::var_os("TINKERDECK_NO_JOB").is_some() {
+                Err("disabled by TINKERDECK_NO_JOB".to_string())
             } else {
                 job::init_launcher_job()
             };
@@ -77,12 +89,12 @@ pub fn run() {
             app.manage(editor_cmds::new_state(&dir, &std::env::args().collect::<Vec<_>>()));
             if let Some(w) = app.get_webview_window("main") {
                 let _ = w.set_title(&model::window_title(env!("CARGO_PKG_VERSION")));
-                // `lcmd` starts the app hidden when nothing is running yet (BRS 7.12)
+                // `tdk` starts the app hidden when nothing is running yet (BRS 7.12)
                 if std::env::args().any(|a| a == "--background") {
                     let _ = w.hide();
                 }
             }
-            // control channel for lcmd and the MCP server
+            // control channel for tdk and the MCP server
             let exit_handle = app.handle().clone();
             let exit_state = state.clone();
             let quit: Arc<dyn Fn() + Send + Sync> = Arc::new(move || {
@@ -168,6 +180,12 @@ pub fn run() {
             editor_cmds::editor_load_any,
             editor_cmds::editor_save_any,
             editor_cmds::editor_read_bytes,
+            themes_cmds::themes_load,
+            themes_cmds::themes_save,
+            themes_cmds::themes_search_online,
+            themes_cmds::themes_fetch_online,
+            themes_cmds::themes_scan_local,
+            themes_cmds::themes_read_local,
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {

@@ -92,7 +92,7 @@ pub fn read_text_file(path: &Path) -> Result<Loaded, String> {
 
 fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
     let mut tmp = path.as_os_str().to_owned();
-    tmp.push(".lcmd-tmp");
+    tmp.push(".tdk-tmp");
     let tmp = PathBuf::from(tmp);
     std::fs::write(&tmp, bytes).map_err(|e| format!("Cannot write {}: {e}", path.display()))?;
     std::fs::rename(&tmp, path).map_err(|e| {
@@ -694,7 +694,7 @@ mod tests {
     #[test]
     fn explorer_launches_name_their_files_after_edit() {
         let a = |v: &[&str]| v.iter().map(|x| x.to_string()).collect::<Vec<_>>();
-        assert_eq!(files_from_args(&a(&["lite-commander.exe", "--edit", "C:/a b/x.txt"])), vec!["C:/a b/x.txt"]);
+        assert_eq!(files_from_args(&a(&["tinkerdeck.exe", "--edit", "C:/a b/x.txt"])), vec!["C:/a b/x.txt"]);
         assert_eq!(files_from_args(&a(&["lc.exe", "--edit", "a.txt", "--edit", "b.txt"])), vec!["a.txt", "b.txt"]);
         assert!(files_from_args(&a(&["lc.exe", "--background"])).is_empty());
         assert!(files_from_args(&a(&["lc.exe", "--edit"])).is_empty(), "a flag with no file");

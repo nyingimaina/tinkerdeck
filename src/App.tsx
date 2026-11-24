@@ -12,6 +12,7 @@ import { HomeScreen } from "./features/home/HomeScreen";
 import { ConsoleNav } from "./features/terminals/ConsoleNav";
 import { TabStrip } from "./features/terminals/TabStrip";
 import { TerminalHost } from "./features/terminals/TerminalHost";
+import { UpdateBanner, UpdateDialog, UpdateSettingsBlock } from "./features/updates/UpdateUI";
 import { consoleExitAction, consoleId, consoleTitle, isConsoleId } from "./state/console";
 import {
   canStop,
@@ -26,6 +27,7 @@ import {
 } from "./state/model";
 import { useGit } from "./state/useGit";
 import { useLauncher } from "./state/useLauncher";
+import { useUpdates } from "./state/useUpdates";
 import { usePoller } from "./state/usePoller";
 import styles from "./App.module.css";
 
@@ -53,6 +55,7 @@ export function App() {
   const [pendingCloseConsole, setPendingCloseConsole] = useState<{ appId: string; id: string; title: string } | null>(null);
   const [gitTab, setGitTab] = useState<GitTab | null>(null);
   const [help, setHelp] = useState(false);
+  const [updateOpen, setUpdateOpen] = useState(false);
   const [folderExists, setFolderExists] = useState<Record<string, boolean>>({});
   const [shells, setShells] = useState<ShellInfo[]>([]);
   const [paneCollapsed, setPaneCollapsed] = useState(readCollapsed);
@@ -71,6 +74,11 @@ export function App() {
     refreshKey,
   });
   const resync = L.resync;
+  const U = useUpdates({
+    autoCheck: L.loaded && (L.config?.update?.autoCheck ?? true), // never before the saved choice is known
+    skippedVersion: L.config?.update?.skippedVersion,
+    save: L.setUpdateSettings,
+  });
 
   const refreshAll = () => {
     setRefreshKey((k) => k + 1);
@@ -321,6 +329,9 @@ export function App() {
         </Banner>
       )}
       {L.jobWarning && <Banner kind="warn">{L.jobWarning}</Banner>}
+      {U.visible && U.info && (
+        <UpdateBanner info={U.info} onDetails={() => setUpdateOpen(true)} onLater={U.later} onSkip={() => void U.skip()} />
+      )}
       {L.error && (
         <Banner kind="error" actions={[{ label: "Dismiss", onClick: L.dismissError }]}>
           {L.error}
@@ -568,6 +579,23 @@ export function App() {
         </Dialog>
       )}
 
+      {updateOpen && U.info && (
+        <UpdateDialog
+          info={U.info}
+          phase={U.phase}
+          progress={U.progress}
+          error={U.error}
+          runningCount={Object.values(L.states).filter(isUp).length}
+          onInstall={() => void U.install()}
+          onClose={() => {
+            if (U.phase === "idle") {
+              U.clearError();
+              setUpdateOpen(false);
+            }
+          }}
+        />
+      )}
+
       {help && (
         <Dialog title="Help" actions={[{ label: "Close", onClick: () => setHelp(false) }]}>
           <ul className={styles.help}>
@@ -588,6 +616,16 @@ export function App() {
             <li>A terminal owns everything it starts: background processes it launches end when it stops.</li>
             <li>Do not put passwords in commands. Use environment variables or a .env file.</li>
           </ul>
+          <UpdateSettingsBlock
+            version={typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : ""}
+            autoCheck={config.update?.autoCheck ?? true}
+            phase={U.phase}
+            upToDate={U.upToDate}
+            available={U.info?.version ?? null}
+            error={U.phase === "idle" && !updateOpen ? U.error : null}
+            onAutoCheck={(v) => void L.setUpdateSettings({ autoCheck: v })}
+            onCheckNow={() => void U.checkNow()}
+          />
         </Dialog>
       )}
     </div>

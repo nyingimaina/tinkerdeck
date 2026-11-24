@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import styles from "./Banner.module.css";
 
 interface Props {
-  kind: "warn" | "error";
+  kind: "warn" | "error" | "info";
   children: ReactNode;
   actions?: { label: string; onClick: () => void }[];
 }

@@ -30,12 +30,27 @@ export interface AppDef {
   lastOpened?: number;
 }
 
+export interface UpdateSettings {
+  autoCheck: boolean;
+  skippedVersion?: string;
+  lastChecked: number;
+}
+
+export interface UpdateInfo {
+  version: string;
+  notes: string;
+  url: string;
+  sha256: string;
+  size: number;
+}
+
 export interface Config {
   version: number;
   theme: "light" | "dark";
   shell: string;
   lastRunning: string[];
   apps: AppDef[];
+  update?: UpdateSettings;
 }
 
 export interface ConfigStatus {

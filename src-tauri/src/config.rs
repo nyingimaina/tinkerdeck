@@ -187,6 +187,13 @@ impl ConfigStore {
         self.commit(next)
     }
 
+    /// Change the update preferences (auto-check, skipped version, last check time).
+    pub fn set_update(&mut self, change: impl FnOnce(&mut crate::model::UpdateSettings)) -> Result<(), String> {
+        let mut next = self.config.clone();
+        change(&mut next.update);
+        self.commit(next)
+    }
+
     pub fn set_theme(&mut self, theme: &str) -> Result<(), String> {
         let mut next = self.config.clone();
         next.theme = theme.to_string();
@@ -282,6 +289,31 @@ mod tests {
         let mut locked = ConfigStore::load(d.path());
         assert!(locked.set_favourite("a1", true).is_err());
         assert!(locked.touch_app("a1", 5).is_err());
+        assert_eq!(read(d.path(), FILE_NAME), "broken");
+    }
+
+    #[test]
+    fn update_settings_persist_without_touching_anything_else() {
+        let d = tempdir().unwrap();
+        let mut s = ConfigStore::load(d.path());
+        s.set_apps(sample_apps()).unwrap();
+        s.set_update(|u| {
+            u.auto_check = false;
+            u.skipped_version = Some("1.4.0".into());
+            u.last_checked = 1234;
+        })
+        .unwrap();
+        let s2 = ConfigStore::load(d.path());
+        assert_eq!((s2.config().update.auto_check, s2.config().update.skipped_version.as_deref(), s2.config().update.last_checked), (false, Some("1.4.0"), 1234));
+        assert_eq!(s2.config().apps, sample_apps());
+    }
+
+    #[test]
+    fn update_settings_respect_the_lock() {
+        let d = tempdir().unwrap();
+        write(d.path(), FILE_NAME, "broken");
+        let mut s = ConfigStore::load(d.path());
+        assert!(s.set_update(|u| u.last_checked = 5).is_err());
         assert_eq!(read(d.path(), FILE_NAME), "broken");
     }
 

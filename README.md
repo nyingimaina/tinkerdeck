@@ -6,7 +6,7 @@ The full requirements are in [BRS-app-launcher.md](BRS-app-launcher.md).
 
 ## Install
 
-Run `installer\output\LiteCommander-Setup-1.2.0.exe`. It adds a Start Menu shortcut (and an optional desktop shortcut) and an uninstaller. It installs per user, without admin rights, unless you choose otherwise.
+Run `installer\output\LiteCommander-Setup-1.3.0.exe`. It adds a Start Menu shortcut (and an optional desktop shortcut) and an uninstaller. It installs per user, without admin rights, unless you choose otherwise.
 
 Requires Windows 10 version 1809 or newer (ConPTY) and the WebView2 runtime (already present on Windows 11).
 
@@ -23,6 +23,23 @@ npm run installer        # icons + release build + Inno Setup installer
 ```
 
 The icon is drawn in `installer/icon.svg` (and `icon-small.svg` for 16 to 32 px). `npm run icons` renders the PNGs and the multi-size `.ico` from them.
+
+## Updates
+
+Lite Commander checks for a new version in the background (about once a day, only while its window is visible) and shows a banner. **Update now** shows what is new, then downloads the installer, verifies it, stops your running terminals, installs and reopens the app; **Later** and **Skip this version** do what they say. Nothing installs without you pressing the button. **Help → Check now** asks immediately and the checkbox there turns the automatic check off. From a terminal: `lcmd update` and `lcmd update apply --yes`.
+
+How it stays safe: the version information (`latest.json`) is signed with a private key that never leaves the maintainer's machine, and the app only trusts the matching public key built into it. The installer's size and SHA-256 are checked after download, it must come from this project's GitHub releases over HTTPS, and a version that is not newer is never offered. Your apps and settings are kept (they live in `%APPDATA%`); a restored session offers to start the apps that were running.
+
+### Publishing a release (maintainers)
+
+```powershell
+node scripts/new-update-key.mjs     # once: creates ~/.lite-commander/update-signing.key (back it up!) and prints the public key for src-tauri/src/update.rs
+npm run installer                   # builds the installer and signs latest.json
+git tag -a v1.3.1 -m "Lite Commander 1.3.1"; git push origin v1.3.1
+powershell -File scripts/publish-release.ps1   # uploads installer, checksum, latest.json and latest.json.sig
+```
+
+Losing the private key means installed copies cannot be updated automatically any more; they would need one manual install of a build that carries a new public key.
 
 ## Command line and LLM tools
 

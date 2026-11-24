@@ -2,7 +2,7 @@
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
-import type { AppDef, ConfigView, StatePayload, Suggestion } from "../state/model";
+import type { AppDef, ConfigView, StatePayload, Suggestion, UpdateInfo } from "../state/model";
 import type { Branches, CommitFile, CommitInfo, FileChange, RepoInfo } from "../state/git";
 
 export interface ShellInfo {
@@ -33,6 +33,15 @@ export const api = {
   listSubfolders: (root: string) => invoke<string[]>("list_subfolders", { root }),
   dockerContainers: () => invoke<string[]>("docker_containers"),
   listShells: () => invoke<ShellInfo[]>("list_shells"),
+  checkUpdate: (force: boolean) => invoke<UpdateInfo | null>("check_update", { force }),
+  downloadUpdate: () => invoke<string>("download_update"),
+  applyUpdate: () => invoke<void>("apply_update"),
+  setUpdateSettings: (p: { autoCheck?: boolean; skippedVersion?: string | null }) =>
+    invoke<void>("set_update_settings", {
+      autoCheck: p.autoCheck ?? null,
+      skippedVersion: p.skippedVersion ?? null,
+      clearSkipped: p.skippedVersion === null ? true : null,
+    }),
   setFavourite: (appId: string, favourite: boolean) => invoke<void>("set_favourite", { appId, favourite }),
   touchApp: (appId: string) => invoke<void>("touch_app", { appId }),
   pathsExist: (paths: string[]) => invoke<boolean[]>("paths_exist", { paths }),
@@ -58,6 +67,9 @@ export function attachTerminal(appId: string, terminalId: string, onData: (bytes
 
 export const onTerminalState = (cb: (p: StatePayload) => void): Promise<UnlistenFn> =>
   listen<StatePayload>("terminal-state", (e) => cb(e.payload));
+
+export const onUpdateProgress = (cb: (p: { done: number; total: number }) => void): Promise<UnlistenFn> =>
+  listen<{ done: number; total: number }>("update-progress", (e) => cb(e.payload));
 
 export const onCloseRequested = (cb: (running: number) => void): Promise<UnlistenFn> =>
   listen<{ running: number }>("close-requested", (e) => cb(e.payload.running));

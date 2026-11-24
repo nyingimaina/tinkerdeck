@@ -22,3 +22,7 @@
   border-radius: var(--radius);
   background: var(--panel-2);
 }
+
+.info {
+  background: color-mix(in srgb, var(--accent) 16%, var(--panel));
+}

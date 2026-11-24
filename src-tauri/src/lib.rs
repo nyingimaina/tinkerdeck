@@ -15,6 +15,7 @@ mod ring;
 mod runtime;
 mod shells;
 mod state;
+mod update;
 
 use commands::AppState;
 use parking_lot::Mutex;
@@ -80,7 +81,10 @@ pub fn run() {
                 ipc::cleanup(&exit_state.config_dir);
                 exit_handle.exit(0);
             });
-            match ipc::start(Arc::new(engine::Engine::new(state, quit)), &dir) {
+            let engine = Arc::new(engine::Engine::new(state.clone(), quit));
+            let (hook_state, hook_app) = (state, app.handle().clone());
+            engine.set_update_hook(Arc::new(move |installer| commands::apply_and_exit(&hook_state, &hook_app, &installer)));
+            match ipc::start(engine, &dir) {
                 Ok(h) => logger::log(&format!("control channel on 127.0.0.1:{}", h.port)),
                 Err(e) => logger::log(&format!("control channel unavailable: {e}")),
             }
@@ -136,6 +140,10 @@ pub fn run() {
             commands::git_push,
             commands::git_sync,
             commands::list_shells,
+            commands::set_update_settings,
+            commands::check_update,
+            commands::download_update,
+            commands::apply_update,
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {

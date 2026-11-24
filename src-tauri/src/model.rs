@@ -45,6 +45,31 @@ pub struct AppDef {
     pub last_opened: Option<i64>,
 }
 
+/// Update preferences (BRS 7.13). Additive fields: the config version stays 1.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateSettings {
+    /// Look for a new version now and then (once a day at most).
+    #[serde(default = "yes")]
+    pub auto_check: bool,
+    /// A version the user chose to ignore.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub skipped_version: Option<String>,
+    /// Unix seconds of the last check.
+    #[serde(default)]
+    pub last_checked: i64,
+}
+
+fn yes() -> bool {
+    true
+}
+
+impl Default for UpdateSettings {
+    fn default() -> Self {
+        UpdateSettings { auto_check: true, skipped_version: None, last_checked: 0 }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
@@ -57,6 +82,8 @@ pub struct Config {
     pub last_running: Vec<String>,
     #[serde(default)]
     pub apps: Vec<AppDef>,
+    #[serde(default)]
+    pub update: UpdateSettings,
 }
 
 fn dark() -> String {
@@ -74,6 +101,7 @@ impl Default for Config {
             shell: default_shell(),
             last_running: vec![],
             apps: vec![],
+            update: UpdateSettings::default(),
         }
     }
 }
@@ -227,6 +255,16 @@ mod tests {
         assert_eq!(c.theme, "dark");
         assert_eq!(c.shell, "powershell.exe");
         assert_eq!(c.last_running, vec!["a".to_string()]);
+    }
+
+    #[test]
+    fn update_settings_default_to_checking_and_are_additive() {
+        let c: Config = serde_json::from_str(r#"{"version":1,"apps":[]}"#).unwrap();
+        assert_eq!(c.update, UpdateSettings { auto_check: true, skipped_version: None, last_checked: 0 });
+        let c: Config = serde_json::from_str(r#"{"version":1,"update":{"autoCheck":false,"skippedVersion":"1.3.0","lastChecked":55}}"#).unwrap();
+        assert_eq!((c.update.auto_check, c.update.skipped_version.as_deref(), c.update.last_checked), (false, Some("1.3.0"), 55));
+        let none = serde_json::to_string(&UpdateSettings::default()).unwrap();
+        assert!(!none.contains("skippedVersion"));
     }
 
     #[test]

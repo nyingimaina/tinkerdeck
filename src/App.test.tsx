@@ -15,7 +15,7 @@ const h = vi.hoisted(() => ({
 vi.mock("./api/tauri", () => {
   const fns = [
     "getConfig", "saveApps", "setTheme", "setShell", "setLastRunning", "ackConfig", "terminalStates", "startTerminal",
-    "stopTerminal", "restartTerminal", "startAll", "stopAll", "writeInput", "resize", "openConfigFolder", "quitApp",
+    "stopTerminal", "restartTerminal", "startAll", "stopAll", "writeInput", "resize", "openConfigFolder", "quitApp", "checkUpdate", "downloadUpdate", "applyUpdate", "setUpdateSettings",
   ];
   for (const f of fns) h.api[f] = vi.fn(async () => undefined);
   for (const f of ["detectProject", "suggestCommands", "listSubfolders", "dockerContainers"]) h.api[f] = vi.fn(async () => []);
@@ -31,6 +31,7 @@ vi.mock("./api/tauri", () => {
   return {
     api: h.api,
     attachTerminal: vi.fn(async () => undefined),
+    onUpdateProgress: vi.fn(async () => () => {}),
     onTerminalState: vi.fn(async (cb: Handler<unknown>) => ((h.stateCb = cb), () => {})),
     onCloseRequested: vi.fn(async (cb: Handler<number>) => ((h.closeCb = cb), () => {})),
     pickFolder: vi.fn(async () => null),

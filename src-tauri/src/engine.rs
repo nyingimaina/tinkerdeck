@@ -23,9 +23,16 @@ const DEFAULT_LINES: usize = 60;
 const MAX_LINES: usize = 1000;
 const MAX_WAIT_S: u64 = 600;
 
+type UpdateHook = Arc<dyn Fn(std::path::PathBuf) + Send + Sync>;
+type UpdateSource = (String, String, Vec<String>);
+
 pub struct Engine {
     state: Arc<AppState>,
     quit: Arc<dyn Fn() + Send + Sync>,
+    /// Called with the verified installer once an update is confirmed (stops terminals, starts it, exits).
+    update_hook: parking_lot::Mutex<Option<UpdateHook>>,
+    /// Where to look for updates; `None` = the official release (tests point it at a local server).
+    update_source: parking_lot::Mutex<Option<UpdateSource>>,
 }
 
 pub fn state_str(s: &TermState) -> String {
@@ -75,7 +82,20 @@ fn pick<'a, T>(items: &'a [T], q: &str, id: impl Fn(&T) -> &str, name: impl Fn(&
 
 impl Engine {
     pub fn new(state: Arc<AppState>, quit: Arc<dyn Fn() + Send + Sync>) -> Engine {
-        Engine { state, quit }
+        Engine { state, quit, update_hook: parking_lot::Mutex::new(None), update_source: parking_lot::Mutex::new(None) }
+    }
+
+    pub fn set_update_hook(&self, hook: UpdateHook) {
+        *self.update_hook.lock() = Some(hook);
+    }
+
+    #[cfg(test)]
+    pub(crate) fn set_update_source(&self, base: &str, pubkey: &str, prefixes: Vec<String>) {
+        *self.update_source.lock() = Some((base.to_string(), pubkey.to_string(), prefixes));
+    }
+
+    fn source(&self) -> UpdateSource {
+        self.update_source.lock().clone().unwrap_or_else(|| (crate::update::base_url(), crate::update::PUBLIC_KEY_B64.to_string(), crate::update::allowed_prefixes()))
     }
 
     // ------------------------------------------------------------ resolution
@@ -140,6 +160,8 @@ impl Engine {
             "term.logs" => self.logs(p),
             "term.wait" => self.wait(p),
             "term.send" => self.send(p),
+            "update.check" => self.update_check(),
+            "update.apply" => self.update_apply(p),
             "run" => self.run(p),
             m if m.starts_with("git.") => self.git(&m[4..], p),
             "quit" => {
@@ -387,6 +409,51 @@ impl Engine {
         }
         self.state.rt.write_input(&def.id, &data)?;
         Ok(json!({ "sent": data.len() }))
+    }
+
+    // ------------------------------------------------------------------ updates
+
+    fn update_check(&self) -> Result<Value, String> {
+        let (base, key, prefixes) = self.source();
+        let current = env!("CARGO_PKG_VERSION");
+        let found = crate::update::check(current, &base, &key, &prefixes)?;
+        crate::update::set_cached(found.clone());
+        let _ = self.state.config.lock().set_update(|u| u.last_checked = now());
+        Ok(match found {
+            Some(i) => json!({ "current": current, "available": true, "version": i.version, "notes": i.notes, "size": i.size }),
+            None => json!({ "current": current, "available": false }),
+        })
+    }
+
+    /// Download, verify and (after the caller's explicit `yes`) install. Installing stops every
+    /// running terminal and restarts Lite Commander, so it is never done unasked.
+    fn update_apply(&self, p: &Value) -> Result<Value, String> {
+        if !flag(p, "yes", false) {
+            return Err("Pass yes=true to confirm: updating stops every running terminal and restarts Lite Commander.".into());
+        }
+        let (base, key, prefixes) = self.source();
+        let info = match crate::update::cached() {
+            Some(i) => i,
+            None => crate::update::check(env!("CARGO_PKG_VERSION"), &base, &key, &prefixes)?.ok_or("Already up to date.")?,
+        };
+        if !crate::update::is_newer(env!("CARGO_PKG_VERSION"), &info.version) {
+            return Err("Already up to date.".into());
+        }
+        let dir = self.state.config_dir.join("updates");
+        let path = crate::update::download(&info, &dir, &prefixes, |_, _| {})?;
+        crate::update::verify_file(&path, &info)?;
+        let hook = self.update_hook.lock().clone();
+        match hook {
+            Some(h) => {
+                let p2 = path.clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(Duration::from_millis(300)); // let the reply go out first
+                    h(p2);
+                });
+                Ok(json!({ "applying": true, "version": info.version }))
+            }
+            None => Ok(json!({ "staged": path.display().to_string(), "version": info.version })),
+        }
     }
 
     // ---------------------------------------------------------------- one-shot
@@ -769,6 +836,83 @@ mod tests {
         assert_eq!(again["existing"], true);
         assert_eq!(call(&h, "status", json!({})).unwrap().as_array().unwrap().len(), 3);
         assert!(call(&h, "app.add", json!({ "path": "Z:\\nope" })).unwrap_err().contains("does not exist"));
+    }
+
+    #[test]
+    fn update_check_finds_a_signed_newer_release_and_reports_none_when_current() {
+        let _g = crate::update::tests::cache_lock();
+        use crate::update::tests::{key, prefixes, serve_release};
+        let (sk, pk) = key(21);
+        let installer = vec![4u8; 120_000];
+        let newer = serve_release("99.0.0", &installer, &sk, false);
+        let h = harness(vec![]);
+        h.engine.set_update_source(&newer.base, &pk, prefixes(&newer.base));
+        let r = call(&h, "update.check", json!({})).unwrap();
+        assert_eq!((r["available"].as_bool(), r["version"].as_str(), r["current"].as_str()), (Some(true), Some("99.0.0"), Some(env!("CARGO_PKG_VERSION"))));
+        assert_eq!(r["notes"], "Faster. Fixes.");
+        let same = serve_release(env!("CARGO_PKG_VERSION"), &installer, &sk, false);
+        h.engine.set_update_source(&same.base, &pk, prefixes(&same.base));
+        assert_eq!(call(&h, "update.check", json!({})).unwrap()["available"], false);
+        crate::update::set_cached(None);
+    }
+
+    #[test]
+    fn update_check_refuses_a_tampered_manifest_and_remembers_when_it_looked() {
+        let _g = crate::update::tests::cache_lock();
+        use crate::update::tests::{key, prefixes, serve_release};
+        let (sk, pk) = key(22);
+        let s = serve_release("99.0.0", &[1u8; 5000], &sk, true);
+        let h = harness(vec![]);
+        h.engine.set_update_source(&s.base, &pk, prefixes(&s.base));
+        assert!(call(&h, "update.check", json!({})).unwrap_err().contains("signature"));
+        let ok = serve_release("99.0.0", &[1u8; 5000], &sk, false);
+        h.engine.set_update_source(&ok.base, &pk, prefixes(&ok.base));
+        call(&h, "update.check", json!({})).unwrap();
+        assert!(h.engine.state.config.lock().config().update.last_checked > 0);
+        crate::update::set_cached(None);
+    }
+
+    #[test]
+    fn update_apply_needs_an_explicit_yes_then_downloads_verifies_and_hands_over() {
+        let _g = crate::update::tests::cache_lock();
+        use crate::update::tests::{key, prefixes, serve_release};
+        let (sk, pk) = key(23);
+        let installer: Vec<u8> = (0..150_000u32).map(|i| (i % 253) as u8).collect();
+        let s = serve_release("99.1.0", &installer, &sk, false);
+        let h = harness(vec![]);
+        h.engine.set_update_source(&s.base, &pk, prefixes(&s.base));
+        crate::update::set_cached(None);
+        // without a hook (as in tests) the verified installer is only staged
+        assert!(call(&h, "update.apply", json!({})).unwrap_err().contains("yes=true"));
+        let staged = call(&h, "update.apply", json!({ "yes": true })).unwrap();
+        let path = std::path::PathBuf::from(staged["staged"].as_str().unwrap());
+        assert_eq!(std::fs::read(&path).unwrap(), installer);
+        assert!(path.starts_with(h.engine.state.config_dir.join("updates")));
+        // with a hook, it is handed over after the reply
+        let got = Arc::new(Mutex::new(None));
+        let g2 = got.clone();
+        h.engine.set_update_hook(Arc::new(move |p| *g2.lock() = Some(p)));
+        let r = call(&h, "update.apply", json!({ "yes": true })).unwrap();
+        assert_eq!((r["applying"].as_bool(), r["version"].as_str()), (Some(true), Some("99.1.0")));
+        let start = Instant::now();
+        while got.lock().is_none() {
+            assert!(start.elapsed() < Duration::from_secs(5), "hook was never called");
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        assert_eq!(got.lock().clone().unwrap(), path);
+        crate::update::set_cached(None);
+    }
+
+    #[test]
+    fn update_apply_when_already_current_says_so() {
+        let _g = crate::update::tests::cache_lock();
+        use crate::update::tests::{key, prefixes, serve_release};
+        let (sk, pk) = key(24);
+        let s = serve_release(env!("CARGO_PKG_VERSION"), &[1u8; 2000], &sk, false);
+        let h = harness(vec![]);
+        h.engine.set_update_source(&s.base, &pk, prefixes(&s.base));
+        crate::update::set_cached(None);
+        assert!(call(&h, "update.apply", json!({ "yes": true })).unwrap_err().contains("up to date"));
     }
 
     #[test]

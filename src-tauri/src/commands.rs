@@ -387,3 +387,95 @@ pub fn stop_everything(state: &Arc<AppState>) {
     });
     let _ = rx.recv_timeout(Duration::from_secs(10));
 }
+
+// ---- self-update (BRS 7.13)
+
+fn unix_now() -> i64 {
+    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs() as i64).unwrap_or(0)
+}
+
+#[tauri::command]
+pub fn set_update_settings(state: S, auto_check: Option<bool>, skipped_version: Option<String>, clear_skipped: Option<bool>) -> Result<(), String> {
+    state.config.lock().set_update(|u| {
+        if let Some(a) = auto_check {
+            u.auto_check = a;
+        }
+        if clear_skipped == Some(true) {
+            u.skipped_version = None;
+        }
+        if let Some(v) = skipped_version {
+            u.skipped_version = Some(v);
+        }
+    })
+}
+
+/// Look for a newer signed release. Automatic checks (`force = false`) are limited to one a day and
+/// fail silently; a manual check always asks and reports errors.
+#[tauri::command]
+pub async fn check_update(state: S<'_>, force: bool) -> Result<Option<crate::update::UpdateInfo>, String> {
+    let (auto, last) = {
+        let c = state.config.lock();
+        (c.config().update.auto_check, c.config().update.last_checked)
+    };
+    if !force && !crate::update::should_auto_check(auto, last, unix_now()) {
+        return Ok(crate::update::cached());
+    }
+    let found = tauri::async_runtime::spawn_blocking(|| {
+        crate::update::check(env!("CARGO_PKG_VERSION"), &crate::update::base_url(), crate::update::PUBLIC_KEY_B64, &crate::update::allowed_prefixes())
+    })
+    .await
+    .map_err(|e| e.to_string())?;
+    let _ = state.config.lock().set_update(|u| u.last_checked = unix_now());
+    match found {
+        Ok(info) => {
+            crate::update::set_cached(info.clone());
+            Ok(info)
+        }
+        Err(e) if force => Err(e),
+        Err(e) => {
+            crate::logger::log(&format!("automatic update check failed: {e}"));
+            Ok(crate::update::cached())
+        }
+    }
+}
+
+/// Download and verify the update found by the last check; emits `update-progress`.
+#[tauri::command]
+pub async fn download_update(app: AppHandle, state: S<'_>) -> Result<String, String> {
+    use tauri::Emitter;
+    let info = crate::update::cached().ok_or("There is no update to download. Check for updates first.")?;
+    let dir = state.config_dir.join("updates");
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut last = std::time::Instant::now() - Duration::from_secs(1);
+        let path = crate::update::download(&info, &dir, &crate::update::allowed_prefixes(), |done, total| {
+            if done == total || last.elapsed() >= Duration::from_millis(120) {
+                last = std::time::Instant::now();
+                let _ = app.emit("update-progress", serde_json::json!({ "done": done, "total": total }));
+            }
+        })?;
+        Ok(path.display().to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Stop everything, start the verified installer, and exit so it can replace the files.
+pub fn apply_and_exit(state: &Arc<AppState>, app: &AppHandle, installer: &std::path::Path) {
+    stop_everything(state);
+    if let Err(e) = crate::update::launch_installer(installer) {
+        crate::logger::log(&format!("could not start the installer: {e}"));
+        return; // stay running rather than leaving the user with nothing
+    }
+    crate::ipc::cleanup(&state.config_dir);
+    app.exit(0);
+}
+
+#[tauri::command]
+pub fn apply_update(app: AppHandle, state: S) -> Result<(), String> {
+    let info = crate::update::cached().ok_or("There is no update to install.")?;
+    let path = crate::update::installer_path(&state.config_dir.join("updates"), &info.version);
+    crate::update::verify_file(&path, &info)?; // re-checked right before it runs
+    let st = state.inner().clone();
+    std::thread::spawn(move || apply_and_exit(&st, &app, &path));
+    Ok(())
+}

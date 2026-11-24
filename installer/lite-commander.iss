@@ -3,7 +3,7 @@
 ; Expects the release build at src-tauri\target\release\lite-commander.exe
 
 #define AppName "Lite Commander"
-#define AppVersion "1.2.0"
+#define AppVersion "1.3.0"
 #define AppPublisher "Nyingi"
 #define AppExe "lite-commander.exe"
 #define CliExe "lcmd.exe"
@@ -57,6 +57,8 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{a
 Root: HKCU; Subkey: "Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{olddata};{app}"; Check: NeedsAddPath(ExpandConstant('{app}'))
 
 [Run]
+; after a self-update (the app passes /update=1 and has already exited) start it again, as the normal user
+Filename: "{app}\{#AppExe}"; Flags: nowait runasoriginaluser; Check: IsUpdateRun
 ; registers the MCP server in the config of each installed LLM client (merged and backed up, see `lcmd mcp status`)
 Filename: "{app}\{#CliExe}"; Parameters: "mcp install"; Flags: runhidden; Tasks: registermcp; StatusMsg: "Registering with LLM tools..."
 Filename: "{app}\{#AppExe}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent
@@ -69,6 +71,11 @@ Filename: "{app}\{#CliExe}"; Parameters: "mcp uninstall"; Flags: runhidden; RunO
 Type: filesandordirs; Name: "{app}"
 
 [Code]
+function IsUpdateRun(): Boolean;
+begin
+  Result := ExpandConstant('{param:update|0}') = '1';
+end;
+
 function NeedsAddPath(Param: string): Boolean;
 var
   OrigPath: string;

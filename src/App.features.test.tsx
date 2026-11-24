@@ -15,7 +15,7 @@ const h = vi.hoisted(() => ({
 vi.mock("./api/tauri", () => {
   const names = [
     "saveApps", "setTheme", "setShell", "setLastRunning", "ackConfig", "startTerminal", "stopTerminal", "restartTerminal",
-    "startAll", "stopAll", "writeInput", "resize", "openConfigFolder", "quitApp", "touchApp", "setFavourite",
+    "startAll", "stopAll", "writeInput", "resize", "openConfigFolder", "quitApp", "touchApp", "setFavourite", "checkUpdate", "downloadUpdate", "applyUpdate", "setUpdateSettings",
     "gitSwitch", "gitFetch", "gitPull", "gitPush", "gitSync",
   ];
   for (const n of names) h.api[n] = vi.fn(async () => undefined);
@@ -34,6 +34,7 @@ vi.mock("./api/tauri", () => {
   return {
     api: h.api,
     attachTerminal: vi.fn(async () => undefined),
+    onUpdateProgress: vi.fn(async () => () => {}),
     onTerminalState: vi.fn(async (cb: (p: unknown) => void) => ((h.stateCb = cb), () => {})),
     onCloseRequested: vi.fn(async () => () => {}),
     pickFolder: vi.fn(async () => h.picked),

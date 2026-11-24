@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0
+
+**Self-update**
+- Lite Commander looks for new versions (about once a day, only while its window is visible) and offers them in a banner: **Update now**, **Later**, **Skip this version**. **Help → Check now** and an on/off switch for the automatic check.
+- Updating shows the release notes, warns how many running terminals will be stopped, downloads with a progress bar, verifies, installs silently and reopens the app, which then offers to start the apps that were running.
+- Signed: `latest.json` carries an ed25519 signature checked against the public key built into the app; the installer's size and SHA-256 are verified; installers must come from this project's GitHub releases over HTTPS; downgrades are never offered.
+- `lcmd update` and `lcmd update apply --yes`.
+- Release tooling: `scripts/new-update-key.mjs`, `scripts/sign-release.mjs` (run by `npm run installer`) and `scripts/publish-release.ps1`.
+
 ## 1.2.0
 
 **Command line and LLM access**

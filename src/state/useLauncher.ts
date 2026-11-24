@@ -30,6 +30,8 @@ export interface Launcher {
   saveApps: (apps: AppDef[]) => Promise<boolean>;
   setTheme: (t: "light" | "dark") => Promise<void>;
   setShell: (s: string) => Promise<void>;
+  /** `skippedVersion: null` clears the skipped version. */
+  setUpdateSettings: (p: { autoCheck?: boolean; skippedVersion?: string | null }) => Promise<void>;
   /** Re-read every terminal's state from Rust (manual refresh). */
   resync: () => Promise<void>;
   ack: () => Promise<void>;
@@ -234,6 +236,23 @@ export function useLauncher(): Launcher {
     setTheme: async (t) => {
       await guard(api.setTheme(t));
       setConfig((c) => (c ? { ...c, theme: t } : c));
+    },
+    setUpdateSettings: async (p) => {
+      await guard(api.setUpdateSettings(p));
+      setConfig((c) =>
+        c
+          ? {
+              ...c,
+              update: {
+                lastChecked: 0,
+                autoCheck: true,
+                ...c.update,
+                ...(p.autoCheck !== undefined ? { autoCheck: p.autoCheck } : {}),
+                ...(p.skippedVersion === null ? { skippedVersion: undefined } : p.skippedVersion !== undefined ? { skippedVersion: p.skippedVersion } : {}),
+              },
+            }
+          : c,
+      );
     },
     setShell: async (s) => {
       await guard(api.setShell(s));

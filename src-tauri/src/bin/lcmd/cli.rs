@@ -28,6 +28,7 @@ pub enum View {
     GitStatus,
     GitLog,
     Message,
+    Update,
     Lines,
     Plain,
 }
@@ -58,6 +59,8 @@ GIT
 
 OTHER
   shells        installed shells        ping | doctor    check the connection
+  update [check]                look for a newer signed version
+  update apply --yes            download, verify and install it (stops running terminals, restarts the app)
   ui            open the window         quit             stop everything and exit
   llms          print the guide for LLMs and agents (also installed as README-LLM.md)
   mcp           run as an MCP server on stdio (for Claude and other LLM clients)
@@ -119,6 +122,14 @@ pub fn parse(argv: &[String]) -> Result<Parsed, String> {
         "ui" => Ok(Parsed::Ui),
         "doctor" => Ok(Parsed::Doctor),
         "llms" | "guide" => Ok(Parsed::Llms),
+        "update" => match args.first().map(String::as_str) {
+            None | Some("check") => call("update.check", json!({}), json, View::Update),
+            Some("apply") => {
+                let yes = args.iter().any(|a| a == "--yes" || a == "-y");
+                call("update.apply", json!({ "yes": yes }), json, View::Update)
+            }
+            Some(other) => Err(format!("Unknown update action \"{other}\". Use: lcmd update [check] | lcmd update apply --yes")),
+        },
         "ping" => call("ping", json!({}), json, View::Plain),
         "quit" => call("quit", json!({}), json, View::Plain),
         "shells" => call("shells", json!({}), json, View::Lines),
@@ -308,6 +319,18 @@ pub fn render(view: View, v: &Value) -> String {
             .as_array()
             .map(|c| c.iter().map(|x| format!("{} {}  ({})", s(x, "hash"), s(x, "subject"), s(x, "author"))).collect::<Vec<_>>().join("\n"))
             .unwrap_or_else(|| v.to_string()),
+        View::Update => {
+            if v["applying"] == true {
+                format!("Installing {}: Lite Commander will restart in a moment.", s(v, "version"))
+            } else if let Some(p) = v.get("staged").and_then(|p| p.as_str()) {
+                format!("Downloaded and verified {} ({p}), not installed.", s(v, "version"))
+            } else if v["available"] == true {
+                let notes = s(v, "notes");
+                format!("Update available: {} (you have {}).{}\nRun `lcmd update apply --yes` to install it.", s(v, "version"), s(v, "current"), if notes.is_empty() { String::new() } else { format!("\n\n{notes}") })
+            } else {
+                format!("Up to date ({}).", s(v, "current"))
+            }
+        }
         View::Message => {
             if let Some(m) = v.get("message").and_then(|m| m.as_str()) {
                 m.to_string()
@@ -376,6 +399,26 @@ mod tests {
         }
         assert_eq!(p(&["--version"]).unwrap(), Parsed::Version);
         assert!(HELP.contains("lcmd mcp") || HELP.contains("mcp "));
+    }
+
+    #[test]
+    fn update_commands_check_by_default_and_apply_only_with_yes() {
+        assert_eq!(call_of(&["update"]).0, "update.check");
+        assert_eq!(call_of(&["update", "check"]).0, "update.check");
+        assert_eq!(call_of(&["update", "apply"]), ("update.apply".into(), json!({ "yes": false }), false));
+        assert_eq!(call_of(&["update", "apply", "--yes"]).1, json!({ "yes": true }));
+        assert_eq!(call_of(&["update", "apply", "-y"]).1, json!({ "yes": true }));
+        assert!(p(&["update", "frobnicate"]).unwrap_err().contains("Unknown update action"));
+        assert!(HELP.contains("update apply --yes"));
+    }
+
+    #[test]
+    fn update_results_render_for_people() {
+        assert_eq!(render(View::Update, &json!({ "current": "1.2.0", "available": false })), "Up to date (1.2.0).");
+        let a = render(View::Update, &json!({ "current": "1.2.0", "available": true, "version": "1.3.0", "notes": "Faster." }));
+        assert!(a.starts_with("Update available: 1.3.0 (you have 1.2.0).") && a.contains("Faster.") && a.contains("lcmd update apply --yes"), "{a}");
+        assert!(render(View::Update, &json!({ "applying": true, "version": "1.3.0" })).contains("restart"));
+        assert!(render(View::Update, &json!({ "staged": "C:\\x.exe", "version": "1.3.0" })).contains("not installed"));
     }
 
     #[test]

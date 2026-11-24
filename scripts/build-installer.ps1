@@ -26,4 +26,13 @@ if (-not $iscc) { throw "Inno Setup 6 (ISCC.exe) not found" }
 Write-Host "==> installer"
 & $iscc "installer\lite-commander.iss"
 if ($LASTEXITCODE -ne 0) { throw "ISCC failed" }
+Write-Host "==> sign the update manifest"
+$key = if ($env:LC_UPDATE_KEY_FILE) { $env:LC_UPDATE_KEY_FILE } else { "$env:USERPROFILE\.lite-commander\update-signing.key" }
+if (Test-Path $key) {
+  $ver = (Get-Content package.json -Raw | ConvertFrom-Json).version
+  node scripts/sign-release.mjs "installer\output\RELEASE-NOTES-$ver.md"
+  if ($LASTEXITCODE -ne 0) { throw "signing failed" }
+} else {
+  Write-Host "No signing key at ${key}: skipping latest.json (run node scripts/new-update-key.mjs)."
+}
 Get-ChildItem installer\output\*.exe | ForEach-Object { Write-Host "Built $($_.FullName) ($([math]::Round($_.Length/1MB,1)) MB)" }

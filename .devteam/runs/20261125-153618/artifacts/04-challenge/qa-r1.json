@@ -1,0 +1,45 @@
+{
+  "findings": [
+    {
+      "cites": "R5",
+      "severity": "blocking",
+      "file": "src/App.tsx",
+      "line": 41,
+      "evidence": "React.lazy wraps ConsoleNav, EditPane, GitDrawer, ThemeFinder and CommandPalette (src/App.tsx:41-45), but no test asserts any of them is absent from the initial view: a search of src for lazy/Suspense/import( in *.test.ts(x) finds nothing. src/App.editor.test.tsx:76-85 only counts the pre-existing CodeSurface chunk, which was already lazy before this revision. Replacing every new lazy() with an eager import leaves all 388 tests green. The Help dialog (src/App.tsx:671) and UpdateDialog (src/App.tsx:654, through the eager UpdateUI import at line 16) also remain eagerly loaded, so 'lazy-load dialogs' is not met.",
+      "description": "R5 acceptance 'Parts that are not shown are loaded when needed rather than up front, so the initial view does not carry them' has no test that can fail: the new code-splitting of GitDrawer/ConsoleNav/EditPane/ThemeFinder/CommandPalette is unproven, and the Help/Update dialogs are still in the initial chunk."
+    },
+    {
+      "cites": "R1",
+      "severity": "blocking",
+      "file": "docs/ui-tidy-up-plan.md",
+      "line": 82,
+      "evidence": "D10 'Switch branch popover (role=\"dialog\" in BranchMenu.tsx)' says it is 'listed under P9 as well'; P9 (line 54) describes the same BranchMenu popover. The plan therefore lists one part in two places, against acceptance 'each appears in exactly one place'. src/App.test.tsx:232-269 only does expect(plan).toContain(name), which cannot detect a duplicated entry.",
+      "description": "The plan puts the branch popover in both the panel (P9) and dialog (D10) inventories, and the R1 test cannot notice a part appearing more than once, so the 'exactly one place' acceptance is both unproven and currently false."
+    },
+    {
+      "cites": "R3",
+      "severity": "advisory",
+      "file": "src/features/apps/TopBar.test.tsx",
+      "line": 82,
+      "evidence": "The test 'keeps every group in the header flow so a narrow window wraps instead of clipping them' only asserts group.parentElement === header (line 87). It never checks flex-wrap or min-width, so removing 'flex-wrap: wrap' from TopBar.module.css (line 3) still passes.",
+      "description": "The R3 edge case 'the grouped top bar stays usable at the window sizes the app supports without controls overlapping or clipping' is asserted only structurally; the assertion cannot detect clipping. The wrap rules are present in the CSS, but the test does not prove them."
+    },
+    {
+      "cites": "R4",
+      "severity": "advisory",
+      "file": "src/shared/shortcuts.test.ts",
+      "line": 54,
+      "evidence": "The test proves Ctrl+O is not matched ('not added'), but no test asserts the plan records the conflict and chosen alternative, which it does at docs/ui-tidy-up-plan.md:142-145.",
+      "description": "The R4 Ctrl+O conflict edge case is only half covered: the 'shortcut is not added' half is tested, the 'plan records the conflict and the chosen alternative' half is not."
+    },
+    {
+      "cites": "R5",
+      "severity": "advisory",
+      "file": "src/App.features.test.tsx",
+      "line": 253,
+      "evidence": "The Console tab is only exercised in an app with no repository (T35, line 253) or with the git tools already expanded. No test asserts the Console stays reachable while the git tools are collapsed, and no test covers the 'how many steps to open a hidden part' edge case.",
+      "description": "R5's edge cases 'a part needed while something happens elsewhere, such as console output arriving, stays reachable' and 'the plan says how many steps it takes and where the entry sits' are not covered by a test."
+    }
+  ],
+  "verifications": []
+}

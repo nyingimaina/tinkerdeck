@@ -1,0 +1,53 @@
+{
+  "findings": [
+    {
+      "cites": "R5",
+      "severity": "blocking",
+      "file": "src/App.tsx",
+      "line": 551,
+      "evidence": "Only ConsoleNav, EditPane, GitDrawer, ThemeFinder and CommandPalette are React.lazy (src/App.tsx:41-45). Every modal dialog is still inline in the eagerly loaded App module: Stop running terminals? (551-570), Delete <app>? (572-583), Close <console>? (585-604), Switch to <branch>? (606-625), Start the apps that were running last time? (627-640), Quit Tinkerdeck? (642-652), Update to <version> (654-669, UpdateDialog comes from the eagerly imported UpdateUI at line 16) and Help (671-702). A Vite build of this tree (outDir sent to scratch) puts 'Stop running terminals', 'Delete ', 'Quit Tinkerdeck', 'Start the apps that were running last time', 'Switch to', 'Update to', 'Find themes' and the Help text into the initial index-*.js chunk, while lazily split strings such as 'Search commands' and 'Close git panel' appear only in separate chunks. The plan even claims 'Initial view therefore carries none of ... the dialogs' bodies' (docs/ui-tidy-up-plan.md:168-170), which is false.",
+      "description": "R5 requires dialogs that are not shown to be lazy-loaded, and its pitfall says 'Do not load the git tools, console or dialogs as part of the initial view'. Here only one dialog body (ThemeFinder) plus the palette are split; the other eight modal dialogs remain in the initial bundle. Move the dialog bodies (at least Help, UpdateDialog and the big texts) into lazy modules rendered under Suspense so the initial view does not carry them."
+    },
+    {
+      "cites": "R1",
+      "severity": "blocking",
+      "file": "docs/ui-tidy-up-plan.md",
+      "line": 204,
+      "evidence": "The plan's own §10 says it was 'Checked per screen against the component source and its CSS module, and against the existing Vitest suite that renders it. The real on-screen look comes from the CSS modules listed in the last column; the manual npm run tauri dev sign-off is the merge gate' (lines 202-204) and 'the manual running-app pass is the last gate before merge' (line 214), while the Signed off column claims 'Developer, this run' (lines 208-211). So the plan was validated against source, CSS files and unit tests, and the running-app inspection is explicitly deferred.",
+      "description": "R1's pitfall forbids relying on source reading alone: the plan must be checked against the running app, including the real on-screen look and the CSS, before/with the window change. Do the running-app pass (or record what was actually observed on screen) instead of deferring it to a later merge gate."
+    },
+    {
+      "cites": "R1",
+      "severity": "blocking",
+      "file": "docs/ui-tidy-up-plan.md",
+      "line": 82,
+      "evidence": "P9 (line 54) lists 'Branch menu popover (features/git/BranchMenu.tsx)' and D10 (line 82) lists the same component a second time as 'Switch branch popover (role=\"dialog\" in BranchMenu.tsx)', with the note '(listed under P9 as well; it is a popover, not a modal)'. R1 acceptance #1 requires that each part appear in exactly one place.",
+      "description": "Merge BranchMenu into a single plan entry (noting its dialog role there) so the inventory is unique and a reviewer can trace it to exactly one entry."
+    },
+    {
+      "cites": "USR-006",
+      "severity": "advisory",
+      "file": "src/features/command-palette/CommandPalette.tsx",
+      "line": 70,
+      "evidence": "Only Escape is handled (lines 30-39). The list items run only through onClick (line 70); there is no ArrowUp/ArrowDown/Enter handling, no active-item state and no focus containment for the aria-modal dialog. The palette is opened by Ctrl+Shift+P, so the primary flow is keyboard, yet running a command needs Tab-to-button or the mouse.",
+      "description": "Add up/down/enter selection and keep focus inside the modal so the VS Code-style palette is efficient from the keyboard (USR-006 §2.1 keyboard navigation / §5.8 accessibility)."
+    },
+    {
+      "cites": "R5",
+      "severity": "advisory",
+      "file": "src/features/git/GitBar.tsx",
+      "line": 24,
+      "evidence": "tools is seeded only once with useState(() => !(collapsible && defaultCollapsed)) (line 24), and App renders GitBar without a key (src/App.tsx:434-443). The component instance survives switching apps, so after expanding the git tools in one app, opening another repo-backed app shows them expanded, contradicting the plan's 'the app view starts from the collapsed chip' (docs/ui-tidy-up-plan.md:48).",
+      "description": "Reset the tools state when the app/repository changes (e.g. key GitBar by app id, or an effect) if every app view should start collapsed."
+    },
+    {
+      "cites": "R3",
+      "severity": "advisory",
+      "file": "src/features/apps/TopBar.test.tsx",
+      "line": 82,
+      "evidence": "The test 'keeps every group in the header flow so a narrow window wraps instead of clipping them' only asserts that each group's parentElement is the header (lines 84-88); it never checks flex-wrap, min-width or that controls do not overlap/clip. R3's edge case 'The grouped top bar stays usable at the window sizes the app supports without controls overlapping or clipping' is therefore not actually verified.",
+      "description": "Assert the layout behaviour the test names (e.g. the header has flex-wrap and the groups keep min-width:0 in TopBar.module.css) rather than only the DOM parent."
+    }
+  ],
+  "verifications": []
+}

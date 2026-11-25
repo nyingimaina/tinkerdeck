@@ -3,6 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConfigView, StatePayload } from "./state/model";
 
+// The R1 plan is read through Vite's raw import so this test does not depend on Node types.
+const planModules = import.meta.glob("../docs/ui-tidy-up-plan.md", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
+const tidyUpPlan = () => Object.values(planModules)[0] ?? "";
+
 type Handler<T> = (v: T) => void;
 const h = vi.hoisted(() => ({
   stateCb: null as null | ((p: unknown) => void),
@@ -45,7 +49,37 @@ vi.mock("./features/terminals/TerminalHost", () => ({
   ),
 }));
 
+// Watches when each on-demand module is first evaluated, so a test can prove the initial view
+// does not pull it in (R5). Factories return the real module, so behaviour is unchanged.
+const lazyLoad = vi.hoisted(() => ({ atImport: true, loaded: [] as { name: string; atImport: boolean }[] }));
+
+vi.mock("./features/terminals/ConsoleNav", async (importOriginal) => {
+  lazyLoad.loaded.push({ name: "ConsoleNav", atImport: lazyLoad.atImport });
+  return await importOriginal();
+});
+vi.mock("./features/apps/EditPane", async (importOriginal) => {
+  lazyLoad.loaded.push({ name: "EditPane", atImport: lazyLoad.atImport });
+  return await importOriginal();
+});
+vi.mock("./features/git/GitDrawer", async (importOriginal) => {
+  lazyLoad.loaded.push({ name: "GitDrawer", atImport: lazyLoad.atImport });
+  return await importOriginal();
+});
+vi.mock("./features/themes/ThemeFinder", async (importOriginal) => {
+  lazyLoad.loaded.push({ name: "ThemeFinder", atImport: lazyLoad.atImport });
+  return await importOriginal();
+});
+vi.mock("./features/command-palette/CommandPalette", async (importOriginal) => {
+  lazyLoad.loaded.push({ name: "CommandPalette", atImport: lazyLoad.atImport });
+  return await importOriginal();
+});
+vi.mock("./features/updates/UpdateUI", async (importOriginal) => {
+  lazyLoad.loaded.push({ name: "UpdateUI", atImport: lazyLoad.atImport });
+  return await importOriginal();
+});
+
 import { App } from "./App";
+lazyLoad.atImport = false;
 
 const T = (id: string, name: string) => ({ id, name, cwd: ".", command: "", env: {} });
 const baseView = (over: Partial<ConfigView["config"]> = {}, status: Partial<ConfigView["status"]> = {}): ConfigView => ({
@@ -80,7 +114,7 @@ describe("App", () => {
     render(<App />);
     expect(await screen.findByText(/No apps yet/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Add your first app" }));
-    expect(screen.getByRole("complementary", { name: "Add app" })).toBeInTheDocument();
+    expect(await screen.findByRole("complementary", { name: "Add app" })).toBeInTheDocument();
   });
 
   it("applies the saved theme and toggles it through Rust", async () => {
@@ -110,6 +144,17 @@ describe("App", () => {
     expect(h.api.startAll).toHaveBeenCalledWith("a1");
     h.stateCb?.({ terminalId: "t2", appId: "a1", state: { kind: "running" } } satisfies StatePayload);
     expect(await screen.findByRole("button", { name: /Stop all/ })).toBeInTheDocument();
+  });
+
+  it("R5: the confirmation dialog bodies load only when a dialog opens, not with the initial view", async () => {
+    render(<App />);
+    await openApp();
+    // Showing the app view does not pull in the confirm-dialog chunk.
+    expect(lazyLoad.loaded.some((m) => m.name === "CommandPalette")).toBe(false);
+    h.closeCb?.(1);
+    expect(await screen.findByRole("dialog", { name: "Quit Tinkerdeck?" })).toBeInTheDocument();
+    // It was evaluated now, on demand, not during App's import.
+    expect(lazyLoad.loaded.find((m) => m.name === "CommandPalette")?.atImport).toBe(false);
   });
 
   it("T22: offers to restore last running apps; No, thanks starts nothing", async () => {
@@ -174,8 +219,8 @@ describe("App", () => {
     render(<App />);
     await openApp();
     await userEvent.click(screen.getByRole("button", { name: "Edit Qonsol" }));
-    await userEvent.click(screen.getByRole("button", { name: "Delete app" }));
-    expect(screen.getByRole("dialog", { name: "Delete Qonsol?" })).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole("button", { name: "Delete app" }));
+    expect(await screen.findByRole("dialog", { name: "Delete Qonsol?" })).toBeInTheDocument();
     expect(h.api.saveApps).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole("button", { name: "Delete" }));
     await waitFor(() => expect(h.api.saveApps).toHaveBeenCalledWith([]));
@@ -186,7 +231,7 @@ describe("App", () => {
     render(<App />);
     await openApp();
     await userEvent.click(screen.getByRole("button", { name: "Edit Qonsol" }));
-    await userEvent.click(screen.getByRole("button", { name: "Remove terminal 2" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Remove terminal 2" }));
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(await screen.findByRole("dialog", { name: "Stop running terminals?" })).toBeInTheDocument();
     expect(h.api.saveApps).not.toHaveBeenCalled();
@@ -203,7 +248,7 @@ describe("App", () => {
     render(<App />);
     await openApp();
     await userEvent.click(screen.getByRole("button", { name: "Edit Qonsol" }));
-    await userEvent.click(screen.getByRole("button", { name: "+ Add a terminal" }));
+    await userEvent.click(await screen.findByRole("button", { name: "+ Add a terminal" }));
     await userEvent.type(screen.getByLabelText("Terminal 3 name"), "web");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(h.api.saveApps).toHaveBeenCalled());
@@ -223,5 +268,123 @@ describe("App", () => {
     await openApp();
     await userEvent.selectOptions(screen.getByLabelText("Shell"), "pwsh.exe");
     expect(h.api.setShell).toHaveBeenCalledWith("pwsh.exe");
+  });
+
+  it("R1: the tidy-up plan names every screen, panel, dialog, footer element, top-bar control and shortcut", () => {
+    const plan = tidyUpPlan();
+    for (const name of [
+      "Home",
+      "App view",
+      "Editor",
+      "Sidebar",
+      "AppHeader",
+      "GitBar",
+      "TabStrip",
+      "TerminalHost",
+      "ConsoleNav",
+      "GitDrawer",
+      "EditPane",
+      "ThemeFinder",
+      "Find themes",
+      "Stop running terminals?",
+      "Delete <app>?",
+      "Close <console>?",
+      "Switch to <branch>?",
+      "Start the apps that were running last time?",
+      "Quit Tinkerdeck?",
+      "Update to <version>",
+      "Help",
+      "Config locked",
+      "Job warning",
+      "Update available",
+      "Ctrl+B",
+      "F5",
+      "Ctrl+Shift+P",
+      "Ctrl+Alt+T",
+      "Ctrl+S",
+      "Ctrl+O",
+      "AppFooter",
+    ]) {
+      expect(plan, `${name} is missing from the plan`).toContain(name);
+    }
+  });
+
+  it("R1: the plan states each part's group, default visibility, how it is hidden again, remembered state, entry, laziness and package choice", () => {
+    const plan = tidyUpPlan();
+    for (const phrase of [
+      "Named group",
+      "Shows by default",
+      "Hidden again by",
+      "State remembered",
+      "Reached from",
+      "Lazy",
+      "Eager",
+      "npm package",
+      "Brand",
+      "Appearance",
+      "Create",
+      "Utilities",
+      "Two entry points, one home",
+      "shortcut-first",
+      "Gap today",
+      "localStorage",
+    ]) {
+      expect(plan, `${phrase} is missing from the plan`).toContain(phrase);
+    }
+  });
+
+  it("R1: the plan lists each part in exactly one inventory entry", () => {
+    const plan = tidyUpPlan();
+    const inventoryRows = plan
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => /^\|\s*(?:[SPDB]\d+|\d+)\s*\|/.test(line));
+    expect(inventoryRows.length).toBeGreaterThan(20);
+    const counts = new Map<string, number>();
+    for (const row of inventoryRows) {
+      for (const match of row.matchAll(/([A-Za-z0-9_-]+\.tsx)\b/g)) {
+        counts.set(match[1], (counts.get(match[1]) ?? 0) + 1);
+      }
+    }
+    for (const [file, count] of counts) {
+      expect(count, `${file} is inventoried ${count} times`).toBe(1);
+    }
+  });
+
+  it("R1: the plan records the running-app check from what was seen on screen instead of deferring it", () => {
+    const plan = tidyUpPlan();
+    expect(plan).toContain("Running-app verification");
+    expect(plan).toContain("What was on screen");
+    expect(plan).toContain("900×560");
+    expect(plan).toContain("no part of the check is left to a later manual pass");
+    expect(plan.toLowerCase()).not.toContain("merge gate");
+  });
+
+  it("R2: the persistent footer is visible on Home, the app view and the separate editor view", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    expect(screen.getByRole("contentinfo", { name: "Status" })).toHaveTextContent("v2.0.0");
+
+    await openApp();
+    expect(screen.getByRole("contentinfo", { name: "Status" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Utilities" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Editor" }));
+    expect(await screen.findByRole("button", { name: "Open…" })).toBeInTheDocument();
+    expect(screen.getByRole("contentinfo", { name: "Status" })).toBeInTheDocument();
+  });
+
+  it("R5: optional panels and the help/update dialog bodies are loaded only when opened, not with the initial view", async () => {
+    expect(lazyLoad.loaded.filter((m) => m.atImport)).toEqual([]);
+
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+
+    await userEvent.click(screen.getByRole("button", { name: "Utilities" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Help" }));
+    expect(await screen.findByRole("dialog", { name: "Help" })).toBeInTheDocument();
+
+    // The Help body shares the palette's chunk, and it was evaluated now, not during App's import.
+    expect(lazyLoad.loaded.find((m) => m.name === "CommandPalette")?.atImport).toBe(false);
   });
 });

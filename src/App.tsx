@@ -1,21 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { api, errorText, pickFolder, type ShellInfo } from "./api/tauri";
+import { AppFooter } from "./features/apps/AppFooter";
 import { AppHeader } from "./features/apps/AppHeader";
 import { Banner } from "./features/apps/Banner";
 import { Dialog } from "./features/apps/Dialog";
-import { EditPane } from "./features/apps/EditPane";
 import { EmptyState } from "./features/apps/EmptyState";
 import { Sidebar } from "./features/apps/Sidebar";
+import { TopBar } from "./features/apps/TopBar";
 import { GitBar } from "./features/git/GitBar";
-import { GitDrawer, type GitTab } from "./features/git/GitDrawer";
+import type { GitTab } from "./features/git/GitDrawer";
 import { HomeScreen } from "./features/home/HomeScreen";
-import { ThemeFinder } from "./features/themes/ThemeFinder";
-import { ThemePicker } from "./features/themes/ThemePicker";
 import { EditorView } from "./features/editor/EditorView";
-import { ConsoleNav } from "./features/terminals/ConsoleNav";
 import { TabStrip } from "./features/terminals/TabStrip";
 import { TerminalHost } from "./features/terminals/TerminalHost";
-import { UpdateBanner, UpdateDialog, UpdateSettingsBlock } from "./features/updates/UpdateUI";
 import { consoleExitAction, consoleId, consoleTitle, isConsoleId } from "./state/console";
 import {
   canStop,
@@ -35,7 +32,24 @@ import { useThemes } from "./themes/useThemes";
 import { useLauncher } from "./state/useLauncher";
 import { useUpdates } from "./state/useUpdates";
 import { usePoller } from "./state/usePoller";
+import { matchShortcut, shortcutKeys } from "./shared/shortcuts";
+import type { PaletteAction } from "./features/command-palette/CommandPalette";
 import styles from "./App.module.css";
+
+// Optional panels and tool bodies are code-split so the initial view does not carry them (R5).
+const ConsoleNav = lazy(() => import("./features/terminals/ConsoleNav").then((m) => ({ default: m.ConsoleNav })));
+const EditPane = lazy(() => import("./features/apps/EditPane").then((m) => ({ default: m.EditPane })));
+const GitDrawer = lazy(() => import("./features/git/GitDrawer").then((m) => ({ default: m.GitDrawer })));
+const ThemeFinder = lazy(() => import("./features/themes/ThemeFinder").then((m) => ({ default: m.ThemeFinder })));
+const CommandPalette = lazy(() => import("./features/command-palette/CommandPalette").then((m) => ({ default: m.CommandPalette })));
+// The update banner, update dialog and the help dialog are only shown in response to a signal or a
+// click, so their bodies share on-demand chunks instead of the initial one (R5).
+const UpdateBanner = lazy(() => import("./features/updates/UpdateUI").then((m) => ({ default: m.UpdateBanner })));
+const UpdateDialog = lazy(() => import("./features/updates/UpdateUI").then((m) => ({ default: m.UpdateDialog })));
+const HelpDialog = lazy(() => import("./features/command-palette/CommandPalette").then((m) => ({ default: m.HelpDialog })));
+// The short confirmation dialogs share the palette's on-demand chunk: their bodies are not in the
+// initial view either, and a dialog loads them the first time one opens (R5).
+const ConfirmDialogs = lazy(() => import("./features/command-palette/CommandPalette").then((m) => ({ default: m.ConfirmDialogs })));
 
 interface Editing {
   app: AppDef;
@@ -60,6 +74,7 @@ export function App() {
   const [pendingSwitch, setPendingSwitch] = useState<{ branch: string; running: string[] } | null>(null);
   const [pendingCloseConsole, setPendingCloseConsole] = useState<{ appId: string; id: string; title: string } | null>(null);
   const [gitTab, setGitTab] = useState<GitTab | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [help, setHelp] = useState(false);
   const [updateOpen, setUpdateOpen] = useState(false);
   const [finderOpen, setFinderOpen] = useState(false);
@@ -117,21 +132,31 @@ export function App() {
       return !c;
     });
 
-  // keyboard: Ctrl+B toggles the left pane, F5 refreshes (VS Code habits)
+  // keyboard: the shared registry drives Ctrl+B, F5, Ctrl+Shift+P and Ctrl+Alt+T (VS Code habits)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "b") {
-        e.preventDefault();
-        toggleSidebar();
-      } else if (e.key === "F5") {
-        e.preventDefault();
-        refreshAll();
-      }
+      const id = matchShortcut(e);
+      if (!id) return;
+      e.preventDefault();
+      if (id === "toggleSidebar") toggleSidebar();
+      else if (id === "refresh") refreshAll();
+      else if (id === "commandPalette") setPaletteOpen(true);
+      else if (id === "toggleTheme") void T.toggleKind();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // the palette lists the window's main actions, each with the shortcut that also runs it (R4)
+  const paletteActions: PaletteAction[] = [
+    { id: "toggleSidebar", label: "Toggle sidebar", shortcut: shortcutKeys("toggleSidebar"), run: toggleSidebar },
+    { id: "refresh", label: "Refresh everything", shortcut: shortcutKeys("refresh"), run: refreshAll },
+    { id: "toggleTheme", label: "Switch light/dark theme", shortcut: shortcutKeys("toggleTheme"), run: () => void T.toggleKind() },
+    { id: "editor", label: "Open editor", run: () => setView((v) => (v === "editor" ? "home" : "editor")) },
+    { id: "updates", label: "Check for updates", run: () => void checkForUpdates() },
+    { id: "help", label: "Help", run: () => setHelp(true) },
+  ];
 
   // installed shells (for the header dropdown, new consoles and the edit form)
   useEffect(() => {
@@ -293,74 +318,32 @@ export function App() {
     L.touchApp(id);
   };
 
-  const shellKnown = shells.length === 0 || shells.some((s) => s.id === config.shell);
-
   return (
     <div className={styles.shell}>
-      <header className={styles.top}>
-        <button
-          className={styles.iconBtn}
-          onClick={toggleSidebar}
-          aria-label={paneCollapsed ? "Show sidebar" : "Hide sidebar"}
-          title="Toggle sidebar (Ctrl+B)"
-        >
-          ☰
-        </button>
-        <img src="/icon.svg" alt="" width="24" height="24" />
-        <span className={styles.brand}>Tinkerdeck</span>
-        <span className={styles.spacer} />
-        <label className={styles.shellPick}>
-          <span>Shell</span>
-          <select value={config.shell} onChange={(e) => void L.setShell(e.target.value)}>
-            {!shellKnown && <option value={config.shell}>{config.shell} (not found)</option>}
-            {(shells.length > 0 ? shells : [{ id: config.shell, name: config.shell, path: "" }]).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          onClick={() => setView((v) => (v === "editor" ? "home" : "editor"))}
-          aria-label="Editor"
-          aria-pressed={view === "editor"}
-          title="Text editor"
-        >
-          ✎ Editor
-        </button>
-        <button
-          onClick={() => void checkForUpdates()}
-          disabled={U.phase === "checking"}
-          aria-label="Check for updates"
-          title="Check for a new version now"
-        >
-          {U.phase === "checking" ? "Checking…" : "⬆ Updates"}
-        </button>
-        <button onClick={refreshAll} aria-label="Refresh everything" title="Refresh everything now (F5)">
-          ⟳
-        </button>
-        <button onClick={() => setHelp(true)} aria-label="Help" title="Help">
-          ?
-        </button>
-        <ThemePicker
-          themes={T.themes}
-          activeId={T.active.id}
-          onSelect={(id) => void T.select(id)}
-          onRemove={(id) => void T.remove(id)}
-          onImportText={T.importText}
-          onFind={() => setFinderOpen(true)}
-        />
-        <button
-          onClick={() => void T.toggleKind()}
-          aria-label="Toggle theme"
-          title="Toggle light and dark"
-        >
-          {config.theme === "dark" ? "☀" : "☾"}
-        </button>
-        <button className={styles.add} onClick={openAdd} disabled={L.status?.locked && L.status.permanent}>
-          + App
-        </button>
-      </header>
+      <TopBar
+        sidebarCollapsed={paneCollapsed}
+        onToggleSidebar={toggleSidebar}
+        shell={config.shell}
+        shells={shells}
+        onShellChange={(v) => void L.setShell(v)}
+        themeKind={config.theme}
+        onToggleTheme={() => void T.toggleKind()}
+        themes={T.themes}
+        activeThemeId={T.active.id}
+        onSelectTheme={(id) => void T.select(id)}
+        onRemoveTheme={(id) => void T.remove(id)}
+        onImportTheme={T.importText}
+        onFindThemes={() => setFinderOpen(true)}
+        onAddApp={openAdd}
+        addDisabled={!!L.status?.locked && L.status.permanent}
+        editorActive={view === "editor"}
+        onEditor={() => setView((v) => (v === "editor" ? "home" : "editor"))}
+        onCheckUpdates={() => void checkForUpdates()}
+        updatesBusy={U.phase === "checking"}
+        updateAvailable={U.visible && U.info ? U.info.version : null}
+        onRefresh={refreshAll}
+        onHelp={() => setHelp(true)}
+      />
 
       {L.status?.locked && L.status.message && (
         <Banner
@@ -375,7 +358,9 @@ export function App() {
       )}
       {L.jobWarning && <Banner kind="warn">{L.jobWarning}</Banner>}
       {U.visible && U.info && (
-        <UpdateBanner info={U.info} onDetails={() => setUpdateOpen(true)} onLater={U.later} onSkip={() => void U.skip()} />
+        <Suspense fallback={null}>
+          <UpdateBanner info={U.info} onDetails={() => setUpdateOpen(true)} onLater={U.later} onSkip={() => void U.skip()} />
+        </Suspense>
       )}
       {manualCheck && U.upToDate && !U.error && !U.visible && (
         <Banner kind="info" actions={[{ label: "Dismiss", onClick: () => setManualCheck(false) }]}>
@@ -462,6 +447,8 @@ export function App() {
                 onOpenHistory={() => setGitTab("history")}
                 onOpenConsole={openConsole}
                 onRefresh={refreshAll}
+                collapsible
+                defaultCollapsed
               />
               {app.terminals.length === 0 && !onConsole ? (
                 <EmptyState
@@ -513,186 +500,170 @@ export function App() {
                   ])}
                 </div>
                 {onConsole && (
-                  <ConsoleNav
-                    consoles={appConsoles}
-                    activeId={selectedTid}
-                    stateOf={L.stateOf}
-                    shells={shellChoices}
-                    notice={consoleNotice[app.id] || null}
-                    onSelect={(id) => L.selectConsole(app.id, id)}
-                    onAdd={(shell) => L.addConsole(app.id, shell)}
-                    onClose={(id) => {
-                      const c = appConsoles.find((x) => x.id === id);
-                      if (c) requestCloseConsole(app.id, id, consoleTitle(c));
-                    }}
-                  />
+                  <Suspense fallback={<div className={styles.lazyPanel} aria-hidden="true" />}>
+                    <ConsoleNav
+                      consoles={appConsoles}
+                      activeId={selectedTid}
+                      stateOf={L.stateOf}
+                      shells={shellChoices}
+                      notice={consoleNotice[app.id] || null}
+                      onSelect={(id) => L.selectConsole(app.id, id)}
+                      onAdd={(shell) => L.addConsole(app.id, shell)}
+                      onClose={(id) => {
+                        const c = appConsoles.find((x) => x.id === id);
+                        if (c) requestCloseConsole(app.id, id, consoleTitle(c));
+                      }}
+                    />
+                  </Suspense>
                 )}
               </div>
-              {gitTab && <GitDrawer git={git} tab={gitTab} onTab={setGitTab} onClose={() => setGitTab(null)} />}
+              {gitTab && (
+                <Suspense fallback={null}>
+                  <GitDrawer git={git} tab={gitTab} onTab={setGitTab} onClose={() => setGitTab(null)} />
+                </Suspense>
+              )}
             </>
           ) : null}
 
           {editing && (
-            <EditPane
-              key={editing.app.id + String(editing.isNew)}
-              initial={editing.app}
-              isNew={editing.isNew}
-              runningTerminalIds={runningIds}
-              onSave={handleSave}
-              onCancel={() => setEditing(null)}
-              onDelete={() => setPendingDelete(editing.app)}
-            />
+            <Suspense fallback={<div className={styles.lazy}>Loading…</div>}>
+              <EditPane
+                key={editing.app.id + String(editing.isNew)}
+                initial={editing.app}
+                isNew={editing.isNew}
+                runningTerminalIds={runningIds}
+                onSave={handleSave}
+                onCancel={() => setEditing(null)}
+                onDelete={() => setPendingDelete(editing.app)}
+              />
+            </Suspense>
           )}
         </main>
       </div>
 
+      <AppFooter version={typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : ""} />
+
+      {paletteOpen && (
+        <Suspense fallback={null}>
+          <CommandPalette actions={paletteActions} onClose={() => setPaletteOpen(false)} />
+        </Suspense>
+      )}
+
       {finderOpen && (
         <Dialog title="Find themes" actions={[{ label: "Close", onClick: () => setFinderOpen(false) }]}>
-          <ThemeFinder finder={finder} />
+          <Suspense fallback={<div className={styles.lazy}>Loading themes…</div>}>
+            <ThemeFinder finder={finder} />
+          </Suspense>
         </Dialog>
       )}
 
-      {pendingSave && (
-        <Dialog
-          title="Stop running terminals?"
-          actions={[
-            {
-              label: "Stop and save",
-              kind: "primary",
-              onClick: async () => {
-                const p = pendingSave;
-                setPendingSave(null);
-                await L.stopAndWait(p.ids);
-                await commit(p.apps);
-              },
-            },
-            { label: "Cancel", onClick: () => setPendingSave(null) },
-          ]}
-        >
-          {pendingSave.ids.length} terminal(s) you removed are still running. They will be stopped first.
-        </Dialog>
-      )}
-
-      {pendingDelete && (
-        <Dialog
-          title={`Delete ${pendingDelete.name}?`}
-          actions={[
-            { label: "Delete", kind: "danger", onClick: () => void handleDelete(pendingDelete) },
-            { label: "Cancel", onClick: () => setPendingDelete(null) },
-          ]}
-        >
-          This removes the app and its terminals from Tinkerdeck. Anything running is stopped first. Your project files
-          are not touched.
-        </Dialog>
-      )}
-
-      {pendingCloseConsole && (
-        <Dialog
-          title={`Close ${pendingCloseConsole.title}?`}
-          actions={[
-            {
-              label: "Stop and close",
-              kind: "danger",
-              onClick: async () => {
-                const p = pendingCloseConsole;
-                setPendingCloseConsole(null);
-                await L.stopAndWait([p.id]);
-                L.closeConsole(p.appId, p.id);
-              },
-            },
-            { label: "Cancel", onClick: () => setPendingCloseConsole(null) },
-          ]}
-        >
-          Something may still be running in it. It will be stopped first.
-        </Dialog>
-      )}
-
-      {pendingSwitch && (
-        <Dialog
-          title={`Switch to ${pendingSwitch.branch}?`}
-          actions={[
-            { label: "Stop all, switch, Start all", kind: "primary", onClick: () => void stopSwitchStart(pendingSwitch) },
-            {
-              label: "Switch anyway",
-              onClick: () => {
-                const b = pendingSwitch.branch;
-                setPendingSwitch(null);
-                void git.switchBranch(b);
-              },
-            },
-            { label: "Cancel", onClick: () => setPendingSwitch(null) },
-          ]}
-        >
-          {pendingSwitch.running.length} terminal{pendingSwitch.running.length === 1 ? " is" : "s are"} running. Switching branches changes the
-          files they use, which can break a dev server or trigger rebuilds. Stop them first and start them again afterwards?
-        </Dialog>
-      )}
-
-      {L.restoreAppIds.length > 0 && !L.status?.locked && (
-        <Dialog
-          title="Start the apps that were running last time?"
-          actions={[
-            { label: "Start them", kind: "primary", onClick: () => void L.answerRestore(true) },
-            { label: "No, thanks", onClick: () => void L.answerRestore(false) },
-          ]}
-        >
-          {apps
-            .filter((a) => L.restoreAppIds.includes(a.id))
-            .map((a) => a.name)
-            .join(", ")}
-        </Dialog>
-      )}
-
-      {L.closeRunning !== null && (
-        <Dialog
-          title="Quit Tinkerdeck?"
-          actions={[
-            { label: "Stop and quit", kind: "primary", onClick: () => void L.answerClose(true) },
-            { label: "Keep running", onClick: L.cancelClose },
-          ]}
-        >
-          {L.closeRunning} terminal{L.closeRunning === 1 ? " is" : "s are"} running. Stop {L.closeRunning === 1 ? "it" : "them"} and quit?
-        </Dialog>
+      {(pendingSave ||
+        pendingDelete ||
+        pendingCloseConsole ||
+        pendingSwitch ||
+        (L.restoreAppIds.length > 0 && !L.status?.locked) ||
+        L.closeRunning !== null) && (
+        <Suspense fallback={null}>
+          <ConfirmDialogs
+            save={
+              pendingSave
+                ? {
+                    count: pendingSave.ids.length,
+                    onConfirm: async () => {
+                      const p = pendingSave;
+                      setPendingSave(null);
+                      await L.stopAndWait(p.ids);
+                      await commit(p.apps);
+                    },
+                    onCancel: () => setPendingSave(null),
+                  }
+                : null
+            }
+            deleteApp={
+              pendingDelete
+                ? {
+                    name: pendingDelete.name,
+                    onConfirm: () => void handleDelete(pendingDelete),
+                    onCancel: () => setPendingDelete(null),
+                  }
+                : null
+            }
+            closeConsole={
+              pendingCloseConsole
+                ? {
+                    title: pendingCloseConsole.title,
+                    onConfirm: async () => {
+                      const p = pendingCloseConsole;
+                      setPendingCloseConsole(null);
+                      await L.stopAndWait([p.id]);
+                      L.closeConsole(p.appId, p.id);
+                    },
+                    onCancel: () => setPendingCloseConsole(null),
+                  }
+                : null
+            }
+            switchBranch={
+              pendingSwitch
+                ? {
+                    branch: pendingSwitch.branch,
+                    runningCount: pendingSwitch.running.length,
+                    onStopStart: () => void stopSwitchStart(pendingSwitch),
+                    onSwitchAnyway: () => {
+                      const b = pendingSwitch.branch;
+                      setPendingSwitch(null);
+                      void git.switchBranch(b);
+                    },
+                    onCancel: () => setPendingSwitch(null),
+                  }
+                : null
+            }
+            restore={
+              L.restoreAppIds.length > 0 && !L.status?.locked
+                ? {
+                    names: apps
+                      .filter((a) => L.restoreAppIds.includes(a.id))
+                      .map((a) => a.name)
+                      .join(", "),
+                    onStart: () => void L.answerRestore(true),
+                    onDismiss: () => void L.answerRestore(false),
+                  }
+                : null
+            }
+            quit={
+              L.closeRunning !== null
+                ? {
+                    runningCount: L.closeRunning,
+                    onQuit: () => void L.answerClose(true),
+                    onKeep: L.cancelClose,
+                  }
+                : null
+            }
+          />
+        </Suspense>
       )}
 
       {updateOpen && U.info && (
-        <UpdateDialog
-          info={U.info}
-          phase={U.phase}
-          progress={U.progress}
-          error={U.error}
-          runningCount={Object.values(L.states).filter(isUp).length}
-          onInstall={() => void U.install()}
-          onClose={() => {
-            if (U.phase === "idle") {
-              U.clearError();
-              setUpdateOpen(false);
-            }
-          }}
-        />
+        <Suspense fallback={null}>
+          <UpdateDialog
+            info={U.info}
+            phase={U.phase}
+            progress={U.progress}
+            error={U.error}
+            runningCount={Object.values(L.states).filter(isUp).length}
+            onInstall={() => void U.install()}
+            onClose={() => {
+              if (U.phase === "idle") {
+                U.clearError();
+                setUpdateOpen(false);
+              }
+            }}
+          />
+        </Suspense>
       )}
 
       {help && (
-        <Dialog title="Help" actions={[{ label: "Close", onClick: () => setHelp(false) }]}>
-          <ul className={styles.help}>
-            <li>An app is a group of terminals. Each terminal is a folder plus a command, run in the shell you choose.</li>
-            <li>Home shows your favourites (star an app), recent apps and what is running now.</li>
-            <li>Stop presses Ctrl+C first, then kills the whole process tree, so ports are released.</li>
-            <li>
-              Commands that start something and exit (such as <code>docker start db</code>) show as <b>Detached</b> when the
-              terminal has a stop command (<code>docker stop db</code>). Without one they show Exited, and the container keeps
-              running.
-            </li>
-            <li>
-              The <b>&gt;_ Console</b> tab holds as many shells as you like (PowerShell, Git Bash, WSL, cmd). Use the list on the
-              right to add or switch. Typing <code>exit</code> in the first console just starts a fresh shell.
-            </li>
-            <li>Pull is fast-forward only. For merges, rebases or force pushes use a console.</li>
-            <li>Live state refreshes by itself while the window is visible. Press <b>⟳</b> or F5 to refresh now. Ctrl+B hides the sidebar.</li>
-            <li>A terminal owns everything it starts: background processes it launches end when it stops.</li>
-            <li>Do not put passwords in commands. Use environment variables or a .env file.</li>
-          </ul>
-          <UpdateSettingsBlock
+        <Suspense fallback={null}>
+          <HelpDialog
             version={typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : ""}
             autoCheck={config.update?.autoCheck ?? true}
             phase={U.phase}
@@ -701,8 +672,9 @@ export function App() {
             error={U.phase === "idle" && !updateOpen ? U.error : null}
             onAutoCheck={(v) => void L.setUpdateSettings({ autoCheck: v })}
             onCheckNow={() => void U.checkNow()}
+            onClose={() => setHelp(false)}
           />
-        </Dialog>
+        </Suspense>
       )}
     </div>
   );

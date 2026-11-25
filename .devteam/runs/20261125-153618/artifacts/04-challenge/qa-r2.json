@@ -1,0 +1,15 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "QA-1",
+      "status": "fixed",
+      "evidence": "src/App.tsx:40-49 now React.lazy-loads ConsoleNav, EditPane, GitDrawer, ThemeFinder, CommandPalette, UpdateBanner, UpdateDialog and the new HelpDialog; the Help/Update bodies are no longer in the initial chunk. src/App.test.tsx:54-82 installs vi.mock evaluation probes with an atImport flag and that flag is cleared only after `import { App }` (line 83). The new test at src/App.test.tsx:339-352 asserts `lazyLoad.loaded.filter((m) => m.atImport)` is empty, so any eager import of an on-demand module would make the factory run while atImport is true and fail the test. It then opens Help and asserts the CommandPalette/Help chunk is evaluated after import (atImport === false). Ran `npx vitest run src/App.test.tsx`: 19 tests pass."
+    },
+    {
+      "id": "QA-2",
+      "status": "open",
+      "evidence": "docs/ui-tidy-up-plan.md:82 (D10) still says the Switch branch popover is '(listed under P9 as well; it is a popover, not a modal)' and docs/ui-tidy-up-plan.md:54 (P9) still describes the same BranchMenu popover. The same part therefore appears in two places, against R1 acceptance 'each appears in exactly one place'. The R1 test at src/App.test.tsx:262-298 only does expect(plan).toContain(name), which cannot detect a duplicate entry, so the acceptance is still unproven."
+    }
+  ]
+}

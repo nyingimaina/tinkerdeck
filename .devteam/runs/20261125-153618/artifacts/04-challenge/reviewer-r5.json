@@ -1,0 +1,10 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "REV-2",
+      "status": "open",
+      "evidence": "docs/ui-tidy-up-plan.md:208-210 still says `Checked per screen against the component source **and its CSS module**, and against the existing Vitest suite that renders it. The real on-screen look comes from the CSS modules listed in the last column; the manual `npm run tauri dev` sign-off is the merge gate.` and lines 219-220 still say `The checklist is signed off by the Developer for this run; the manual running-app pass is the last gate before merge.` The Signed off column still reads `Developer, this run` (lines 214-216). The running-app inspection is therefore still deferred to a later merge gate rather than performed for this revision, so R1's 'do not rely on source reading alone; check the plan against the running app, including the real on-screen look and the CSS' is not satisfied."
+    }
+  ]
+}

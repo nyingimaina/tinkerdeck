@@ -1,0 +1,45 @@
+{
+  "summary": "Revision 1 is mostly consistent, but it defers the blocking jattac package rule, keeps the update dialog eager contrary to R5, reorganises an old CSS file, gives R1 no test, and adds a footer that R2's change set does not cover.",
+  "conflicts": [
+    {
+      "requirement": "R3",
+      "against": "USR-001",
+      "kind": "rule",
+      "owner": "design",
+      "why": "R3 regroups the top-bar controls into named groups, and the design does this by hand-building TopBar, UtilitiesMenu, AppFooter and a command palette, explicitly leaving the jattac packages installed 'in preference of any other components' for a later revision; a UtilitiesMenu performs the same function as jattac.libs.web.overflow-menu and the new buttons the same function as zest-button.",
+      "evidence": "USR-001 (blocking): 'use the following npm i jattac.libs.web.zest-responsive-layout, ... npm i jattac.libs.web.overflow-menu, and npm i jattac-web-poller in preference of any other components or native ui elements that may perform the same function'. Design: 'a small in-house command palette'; 'No npm package is added in this revision ... jattac overflow-menu/zest-button, cmdk, react-hotkeys-hook and Radix remain candidates for revision 2's R10 package verification against React 18.3 and the Tauri webview.'"
+    },
+    {
+      "requirement": "R5",
+      "against": "design",
+      "kind": "design",
+      "owner": "design",
+      "why": "R5 requires dialogs that are not shown to be lazy-loaded so the initial view does not carry them; the design keeps UpdateDialog in the eager module purely because it shares a file with the always-needed banner, which is a co-location convenience, not a technical necessity (the module can be split).",
+      "evidence": "R5: 'lazy-load dialogs and tool panels that are not shown' and 'Do not load the git tools, console or dialogs as part of the initial view.' Design: 'UpdateDialog stays with UpdateBanner because the always-needed banner and the dialog live in one module today.'"
+    },
+    {
+      "requirement": "R3",
+      "against": "design",
+      "kind": "scope",
+      "owner": "design",
+      "why": "The design's scope and impact include src/App.module.css, which is an old area, and it says the header rules are moved out of it. No requirement needs the existing header rules removed: the new TopBar.module.css can carry the new rules while the old file is left alone, so this is a reorganisation of an old file for convenience. The design states no technical reason why new code plus an adapter in features/ cannot meet R3 without touching the old stylesheet.",
+      "evidence": "Design scope: 'src/App.module.css'; impact.touches: 'src/App.module.css (header rules moved out, lazy fallback style added)'. Compatibility layer: 'Old files are changed only when a requirement cannot be met otherwise ... They are never reformatted, reorganised or rewritten as a side effect.' and old area: 'Everything in src-tauri/src outside features/ and shared/, and everything in src outside features/, shared/ and api/ that is not already in the standard's shape.'"
+    },
+    {
+      "requirement": "R1",
+      "against": "TEST-001",
+      "kind": "check",
+      "owner": "design",
+      "why": "R1's only deliverable in the design is a markdown file and a manual sign-off checklist; no test file lists R1, so the blocking requirement-test check cannot pass as the plan stands. R1 needs a test that names it and proves the required inventory is present.",
+      "evidence": "TEST-001: 'Every requirement is proven by at least one test that names it.' Design: component 'TidyUpPlan', path 'docs/ui-tidy-up-plan.md', requirements ['R1','A2']; A2 acceptance 'The developer signs the checklist off before the UI change is merged.' No test component (TopBar, UtilitiesMenu, AppFooter, Shortcuts, CommandPalette, GitBar.collapse, TerminalHost.shortcuts, App.shortcuts) lists R1."
+    },
+    {
+      "requirement": "R2",
+      "against": "design",
+      "kind": "design",
+      "owner": "requirements",
+      "why": "R2 says the tidy-up keeps the current footer and 'changes only' control grouping, default visibility, on-demand hiding, remembered layout and shortcuts, but no footer exists in the app today; the design therefore adds a brand-new footer strip, which is a new UI element outside those allowed changes. R2's two halves (keep the footer / change only those things) cannot both hold, so the requirement must say which wins.",
+      "evidence": "R2: 'Keep every current screen, panel, dialog, the footer and the separate editor view; the tidy-up changes only how controls are grouped, which are shown by default or hidden until needed, how open parts can be hidden again, which state is remembered and which shortcuts exist.' Design: 'Because R2/R6 name a footer but none exists today, a slim persistent footer strip is added showing the app version.' Analyst fact: 'no footer element exists anywhere in src or index.html.'"
+    }
+  ]
+}

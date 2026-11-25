@@ -1,0 +1,328 @@
+{
+  "at": "2026-11-25T18:56:43.3808505+00:00",
+  "entries": [
+    {
+      "kind": "npm",
+      "name": "@codemirror/commands",
+      "version": "6.11.1",
+      "key": "20436c20c189e148a6d25191",
+      "own": false,
+      "source": "npm:@codemirror/commands@6.11.1",
+      "size": 1040,
+      "ticks": 639311148643854407
+    },
+    {
+      "kind": "npm",
+      "name": "@codemirror/language",
+      "version": "6.13.1",
+      "key": "ce001d24b5f54936c0f2ca8b",
+      "own": false,
+      "source": "npm:@codemirror/language@6.13.1",
+      "size": 1120,
+      "ticks": 639311148644024522
+    },
+    {
+      "kind": "npm",
+      "name": "@codemirror/language-data",
+      "version": "6.5.2",
+      "key": "bab95f9b881b74cbc960db70",
+      "own": false,
+      "source": "npm:@codemirror/language-data@6.5.2",
+      "size": 1771,
+      "ticks": 639311148643037702
+    },
+    {
+      "kind": "npm",
+      "name": "@codemirror/search",
+      "version": "6.7.2",
+      "key": "7878179fbef25a706b7287d2",
+      "own": false,
+      "source": "npm:@codemirror/search@6.7.2",
+      "size": 932,
+      "ticks": 639311148643894570
+    },
+    {
+      "kind": "npm",
+      "name": "@codemirror/state",
+      "version": "6.7.6",
+      "key": "7df0c44ad56c5ab27baa6b70",
+      "own": false,
+      "source": "npm:@codemirror/state@6.7.6",
+      "size": 888,
+      "ticks": 639311148642756891
+    },
+    {
+      "kind": "npm",
+      "name": "@codemirror/theme-one-dark",
+      "version": "6.1.3",
+      "key": "6888be2d7afc49516c1f3d30",
+      "own": false,
+      "source": "npm:@codemirror/theme-one-dark@6.1.3",
+      "size": 977,
+      "ticks": 639311148642826909
+    },
+    {
+      "kind": "npm",
+      "name": "@codemirror/view",
+      "version": "6.43.15",
+      "key": "5aa547dfdcf20dea9d324e8b",
+      "own": false,
+      "source": "npm:@codemirror/view@6.43.15",
+      "size": 948,
+      "ticks": 639311148642586338
+    },
+    {
+      "kind": "npm",
+      "name": "@lezer/highlight",
+      "version": "1.2.5",
+      "key": "d141da7901a9c9535ee647f0",
+      "own": false,
+      "source": "npm:@lezer/highlight@1.2.5",
+      "size": 752,
+      "ticks": 639311148641784937
+    },
+    {
+      "kind": "npm",
+      "name": "@tauri-apps/api",
+      "version": "2.12.5",
+      "key": "b2fe0341aa4b20bd0974b30e",
+      "own": false,
+      "source": "npm:@tauri-apps/api@2.12.5",
+      "size": 1758,
+      "ticks": 639310243636406007
+    },
+    {
+      "kind": "npm",
+      "name": "@tauri-apps/plugin-dialog",
+      "version": "2.8.4",
+      "key": "45b3d01d72c95259b2ec8c9d",
+      "own": false,
+      "source": "npm:@tauri-apps/plugin-dialog@2.8.4",
+      "size": 657,
+      "ticks": 639310243595594100
+    },
+    {
+      "kind": "npm",
+      "name": "@xterm/addon-fit",
+      "version": "0.10.0",
+      "key": "8658739bc686ba970452da73",
+      "own": false,
+      "source": "npm:@xterm/addon-fit@0.10.0",
+      "size": 632,
+      "ticks": 639310243593313927
+    },
+    {
+      "kind": "npm",
+      "name": "@xterm/xterm",
+      "version": "5.5.0",
+      "key": "e1027cf8f7ec4c7fb03c0a57",
+      "own": false,
+      "source": "npm:@xterm/xterm@5.5.0",
+      "size": 4006,
+      "ticks": 639310243597611839
+    },
+    {
+      "kind": "npm",
+      "name": "dompurify",
+      "version": "3.5.0",
+      "key": "3bc9aa9770003ce3be3a20fa",
+      "own": false,
+      "source": "npm:dompurify@\u003E=20",
+      "size": 7018,
+      "ticks": 639311177170885660
+    },
+    {
+      "kind": "npm",
+      "name": "framer-motion",
+      "version": "14.14.0",
+      "key": "4e44521f622c4130c1dd5289",
+      "own": false,
+      "source": "npm:framer-motion@14.14.0",
+      "size": 5418,
+      "ticks": 639310385343049259
+    },
+    {
+      "kind": "npm",
+      "name": "jattac-web-poller",
+      "version": "1.0.0",
+      "key": "602b0d3242625bac6a9c7c88",
+      "own": false,
+      "source": "npm:jattac-web-poller@1.0.0",
+      "size": 961,
+      "ticks": 639310385141123698
+    },
+    {
+      "kind": "npm",
+      "name": "jattac.libs.web.zest-tabs",
+      "version": "0.5.0",
+      "key": "6e9716056810269cf127294e",
+      "own": false,
+      "source": "npm:jattac.libs.web.zest-tabs@0.5.0",
+      "size": 1829,
+      "ticks": 639310385141183727
+    },
+    {
+      "kind": "npm",
+      "name": "marked",
+      "version": "18.3.0",
+      "key": "45aad55bf9c35c2c1c15b27d",
+      "own": false,
+      "source": "npm:marked@18.3.0",
+      "size": 3407,
+      "ticks": 639311177170474486
+    },
+    {
+      "kind": "npm",
+      "name": "react",
+      "version": "18.3.1",
+      "key": "d4e68a5c96babb20cad1daaf",
+      "own": false,
+      "source": "npm:react@18.3.1",
+      "size": 999,
+      "ticks": 639310243617346238
+    },
+    {
+      "kind": "npm",
+      "name": "react-dom",
+      "version": "18.3.1",
+      "key": "d2f29e31bd48b833e48cd7bb",
+      "own": false,
+      "source": "npm:react-dom@18.3.1",
+      "size": 1353,
+      "ticks": 639310243653123255
+    },
+    {
+      "kind": "npm",
+      "name": "@resvg/resvg-js",
+      "version": "2.6.2",
+      "key": "f002e9aec23b3e04de120fe8",
+      "own": false,
+      "source": "npm:@resvg/resvg-js@2.6.2",
+      "size": 4786,
+      "ticks": 639310243593258543
+    },
+    {
+      "kind": "npm",
+      "name": "@tauri-apps/cli",
+      "version": "2.12.6",
+      "key": "119e38f5d4b9f7cdaa6e21cc",
+      "own": false,
+      "source": "npm:@tauri-apps/cli@2.12.6",
+      "size": 2457,
+      "ticks": 639310243607070746
+    },
+    {
+      "kind": "npm",
+      "name": "@testing-library/dom",
+      "version": "10.4.2",
+      "key": "b7c97757aa921bbb2350be7c",
+      "own": false,
+      "source": "npm:@testing-library/dom@10.4.2",
+      "size": 3430,
+      "ticks": 639311150587899775
+    },
+    {
+      "kind": "npm",
+      "name": "@testing-library/jest-dom",
+      "version": "6.9.1",
+      "key": "0ed3e43d21b123f833fe61cf",
+      "own": false,
+      "source": "npm:@testing-library/jest-dom@6.9.1",
+      "size": 3906,
+      "ticks": 639310243599587198
+    },
+    {
+      "kind": "npm",
+      "name": "@testing-library/react",
+      "version": "16.3.3",
+      "key": "935733dd191c5880306bf75c",
+      "own": false,
+      "source": "npm:@testing-library/react@16.3.3",
+      "size": 3469,
+      "ticks": 639310243608357299
+    },
+    {
+      "kind": "npm",
+      "name": "@testing-library/user-event",
+      "version": "14.6.13",
+      "key": "f2c71ad03253ea6718b33eed",
+      "own": false,
+      "source": "npm:@testing-library/user-event@14.6.13",
+      "size": 3360,
+      "ticks": 639310243683251372
+    },
+    {
+      "kind": "npm",
+      "name": "@types/react",
+      "version": "18.3.31",
+      "key": "b315f5b5d4663453ca6dd2d5",
+      "own": false,
+      "source": "npm:@types/react@18.3.31",
+      "size": 6010,
+      "ticks": 639310243602046003
+    },
+    {
+      "kind": "npm",
+      "name": "@types/react-dom",
+      "version": "18.3.7",
+      "key": "1778b1158a968692bcd66e71",
+      "own": false,
+      "source": "npm:@types/react-dom@18.3.7",
+      "size": 2399,
+      "ticks": 639310243595315165
+    },
+    {
+      "kind": "npm",
+      "name": "@vitejs/plugin-react",
+      "version": "4.7.0",
+      "key": "aa16559e9603ebc5e7c72b11",
+      "own": false,
+      "source": "npm:@vitejs/plugin-react@4.7.0",
+      "size": 1743,
+      "ticks": 639310243595285160
+    },
+    {
+      "kind": "npm",
+      "name": "jsdom",
+      "version": "25.0.1",
+      "key": "a6c20d5b30fe842827dcad28",
+      "own": false,
+      "source": "npm:jsdom@25.0.1",
+      "size": 2962,
+      "ticks": 639310243701754959
+    },
+    {
+      "kind": "npm",
+      "name": "typescript",
+      "version": "5.9.3",
+      "key": "822ef7ca6452205657b6288b",
+      "own": false,
+      "source": "npm:typescript@5.9.3",
+      "size": 3620,
+      "ticks": 639310243686893841
+    },
+    {
+      "kind": "npm",
+      "name": "vite",
+      "version": "5.4.21",
+      "key": "bf34d33e730737b3fbf5605c",
+      "own": false,
+      "source": "npm:vite@5.4.21",
+      "size": 4893,
+      "ticks": 639310243637307684
+    },
+    {
+      "kind": "npm",
+      "name": "vitest",
+      "version": "2.1.9",
+      "key": "25e4990e0264f2b8717e69f4",
+      "own": false,
+      "source": "npm:vitest@2.1.9",
+      "size": 4995,
+      "ticks": 639310243646617551
+    }
+  ],
+  "missing": [],
+  "incomplete": false,
+  "newlyRead": 0
+}

@@ -1,0 +1,1364 @@
+{
+  "facts": [
+    {
+      "text": "top bar has sidebar toggle, logo, name, Shell select, Editor, Updates, Refresh, Help, ThemePicker, light/dark toggle, \u002B App (lines 300-363); only paneCollapsed is persisted, in localStorage key td.sidebarCollapsed (45-52, 110-118).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "381a0d08af877c337493"
+        }
+      ],
+      "at": "2026-11-25T15:42:25.9867555+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "app view stacks AppHeader, GitBar, empty state, TabStrip, terminal area, ConsoleNav and GitDrawer (451-531); GitDrawer shows only when gitTab is set (62, 531).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "381a0d08af877c337493"
+        }
+      ],
+      "at": "2026-11-25T15:42:26.0026896+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "gitTab, help, updateOpen, finderOpen and manualCheck are plain useState flags, not persisted (62-66).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "381a0d08af877c337493"
+        }
+      ],
+      "at": "2026-11-25T15:42:26.0156541+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "window keydown handler only handles Ctrl\u002BB and F5 (120-134).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "381a0d08af877c337493"
+        }
+      ],
+      "at": "2026-11-25T15:42:26.0276958+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "banners are lock, job warning, update, manual-check up-to-date, manual-check error and load error (365-405).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "381a0d08af877c337493"
+        }
+      ],
+      "at": "2026-11-25T15:42:26.0391892+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "custom key handler passes only F5 and Ctrl\u002BB through to the app; every other Ctrl key goes to the shell, so new app shortcuts must be added there (74-91).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/terminals/TerminalHost.tsx",
+          "hash": "85382b955bd4a10e14c7"
+        }
+      ],
+      "at": "2026-11-25T15:42:26.0532221+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "window keydown handles Ctrl\u002BS/Shift\u002BS, Ctrl\u002BN, Ctrl\u002BO and Ctrl\u002BW while the editor view is mounted (26-43); Ctrl\u002BO conflicts with the proposed open-editor shortcut.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/editor/EditorView.tsx",
+          "hash": "7c939f62933f153bf167"
+        }
+      ],
+      "at": "2026-11-25T15:42:26.0647626+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "CodeSurface and PreviewPane already use React.lazy \u002B Suspense (11-14, 52-57).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/editor/EditorView.tsx",
+          "hash": "7c939f62933f153bf167"
+        }
+      ],
+      "at": "2026-11-25T15:42:26.0769941+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "renders nothing without repo info; otherwise shows branch pill, ahead/behind, refresh, fetch/pull/push/sync and Changes/History/Console (18-101).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/git/GitBar.tsx",
+          "hash": "cec24573fbb99a1727b9"
+        }
+      ],
+      "at": "2026-11-25T15:42:26.114329+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "Config = version, theme, shell, lastRunning, apps, update; additive fields keep CONFIG_VERSION=1; normalize() fixes unknown theme/shell and stale lastRunning (79-139).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/model.rs",
+          "hash": "b7bf600d9a49d61df26d"
+        }
+      ],
+      "at": "2026-11-25T15:42:26.1255948+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "consoles are session-only useState, not persisted; saveApps/setTheme/setShell/setUpdateSettings call src/api and update local config (61-310).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/useLauncher.ts",
+          "hash": "5f3d9df6c1739be96704"
+        }
+      ],
+      "at": "2026-11-25T15:42:26.1376359+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "top bar is lines 300-363; no footer element exists anywhere in src or index.html.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "381a0d08af877c337493"
+        }
+      ],
+      "at": "2026-11-25T16:41:09.5864866+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "returns null without repo info; render full tools by default so git.test.tsx keeps passing; add optional collapsed prop for the app view.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/git/GitBar.tsx",
+          "hash": "cec24573fbb99a1727b9"
+        }
+      ],
+      "at": "2026-11-25T16:41:09.603025+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "named export rendered only when gitTab is set; React.lazy needs .then((m) =\u003E ({ default: m.GitDrawer })).",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/git/GitDrawer.tsx",
+          "hash": "edb96e6770e509f796f1"
+        }
+      ],
+      "at": "2026-11-25T16:41:09.6206591+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "attachCustomKeyEventHandler at 74-91 passes only F5 and Ctrl\u002BB to the app; every new app shortcut must be added there.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/terminals/TerminalHost.tsx",
+          "hash": "85382b955bd4a10e14c7"
+        }
+      ],
+      "at": "2026-11-25T16:41:09.6377133+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "window keydown at 26-43 handles Ctrl\u002BS/Shift\u002BS/N/O/W, ignores Alt, and does not preventDefault unknown keys, so Ctrl\u002BShift\u002BP bubbles to App.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/editor/EditorView.tsx",
+          "hash": "7c939f62933f153bf167"
+        }
+      ],
+      "at": "2026-11-25T16:41:09.6531221+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "named export only rendered while the Console tab is selected; lazy needs .then((m) =\u003E ({ default: m.ConsoleNav })).",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/terminals/ConsoleNav.tsx",
+          "hash": "405649aa92db96fcf435"
+        }
+      ],
+      "at": "2026-11-25T16:41:09.6699176+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "named export rendered over main while editing; lazy needs .then((m) =\u003E ({ default: m.EditPane })).",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/EditPane.tsx",
+          "hash": "bda42348d57aeade840e"
+        }
+      ],
+      "at": "2026-11-25T16:41:09.6841388+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "named export rendered inside Dialog while finderOpen; lazy needs .then((m) =\u003E ({ default: m.ThemeFinder })).",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/themes/ThemeFinder.tsx",
+          "hash": "a08f39d97f3e348abe76"
+        }
+      ],
+      "at": "2026-11-25T16:41:09.6972824+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "45-52 and 110-118 persist sidebar collapsed in localStorage key td.sidebarCollapsed; gitTab/help/updateOpen/finderOpen/manualCheck are plain useState and not persisted.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "381a0d08af877c337493"
+        }
+      ],
+      "at": "2026-11-25T16:41:09.7106175+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "Git tests click Sync/Pull/Changes/Console directly after openApp; expand the chip first, and use findByRole for a lazy ConsoleNav.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.features.test.tsx",
+          "hash": "c985878bf4b8b9f17ec6"
+        }
+      ],
+      "at": "2026-11-25T16:41:09.7250781+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "clicks the Editor button twice without reopening a menu; update both clicks if Editor moves into Utilities.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.editor.test.tsx",
+          "hash": "22ed36711aa8fc50de7e"
+        }
+      ],
+      "at": "2026-11-25T16:41:09.739109+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "clicks Help directly; App.updatecheck.test.tsx clicks Check for updates directly; both move into Utilities in this revision.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.updates.test.tsx",
+          "hash": "0231d1e6fa3005601535"
+        }
+      ],
+      "at": "2026-11-25T16:41:09.7543348+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "no cmdk, Radix, react-hotkeys-hook or jattac overflow-menu/zest-button installed; only jattac.libs.web.zest-tabs and jattac-web-poller are present.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "package.json",
+          "hash": "4e8da0405b6fe73dd932"
+        }
+      ],
+      "at": "2026-11-25T16:41:09.7664822+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "The design puts AppShell at src/App.tsx.",
+      "role": "planchecker",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "381a0d08af877c337493"
+        }
+      ],
+      "at": "2026-11-25T16:45:39.3918182+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "The design puts AppShellStyles at src/App.module.css.",
+      "role": "planchecker",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.module.css",
+          "hash": "9211bbd8b9f66e5109ea"
+        }
+      ],
+      "at": "2026-11-25T16:45:39.4058453+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "The design puts GitBarChip at src/features/git/GitBar.tsx.",
+      "role": "planchecker",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/git/GitBar.tsx",
+          "hash": "cec24573fbb99a1727b9"
+        }
+      ],
+      "at": "2026-11-25T16:45:39.5451858+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "The design puts GitChipStyles at src/features/git/Git.module.css.",
+      "role": "planchecker",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/git/Git.module.css",
+          "hash": "f8a185df399fc3e0d11a"
+        }
+      ],
+      "at": "2026-11-25T16:45:39.560184+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "The design puts TerminalPassThrough at src/features/terminals/TerminalHost.tsx.",
+      "role": "planchecker",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/terminals/TerminalHost.tsx",
+          "hash": "85382b955bd4a10e14c7"
+        }
+      ],
+      "at": "2026-11-25T16:45:39.5723681+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "The design puts AppEditorTestsUpdate at src/App.editor.test.tsx.",
+      "role": "planchecker",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.editor.test.tsx",
+          "hash": "22ed36711aa8fc50de7e"
+        }
+      ],
+      "at": "2026-11-25T16:45:39.7067605+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "The design puts AppFeaturesTestsUpdate at src/App.features.test.tsx.",
+      "role": "planchecker",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.features.test.tsx",
+          "hash": "c985878bf4b8b9f17ec6"
+        }
+      ],
+      "at": "2026-11-25T16:45:39.7208187+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "The design puts AppUpdateCheckTestsUpdate at src/App.updatecheck.test.tsx.",
+      "role": "planchecker",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.updatecheck.test.tsx",
+          "hash": "60a6407536204fa41c21"
+        }
+      ],
+      "at": "2026-11-25T16:45:39.7371409+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "The design puts AppUpdatesTestsUpdate at src/App.updates.test.tsx.",
+      "role": "planchecker",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.updates.test.tsx",
+          "hash": "0231d1e6fa3005601535"
+        }
+      ],
+      "at": "2026-11-25T16:45:39.7503151+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "The design puts AppThemesTestsUpdate at src/App.themes.test.tsx.",
+      "role": "planchecker",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.themes.test.tsx",
+          "hash": "b462a44d9330ba805e55"
+        }
+      ],
+      "at": "2026-11-25T16:45:39.7660695+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "The design puts AppTestsUpdate at src/App.test.tsx.",
+      "role": "planchecker",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.test.tsx",
+          "hash": "80118d34d447618ab39f"
+        }
+      ],
+      "at": "2026-11-25T16:45:39.7828895+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "four groups Brand/Appearance/Create/Utilities; Utilities trigger is a button whose aria-label becomes \u0022Utilities, update \u003Cv\u003E available\u0022 when an update waits.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/TopBar.tsx",
+          "hash": "dc2f04686ecff259bc79"
+        }
+      ],
+      "at": "2026-11-25T17:14:40.7865145+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "menu is conditionally rendered (closed =\u003E no menuitem in DOM); items have aria-labels Editor, Check for updates, Refresh everything, Help.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/UtilitiesMenu.tsx",
+          "hash": "2fbe6afa1b76d0cb5db0"
+        }
+      ],
+      "at": "2026-11-25T17:14:40.8027823+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "persistent footer is role contentinfo aria-label \u0022Status\u0022 and shows \u0022v\u003Cversion\u003E\u0022 (or \u0022version unknown\u0022), no controls.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/AppFooter.tsx",
+          "hash": "34675ae4c29d4e390ef2"
+        }
+      ],
+      "at": "2026-11-25T17:14:40.8225409+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "header now renders TopBar and the footer sits after the body; Editor/Updates/Refresh/Help moved into the Utilities menu.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "481eecc7424a935fb299"
+        }
+      ],
+      "at": "2026-11-25T17:14:40.8376073+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "EditPane, GitDrawer, ConsoleNav and the ThemeFinder body are React.lazy under Suspense, so tests opening them must await findBy*.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "481eecc7424a935fb299"
+        }
+      ],
+      "at": "2026-11-25T17:14:40.8504959+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "the R1 plan; App.test.tsx reads it through import.meta.glob(\u0022?raw\u0022) because @types/node is not installed.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "docs/ui-tidy-up-plan.md",
+          "hash": "6892d3b24a67bec4cef7"
+        }
+      ],
+      "at": "2026-11-25T17:14:40.8629577+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "App.test mocks listShells; Utilities must be opened before clicking Editor/Check for updates/Refresh everything/Help.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.test.tsx",
+          "hash": "f4bd0b55ab7259c38fa3"
+        }
+      ],
+      "at": "2026-11-25T17:14:40.8748658+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "Refresh-everything and the lazy Console list now need the Utilities menu and findByRole respectively.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.features.test.tsx",
+          "hash": "e1c6b297835592a99c4a"
+        }
+      ],
+      "at": "2026-11-25T17:14:40.8885426+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "APP_SHORTCUTS \u002B matchShortcut/isAppShortcut; Ctrl\u002BB, F5, Ctrl\u002BShift\u002BP, Ctrl\u002BAlt\u002BT; Ctrl\u002BO/S/N/W deliberately unmatched.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/shared/shortcuts.ts",
+          "hash": "70799bde5b2665706da5"
+        }
+      ],
+      "at": "2026-11-25T17:23:51.2084268+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "props actions[{id,label,shortcut?,run}] \u002B onClose; Escape/backdrop close, choose runs then closes.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "ed0c0d68277b3b11fcee"
+        }
+      ],
+      "at": "2026-11-25T17:23:51.2227091+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "optional collapsible/defaultCollapsed; defaults keep the full tools expanded for existing callers; chip keeps pill/counts/refresh.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/git/GitBar.tsx",
+          "hash": "3771b5d9bf3e6c5f39b6"
+        }
+      ],
+      "at": "2026-11-25T17:23:51.2393769+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "attachCustomKeyEventHandler returns false for isAppShortcut on keydown, then keeps existing Ctrl\u002BC/V handling.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/terminals/TerminalHost.tsx",
+          "hash": "2cd668bee9de53e7c78a"
+        }
+      ],
+      "at": "2026-11-25T17:23:51.2551351+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "window keydown now dispatches matchShortcut -\u003E toggleSidebar/refresh/palette/theme; CommandPalette is lazy and mounted only while paletteOpen.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "a902d42a82b3d2b3d300"
+        }
+      ],
+      "at": "2026-11-25T17:36:08.3358138+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "app view renders GitBar with collapsible defaultCollapsed, so tools start as a chip; tests must click \u0027Show git tools\u0027 before Fetch/Pull/Changes/Console.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "a902d42a82b3d2b3d300"
+        }
+      ],
+      "at": "2026-11-25T17:36:08.3517836+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "mocks api/editor \u002B CodeSurface; a pending file opens the editor immediately so do not wait for the Home heading.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.shortcuts.test.tsx",
+          "hash": "b0c7ba76c54187b666c0"
+        }
+      ],
+      "at": "2026-11-25T17:36:08.3682657+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "the theme test mock returns no shells by default, so a shell-change assertion must seed listShells first.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.themes.test.tsx",
+          "hash": "1d01e13c069d8b01b7f2"
+        }
+      ],
+      "at": "2026-11-25T17:43:55.0382243+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "matchShortcut matches F5 regardless of modifiers and ignores metaKey; the terminal hands any matching key to the window.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/shared/shortcuts.ts",
+          "hash": "70799bde5b2665706da5"
+        }
+      ],
+      "at": "2026-11-25T17:50:43.8511419+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "the new window keydown handler calls preventDefault for every app shortcut but has no e.repeat guard and does not check whether focus is in an input.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "a902d42a82b3d2b3d300"
+        }
+      ],
+      "at": "2026-11-25T17:50:43.8689223+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "Escape and click-outside listeners exist only while open and are removed on close; update version is rendered as text via aria-label.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/UtilitiesMenu.tsx",
+          "hash": "2fbe6afa1b76d0cb5db0"
+        }
+      ],
+      "at": "2026-11-25T17:50:43.886028+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "renders only static action labels/shortcuts as React text (no HTML sink); Escape and backdrop mousedown call onClose.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "ed0c0d68277b3b11fcee"
+        }
+      ],
+      "at": "2026-11-25T17:50:43.8996702+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "R5 lazy() covers ConsoleNav, EditPane, GitDrawer, ThemeFinder, CommandPalette (41-45); Help and UpdateDialog stay eager (16, 654, 671).",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "a902d42a82b3d2b3d300"
+        }
+      ],
+      "at": "2026-11-25T17:52:30.074205+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "R1 plan tests only use expect(plan).toContain(...) via import.meta.glob raw; they cannot detect a duplicated entry.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.test.tsx",
+          "hash": "f4bd0b55ab7259c38fa3"
+        }
+      ],
+      "at": "2026-11-25T17:52:30.0891024+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "header is display:flex; flex-wrap:wrap; groups min-width:0, so the wrap edge case lives only in CSS, not in a test.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/TopBar.module.css",
+          "hash": "763c271a162086b8c21e"
+        }
+      ],
+      "at": "2026-11-25T17:52:30.1052236+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "only ConsoleNav, EditPane, GitDrawer, ThemeFinder and CommandPalette are React.lazy; all eight modal dialogs stay inline in the eagerly loaded App module, so the initial chunk carries them.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "a902d42a82b3d2b3d300"
+        }
+      ],
+      "at": "2026-11-25T18:01:25.832705+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "\u00A77 claims the initial view carries no dialog bodies (false), \u00A710 defers the running-app sign-off to \u0022the merge gate\u0022, and BranchMenu is listed twice (P9 and D10).",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "docs/ui-tidy-up-plan.md",
+          "hash": "6892d3b24a67bec4cef7"
+        }
+      ],
+      "at": "2026-11-25T18:01:25.8522148+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "only Escape is handled; the list runs on click, with no arrow/Enter selection or focus containment.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "ed0c0d68277b3b11fcee"
+        }
+      ],
+      "at": "2026-11-25T18:01:25.8695855+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "the collapsible tools state is seeded once per mount and App renders GitBar without a key, so it survives switching apps.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/git/GitBar.tsx",
+          "hash": "3771b5d9bf3e6c5f39b6"
+        }
+      ],
+      "at": "2026-11-25T18:01:25.8862175+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "UpdateBanner/UpdateDialog (UpdateUI) and HelpDialog (exported by CommandPalette.tsx) are React.lazy; Help shares the palette chunk; tests must await them.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "2985ece12d8065f8acff"
+        }
+      ],
+      "at": "2026-11-25T18:17:48.6790729+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "also exports HelpDialog (version/autoCheck/phase/upToDate/available/error/onAutoCheck/onCheckNow/onClose); .help styles live in CommandPalette.module.css.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "4de72785c7046fe80bf1"
+        }
+      ],
+      "at": "2026-11-25T18:17:48.6975886+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "vi.mock wrappers push {name, atImport} when each on-demand module is first evaluated; asserts none is pulled in at App import (R5), factories return the real module.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.test.tsx",
+          "hash": "91ae03a6e592892e03d2"
+        }
+      ],
+      "at": "2026-11-25T18:17:48.7137148+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "\u00A77/D8/D9 now say the Help and Update dialog bodies and UpdateUI are lazy, loaded on demand.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "docs/ui-tidy-up-plan.md",
+          "hash": "bd9523903201f5854e17"
+        }
+      ],
+      "at": "2026-11-25T18:17:48.7302291+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "R5 lazy() covers ConsoleNav, EditPane, GitDrawer, ThemeFinder, CommandPalette, UpdateBanner, UpdateDialog and HelpDialog (40-49); UpdateUI/Help bodies no longer eager.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "2985ece12d8065f8acff"
+        }
+      ],
+      "at": "2026-11-25T18:22:54.0191116+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "vi.mock evaluation probes (54-82) set atImport false right after \u0060import { App }\u0060; the R5 test (339-352) fails if any on-demand module is imported eagerly.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.test.tsx",
+          "hash": "91ae03a6e592892e03d2"
+        }
+      ],
+      "at": "2026-11-25T18:22:54.0352866+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "R1 plan tests (262-298) only use expect(plan).toContain(...) via import.meta.glob raw; they cannot detect a duplicated plan entry.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.test.tsx",
+          "hash": "91ae03a6e592892e03d2"
+        }
+      ],
+      "at": "2026-11-25T18:22:54.0489056+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "the Switch branch popover is listed twice, at P9 (line 54) and D10 (line 82), against R1 \u0022exactly one place\u0022.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "docs/ui-tidy-up-plan.md",
+          "hash": "bd9523903201f5854e17"
+        }
+      ],
+      "at": "2026-11-25T18:22:54.0637746+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "BranchMenu popover is now only P9 (line 54); D10 removed so the dialog table is D1-D9.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "docs/ui-tidy-up-plan.md",
+          "hash": "c7f8ff1ae2050da3bad6"
+        }
+      ],
+      "at": "2026-11-25T18:30:53.3099883+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "R1 uniqueness test (325-341) parses S/P/D/B/numbered rows and asserts each *.tsx basename appears exactly once; re-adding a duplicate row fails it.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.test.tsx",
+          "hash": "cc1c9b4a472771f94053"
+        }
+      ],
+      "at": "2026-11-25T18:30:53.3260387+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "also exports ConfirmDialogs; the six yes/no dialogs live there so their bodies share the palette\u0027s lazy chunk (App.test probe names it CommandPalette).",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "11dffeedbc82ac75969b"
+        }
+      ],
+      "at": "2026-11-25T18:41:29.2609662+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "confirmations now render via lazy ConfirmDialogs under Suspense; App.test\u0027s R5 case opens the quit dialog to prove the chunk is not in the initial view.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "8d605b2c78015f5dba73"
+        }
+      ],
+      "at": "2026-11-25T18:41:29.2765319+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "D2-D7 and the lazy table now say every dialog body is code-split; initial view carries no confirmation text.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "docs/ui-tidy-up-plan.md",
+          "hash": "5b330208d0a855f2bd08"
+        }
+      ],
+      "at": "2026-11-25T18:41:29.2921626+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "section 10 records real on-screen observations captured by rendering the built dist/ bundle at 1280x800 and 900x560 (scenes/ in the developer scratch); no merge-gate deferral remains.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "docs/ui-tidy-up-plan.md",
+          "hash": "474d3a17ea645aa8a280"
+        }
+      ],
+      "at": "2026-11-25T18:54:34.2145647+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "one registry (toggleSidebar Ctrl\u002BB, refresh F5, commandPalette Ctrl\u002BShift\u002BP, toggleTheme Ctrl\u002BAlt\u002BT); isAppShortcut lets TerminalHost release those keys to the window.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/shared/shortcuts.ts",
+          "hash": "70799bde5b2665706da5"
+        }
+      ],
+      "at": "2026-11-25T19:00:32.401914+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "global keydown effect registers once (empty deps) and preventDefault only for matched app shortcuts; only td.sidebarCollapsed is written to localStorage (no user data).",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "8d605b2c78015f5dba73"
+        }
+      ],
+      "at": "2026-11-25T19:00:32.4176845+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "renders labels/shortcuts from internal constants as JSX text; no markup injection, no user-controlled HTML.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "11dffeedbc82ac75969b"
+        }
+      ],
+      "at": "2026-11-25T19:00:32.4328144+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "menu state/listeners local and cleaned up; renders props as text only, no dangerouslySetInnerHTML or external fetch.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/UtilitiesMenu.tsx",
+          "hash": "2fbe6afa1b76d0cb5db0"
+        }
+      ],
+      "at": "2026-11-25T19:00:32.4507313+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "regrouped controls are plain JSX; no new network calls, secrets, or auth surface.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/TopBar.tsx",
+          "hash": "dc2f04686ecff259bc79"
+        }
+      ],
+      "at": "2026-11-25T19:00:32.4657775+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "ConfirmDialogs, HelpDialog, UpdateDialog and UpdateBanner are now React.lazy (lines 47-52); a vite build puts none of the confirm/help/update body text in the entry index-*.js chunk, it lands in the CommandPalette chunk.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "8d605b2c78015f5dba73"
+        }
+      ],
+      "at": "2026-11-25T19:03:20.4846716+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "ConfirmDialogs and HelpDialog live here (shared on-demand chunk); the palette still has no arrow-key selection or focus trap, only Escape.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "11dffeedbc82ac75969b"
+        }
+      ],
+      "at": "2026-11-25T19:03:20.4993078+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "section 10 (lines 206-227) records the running-app pass per screen and says no check is left to a manual pass; no \u0022merge gate\u0022 text remains.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "docs/ui-tidy-up-plan.md",
+          "hash": "474d3a17ea645aa8a280"
+        }
+      ],
+      "at": "2026-11-25T19:03:20.5142517+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    },
+    {
+      "text": "BranchMenu is inventoried only at P9 (line 54); the dialogs intro (lines 67-72) says it is not repeated in the D table.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "docs/ui-tidy-up-plan.md",
+          "hash": "474d3a17ea645aa8a280"
+        }
+      ],
+      "at": "2026-11-25T19:03:20.5275502+00:00",
+      "runs": [
+        "20261125-153618"
+      ]
+    }
+  ]
+}

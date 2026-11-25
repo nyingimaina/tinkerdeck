@@ -1,0 +1,31 @@
+{
+  "summary": "Fixed QA-1 (R5): the code-splitting is now proven by a test that fails if any on-demand module is eagerly imported, and the Help/Update dialog bodies are no longer carried by the initial view. App.tsx now lazy-loads the whole UpdateUI module (UpdateBanner, UpdateDialog, UpdateSettingsBlock) and a new HelpDialog export; the Help body moved out of App.tsx into src/features/command-palette/CommandPalette.tsx so it shares the palette's on-demand chunk. Each is wrapped in Suspense with a null/panel fallback, and the Utilities trigger keeps the update version visible immediately. Added src/App.test.tsx 'R5: optional panels and the help/update dialog bodies are loaded only when opened, not with the initial view', which uses vi.mock evaluation probes to assert ConsoleNav, EditPane, GitDrawer, ThemeFinder, CommandPalette (palette + Help) and UpdateUI are not evaluated while App's module graph loads, then opens Help and proves the palette chunk loads only then; verified it fails when GitDrawer is made an eager import. Updated docs/ui-tidy-up-plan.md §3 and §7 (D8/D9 plus the load table) to record the Help and Update bodies as lazy. No Rust, src/api, permission, CSP or dependency changes. npm run lint clean, npm test 389 passing in 42 files, npm run build succeeds; the built main chunk no longer contains the Help text and UpdateUI/CommandPalette are separate chunks.",
+  "tests": [
+    { "name": "R1: the tidy-up plan names every screen, panel, dialog, footer element, top-bar control and shortcut", "file": "src/App.test.tsx", "requirements": ["R1"] },
+    { "name": "R1: the plan states each part's group, default visibility, how it is hidden again, remembered state, entry, laziness and package choice", "file": "src/App.test.tsx", "requirements": ["R1"] },
+    { "name": "R3: Shell and Theme sit in the visible Appearance group, reachable without opening a dialog or the Utilities menu", "file": "src/App.themes.test.tsx", "requirements": ["R3"] },
+    { "name": "R3: groups related controls into named groups and keeps Shell, Theme and the primary actions directly reachable", "file": "src/features/apps/TopBar.test.tsx", "requirements": ["R3"] },
+    { "name": "R3: hides the advanced controls until Utilities is opened, and every hidden control has its way back", "file": "src/features/apps/TopBar.test.tsx", "requirements": ["R3"] },
+    { "name": "R3: an available update stays noticeable while Updates sits inside Utilities", "file": "src/features/apps/TopBar.test.tsx", "requirements": ["R3"] },
+    { "name": "R3: keeps every group in the header flow so a narrow window wraps instead of clipping them", "file": "src/features/apps/TopBar.test.tsx", "requirements": ["R3"] },
+    { "name": "R3: is hidden until it is opened and is hidden again with Escape", "file": "src/features/apps/UtilitiesMenu.test.tsx", "requirements": ["R3"] },
+    { "name": "R3: clicking outside hides it again", "file": "src/features/apps/UtilitiesMenu.test.tsx", "requirements": ["R3"] },
+    { "name": "R3: choosing an action runs it once and closes the menu", "file": "src/features/apps/UtilitiesMenu.test.tsx", "requirements": ["R3"] },
+    { "name": "R3: the Updates item is disabled while a check runs and shows the waiting version otherwise", "file": "src/features/apps/UtilitiesMenu.test.tsx", "requirements": ["R3"] },
+    { "name": "R5: starts collapsed when asked, keeping branch, dirty marker, ahead/behind and refresh visible", "file": "src/features/git/GitBar.collapse.test.tsx", "requirements": ["R5"] },
+    { "name": "R5: the chip control expands the tools and collapses them back to the same state", "file": "src/features/git/GitBar.collapse.test.tsx", "requirements": ["R5"] },
+    { "name": "R5: a collapsed chip stays out of the way outside a repository", "file": "src/features/git/GitBar.collapse.test.tsx", "requirements": ["R5"] },
+    { "name": "A5: existing callers still get the full tools expanded, so no control changes behaviour", "file": "src/features/git/GitBar.collapse.test.tsx", "requirements": ["R2"] },
+    { "name": "R5: the git drawer stays hidden until opened and returns to hidden when closed", "file": "src/App.features.test.tsx", "requirements": ["R5"] },
+    { "name": "R4: Ctrl+B and F5 keep working after the header regroup", "file": "src/App.features.test.tsx", "requirements": ["R4"] },
+    { "name": "R5: an app view starts with the git tools collapsed behind the branch chip and they hide again on demand", "file": "src/App.shortcuts.test.tsx", "requirements": ["R5"] },
+    { "name": "R2: the footer stays visible and the editor stays its own full view while optional parts are hidden", "file": "src/App.shortcuts.test.tsx", "requirements": ["R2"] },
+    { "name": "R2: keeps a persistent status footer that shows the app version", "file": "src/features/apps/AppFooter.test.tsx", "requirements": ["R2"] },
+    { "name": "R2: adds no control that duplicates a primary action", "file": "src/features/apps/AppFooter.test.tsx", "requirements": ["R2"] },
+    { "name": "R2: says so plainly when the version is not available", "file": "src/features/apps/AppFooter.test.tsx", "requirements": ["R2"] },
+    { "name": "R2: the persistent footer is visible on Home, the app view and the separate editor view", "file": "src/App.test.tsx", "requirements": ["R2"] },
+    { "name": "R5: optional panels and the help/update dialog bodies are loaded only when opened, not with the initial view", "file": "src/App.test.tsx", "requirements": ["R5"] },
+    { "name": "A3/A5: keeps the existing Ctrl+C selection copy and Ctrl+V paste behaviour", "file": "src/features/terminals/TerminalHost.shortcuts.test.tsx", "requirements": ["R2"] }
+  ],
+  "kickbacks": []
+}

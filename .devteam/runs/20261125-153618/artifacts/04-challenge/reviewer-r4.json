@@ -1,0 +1,10 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "REV-1",
+      "status": "open",
+      "evidence": "The shown code still renders the modal dialog bodies inline in the eagerly loaded App module instead of in lazy modules: `{pendingSave && (` / `<Dialog` / `title=\"Stop running terminals?\"` with the body text `{pendingSave.ids.length} terminal(s) you removed are still running. They will be stopped first.` (lines 557-576), and `{pendingDelete && (` / `<Dialog` / `title={`Delete ${pendingDelete.name}?`}` with the literal body `This removes the app and its terminals from Tinkerdeck. ...` (lines 578-589). Only ThemeFinder (line 552) and the palette (line 545) are wrapped in Suspense/lazy; the dialogs are not, so R5's 'dialogs that are not shown ... lazy-loaded' and its pitfall 'Do not load the ... dialogs as part of the initial view' are still unmet."
+    }
+  ]
+}

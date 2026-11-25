@@ -40,6 +40,12 @@ vi.mock("./features/terminals/TerminalHost", () => ({ TerminalHost: () => <div /
 
 import { App } from "./App";
 
+/** The Updates command now lives in the Utilities menu. */
+async function checkForUpdatesNow() {
+  await userEvent.click(screen.getByRole("button", { name: "Utilities" }));
+  await userEvent.click(screen.getByRole("menuitem", { name: "Check for updates" }));
+}
+
 const info: UpdateInfo = { version: "9.9.9", notes: "New things.", url: "https://x/y.exe", sha256: "a".repeat(64), size: 4_200_000 };
 const view = (): ConfigView => ({
   config: {
@@ -61,7 +67,7 @@ describe("manual update check from the header", () => {
   it("is one click away and says so when you are up to date", async () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
-    await userEvent.click(screen.getByRole("button", { name: "Check for updates" }));
+    await checkForUpdatesNow();
     expect(await screen.findByText(/latest version/i)).toBeTruthy();
     expect(h.api.checkUpdate).toHaveBeenCalledWith(true);
   });
@@ -70,7 +76,7 @@ describe("manual update check from the header", () => {
     h.info = info;
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
-    await userEvent.click(screen.getByRole("button", { name: "Check for updates" }));
+    await checkForUpdatesNow();
     expect(await screen.findByText(/is available\./)).toHaveTextContent("9.9.9");
     expect(screen.queryByText(/latest version/i)).toBeNull();
   });
@@ -79,7 +85,7 @@ describe("manual update check from the header", () => {
     h.fail = "Could not reach the update server.";
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
-    await userEvent.click(screen.getByRole("button", { name: "Check for updates" }));
+    await checkForUpdatesNow();
     expect(await screen.findByText(/Could not reach the update server/)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Dismiss" }));
     await waitFor(() => expect(screen.queryByText(/Could not reach the update server/)).toBeNull());

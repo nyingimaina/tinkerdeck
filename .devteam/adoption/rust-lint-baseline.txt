@@ -1,0 +1,1 @@
+# clippy issues the project had when DevTeam adopted it. They are not judged; any other issue is new.

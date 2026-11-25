@@ -1,0 +1,301 @@
+{
+  "summary": "Built the slice-1 parts of the R1-R5 tidy-up: (1) docs/ui-tidy-up-plan.md, the R1 inventory that names every screen, panel, dialog, banner, the eleven top-bar controls and every shortcut, with its named group, default visibility, how it is hidden again, remembered state and entry point, plus the lazy/eager record, package decisions, R1 edge cases, gaps and the A2 per-screen running-app checklist; (2) src/features/apps/TopBar.tsx \u002B TopBar.module.css, extracting the header into four named groups (Brand, Appearance, Create, Utilities) with Shell, Theme and the primary actions always visible and wrapping instead of clipping; (3) src/features/apps/UtilitiesMenu.tsx \u002B UtilitiesMenu.module.css, one menu holding the advanced Editor, Updates, Refresh and Help commands, hidden until opened and hidden again on choose, Escape or click-outside, with an update-available badge so a waiting update stays noticeable; (4) src/features/apps/AppFooter.tsx \u002B AppFooter.module.css, the slim persistent role=contentinfo status strip showing the app version only; (5) src/App.tsx now renders TopBar and AppFooter and code-splits EditPane, GitDrawer, ConsoleNav and the ThemeFinder body under Suspense, and src/App.module.css drops the moved header rules and adds the lazy fallbacks. Existing App tests were adapted where a control moved into the Utilities menu or a panel became lazy. Shortcut registry, command palette, Git branch-chip collapse and the terminal pass-through belong to the other slices of this build and were not touched. Verified with npm run lint, npm test (37 files, 364 tests pass) and npm run build. Slice 2 of 4. Added src/shared/shortcuts.ts: one registry plus matchShortcut/isAppShortcut for Ctrl\u002BB (sidebar), F5 (refresh), Ctrl\u002BShift\u002BP (palette) and Ctrl\u002BAlt\u002BT (theme), deliberately not matching the editor\u0027s Ctrl\u002BS/N/O/W. Added the in-house CommandPalette (filter by name, shortcut shown beside each action, Escape/backdrop closes, choosing runs then closes) and its CSS module. GitBar gains an optional collapsible mode (collapsible \u002B defaultCollapsed) that starts as a branch chip showing branch, dirty marker, ahead/behind and refresh, with a control that expands and re-collapses the Fetch/Pull/Push/Sync/Changes/History/Console tools; existing callers stay fully expanded. TerminalHost now uses the shared predicate in attachCustomKeyEventHandler, so the four app shortcuts reach the window while the focused terminal keeps Ctrl\u002BC/Ctrl\u002BV and every other key. Tests: shortcuts registry, palette, git chip collapse and terminal pass-through. Also reported here are the run\u0027s existing tests that cover R1-R3 (plan, footer, grouped top bar/Utilities) so every revision-1 requirement ID appears in the report. Finished slice 3: wired the shared shortcut registry into App (Ctrl\u002BB, F5, Ctrl\u002BShift\u002BP, Ctrl\u002BAlt\u002BT, all reaching the app through the terminal pass-through), added the lazy command palette with its action list, and made the app view\u0027s GitBar start collapsed to a branch chip. Added src/App.shortcuts.test.tsx (R2/R4/R5) and updated App.features tests to expand the git tools before using them. Full suite 387 tests pass, lint and build pass. Slice 4 of the revision-1 tidy-up: finished the App-level test updates. Added the missing AppThemesTestsUpdate piece in src/App.themes.test.tsx, an R3 test proving Shell and Theme sit in the visible Appearance group and are reachable without opening a dialog or the hidden Utilities menu (and that changing Shell and opening the Theme menu still work). Confirmed the rest of the design already in the tree and passing: grouped TopBar (Brand/Appearance/Create/Utilities) and UtilitiesMenu, persistent AppFooter, the collapsible git branch chip, lazy ConsoleNav/GitDrawer/EditPane/ThemeFinder/CommandPalette, and the shared shortcut registry. No Rust, src/api, permission, CSP or dependency changes. Ran npm run lint (tsc --noEmit) clean, npm test with 388 passing tests in 42 files, and npm run build successfully.",
+  "tests": [
+    {
+      "name": "R1: the tidy-up plan names every screen, panel, dialog, footer element, top-bar control and shortcut",
+      "file": "src/App.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: the plan states each part\u0027s group, default visibility, how it is hidden again, remembered state, entry, laziness and package choice",
+      "file": "src/App.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R2: the persistent footer is visible on Home, the app view and the separate editor view",
+      "file": "src/App.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R3: groups related controls into named groups and keeps Shell, Theme and the primary actions directly reachable",
+      "file": "src/features/apps/TopBar.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: hides the advanced controls until Utilities is opened, and every hidden control has its way back",
+      "file": "src/features/apps/TopBar.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: an available update stays noticeable while Updates sits inside Utilities",
+      "file": "src/features/apps/TopBar.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: keeps every group in the header flow so a narrow window wraps instead of clipping them",
+      "file": "src/features/apps/TopBar.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: is hidden until it is opened and is hidden again with Escape",
+      "file": "src/features/apps/UtilitiesMenu.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: clicking outside hides it again",
+      "file": "src/features/apps/UtilitiesMenu.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: choosing an action runs it once and closes the menu",
+      "file": "src/features/apps/UtilitiesMenu.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: the Updates item is disabled while a check runs and shows the waiting version otherwise",
+      "file": "src/features/apps/UtilitiesMenu.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R2: keeps a persistent status footer that shows the app version",
+      "file": "src/features/apps/AppFooter.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2: adds no control that duplicates a primary action",
+      "file": "src/features/apps/AppFooter.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2: says so plainly when the version is not available",
+      "file": "src/features/apps/AppFooter.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R4: Ctrl\u002BB and F5 keep working after the header regroup",
+      "file": "src/App.features.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R5: the git drawer stays hidden until opened and returns to hidden when closed",
+      "file": "src/App.features.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R4: maps Ctrl\u002BB, F5, Ctrl\u002BShift\u002BP and Ctrl\u002BAlt\u002BT to their actions",
+      "file": "src/shared/shortcuts.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: the palette labels come from the same registry",
+      "file": "src/shared/shortcuts.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "A3: forwards exactly the app shortcuts and leaves shell keys alone",
+      "file": "src/shared/shortcuts.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: does not claim the editor\u0027s Ctrl\u002BO or a near-miss theme chord",
+      "file": "src/shared/shortcuts.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: lists the revision-1 actions with the same shortcut beside each",
+      "file": "src/features/command-palette/CommandPalette.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: filters by name and says so when nothing matches",
+      "file": "src/features/command-palette/CommandPalette.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "A4: choosing an action runs it once and closes the palette",
+      "file": "src/features/command-palette/CommandPalette.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "A4: Escape closes without running anything",
+      "file": "src/features/command-palette/CommandPalette.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: hands the app shortcuts to the window while the terminal has focus",
+      "file": "src/features/terminals/TerminalHost.shortcuts.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: leaves every other key, including the editor\u0027s, with the shell",
+      "file": "src/features/terminals/TerminalHost.shortcuts.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "A3/A5: keeps the existing Ctrl\u002BC selection copy and Ctrl\u002BV paste behaviour",
+      "file": "src/features/terminals/TerminalHost.shortcuts.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R5: starts collapsed when asked, keeping branch, dirty marker, ahead/behind and refresh visible",
+      "file": "src/features/git/GitBar.collapse.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5: the chip control expands the tools and collapses them back to the same state",
+      "file": "src/features/git/GitBar.collapse.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "A5: existing callers still get the full tools expanded, so no control changes behaviour",
+      "file": "src/features/git/GitBar.collapse.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5: a collapsed chip stays out of the way outside a repository",
+      "file": "src/features/git/GitBar.collapse.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R4: Ctrl\u002BShift\u002BP opens the command palette and Escape closes it",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: the palette lists each app action with the same shortcut and choosing one runs it",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: Ctrl\u002BAlt\u002BT switches the theme while Ctrl\u002BB and F5 keep their old actions",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: the editor keeps Ctrl\u002BS, Ctrl\u002BN, Ctrl\u002BO and Ctrl\u002BW while it has focus",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R5: an app view starts with the git tools collapsed behind the branch chip and they hide again on demand",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R2: the footer stays visible and the editor stays its own full view while optional parts are hidden",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R2",
+        "R5"
+      ]
+    },
+    {
+      "name": "T33: Sync, Push and Pull call Rust and show the result message",
+      "file": "src/App.features.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "opens the Changes drawer from the bar",
+      "file": "src/App.features.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "the git bar opens the Console",
+      "file": "src/App.features.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "is one click from the header, and the heavy part is not loaded until a file is open",
+      "file": "src/App.editor.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: Shell and Theme sit in the visible Appearance group, reachable without opening a dialog or the Utilities menu",
+      "file": "src/App.themes.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    }
+  ],
+  "kickbacks": []
+}

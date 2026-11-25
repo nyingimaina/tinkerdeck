@@ -3,6 +3,7 @@ import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
 import { api, attachTerminal } from "../../api/tauri";
+import { isAppShortcut } from "../../shared/shortcuts";
 import { isUp, type TermState } from "../../state/model";
 import { terminalTheme } from "../../themes/terminal";
 import type { Theme } from "../../themes/types";
@@ -72,8 +73,8 @@ export function TerminalHost({ appId, terminalId, visible, state, theme, palette
       }
     };
     t.attachCustomKeyEventHandler((e) => {
-      // app shortcuts (F5 refresh, Ctrl+B sidebar) belong to the app, not to the shell
-      if (e.type === "keydown" && (e.key === "F5" || (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "b"))) return false;
+      // app shortcuts belong to the app, not to the shell: let them bubble to the window (R4)
+      if (e.type === "keydown" && isAppShortcut(e)) return false;
       if (e.type !== "keydown" || !e.ctrlKey) return true;
       const k = e.key.toLowerCase();
       if (k === "c") {

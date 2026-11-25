@@ -124,4 +124,30 @@ describe("themes in the app", () => {
     await userEvent.click(screen.getByRole("button", { name: "Toggle theme" }));
     expect(h.api.setTheme).toHaveBeenCalledWith("light");
   });
+
+  it("R3: Shell and Theme sit in the visible Appearance group, reachable without opening a dialog or the Utilities menu", async () => {
+    h.api.listShells.mockResolvedValueOnce([
+      { id: "powershell.exe", name: "Windows PowerShell", path: "a" },
+      { id: "pwsh.exe", name: "PowerShell 7", path: "b" },
+    ]);
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+
+    const appearance = screen.getByRole("group", { name: "Appearance" });
+    const shell = within(appearance).getByLabelText("Shell");
+    const theme = within(appearance).getByRole("button", { name: "Theme" });
+    expect(within(appearance).getByRole("button", { name: "Toggle theme" })).toBeInTheDocument();
+
+    // Neither control is behind a dialog or the hidden Utilities menu.
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByRole("menu")).toBeNull();
+
+    await within(appearance).findByRole("option", { name: "PowerShell 7" });
+    await userEvent.selectOptions(shell, "pwsh.exe");
+    expect(h.api.setShell).toHaveBeenCalledWith("pwsh.exe");
+
+    await userEvent.click(theme);
+    const menu = await within(appearance).findByRole("menu");
+    expect(within(menu).getAllByRole("menuitemradio").length).toBeGreaterThan(0);
+  });
 });

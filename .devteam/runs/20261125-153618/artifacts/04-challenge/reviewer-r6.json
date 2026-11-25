@@ -1,0 +1,20 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "REV-1",
+      "status": "fixed",
+      "evidence": "The modal dialog bodies are now lazy modules rendered under Suspense: ConfirmDialogs (src/App.tsx:52, used at 567), HelpDialog (src/App.tsx:49, used at 666) and UpdateDialog (src/App.tsx:48, used at 647) join UpdateBanner (47) next to the existing lazy panels (40-44). ConfirmDialogs and HelpDialog are exported from src/features/command-palette/CommandPalette.tsx (lines 106 and 205), so their bodies share the palette's on-demand chunk. I rebuilt the tree with `npx vite build` (outDir in scratch/reviewer/dist-r6) and searched the entry chunk named by index.html (assets/index-DIaYPJCi.js): none of 'Stop running terminals', 'Switch to', 'Start the apps that were running last time', 'Quit Tinkerdeck', 'Update to', 'An app is a group of terminals', 'This removes the app and its terminals from Tinkerdeck', 'terminal(s) you removed are still running', 'Something may still be running in it', 'Switching branches changes the files' or 'Check for updates automatically' is in the initial chunk; they are all in CommandPalette-yFhYfqFV.js. The plan's section 7 claim that the initial view carries none of the dialog bodies is now true."
+    },
+    {
+      "id": "REV-2",
+      "status": "fixed",
+      "evidence": "docs/ui-tidy-up-plan.md:206-227 is now '10. Running-app verification (A2)': it records the built window bundle (the dist/ assets the Tauri window embeds) being rendered and driven at 1280x800 and 900x560, and gives an on-screen result per screen (four named top-bar groups and the Utilities contents, the collapsed git chip and its expand/collapse toggle, the separate editor view, Utilities > Help, the 900x560 layout, and Ctrl+B collapsing the sidebar), each with the CSS modules behind it. The old 'manual npm run tauri dev sign-off is the merge gate' and 'last gate before merge' wording is gone, and line 227 states no part of the check is left to a later manual pass. The eight screenshots the section refers to exist in scratch/developer/scenes (home-1280.png, home-900.png, appview-1280.png, appview-git-open-1280.png, editor-1280.png, help-1280.png, utilities-open-1280.png, home-ctrlb-1280.png); I opened home-1280.png and it shows the grouped Brand/Appearance/Create/Utilities bar, the Shell select, the theme control, the accent '+ App' and the 'v2.0.0' footer described for Home."
+    },
+    {
+      "id": "REV-3",
+      "status": "fixed",
+      "evidence": "BranchMenu now has exactly one inventory entry: P9 at docs/ui-tidy-up-plan.md:54 ('Branch menu popover ... features/git/BranchMenu.tsx ... a popover, not a modal'). The dialogs intro at lines 67-72 says the branch menu 'is inventoried once, with the panels at P9, and is not repeated here', and the D1-D9 table (lines 74-84) no longer contains a BranchMenu/BranchMenu.tsx row, so the duplicate D10 is gone. The R1 uniqueness test also passes (npm test: 392 tests, 42 files), scanning every inventory row for each *.tsx exactly once."
+    }
+  ]
+}

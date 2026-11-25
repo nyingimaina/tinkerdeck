@@ -1,0 +1,274 @@
+{
+  "summary": "Revision 1 of the tidy-up covers R1-R5 and is window-only; no Rust command, permission, CSP or storage change. First the builder writes docs/ui-tidy-up-plan.md: an inventory of the three screens (home, app, separate editor), the panels (sidebar, AppHeader, GitBar, TabStrip, terminal area, ConsoleNav, GitDrawer, EditPane), the nine dialogs, the six banners, the eleven current top-bar controls and every shortcut, each with its named group, default visibility, how it is hidden again, whether its state is saved and where it is reached from. The plan records that today only CodeSurface and PreviewPane load lazily, everything else is eager, and no footer element exists in the current code. Then the header in src/App.tsx is extracted to a new TopBar with four named groups: Brand (sidebar toggle, logo, name), Appearance (Shell select, ThemePicker, light/dark toggle), Create (+ App), and one Utilities menu holding the advanced controls (Editor, Updates, Refresh, Help). Shell and Theme stay visible so neither goes behind a dialog; the primary actions stay visible: open an app (Home/Sidebar), run a command (terminal tabs and the Console tab), open Git (a visible branch chip), toggle the sidebar (brand button and Ctrl+B). In the app view the GitBar starts collapsed to a branch chip showing branch, dirty marker, ahead/behind and refresh; a control on the chip expands the full fetch/pull/push/sync/Changes/History/Console tools, and the GitDrawer keeps its existing hidden-until-opened behaviour. ConsoleNav, GitDrawer, EditPane and the ThemeFinder body become React.lazy under Suspense, so the initial chunk stops carrying them; UpdateDialog stays with UpdateBanner because the always-needed banner and the dialog live in one module today. A new src/shared/shortcuts.ts registry drives both the window keydown handler and the terminal's pass-through, so Ctrl+B (sidebar), F5 (refresh), Ctrl+Shift+P (palette) and Ctrl+Alt+T (theme) reach the app even when the terminal or editor is focused; the editor keeps Ctrl+S/N/O/W, and no app-level Ctrl+O is added because the editor already owns it. Ctrl+Shift+P opens a small in-house command palette that lists the revision-1 actions with their shortcuts and filters by name (revision 2 expands this under R7). Because R2/R6 name a footer but none exists today, a slim persistent footer strip is added showing the app version; the sidebar toggle that R6 expects lands in revision 2. No npm package is added in this revision: the hand-built Dialog and ThemePicker menu patterns are reused, and jattac overflow-menu/zest-button, cmdk, react-hotkeys-hook and Radix remain candidates for revision 2's R10 package verification against React 18.3 and the Tauri webview. Scale and cost: the palette filters a fixed action list, git data is still fetched only while an app is open, lazy chunks are fetched once and cached by the module loader, no polling or new timers are added, and every menu/document listener is removed on close or unmount.",
+  "impact": {
+    "touches": [
+      "src/App.tsx (header extracted, footer and palette mounted, lazy/Suspense boundaries, shortcut wiring, git-tools open state)",
+      "src/App.module.css (header rules moved out, lazy fallback style added)",
+      "src/features/git/GitBar.tsx and Git.module.css (optional collapsed branch-chip state; default stays expanded for existing callers and tests)",
+      "src/features/terminals/TerminalHost.tsx (pass-through list replaced by the shared shortcut predicate)",
+      "the app view and the top bar (features: apps, git, terminals)",
+      "existing App tests that click controls which move into the Utilities menu or the expanded git tools"
+    ],
+    "reuses": [
+      "React 18 lazy/Suspense, already used in src/features/editor/EditorView.tsx",
+      "src/features/apps/Dialog.tsx modal pattern and src/features/themes/ThemePicker.tsx menu pattern",
+      "src/state/useGit.ts branch/upstream data for the git chip (unchanged)",
+      "src/api/tauri.ts and useLauncher (unchanged; no new command or API type)",
+      "existing CSS variables and App.module.css layout classes",
+      "the existing window keydown listener and localStorage sidebar preference"
+    ],
+    "adds": [
+      "docs/ui-tidy-up-plan.md (the R1 written plan)",
+      "src/features/apps/TopBar.tsx and TopBar.module.css",
+      "src/features/apps/UtilitiesMenu.tsx and UtilitiesMenu.module.css",
+      "src/features/apps/AppFooter.tsx and AppFooter.module.css",
+      "src/shared/shortcuts.ts (registry, matcher and terminal pass-through predicate)",
+      "src/features/command-palette/CommandPalette.tsx and CommandPalette.module.css",
+      "new tests for the top bar, footer, shortcut registry, terminal pass-through, palette and git chip"
+    ]
+  },
+  "scope": [
+    "src/App.tsx",
+    "src/App.module.css",
+    "src/App.test.tsx",
+    "src/App.editor.test.tsx",
+    "src/App.features.test.tsx",
+    "src/App.themes.test.tsx",
+    "src/App.updatecheck.test.tsx",
+    "src/App.updates.test.tsx",
+    "src/App.shortcuts.test.tsx",
+    "src/features/apps/TopBar.tsx",
+    "src/features/apps/TopBar.module.css",
+    "src/features/apps/TopBar.test.tsx",
+    "src/features/apps/UtilitiesMenu.tsx",
+    "src/features/apps/UtilitiesMenu.module.css",
+    "src/features/apps/UtilitiesMenu.test.tsx",
+    "src/features/apps/AppFooter.tsx",
+    "src/features/apps/AppFooter.module.css",
+    "src/features/apps/AppFooter.test.tsx",
+    "src/features/command-palette/CommandPalette.tsx",
+    "src/features/command-palette/CommandPalette.module.css",
+    "src/features/command-palette/CommandPalette.test.tsx",
+    "src/shared/shortcuts.ts",
+    "src/shared/shortcuts.test.ts",
+    "src/features/git/GitBar.tsx",
+    "src/features/git/Git.module.css",
+    "src/features/git/GitBar.collapse.test.tsx",
+    "src/features/terminals/TerminalHost.tsx",
+    "src/features/terminals/TerminalHost.shortcuts.test.tsx",
+    "docs/ui-tidy-up-plan.md"
+  ],
+  "components": [
+    {
+      "name": "TidyUpPlan",
+      "path": "docs/ui-tidy-up-plan.md",
+      "requirements": ["R1", "A2"]
+    },
+    {
+      "name": "AppShell",
+      "path": "src/App.tsx",
+      "requirements": ["R2", "R3", "R4", "R5"]
+    },
+    {
+      "name": "AppShellStyles",
+      "path": "src/App.module.css",
+      "requirements": ["R2", "R3", "R5"]
+    },
+    {
+      "name": "TopBar",
+      "path": "src/features/apps/TopBar.tsx",
+      "requirements": ["R3"]
+    },
+    {
+      "name": "TopBarStyles",
+      "path": "src/features/apps/TopBar.module.css",
+      "requirements": ["R3"]
+    },
+    {
+      "name": "UtilitiesMenu",
+      "path": "src/features/apps/UtilitiesMenu.tsx",
+      "requirements": ["R3"]
+    },
+    {
+      "name": "UtilitiesMenuStyles",
+      "path": "src/features/apps/UtilitiesMenu.module.css",
+      "requirements": ["R3"]
+    },
+    {
+      "name": "AppFooter",
+      "path": "src/features/apps/AppFooter.tsx",
+      "requirements": ["R2", "A1"]
+    },
+    {
+      "name": "AppFooterStyles",
+      "path": "src/features/apps/AppFooter.module.css",
+      "requirements": ["R2", "A1"]
+    },
+    {
+      "name": "Shortcuts",
+      "path": "src/shared/shortcuts.ts",
+      "requirements": ["R4", "A3"]
+    },
+    {
+      "name": "CommandPalette",
+      "path": "src/features/command-palette/CommandPalette.tsx",
+      "requirements": ["R4", "A4"]
+    },
+    {
+      "name": "CommandPaletteStyles",
+      "path": "src/features/command-palette/CommandPalette.module.css",
+      "requirements": ["R4", "A4"]
+    },
+    {
+      "name": "GitBarChip",
+      "path": "src/features/git/GitBar.tsx",
+      "requirements": ["R5"]
+    },
+    {
+      "name": "GitChipStyles",
+      "path": "src/features/git/Git.module.css",
+      "requirements": ["R5"]
+    },
+    {
+      "name": "TerminalPassThrough",
+      "path": "src/features/terminals/TerminalHost.tsx",
+      "requirements": ["R4", "A3"]
+    },
+    {
+      "name": "TopBarTests",
+      "path": "src/features/apps/TopBar.test.tsx",
+      "requirements": ["R3"]
+    },
+    {
+      "name": "UtilitiesMenuTests",
+      "path": "src/features/apps/UtilitiesMenu.test.tsx",
+      "requirements": ["R3"]
+    },
+    {
+      "name": "AppFooterTests",
+      "path": "src/features/apps/AppFooter.test.tsx",
+      "requirements": ["R2", "A1"]
+    },
+    {
+      "name": "ShortcutTests",
+      "path": "src/shared/shortcuts.test.ts",
+      "requirements": ["R4", "A3"]
+    },
+    {
+      "name": "CommandPaletteTests",
+      "path": "src/features/command-palette/CommandPalette.test.tsx",
+      "requirements": ["R4", "A4"]
+    },
+    {
+      "name": "GitBarCollapseTests",
+      "path": "src/features/git/GitBar.collapse.test.tsx",
+      "requirements": ["R5", "A5"]
+    },
+    {
+      "name": "TerminalPassThroughTests",
+      "path": "src/features/terminals/TerminalHost.shortcuts.test.tsx",
+      "requirements": ["R4", "A3", "A5"]
+    },
+    {
+      "name": "AppShortcutTests",
+      "path": "src/App.shortcuts.test.tsx",
+      "requirements": ["R2", "R4", "R5"]
+    },
+    {
+      "name": "AppEditorTestsUpdate",
+      "path": "src/App.editor.test.tsx",
+      "requirements": ["R3", "A5"]
+    },
+    {
+      "name": "AppFeaturesTestsUpdate",
+      "path": "src/App.features.test.tsx",
+      "requirements": ["R3", "R5", "A5"]
+    },
+    {
+      "name": "AppUpdateCheckTestsUpdate",
+      "path": "src/App.updatecheck.test.tsx",
+      "requirements": ["R3"]
+    },
+    {
+      "name": "AppUpdatesTestsUpdate",
+      "path": "src/App.updates.test.tsx",
+      "requirements": ["R3"]
+    },
+    {
+      "name": "AppThemesTestsUpdate",
+      "path": "src/App.themes.test.tsx",
+      "requirements": ["R3"]
+    },
+    {
+      "name": "AppTestsUpdate",
+      "path": "src/App.test.tsx",
+      "requirements": ["R2", "A5"]
+    }
+  ],
+  "additions": [
+    {
+      "id": "A1",
+      "title": "Add the slim persistent footer the requirements keep",
+      "why": "R2 and R6 require a footer to stay visible, but the current code has no footer element at all; a 26px status strip is added so the footer exists now and can carry the sidebar toggle in revision 2.",
+      "parent": "R2",
+      "kind": "behaviour",
+      "touches": ["ui", "tests"],
+      "acceptance": [
+        "A slim footer with role contentinfo is visible on the home, app and editor screens.",
+        "It shows the app version and no controls that duplicate a primary action.",
+        "Hiding optional parts leaves the footer visible."
+      ]
+    },
+    {
+      "id": "A2",
+      "title": "Running-app verification checklist inside the plan",
+      "why": "R1 requires the plan to be checked against the running app, not only src/App.tsx, and an explicit checklist makes that review traceable.",
+      "parent": "R1",
+      "kind": "enabling",
+      "touches": ["none"],
+      "acceptance": [
+        "The plan contains a per-screen checklist naming every top-bar control, panel, dialog, banner and shortcut.",
+        "The checklist records which parts already load lazily and which load eagerly.",
+        "The developer signs the checklist off before the UI change is merged."
+      ]
+    },
+    {
+      "id": "A3",
+      "title": "One shared shortcut registry and terminal pass-through predicate",
+      "why": "R4 requires new shortcuts to reach the app when the terminal has focus; one predicate used by both the window handler and the terminal prevents two key lists from drifting.",
+      "parent": "R4",
+      "kind": "enabling",
+      "touches": ["ui", "tests"],
+      "acceptance": [
+        "src/shared/shortcuts.ts defines the app shortcuts and exports a predicate used by both App and TerminalHost.",
+        "Unit tests cover Ctrl+B, F5, Ctrl+Shift+P and Ctrl+Alt+T passing through, and Ctrl+C/Ctrl+V staying with the shell.",
+        "The editor's Ctrl+S, Ctrl+Shift+S, Ctrl+N, Ctrl+O and Ctrl+W still work while the editor is focused."
+      ]
+    },
+    {
+      "id": "A4",
+      "title": "Minimal command palette so Ctrl+Shift+P does something in revision 1",
+      "why": "R4 requires Ctrl+Shift+P to open a command palette; revision 1 needs a small shell that lists the actions it introduces, while revision 2 expands coverage under R7.",
+      "parent": "R4",
+      "kind": "enabling",
+      "touches": ["ui", "tests"],
+      "acceptance": [
+        "Ctrl+Shift+P opens the palette from the home, app, terminal-focused and editor-focused states.",
+        "The palette lists the revision-1 actions with their shortcuts and filters by name.",
+        "Escape closes it; choosing an action runs it and closes it."
+      ]
+    },
+    {
+      "id": "A5",
+      "title": "Characterization tests before editing merged UI",
+      "why": "USR-004 requires tests that pin today's behaviour before changing merged code, so regrouping and collapsing cannot silently change what existing controls do.",
+      "parent": "R2",
+      "kind": "enabling",
+      "touches": ["tests"],
+      "acceptance": [
+        "Before changing GitBar, TerminalHost or the top bar, tests pin today's branch pill, git buttons, terminal key handling and header actions.",
+        "The full test suite passes before the change and after it."
+      ]
+    }
+  ]
+}

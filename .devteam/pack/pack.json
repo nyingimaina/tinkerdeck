@@ -1,0 +1,1033 @@
+{
+  "id": "tauri-desktop-app",
+  "name": "Tauri desktop app (Rust \u002B React)",
+  "description": "A Windows, macOS or Linux desktop app: Tauri 2 with a Rust core and a React \u002B TypeScript window. Rust is formatted, linted and tested; the window is type-checked and tested; the permissions stay small. Releasing is always your own step.",
+  "prerequisites": {
+    "node": {
+      "what": "Node.js, the program that builds and tests the window (the part you see).",
+      "how": [
+        "Install the current LTS version from https://nodejs.org, then close and reopen the terminal. Check with:  node --version"
+      ]
+    },
+    "npm": {
+      "what": "npm, the package manager that comes with Node.js; it installs the window\u0027s tooling.",
+      "how": [
+        "It is installed together with Node.js (see node above). Check with:  npm --version"
+      ]
+    },
+    "cargo": {
+      "what": "Rust and its build tool (cargo), which compile, check and test the app\u0027s core.",
+      "how": [
+        "Install Rust from https://rustup.rs, then close and reopen the terminal. On Windows it also asks for the Visual Studio Build Tools with \u0027Desktop development with C\u002B\u002B\u0027; accept that.",
+        "Check with:  cargo --version   and add the checkers:  rustup component add rustfmt clippy",
+        "On Windows the window itself needs the WebView2 runtime (already part of Windows 11)."
+      ]
+    }
+  },
+  "index": {
+    "languages": [
+      {
+        "name": "Rust",
+        "extensions": [
+          ".rs"
+        ],
+        "comments": [
+          "//"
+        ],
+        "tests": [
+          "(^|/)tests/",
+          "_test\\.rs$"
+        ],
+        "symbols": [
+          {
+            "kind": "struct",
+            "pattern": "^\\s*(?:pub(?:\\([a-z:]\u002B\\))?\\s\u002B)?struct\\s\u002B(?\u003Cname\u003E[A-Za-z_]\\w*)"
+          },
+          {
+            "kind": "enum",
+            "pattern": "^\\s*(?:pub(?:\\([a-z:]\u002B\\))?\\s\u002B)?enum\\s\u002B(?\u003Cname\u003E[A-Za-z_]\\w*)"
+          },
+          {
+            "kind": "trait",
+            "pattern": "^\\s*(?:pub(?:\\([a-z:]\u002B\\))?\\s\u002B)?trait\\s\u002B(?\u003Cname\u003E[A-Za-z_]\\w*)"
+          },
+          {
+            "kind": "function",
+            "pattern": "^\\s*(?:pub(?:\\([a-z:]\u002B\\))?\\s\u002B)?(?:async\\s\u002B)?(?:unsafe\\s\u002B)?fn\\s\u002B(?\u003Cname\u003E[a-z_]\\w*)"
+          }
+        ],
+        "imports": [
+          {
+            "pattern": "^\\s*(?:pub\\s\u002B)?mod\\s\u002B(?\u003Ctarget\u003E[a-z_]\\w*)\\s*;",
+            "resolve": [
+              {
+                "match": "^(?\u003Cname\u003E.\u002B)$",
+                "to": "{dir}/${name}.rs"
+              },
+              {
+                "match": "^(?\u003Cname\u003E.\u002B)$",
+                "to": "{dir}/${name}/mod.rs"
+              }
+            ]
+          }
+        ],
+        "examples": [
+          {
+            "path": "src-tauri/src/lib.rs",
+            "text": "mod greeting;\n\npub struct Person { pub name: String }\n\npub enum Mood { Happy }\n\npub trait Speaks {\n    fn speak(\u0026self) -\u003E String;\n}\n\npub fn run() {}\n\nasync fn load() {}\n",
+            "context": {
+              "src-tauri/src/greeting.rs": "pub fn hello() {}"
+            },
+            "symbols": [
+              "struct Person",
+              "enum Mood",
+              "trait Speaks",
+              "function speak",
+              "function run",
+              "function load"
+            ],
+            "imports": [
+              "src-tauri/src/greeting.rs"
+            ],
+            "test": false
+          },
+          {
+            "path": "src-tauri/tests/greeting.rs",
+            "text": "#[test]\nfn greets() {}\n",
+            "symbols": [
+              "function greets"
+            ],
+            "test": true
+          }
+        ]
+      }
+    ]
+  },
+  "layout": {
+    "featureRoots": [
+      "src/features",
+      "src-tauri/src/features"
+    ],
+    "sharedRoots": [
+      "src/api",
+      "src/shared",
+      "src-tauri/src/shared"
+    ],
+    "ignore": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/coverage/**",
+      "**/test-results/**",
+      "**/src-tauri/target/**",
+      "**/src-tauri/gen/**",
+      "**/installer/output/**",
+      "**/*.tsbuildinfo",
+      "**/Cargo.lock",
+      "**/package-lock.json",
+      "**/src-tauri/target/**",
+      "**/src-tauri/gen/**",
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/coverage/**",
+      "**/installer/output/**"
+    ]
+  },
+  "rules": [
+    {
+      "id": "PERF-001",
+      "rule": "Do no needless work and use only the memory, network, storage and startup time the feature needs: no repeated identical work, no loop over everything, no polling where an event exists, nothing loaded that is not shown, no unbounded read, query or cache, and everything opened (connection, listener, timer, file) is released. It must still behave when the data or the number of users is a hundred times larger.",
+      "why": "Slow, hungry software costs every user time and money, and what works with ten rows and one user fails at ten thousand.",
+      "plain": "The app stays fast and light, and keeps working when there is a lot more data or many more people.",
+      "appliesTo": [
+        "backend",
+        "frontend",
+        "library"
+      ],
+      "roles": [
+        "analyst",
+        "architect",
+        "developer",
+        "reviewer",
+        "qa"
+      ],
+      "severity": "blocking",
+      "overridable": true,
+      "check": "review",
+      "good": "",
+      "bad": "",
+      "facts": []
+    },
+    {
+      "id": "SEC-001",
+      "rule": "No secrets (passwords, API keys, tokens, connection strings) in source code or committed config.",
+      "why": "Secrets in code end up in git history and leak, and cannot be un-leaked.",
+      "plain": "Passwords and keys must come from settings, never be written into the code.",
+      "appliesTo": [
+        "backend",
+        "frontend",
+        "library"
+      ],
+      "roles": [
+        "developer",
+        "reviewer",
+        "security"
+      ],
+      "severity": "blocking",
+      "overridable": false,
+      "check": "automated",
+      "good": "const token = env.REGISTRY_TOKEN; // read from the environment, never written in the code",
+      "bad": "const apiKey = \u0022sk_live_51Habcdef\u0022;",
+      "facts": []
+    },
+    {
+      "id": "SCOPE-001",
+      "rule": "Only files inside the design\u0027s declared scope may change.",
+      "why": "Unplanned changes are where regressions hide. Enforced by the engine on the diff.",
+      "plain": "The developer may only change the parts of the project this change is about.",
+      "appliesTo": [],
+      "roles": [
+        "architect",
+        "developer"
+      ],
+      "severity": "blocking",
+      "overridable": false,
+      "check": "engine",
+      "good": "",
+      "bad": "",
+      "facts": []
+    },
+    {
+      "id": "TEST-001",
+      "rule": "Every requirement is proven by at least one test that names it.",
+      "why": "Untested requirements are guesses. Enforced by the engine when the build report is accepted.",
+      "plain": "Everything you asked for must have a test proving it works.",
+      "appliesTo": [],
+      "roles": [
+        "developer",
+        "qa"
+      ],
+      "severity": "blocking",
+      "overridable": false,
+      "check": "engine",
+      "good": "",
+      "bad": "",
+      "facts": []
+    },
+    {
+      "id": "TAU-001",
+      "rule": "Rust code is formatted by rustfmt and passes clippy with warnings as errors (--all-targets). New and changed code adds no lint, and a lint is silenced only with a comment that says why.",
+      "why": "The compiler and clippy catch most memory, ownership and logic slips before anyone runs the app; formatting arguments hide real changes in reviews.",
+      "plain": "The Rust part of the app must pass Rust\u0027s own code checkers with no complaints.",
+      "appliesTo": [
+        "desktop"
+      ],
+      "roles": [
+        "developer",
+        "reviewer"
+      ],
+      "severity": "blocking",
+      "overridable": false,
+      "check": "automated",
+      "good": "",
+      "bad": "",
+      "facts": []
+    },
+    {
+      "id": "TAU-002",
+      "rule": "The window never calls the operating system directly. Every call into the Rust core goes through one typed module (src/api): features import functions from it, never invoke() or a @tauri-apps package themselves.",
+      "why": "One boundary means one place to type, mock and review every request the window can make; scattered invoke calls turn into untyped strings nobody can find.",
+      "plain": "Screens ask for things through one small, typed doorway, so every request the window can make is easy to find and test.",
+      "appliesTo": [
+        "desktop"
+      ],
+      "roles": [
+        "architect",
+        "developer",
+        "reviewer"
+      ],
+      "severity": "blocking",
+      "overridable": false,
+      "check": "automated",
+      "good": "import { greet } from \u0027../../api/commands\u0027;",
+      "bad": "import { invoke } from \u0027@tauri-apps/api/core\u0027;",
+      "facts": []
+    },
+    {
+      "id": "TAU-003",
+      "rule": "Commands are thin. A #[tauri::command] function only translates: it reads its arguments, calls plain Rust in the feature or shared module, and maps the answer. The logic lives in ordinary functions that are tested without Tauri, a window or an app handle.",
+      "why": "Code that needs a running app to test does not get tested; a thin command layer is also the part that changes least.",
+      "plain": "The part of the code that talks to the window is a thin shell, and the real work sits where it can be tested on its own.",
+      "appliesTo": [
+        "desktop"
+      ],
+      "roles": [
+        "architect",
+        "developer",
+        "reviewer"
+      ],
+      "severity": "blocking",
+      "overridable": false,
+      "check": "review",
+      "good": "",
+      "bad": "",
+      "facts": []
+    },
+    {
+      "id": "TAU-004",
+      "rule": "The window has a content security policy (app.security.csp in tauri.conf.json), never null, and it allows only what the app needs: no remote scripts, no \u0027unsafe-eval\u0027.",
+      "why": "The window is a web page with a bridge to the computer; the policy is what stops injected script from reaching that bridge.",
+      "plain": "The app\u0027s window is locked down so a stray script cannot take over the computer.",
+      "appliesTo": [
+        "desktop"
+      ],
+      "roles": [
+        "architect",
+        "developer",
+        "reviewer",
+        "security"
+      ],
+      "severity": "blocking",
+      "overridable": false,
+      "check": "automated",
+      "good": "\u0022csp\u0022: \u0022default-src \u0027self\u0027\u0022",
+      "bad": "\u0022csp\u0022: null",
+      "facts": []
+    },
+    {
+      "id": "TAU-005",
+      "rule": "Permissions are the fewest the app needs: each capability file names its windows (never \u0022*\u0022) and lists specific permissions, no command-spawning permission (allow-execute, allow-spawn) without a scope that names the exact program, and no file or URL scope of \u0022**\u0022 or \u0022*\u0022. A new permission is a decision recorded in the design.",
+      "why": "Every permission is something a compromised window can do to the person\u0027s computer.",
+      "plain": "The app asks for only the powers it needs and says which program or folder each one covers.",
+      "appliesTo": [
+        "desktop"
+      ],
+      "roles": [
+        "architect",
+        "developer",
+        "reviewer",
+        "security"
+      ],
+      "severity": "blocking",
+      "overridable": false,
+      "check": "automated",
+      "good": "\u0022permissions\u0022: [\u0022core:default\u0022]",
+      "bad": "\u0022windows\u0022: [\u0022*\u0022]",
+      "facts": []
+    },
+    {
+      "id": "TAU-006",
+      "rule": "The Rust core does not panic: no unwrap(), expect(), panic!, todo! or unimplemented! in the app\u0027s source (tests are exempt). Errors are values: functions return Result with the app\u0027s own error type, and a command returns that error as text the window can show.",
+      "why": "A panic in a command takes the whole app down in front of the person; an error value becomes a message they can act on.",
+      "plain": "When something goes wrong the app says so and carries on, instead of closing without a word.",
+      "appliesTo": [
+        "desktop"
+      ],
+      "roles": [
+        "developer",
+        "reviewer",
+        "qa"
+      ],
+      "severity": "blocking",
+      "overridable": false,
+      "check": "automated",
+      "good": "let n = value.ok_or(AppError::Missing)?;",
+      "bad": "let n = value.unwrap();",
+      "facts": []
+    },
+    {
+      "id": "TAU-007",
+      "rule": "Nothing slow runs on the thread that serves the window: file, network, database and child-process work is async or on its own thread, and a child process the app starts is tracked and stopped when the app or its window closes (the whole process tree, never by program name).",
+      "why": "A blocked command freezes the window; an orphaned child keeps ports and files busy after the app is gone.",
+      "plain": "The app stays responsive while it works, and cleans up everything it started when it closes.",
+      "appliesTo": [
+        "desktop"
+      ],
+      "roles": [
+        "architect",
+        "developer",
+        "reviewer",
+        "qa"
+      ],
+      "severity": "blocking",
+      "overridable": false,
+      "check": "review",
+      "good": "",
+      "bad": "",
+      "facts": []
+    },
+    {
+      "id": "TAU-008",
+      "rule": "Everything that crosses between the window and the core is typed on both sides: Rust structs with serde on one side, a matching TypeScript type in src/api on the other, and the data is validated where it enters the core (paths, sizes, names), never trusted because the window sent it.",
+      "why": "The window is not a trusted caller: a path or a command line it sends is input like any other.",
+      "plain": "Information passed between the screen and the core is checked at the door and has a clear shape on both sides.",
+      "appliesTo": [
+        "desktop"
+      ],
+      "roles": [
+        "architect",
+        "developer",
+        "reviewer",
+        "security"
+      ],
+      "severity": "blocking",
+      "overridable": false,
+      "check": "review",
+      "good": "",
+      "bad": "",
+      "facts": []
+    },
+    {
+      "id": "TAU-009",
+      "rule": "No signing keys: the updater\u0027s private key, certificates and their passwords are never in the project (TAURI_SIGNING_PRIVATE_KEY with a value, a minisign secret key, a PEM private key). Only the public key may be committed.",
+      "why": "Anyone with the private key can publish an update that every installed copy will trust.",
+      "plain": "The key that proves updates are really yours stays off the project, always.",
+      "appliesTo": [
+        "desktop"
+      ],
+      "roles": [
+        "developer",
+        "reviewer",
+        "security"
+      ],
+      "severity": "blocking",
+      "overridable": false,
+      "check": "automated",
+      "good": "pubkey = \u0022dW50cnVzdGVk\u0022",
+      "bad": "TAURI_SIGNING_PRIVATE_KEY=dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHNlY3JldCBrZXk=",
+      "facts": []
+    },
+    {
+      "id": "TAU-010",
+      "rule": "An updater, if there is one, trusts a signed manifest: HTTPS only, the public key built into the app, a version that is newer, and a download whose size and checksum are verified before anything is installed. Nothing installs without the person pressing the button.",
+      "why": "An unsigned or downgradable update path is a way to run someone else\u0027s program on every installed copy.",
+      "plain": "The app only updates itself from something it can prove is genuine, and only when the person says so.",
+      "appliesTo": [
+        "desktop"
+      ],
+      "roles": [
+        "architect",
+        "developer",
+        "reviewer",
+        "security"
+      ],
+      "severity": "blocking",
+      "overridable": true,
+      "check": "review",
+      "good": "",
+      "bad": "",
+      "facts": []
+    },
+    {
+      "id": "TAU-011",
+      "rule": "Behaviour is proven at three levels: Rust tests of the core\u0027s plain functions (in src-tauri/tests, no window needed), window tests of each screen in each of its states with the src/api module mocked, and a test of src/api itself against the shape of the Rust commands. Every new command, screen and rule has a test that fails without it.",
+      "why": "Core tests are cheap and catch logic; window tests catch what people see; the boundary test catches the mismatch that only shows when the two halves meet.",
+      "plain": "Every behaviour has a test that proves it, from the smallest rule to what is shown on the screen, and the tests pass.",
+      "appliesTo": [
+        "desktop"
+      ],
+      "roles": [
+        "developer",
+        "qa",
+        "reviewer"
+      ],
+      "severity": "blocking",
+      "overridable": false,
+      "check": "automated",
+      "good": "",
+      "bad": "",
+      "facts": []
+    },
+    {
+      "id": "TAU-012",
+      "rule": "The window is accessible and honest about state: every control has a text label or an accessible name, everything works by keyboard with a visible focus, colour is never the only signal, and every screen says what is happening when it is loading, empty or broken.",
+      "why": "Keyboard and screen-reader users are real users, and a screen that only handles the happy path fails in front of people on their real machines.",
+      "plain": "The app can be used without a mouse, and always says what it is doing or what went wrong.",
+      "appliesTo": [
+        "desktop"
+      ],
+      "roles": [
+        "analyst",
+        "developer",
+        "reviewer",
+        "qa"
+      ],
+      "severity": "advisory",
+      "overridable": true,
+      "check": "review",
+      "good": "",
+      "bad": "",
+      "facts": []
+    },
+    {
+      "id": "TAU-013",
+      "rule": "The version is one number, kept in step in package.json, src-tauri/Cargo.toml and src-tauri/tauri.conf.json, and shown to the person in the window. A change that bumps one bumps all three.",
+      "why": "Three versions that disagree make a bug report impossible to match to a build, and the updater compares the wrong one.",
+      "plain": "The app has one version number, the same everywhere, and the person can see it.",
+      "appliesTo": [
+        "desktop"
+      ],
+      "roles": [
+        "developer",
+        "reviewer"
+      ],
+      "severity": "blocking",
+      "overridable": false,
+      "check": "automated",
+      "good": "",
+      "bad": "",
+      "facts": []
+    },
+    {
+      "id": "TAU-014",
+      "rule": "Paths and processes work on every platform the app ships on: paths are built with Path and PathBuf (never joined with a slash or a backslash), nothing assumes a shell, a drive letter or a case-sensitive file system, and anything platform-specific sits behind #[cfg(...)] with a fallback.",
+      "why": "A desktop app runs on machines the author never saw; a hard-coded separator or shell is a bug on the first one that differs.",
+      "plain": "The app does not quietly depend on how one particular computer is set up.",
+      "appliesTo": [
+        "desktop"
+      ],
+      "roles": [
+        "architect",
+        "developer",
+        "reviewer"
+      ],
+      "severity": "advisory",
+      "overridable": true,
+      "check": "review",
+      "good": "",
+      "bad": "",
+      "facts": []
+    },
+    {
+      "id": "EFF-002",
+      "rule": "Build for data that grows a hundred times: no work in a render or an event handler that scales with the data (sorting, filtering, mapping huge arrays) without memoization; long lists are paged or virtualized; the core streams or pages big files and outputs instead of loading them whole; effects and listeners clean up.",
+      "why": "Desktop apps are used on data the author never imagined. A screen that is fine with ten rows and frozen with ten thousand is a bug.",
+      "plain": "The app must stay fast when there is far more data than in your examples.",
+      "appliesTo": [
+        "desktop"
+      ],
+      "roles": [
+        "architect",
+        "developer",
+        "reviewer"
+      ],
+      "severity": "blocking",
+      "overridable": true,
+      "check": "review",
+      "good": "",
+      "bad": "",
+      "facts": []
+    },
+    {
+      "id": "DEP-001",
+      "rule": "Adding, removing or upgrading a crate, an npm package, a Tauri plugin or a tool version is a decision with a reason recorded in the design. Prefer none; if one is needed, prefer a small, maintained one with a licence that allows shipping it.",
+      "why": "Every dependency is code nobody on the team wrote that ships to every machine and can break the next build.",
+      "plain": "Nothing new is added to the app\u0027s ingredients without a stated reason.",
+      "appliesTo": [
+        "desktop"
+      ],
+      "roles": [
+        "architect",
+        "developer",
+        "reviewer",
+        "security"
+      ],
+      "severity": "blocking",
+      "overridable": false,
+      "check": "review",
+      "good": "",
+      "bad": "",
+      "facts": []
+    },
+    {
+      "id": "QUAL-001",
+      "rule": "No debugging leftovers (console.log, console.debug, debugger, dbg!) in the app\u0027s source.",
+      "why": "Debug output reaches logs and consoles of people who cannot switch it off.",
+      "plain": "Leftover debugging code has to be removed before the change is done.",
+      "appliesTo": [
+        "desktop"
+      ],
+      "roles": [
+        "developer",
+        "reviewer"
+      ],
+      "severity": "blocking",
+      "overridable": true,
+      "check": "automated",
+      "good": "export function format(value: number) { return value.toFixed(2); }",
+      "bad": "console.log(\u0027rendering\u0027, props);",
+      "facts": []
+    }
+  ],
+  "checks": [
+    {
+      "id": "no-secrets",
+      "name": "No secrets in code",
+      "kind": "pattern",
+      "command": "",
+      "workingDir": ".",
+      "timeoutSeconds": 600,
+      "rules": [
+        "SEC-001"
+      ],
+      "files": [
+        "**/*.cs",
+        "**/*.ts",
+        "**/*.tsx",
+        "**/*.js",
+        "**/*.mjs",
+        "**/*.cjs",
+        "**/*.json"
+      ],
+      "exclude": [],
+      "forbid": "(?i)(password|secret|api[_-]?key|token|connectionstring)\\s*[=:]\\s*\u0022[^\u0022]{8,}\u0022",
+      "tier": "fast",
+      "requiresEnv": [],
+      "requiresTools": [],
+      "dependsOn": [],
+      "phase": "challenge",
+      "inDocumentation": false,
+      "inChallenge": true,
+      "gate": false,
+      "fastCommand": "",
+      "retryCommand": "",
+      "failedPattern": ""
+    },
+    {
+      "id": "no-debug-leftovers",
+      "name": "No debugging leftovers",
+      "kind": "pattern",
+      "command": "",
+      "workingDir": ".",
+      "timeoutSeconds": 600,
+      "rules": [
+        "QUAL-001"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src-tauri/src/**/*.rs"
+      ],
+      "exclude": [
+        "**/*.test.*",
+        "**/*.spec.*",
+        "**/test/**"
+      ],
+      "forbid": "console\\.(log|debug)\\(|\\bdebugger\\b|\\bdbg!\\(",
+      "tier": "fast",
+      "requiresEnv": [],
+      "requiresTools": [],
+      "dependsOn": [],
+      "phase": "challenge",
+      "inDocumentation": false,
+      "inChallenge": true,
+      "gate": false,
+      "fastCommand": "",
+      "retryCommand": "",
+      "failedPattern": ""
+    },
+    {
+      "id": "tauri-no-invoke-in-features",
+      "name": "Screens ask the core through src/api only",
+      "kind": "pattern",
+      "command": "",
+      "workingDir": ".",
+      "timeoutSeconds": 600,
+      "rules": [
+        "TAU-002"
+      ],
+      "files": [
+        "src/features/**/*.ts",
+        "src/features/**/*.tsx"
+      ],
+      "exclude": [
+        "**/*.test.*",
+        "**/*.spec.*"
+      ],
+      "forbid": "@tauri-apps/|\\binvoke\\s*(\u003C[^\u003E]*\u003E)?\\(",
+      "tier": "fast",
+      "requiresEnv": [],
+      "requiresTools": [],
+      "dependsOn": [],
+      "phase": "challenge",
+      "inDocumentation": false,
+      "inChallenge": true,
+      "gate": false,
+      "fastCommand": "",
+      "retryCommand": "",
+      "failedPattern": ""
+    },
+    {
+      "id": "tauri-no-panics",
+      "name": "The Rust core does not panic",
+      "kind": "pattern",
+      "command": "",
+      "workingDir": ".",
+      "timeoutSeconds": 600,
+      "rules": [
+        "TAU-006"
+      ],
+      "files": [
+        "src-tauri/src/features/**/*.rs",
+        "src-tauri/src/shared/**/*.rs"
+      ],
+      "exclude": [
+        "**/tests/**"
+      ],
+      "forbid": "\\.unwrap\\(\\)|\\.expect\\(|\\bpanic!\\(|\\btodo!\\(|\\bunimplemented!\\(",
+      "tier": "fast",
+      "requiresEnv": [],
+      "requiresTools": [],
+      "dependsOn": [],
+      "phase": "challenge",
+      "inDocumentation": false,
+      "inChallenge": true,
+      "gate": false,
+      "fastCommand": "",
+      "retryCommand": "",
+      "failedPattern": ""
+    },
+    {
+      "id": "tauri-csp-set",
+      "name": "The window has a content security policy",
+      "kind": "pattern",
+      "command": "",
+      "workingDir": ".",
+      "timeoutSeconds": 600,
+      "rules": [
+        "TAU-004"
+      ],
+      "files": [
+        "src-tauri/tauri.conf.json"
+      ],
+      "exclude": [],
+      "forbid": "\u0022csp\u0022\\s*:\\s*null",
+      "tier": "fast",
+      "requiresEnv": [],
+      "requiresTools": [],
+      "dependsOn": [],
+      "phase": "challenge",
+      "inDocumentation": false,
+      "inChallenge": true,
+      "gate": false,
+      "fastCommand": "",
+      "retryCommand": "",
+      "failedPattern": ""
+    },
+    {
+      "id": "tauri-least-privilege",
+      "name": "Permissions are small and specific",
+      "kind": "pattern",
+      "command": "",
+      "workingDir": ".",
+      "timeoutSeconds": 600,
+      "rules": [
+        "TAU-005"
+      ],
+      "files": [
+        "src-tauri/capabilities/*.json"
+      ],
+      "exclude": [],
+      "forbid": "\u0022windows\u0022\\s*:\\s*\\[\\s*\u0022\\*\u0022|:allow-(execute|spawn)\\b|\u0022(?:path|url)\u0022\\s*:\\s*\u0022(?:\\*\\*|\\*)\u0022",
+      "tier": "fast",
+      "requiresEnv": [],
+      "requiresTools": [],
+      "dependsOn": [],
+      "phase": "challenge",
+      "inDocumentation": false,
+      "inChallenge": true,
+      "gate": false,
+      "fastCommand": "",
+      "retryCommand": "",
+      "failedPattern": ""
+    },
+    {
+      "id": "tauri-no-signing-key",
+      "name": "No signing keys in the project",
+      "kind": "pattern",
+      "command": "",
+      "workingDir": ".",
+      "timeoutSeconds": 600,
+      "rules": [
+        "TAU-009"
+      ],
+      "files": [
+        "src/**",
+        "src-tauri/**",
+        "scripts/**",
+        "*.json",
+        "*.md",
+        "*.ps1",
+        "*.mjs",
+        ".github/**"
+      ],
+      "exclude": [
+        "**/node_modules/**",
+        "**/target/**",
+        "**/dist/**",
+        "**/package-lock.json"
+      ],
+      "forbid": "TAURI_SIGNING_PRIVATE_KEY\\s*=\\s*[A-Za-z0-9\u002B/=]{20,}|untrusted comment: [^\\n]*secret key|-----BEGIN [A-Z ]*PRIVATE KEY-----",
+      "tier": "fast",
+      "requiresEnv": [],
+      "requiresTools": [],
+      "dependsOn": [],
+      "phase": "challenge",
+      "inDocumentation": false,
+      "inChallenge": true,
+      "gate": false,
+      "fastCommand": "",
+      "retryCommand": "",
+      "failedPattern": ""
+    },
+    {
+      "id": "tauri-versions",
+      "name": "One version number everywhere",
+      "kind": "command",
+      "command": "node .devteam/pack/tools/check-versions.mjs",
+      "workingDir": ".",
+      "timeoutSeconds": 600,
+      "rules": [
+        "TAU-013"
+      ],
+      "files": [],
+      "exclude": [],
+      "tier": "fast",
+      "group": "tauri",
+      "requiresEnv": [],
+      "requiresTools": [
+        "node"
+      ],
+      "dependsOn": [],
+      "phase": "challenge",
+      "inDocumentation": false,
+      "inChallenge": true,
+      "gate": false,
+      "fastCommand": "",
+      "retryCommand": "",
+      "failedPattern": ""
+    },
+    {
+      "id": "tauri-web-typecheck",
+      "name": "Window: type check",
+      "kind": "command",
+      "command": "npm run lint",
+      "workingDir": ".",
+      "timeoutSeconds": 600,
+      "rules": [],
+      "files": [],
+      "exclude": [],
+      "tier": "fast",
+      "group": "tauri",
+      "requiresEnv": [],
+      "requiresTools": [
+        "node",
+        "npm"
+      ],
+      "dependsOn": [],
+      "phase": "challenge",
+      "inDocumentation": false,
+      "inChallenge": true,
+      "gate": false,
+      "fastCommand": "",
+      "retryCommand": "",
+      "failedPattern": ""
+    },
+    {
+      "id": "tauri-rust-format",
+      "name": "Core: formatting",
+      "kind": "command",
+      "command": "node .devteam/pack/tools/rust_gate.mjs fmt --manifest src-tauri/Cargo.toml --baseline .devteam/adoption/rust-fmt-baseline.txt",
+      "workingDir": ".",
+      "timeoutSeconds": 600,
+      "rules": [
+        "TAU-001"
+      ],
+      "files": [],
+      "exclude": [],
+      "tier": "fast",
+      "group": "tauri",
+      "requiresEnv": [],
+      "requiresTools": [
+        "cargo",
+        "node"
+      ],
+      "dependsOn": [],
+      "phase": "challenge",
+      "inDocumentation": false,
+      "inChallenge": true,
+      "gate": false,
+      "fastCommand": "",
+      "retryCommand": "",
+      "failedPattern": ""
+    },
+    {
+      "id": "tauri-web-tests",
+      "name": "Window: tests, with coverage",
+      "kind": "command",
+      "command": "npm test",
+      "workingDir": ".",
+      "timeoutSeconds": 600,
+      "rules": [
+        "TAU-011"
+      ],
+      "files": [],
+      "exclude": [],
+      "tier": "full",
+      "group": "tauri",
+      "requiresEnv": [],
+      "requiresTools": [
+        "node",
+        "npm"
+      ],
+      "dependsOn": [],
+      "phase": "challenge",
+      "inDocumentation": false,
+      "inChallenge": true,
+      "gate": false,
+      "fastCommand": "",
+      "retryCommand": "",
+      "failedPattern": ""
+    },
+    {
+      "id": "tauri-web-build",
+      "name": "Window: build",
+      "kind": "command",
+      "command": "npm run build",
+      "workingDir": ".",
+      "timeoutSeconds": 600,
+      "rules": [],
+      "files": [],
+      "exclude": [],
+      "tier": "full",
+      "group": "tauri",
+      "requiresEnv": [],
+      "requiresTools": [
+        "node",
+        "npm"
+      ],
+      "dependsOn": [],
+      "phase": "challenge",
+      "inDocumentation": false,
+      "inChallenge": true,
+      "gate": false,
+      "fastCommand": "",
+      "retryCommand": "",
+      "failedPattern": ""
+    },
+    {
+      "id": "tauri-rust-lints",
+      "name": "Core: lints (clippy, warnings are errors)",
+      "kind": "command",
+      "command": "node .devteam/pack/tools/rust_gate.mjs lint --manifest src-tauri/Cargo.toml --baseline .devteam/adoption/rust-lint-baseline.txt",
+      "workingDir": ".",
+      "timeoutSeconds": 1800,
+      "rules": [
+        "TAU-001"
+      ],
+      "files": [],
+      "exclude": [],
+      "tier": "full",
+      "group": "tauri",
+      "requiresEnv": [],
+      "requiresTools": [
+        "cargo",
+        "node"
+      ],
+      "dependsOn": [
+        "tauri-web-build"
+      ],
+      "phase": "challenge",
+      "inDocumentation": false,
+      "inChallenge": true,
+      "gate": false,
+      "fastCommand": "",
+      "retryCommand": "",
+      "failedPattern": ""
+    },
+    {
+      "id": "tauri-rust-tests",
+      "name": "Core: tests",
+      "kind": "command",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+      "workingDir": ".",
+      "timeoutSeconds": 1800,
+      "rules": [
+        "TAU-011"
+      ],
+      "files": [],
+      "exclude": [],
+      "tier": "full",
+      "group": "tauri",
+      "requiresEnv": [],
+      "requiresTools": [
+        "cargo"
+      ],
+      "dependsOn": [
+        "tauri-web-build"
+      ],
+      "phase": "challenge",
+      "inDocumentation": false,
+      "inChallenge": true,
+      "gate": false,
+      "fastCommand": "",
+      "retryCommand": "",
+      "failedPattern": ""
+    },
+    {
+      "id": "tauri-rust-build",
+      "name": "Core: the app compiles",
+      "kind": "command",
+      "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+      "workingDir": ".",
+      "timeoutSeconds": 1800,
+      "rules": [],
+      "files": [],
+      "exclude": [],
+      "tier": "full",
+      "group": "tauri",
+      "requiresEnv": [],
+      "requiresTools": [
+        "cargo"
+      ],
+      "dependsOn": [
+        "tauri-web-build"
+      ],
+      "phase": "challenge",
+      "inDocumentation": false,
+      "inChallenge": true,
+      "gate": false,
+      "fastCommand": "",
+      "retryCommand": "",
+      "failedPattern": ""
+    }
+  ],
+  "startup": {
+    "check": "tauri-rust-build",
+    "title": "The app compiles",
+    "ready": "The window was built and the Rust core compiled together into the desktop app, so the two halves fit.",
+    "blocked": "The app does not compile. See what the check printed: the window may not build, or the core may not compile against it.",
+    "notRun": "The app could not be compiled here (Rust or Node is not installed, or the window\u0027s tools are not installed yet), so it has not been shown to build."
+  },
+  "coverage": [
+    {
+      "name": "Window",
+      "path": "coverage/lcov.info",
+      "format": "lcov"
+    }
+  ],
+  "testResults": [
+    {
+      "name": "Window",
+      "path": "test-results/vitest.json",
+      "format": "jest-json"
+    }
+  ],
+  "roleGuidance": {
+    "analyst": "guidance/analyst.md",
+    "architect": "guidance/architect.md",
+    "developer": "guidance/developer.md",
+    "reviewer": "guidance/reviewer.md",
+    "qa": "guidance/qa.md",
+    "security": "guidance/security.md"
+  }
+}

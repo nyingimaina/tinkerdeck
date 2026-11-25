@@ -66,6 +66,11 @@ async function openApp(name = "Qonsol") {
   await screen.findByRole("heading", { name, level: 2 });
 }
 
+/** The git tools start collapsed behind the branch chip (R5). */
+async function expandGit() {
+  await userEvent.click(await screen.findByRole("button", { name: "Show git tools" }));
+}
+
 beforeEach(() => {
   Object.values(h.api).forEach((f) => f.mockClear());
   h.view = view();
@@ -195,6 +200,7 @@ describe("Git in the app", () => {
     h.api.gitSync.mockResolvedValue("Synced: pulled and pushed.");
     render(<App />);
     await openApp();
+    await expandGit();
     await userEvent.click(await screen.findByRole("button", { name: /Sync/ }));
     expect(h.api.gitSync).toHaveBeenCalledWith("a1");
     expect(await screen.findByText("Synced: pulled and pushed.")).toBeInTheDocument();
@@ -205,6 +211,7 @@ describe("Git in the app", () => {
     h.api.gitPull.mockRejectedValue("Your branch and the remote have both changed, so a fast-forward is not possible.");
     render(<App />);
     await openApp();
+    await expandGit();
     await userEvent.click(await screen.findByRole("button", { name: /Pull/ }));
     expect(await screen.findByRole("alert")).toHaveTextContent("fast-forward is not possible");
   });
@@ -214,8 +221,25 @@ describe("Git in the app", () => {
     h.api.gitChanges = vi.fn(async () => [{ path: "a.txt", status: "M", staged: false, conflict: false }]);
     render(<App />);
     await openApp();
+    await expandGit();
     await userEvent.click(await screen.findByRole("button", { name: /Changes/ }));
     expect(await screen.findByLabelText("a.txt")).toBeInTheDocument();
+  });
+
+  it("R5: the git drawer stays hidden until opened and returns to hidden when closed", async () => {
+    h.repo = repo({ dirty: true });
+    h.api.gitChanges = vi.fn(async () => [{ path: "a.txt", status: "M", staged: false, conflict: false }]);
+    render(<App />);
+    await openApp();
+    await screen.findByRole("button", { name: /Switch branch/ });
+    expect(screen.queryByRole("complementary", { name: "Git" })).toBeNull();
+
+    await expandGit();
+    await userEvent.click(screen.getByRole("button", { name: /Changes/ }));
+    expect(await screen.findByRole("complementary", { name: "Git" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Close git panel" }));
+    await waitFor(() => expect(screen.queryByRole("complementary", { name: "Git" })).toBeNull());
   });
 });
 
@@ -234,7 +258,7 @@ describe("Consoles", () => {
     await waitFor(() => expect(h.api.startTerminal).toHaveBeenCalledWith("a1", "console-a1:1"));
     expect(screen.getByTestId("host-console-a1:1").dataset.visible).toBe("true");
     expect(screen.getByTestId("host-t1").dataset.visible).toBe("false"); // saved terminals stay alive, hidden
-    expect(screen.getByRole("complementary", { name: "Consoles" })).toBeInTheDocument();
+    expect(await screen.findByRole("complementary", { name: "Consoles" })).toBeInTheDocument();
     // a second visit does not start it again
     await userEvent.click(screen.getByRole("tab", { name: /api/ }));
     expect(screen.queryByRole("complementary", { name: "Consoles" })).toBeNull();
@@ -251,7 +275,7 @@ describe("Consoles", () => {
     await userEvent.click(screen.getByRole("button", { name: "Choose shell for a new console" }));
     await userEvent.click(await screen.findByRole("menuitem", { name: "Git Bash" }));
     await waitFor(() => expect(h.api.startTerminal).toHaveBeenCalledWith("a1", "console-a1:3:gitbash"));
-    const nav = screen.getByRole("complementary", { name: "Consoles" });
+    const nav = await screen.findByRole("complementary", { name: "Consoles" });
     expect(within(nav).getAllByRole("button", { name: /^Console \d/ })).toHaveLength(3);
     expect(screen.getByTestId("host-console-a1:3:gitbash").dataset.visible).toBe("true");
     // switching in the list shows that console
@@ -337,6 +361,7 @@ describe("Consoles", () => {
     h.repo = repo();
     render(<App />);
     await openApp();
+    await expandGit();
     await userEvent.click(await screen.findByRole("button", { name: /Console/, description: "Run git or anything else in a terminal" }));
     await waitFor(() => expect(h.api.startTerminal).toHaveBeenCalledWith("a1", "console-a1:1"));
   });
@@ -350,7 +375,7 @@ describe("Consoles", () => {
       h.stateCb?.({ terminalId: "console-a1:1", appId: "a1", state: { kind: "stopped" } });
     });
     await userEvent.click(screen.getByRole("button", { name: "Edit Qonsol" }));
-    await userEvent.click(screen.getByRole("button", { name: "Delete app" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Delete app" }));
     await userEvent.click(screen.getByRole("button", { name: "Delete" }));
     await waitFor(() => expect(h.api.stopTerminal).toHaveBeenCalledWith("a1", "console-a1:1"));
     await waitFor(() => expect(h.api.saveApps).toHaveBeenCalledWith([]));
@@ -386,6 +411,20 @@ describe("Left pane, refresh and shells", () => {
     localStorage.clear();
   });
 
+  it("R4: Ctrl+B and F5 keep working after the header regroup", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+
+    await userEvent.keyboard("{Control>}b{/Control}");
+    expect(screen.getByRole("navigation", { name: "Apps (collapsed)" })).toBeInTheDocument();
+    await userEvent.keyboard("{Control>}b{/Control}");
+    expect(screen.getByRole("navigation", { name: "Apps" })).toBeInTheDocument();
+
+    const shells = h.api.listShells.mock.calls.length;
+    await userEvent.keyboard("{F5}");
+    await waitFor(() => expect(h.api.listShells.mock.calls.length).toBeGreaterThan(shells));
+  });
+
   it("the Refresh button and F5 re-read terminal states and git now", async () => {
     h.repo = repo();
     render(<App />);
@@ -393,7 +432,8 @@ describe("Left pane, refresh and shells", () => {
     await screen.findByRole("button", { name: /Switch branch/ });
     const states = h.api.terminalStates.mock.calls.length;
     const info = h.api.gitInfo.mock.calls.length;
-    await userEvent.click(screen.getByRole("button", { name: "Refresh everything" }));
+    await userEvent.click(screen.getByRole("button", { name: "Utilities" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Refresh everything" }));
     await waitFor(() => expect(h.api.terminalStates.mock.calls.length).toBe(states + 1));
     await waitFor(() => expect(h.api.gitInfo.mock.calls.length).toBeGreaterThan(info));
     const info2 = h.api.gitInfo.mock.calls.length;

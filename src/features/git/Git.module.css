@@ -41,6 +41,18 @@
 .spacer {
   flex: 1;
 }
+.toolsToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  padding: 0 !important;
+}
+.chevron {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1;
+}
 .hidden {
   display: none;
 }

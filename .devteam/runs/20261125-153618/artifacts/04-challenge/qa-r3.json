@@ -1,0 +1,10 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "QA-2",
+      "status": "fixed",
+      "evidence": "docs/ui-tidy-up-plan.md now inventories the branch popover once: P9 (line 54) is the only BranchMenu.tsx row, the D10 row is gone, the dialog table is D1-D9, and §3 (lines 69-71) states it is inventoried once with the panels. src/App.test.tsx:325-341 ('R1: the plan lists each part in exactly one inventory entry') parses every S/P/D/B/numbered inventory row and asserts each *.tsx basename appears in exactly one row; re-adding the old D10 row (which named BranchMenu.tsx) would make the count 2 and fail, so the acceptance is now proven rather than unproven. `npx vitest run src/App.test.tsx` 20/20 pass; full `npx vitest run` 390/390 pass; `npm run lint` clean."
+    }
+  ]
+}

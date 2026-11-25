@@ -12,11 +12,16 @@ interface Props {
   onOpenConsole: () => void;
   /** Manual refresh of everything now. */
   onRefresh?: () => void;
+  /** When true the bar can start as a branch chip and expand the tools on demand (R5). */
+  collapsible?: boolean;
+  /** Start collapsed, only meaningful with `collapsible`. Existing callers stay expanded. */
+  defaultCollapsed?: boolean;
 }
 
 /** Branch pill, fetch/pull/push/sync and links to the changes, history and console. Hidden outside a repository. */
-export function GitBar({ git, onSwitch, onOpenChanges, onOpenHistory, onOpenConsole, onRefresh }: Props) {
+export function GitBar({ git, onSwitch, onOpenChanges, onOpenHistory, onOpenConsole, onRefresh, collapsible = false, defaultCollapsed = false }: Props) {
   const [menu, setMenu] = useState(false);
+  const [tools, setTools] = useState(() => !(collapsible && defaultCollapsed));
   const { info, busy, message } = git;
   if (!info) return null; // loading, or not a repository
 
@@ -66,6 +71,21 @@ export function GitBar({ git, onSwitch, onOpenChanges, onOpenHistory, onOpenCons
             ⟳
           </button>
         )}
+        {collapsible && (
+          <button
+            className={styles.toolsToggle}
+            onClick={() => setTools((v) => !v)}
+            aria-expanded={tools}
+            aria-label={tools ? "Hide git tools" : "Show git tools"}
+            title={tools ? "Hide git tools" : "Show git tools"}
+          >
+            <span className={styles.chevron} aria-hidden="true">
+              {tools ? "\u25b4" : "\u25be"}
+            </span>
+          </button>
+        )}
+        {tools && (
+          <>
         <button onClick={() => void git.fetch()} disabled={off}>
           Fetch
         </button>
@@ -84,6 +104,8 @@ export function GitBar({ git, onSwitch, onOpenChanges, onOpenHistory, onOpenCons
         <button onClick={onOpenConsole} title="Run git or anything else in a terminal">
           &gt;_ Console
         </button>
+          </>
+        )}
       </div>
       {busy && (
         <p className={styles.busy} role="status">

@@ -47,6 +47,12 @@ vi.mock("./features/editor/CodeSurface", () => {
 
 import { App } from "./App";
 
+/** The Editor command now lives in the Utilities menu. */
+async function toggleEditor() {
+  await userEvent.click(screen.getByRole("button", { name: "Utilities" }));
+  await userEvent.click(screen.getByRole("menuitem", { name: "Editor" }));
+}
+
 const view = (): ConfigView => ({
   config: {
     version: 1, theme: "dark", shell: "powershell.exe", lastRunning: [],
@@ -71,10 +77,10 @@ describe("the editor inside the app", () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
     expect(h.surface.loaded).toBe(0);
-    await userEvent.click(screen.getByRole("button", { name: "Editor" }));
+    await toggleEditor();
     expect(await screen.findByRole("button", { name: "Open…" })).toBeTruthy();
     expect(h.surface.loaded).toBe(0); // an empty editor still has not loaded CodeMirror
-    await userEvent.click(screen.getByRole("button", { name: "Editor" })); // second click goes back
+    await toggleEditor(); // second click goes back
     expect(await screen.findByRole("heading", { name: "Home", level: 2 })).toBeTruthy();
   });
 
@@ -91,7 +97,7 @@ describe("the editor inside the app", () => {
     h.view = { ...view(), config: { ...view().config, apps: [] } };
     render(<App />);
     await screen.findByText(/No apps yet/);
-    await userEvent.click(screen.getByRole("button", { name: "Editor" }));
+    await toggleEditor();
     expect(await screen.findByRole("button", { name: "Open…" })).toBeTruthy();
   });
 });

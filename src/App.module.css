@@ -9,45 +9,15 @@
   place-items: center;
   color: var(--muted);
 }
-.top {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 46px;
-  padding: 0 12px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-}
-.brand {
-  font-weight: 650;
-  letter-spacing: 0.2px;
-}
-.spacer {
-  flex: 1;
-}
-.top button,
-.shellPick select {
-  height: 30px;
-  padding: 0 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--panel-2);
-}
-.top button:hover:not(:disabled) {
-  background: var(--hover);
-}
-.shellPick {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.lazy {
+  padding: 12px;
   color: var(--muted);
-  font-size: 12px;
 }
-.add {
-  background: var(--accent) !important;
-  border-color: var(--accent) !important;
-  color: var(--on-accent);
-  font-weight: 600;
+.lazyPanel {
+  flex: 0 0 210px;
+  align-self: stretch;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
 }
 .body {
   flex: 1;
@@ -66,15 +36,6 @@
   flex: 1;
   min-height: 0;
 }
-.help {
-  margin: 0;
-  padding-left: 18px;
-  display: grid;
-  gap: 8px;
-}
-.help code {
-  font-family: var(--font-mono);
-}
 .termWrap {
   flex: 1;
   min-height: 0;
@@ -83,9 +44,4 @@
 .termWrap .termArea {
   flex: 1;
   min-width: 0;
-}
-.iconBtn {
-  width: 32px;
-  padding: 0 !important;
-  font-size: 16px;
 }

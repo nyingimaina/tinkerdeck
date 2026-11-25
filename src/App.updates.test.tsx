@@ -38,6 +38,12 @@ vi.mock("./features/terminals/TerminalHost", () => ({ TerminalHost: () => <div /
 
 import { App } from "./App";
 
+/** Help now lives in the Utilities menu. */
+async function openHelp() {
+  await userEvent.click(screen.getByRole("button", { name: "Utilities" }));
+  await userEvent.click(screen.getByRole("menuitem", { name: "Help" }));
+}
+
 const T = (id: string, name: string) => ({ id, name, cwd: ".", command: "", env: {} });
 const info: UpdateInfo = { version: "1.3.0", notes: "Faster.\nFewer bugs.", url: "https://x/y.exe", sha256: "a".repeat(64), size: 4_200_000 };
 const view = (update?: { autoCheck: boolean; skippedVersion?: string; lastChecked: number }): ConfigView => ({
@@ -153,7 +159,7 @@ describe("self-update in the app", () => {
   it("Help shows the version, a Check now button and the automatic switch", async () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
-    await userEvent.click(screen.getByRole("button", { name: "Help" }));
+    await openHelp();
     const dlg = await screen.findByRole("dialog", { name: "Help" });
     expect(within(dlg).getByText(/^Version \d+\.\d+\.\d+/)).toBeInTheDocument();
     await userEvent.click(within(dlg).getByRole("button", { name: "Check now" }));
@@ -170,7 +176,7 @@ describe("self-update in the app", () => {
     });
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
-    await userEvent.click(screen.getByRole("button", { name: "Help" }));
+    await openHelp();
     const dlg = await screen.findByRole("dialog", { name: "Help" });
     await userEvent.click(within(dlg).getByRole("button", { name: "Check now" }));
     expect(await within(dlg).findByText("Could not reach the update server.")).toBeInTheDocument();
@@ -180,7 +186,7 @@ describe("self-update in the app", () => {
     h.api.checkUpdate.mockImplementation(async (force: boolean) => (force ? info : null));
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
-    await userEvent.click(screen.getByRole("button", { name: "Help" }));
+    await openHelp();
     const dlg = await screen.findByRole("dialog", { name: "Help" });
     await userEvent.click(within(dlg).getByRole("button", { name: "Check now" }));
     expect(await within(dlg).findByText("Version 1.3.0 is available.")).toBeInTheDocument();

@@ -1,0 +1,110 @@
+{
+  "checks": [
+    {
+      "id": "no-secrets",
+      "name": "No secrets in code",
+      "status": "passed",
+      "seconds": 0.085324,
+      "output": ""
+    },
+    {
+      "id": "no-debug-leftovers",
+      "name": "No debugging leftovers",
+      "status": "passed",
+      "seconds": 0.0685953,
+      "output": ""
+    },
+    {
+      "id": "tauri-no-invoke-in-features",
+      "name": "Screens ask the core through src/api only",
+      "status": "passed",
+      "seconds": 0.0554428,
+      "output": ""
+    },
+    {
+      "id": "tauri-no-panics",
+      "name": "The Rust core does not panic",
+      "status": "passed",
+      "seconds": 0.0466661,
+      "output": ""
+    },
+    {
+      "id": "tauri-csp-set",
+      "name": "The window has a content security policy",
+      "status": "passed",
+      "seconds": 0.0428677,
+      "output": ""
+    },
+    {
+      "id": "tauri-least-privilege",
+      "name": "Permissions are small and specific",
+      "status": "passed",
+      "seconds": 0.0562287,
+      "output": ""
+    },
+    {
+      "id": "tauri-no-signing-key",
+      "name": "No signing keys in the project",
+      "status": "passed",
+      "seconds": 0.1034265,
+      "output": ""
+    },
+    {
+      "id": "tauri-versions",
+      "name": "One version number everywhere",
+      "status": "passed",
+      "seconds": 0,
+      "output": ""
+    },
+    {
+      "id": "tauri-web-typecheck",
+      "name": "Window: type check",
+      "status": "passed",
+      "seconds": 0,
+      "output": ""
+    },
+    {
+      "id": "tauri-rust-format",
+      "name": "Core: formatting",
+      "status": "passed",
+      "seconds": 0,
+      "output": ""
+    },
+    {
+      "id": "tauri-web-tests",
+      "name": "Window: tests, with coverage",
+      "status": "passed",
+      "seconds": 0,
+      "output": ""
+    },
+    {
+      "id": "tauri-web-build",
+      "name": "Window: build",
+      "status": "passed",
+      "seconds": 0,
+      "output": ""
+    },
+    {
+      "id": "tauri-rust-lints",
+      "name": "Core: lints (clippy, warnings are errors)",
+      "status": "passed",
+      "seconds": 0,
+      "output": ""
+    },
+    {
+      "id": "tauri-rust-build",
+      "name": "Core: the app compiles",
+      "status": "passed",
+      "seconds": 0,
+      "output": ""
+    },
+    {
+      "id": "tauri-rust-tests",
+      "name": "Core: tests",
+      "status": "flaky",
+      "seconds": 60.4339897,
+      "output": "This check is flaky: it failed on the first try and passed on the second. Treated as passed; the first failure was:\n\u2026\ntest themes::tests::a_choice_with_no_imports_is_fine ... ok\r\ntest themes::tests::nothing_saved_means_the_defaults ... ok\r\ntest themes::tests::the_chosen_theme_and_imported_themes_survive_a_restart ... ok\r\ntest themes::tests::nonsense_is_refused_and_the_old_file_is_kept ... ok\r\ntest update::tests::a_download_that_does_not_match_is_discarded_and_nothing_is_kept ... ok\r\ntest update::tests::a_manifest_changed_after_signing_or_signed_by_someone_else_is_refused ... ok\r\ntest runtime::tests::exit_zero_with_stop_command_is_detached_and_stop_runs_the_command ... ok\r\ntest update::tests::a_release_published_hours_after_the_last_check_is_found_without_a_restart ... ok\r\ntest runtime::tests::stop_kills_the_whole_tree_and_ends_stopped_not_red ... ok\r\ntest update::tests::a_valid_manifest_is_accepted_and_the_checksum_normalised ... ok\r\ntest update::tests::auto_checks_are_rate_limited_and_respect_the_setting ... ok\r\ntest update::tests::download_refuses_urls_outside_the_allowed_prefixes_before_any_request ... ok\r\ntest update::tests::an_oversized_manifest_is_refused ... ok\r\ntest update::tests::installers_listed_under_the_old_project_name_are_still_accepted ... ok\r\ntest update::tests::manifests_that_could_lead_somewhere_else_are_refused ... ok\r\ntest update::tests::a_newer_signed_release_is_found ... ok\r\ntest update::tests::redirects_are_followed_like_github_release_downloads ... ok\r\ntest update::tests::download_verifies_reports_progress_and_leaves_one_clean_file ... ok\r\ntest update::tests::the_cache_holds_the_latest_found_update ... ok\r\ntest update::tests::the_embedded_public_key_is_a_valid_ed25519_key ... ok\r\ntest update::tests::the_installer_runs_silently_closes_the_app_and_asks_to_relaunch ... ok\r\ntest update::tests::the_official_base_and_prefix_point_at_this_projects_releases ... ok\r\ntest themes::tests::there_is_a_limit_on_how_much_can_be_stored ... ok\r\ntest update::tests::signatures_verify_only_for_the_right_key_and_the_exact_bytes ... ok\r\ntest update::tests::versions_parse_and_compare ... ok\r\ntest update::tests::verify_file_catches_truncation_and_corruption ... ok\r\ntest runtime::tests::empty_command_opens_interactive_shell_that_accepts_input ... ok\r\ntest git::tests::push_sets_upstream_for_a_new_branch_and_the_remote_receives_it ... ok\r\ntest git::tests::pull_never_merges_when_branches_diverged_and_changes_nothing ... ok\r\ntest git::tests::push_is_rejected_when_behind_with_a_helpful_message_and_never_forces ... ok\r\ntest runtime::tests::the_terminal_shell_overrides_the_default_and_a_missing_shell_fails_clearly ... ok\r\ntest runtime::tests::git_bash_runs_commands_in_the_project_folder_with_real_exit_codes ... ok\r\ntest runtime::tests::t4_unknown_command_is_nonzero_and_error_visible ... ok\r\ntest git::tests::sync_on_a_branch_without_upstream_just_pushes_it ... ok\r\ntest git::tests::fetch_then_pull_brings_a_teammates_commit ... ok\r\ntest update::tests::missing_and_unreachable_servers_give_plain_messages ... ok\r\ntest git::tests::sync_pulls_then_pushes ... ok\r\ntest git::tests::sync_stops_at_the_pull_when_diverged ... ok\r\ntest runtime::tests::stopping_a_git_bash_terminal_kills_its_whole_tree ... ok\r\n\r\nfailures:\r\n\r\n---- engine::tests::up_with_wait_stops_early_and_explains_when_a_terminal_fails stdout ----\r\n\r\nthread \u0027engine::tests::up_with_wait_stops_early_and_explains_when_a_terminal_fails\u0027 (42248) panicked at src\\engine.rs:904:9:\r\nassertion \u0060left == right\u0060 failed: {\u0022elapsed_ms\u0022:2108,\u0022ready\u0022:true,\u0022terminals\u0022:[{\u0022name\u0022:\u0022db\u0022,\u0022ready\u0022:true,\u0022state\u0022:\u0022running\u0022},{\u0022name\u0022:\u0022api\u0022,\u0022ready\u0022:true,\u0022state\u0022:\u0022running\u0022}]}\r\n  left: (Some(true), None)\r\n right: (Some(false), Some(\u0022api\u0022))\r\nnote: run with \u0060RUST_BACKTRACE=1\u0060 environment variable to display a backtrace\r\n\r\n\r\nfailures:\r\n    engine::tests::up_with_wait_stops_early_and_explains_when_a_terminal_fails\r\n\r\ntest result: FAILED. 269 passed; 1 failed; 1 ignored; 0 measured; 0 filtered out; finished in 26.54s\r\n\r\n\n    Finished \u0060test\u0060 profile [unoptimized \u002B debuginfo] target(s) in 0.97s\r\n     Running unittests src\\lib.rs (src-tauri\\target\\debug\\build\\tinkerdeck/44560fda5c08c730\\out\\tinkerdeck_lib-44560fda5c08c730.exe)\r\nerror: test failed, to rerun pass \u0060--lib\u0060\n\n\u2026\ntest cli::tests::update_commands_check_by_default_and_apply_only_with_yes ... ok\r\ntest cli::tests::update_results_render_for_people ... ok\r\ntest cli::tests::send_joins_words_and_can_skip_enter ... ok\r\ntest cli::tests::wait_options ... ok\r\ntest client::tests::endpoint_file_parses_and_rejects_junk ... ok\r\ntest client::tests::replies_map_to_ok_or_the_engine_message ... ok\r\ntest client::tests::the_config_folder_matches_the_app ... ok\r\ntest mcp::tests::initialize_announces_tools_and_cheap_usage_instructions ... ok\r\ntest mcp::tests::logs_wait_and_run_have_short_plain_forms ... ok\r\ntest mcp::tests::notifications_get_no_reply_and_ping_works ... ok\r\ntest mcp::tests::new_true_reads_only_output_since_the_last_lc_logs_of_that_terminal ... ok\r\ntest mcp::tests::results_are_compact_text_and_engine_errors_are_tool_errors_not_protocol_errors ... ok\r\ntest mcp::tests::status_and_up_results_have_short_plain_forms ... ok\r\ntest mcp::tests::td_git_routes_by_op_and_drops_it_from_the_params ... ok\r\ntest mcp::tests::the_guide_covers_discovery_ready_checks_and_the_token_saving_rules ... ok\r\ntest mcp::tests::llms_txt_and_the_server_instructions_name_every_tool ... ok\r\ntest mcp::tests::token_saving_defaults_are_applied_unless_the_model_overrides_them ... ok\r\ntest mcp::tests::unknown_tools_and_methods_are_protocol_errors ... ok\r\ntest mcp::tests::tool_calls_map_to_engine_methods ... ok\r\ntest register::tests::adds_the_entry_with_the_full_path_and_keeps_everything_else ... ok\r\ntest register::tests::creates_the_servers_object_when_missing_and_is_idempotent ... ok\r\ntest mcp::tests::the_guide_documents_every_command_line_flag_and_command ... ok\r\ntest register::tests::known_clients_have_their_documented_locations ... ok\r\ntest register::tests::opencode_gets_a_local_command_array_under_mcp_and_keeps_its_other_settings ... ok\r\ntest register::tests::rejects_documents_it_cannot_safely_extend ... ok\r\ntest mcp::tests::the_guide_documents_every_tool_and_every_parameter_of_every_tool ... ok\r\ntest register::tests::removal_touches_only_our_entry ... ok\r\ntest register::tests::the_old_lite_commander_entry_is_removed_and_everything_else_is_kept ... ok\r\ntest register::tests::the_paste_snippet_is_valid_json_with_the_full_path ... ok\r\ntest mcp::tests::the_tool_list_is_small_valid_and_cheap ... ok\r\ntest register::tests::vs_code_uses_servers_with_a_stdio_type ... ok\r\ntest register::tests::selection_defaults_to_the_detected_clients_and_names_unknown_ones ... ok\r\ntest register::tests::install_writes_a_new_file_and_a_second_run_changes_nothing ... ok\r\ntest register::tests::opencode_location_prefers_an_existing_jsonc_file ... ok\r\ntest register::tests::a_byte_order_mark_and_an_empty_file_are_fine ... ok\r\ntest register::tests::opencode_installs_into_a_real_file ... ok\r\ntest register::tests::installing_replaces_the_old_entry_with_the_new_one_in_a_real_file ... ok\r\ntest register::tests::a_file_it_cannot_parse_is_left_exactly_as_it_was ... ok\r\ntest register::tests::uninstall_also_clears_a_leftover_old_entry ... ok\r\ntest register::tests::install_backs_up_the_original_once_and_preserves_other_settings ... ok\r\ntest register::tests::uninstall_removes_only_ours_and_ignores_missing_files ... ok\r\n\r\ntest result: ok. 54 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s\r\n\r\n\r\nrunning 0 tests\r\n\r\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\r\n\r\n\r\nrunning 0 tests\r\n\r\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\r\n\r\n\n    Finished \u0060test\u0060 profile [unoptimized \u002B debuginfo] target(s) in 1.43s\r\n     Running unittests src\\lib.rs (src-tauri\\target\\debug\\build\\tinkerdeck/44560fda5c08c730\\out\\tinkerdeck_lib-44560fda5c08c730.exe)\r\n     Running unittests src\\bin\\tdk\\main.rs (src-tauri\\target\\debug\\build\\tinkerdeck/31f70c934402d8b8\\out\\tdk-31f70c934402d8b8.exe)\r\n     Running unittests src\\main.rs (src-tauri\\target\\debug\\build\\tinkerdeck/7497afa71532386c\\out\\tinkerdeck-7497afa71532386c.exe)\r\n   Doc-tests tinkerdeck_lib"
+    }
+  ],
+  "tests": []
+}

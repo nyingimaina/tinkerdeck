@@ -1,0 +1,50 @@
+{
+  "overall": 2,
+  "headline": "Not fully proven: some parts could not be checked, so they are not counted as passed.",
+  "items": [
+    {
+      "id": "boot",
+      "title": "The app compiles",
+      "status": 0,
+      "evidence": "The window was built and the Rust core compiled together into the desktop app, so the two halves fit."
+    },
+    {
+      "id": "tests",
+      "title": "Automated tests and checks pass",
+      "status": 0,
+      "evidence": "15 of 15 checks passed. The developer reported 28 tests."
+    },
+    {
+      "id": "requirements",
+      "title": "Every requirement has a test that names it",
+      "status": 0,
+      "evidence": "5 of 5 requirements have a test."
+    },
+    {
+      "id": "findings",
+      "title": "No problems left open by review, QA or security",
+      "status": 0,
+      "evidence": "None open. 5 fixed along the way, 6 note(s) recorded."
+    },
+    {
+      "id": "coverage",
+      "title": "The tests run the code",
+      "status": 2,
+      "evidence": "No coverage report was produced, so nobody knows how much of the code the tests run."
+    },
+    {
+      "id": "skipped",
+      "title": "Nothing was skipped",
+      "status": 0,
+      "evidence": "Every check that applies was run."
+    }
+  ],
+  "notes": [
+    {
+      "id": "browser",
+      "title": "Real browser journeys",
+      "status": 2,
+      "evidence": "Not run: this stack has no browser journeys. Not counted for or against the verdict."
+    }
+  ]
+}

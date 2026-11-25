@@ -435,3 +435,11 @@
 {"seq":435,"at":"2026-11-25T19:03:26.5021366+00:00","type":"evidence.recorded","stage":"challenge","message":"29 changed file(s) and 5 requirement(s) are written down after Challenge."}
 {"seq":436,"at":"2026-11-25T19:03:26.5498154+00:00","type":"stage.started","stage":"prove","message":"Engine assembles the proof report"}
 {"seq":437,"at":"2026-11-25T19:03:27.5781369+00:00","type":"browser.skipped","stage":"prove","message":"Browser journeys not run: this stack has no browser journeys"}
+{"seq":438,"at":"2026-11-25T19:03:29.3556473+00:00","type":"revision.sealed","stage":"prove","message":"Revision 1 is sealed: commit 73a21f3, checkpoint d6701db, evidence 8a43f993eb69f527, proof none."}
+{"seq":439,"at":"2026-11-25T19:03:29.4239371+00:00","type":"series.committed","stage":"prove","message":"Revision 1 of 2 is built and committed (73a21f3)"}
+{"seq":440,"at":"2026-11-25T19:03:29.4696179+00:00","type":"series.autocontinued","stage":"prove","message":"Revision 1 passed and auto-continue is on: going on to the next without asking"}
+{"seq":441,"at":"2026-11-25T19:03:31.6920605+00:00","type":"facts.written","message":"Metrics and readiness saved: Not fully proven: some parts could not be checked, so they are not counted as passed.","data":{"readiness":"NotProven"}}
+{"seq":442,"at":"2026-11-25T19:03:31.8242786+00:00","type":"workflows.learned","message":"839 tool use(s) recorded."}
+{"seq":443,"at":"2026-11-25T19:03:32.0400978+00:00","type":"lessons.findings","message":"11 finding(s) taken into what this project has learned"}
+{"seq":444,"at":"2026-11-25T19:03:32.1360441+00:00","type":"proof.written","stage":"prove","message":"Proof report written","data":{"report":".devteam/runs/20261125-153618/proof-report.md"}}
+{"seq":445,"at":"2026-11-25T19:03:32.8318435+00:00","type":"run.completed","stage":"prove","message":"Feature complete in 207m 10s, $0.57"}

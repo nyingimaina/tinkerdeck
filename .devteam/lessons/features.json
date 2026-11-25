@@ -1,0 +1,16 @@
+{
+  "runs": [
+    {
+      "runId": "20261125-153618",
+      "feature": "Before any window code changes, produce a tidy-up plan that names every current\u2026 (and 4 more)",
+      "areas": [
+        "src",
+        "src/features/apps",
+        "src/features/command-palette",
+        "src/features/git",
+        "src/features/terminals",
+        "src/shared"
+      ]
+    }
+  ]
+}

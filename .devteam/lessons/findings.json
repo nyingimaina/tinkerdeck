@@ -1,0 +1,27 @@
+{
+  "rules": [],
+  "files": [
+    {
+      "path": "src/App.tsx",
+      "count": 2,
+      "runs": [
+        "20261125-153618"
+      ],
+      "lastDescription": "R5 acceptance \u0027Parts that are not shown are loaded when needed rather than up front, so the initial view does not carry them\u0027 has no test that can fail: the new code-splitting of GitDrawer/ConsoleNav/EditPane/ThemeFinder/CommandPalette is u",
+      "lastRule": ""
+    },
+    {
+      "path": "docs/ui-tidy-up-plan.md",
+      "count": 3,
+      "runs": [
+        "20261125-153618"
+      ],
+      "lastDescription": "The plan puts the branch popover in both the panel (P9) and dialog (D10) inventories, and the R1 test cannot notice a part appearing more than once, so the \u0027exactly one place\u0027 acceptance is both unproven and currently false.",
+      "lastRule": ""
+    }
+  ],
+  "absorbed": [
+    "20261125-153618"
+  ],
+  "promotionAsked": {}
+}

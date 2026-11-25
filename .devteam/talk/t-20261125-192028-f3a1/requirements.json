@@ -1,0 +1,107 @@
+{
+  "summary": "DevTeam is meant to run a series of revisions back-to-back. The developer reported that after revision 1 of a two-revision series was accepted, DevTeam announced it was continuing automatically but then ended the run without starting revision 2, leaving the series half done. The requirement being discussed is that an accepted revision with auto-continue on must start the next pending revision by itself, so the developer does not have to notice the stall and restart the series by hand. No other feature has been agreed yet.",
+  "roles": [
+    "Developer/operator running a DevTeam revision series"
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "When a revision in a series is accepted and auto-continue is on, DevTeam must start the next pending revision without asking the developer.",
+      "rationale": "The series is meant to run its revisions back-to-back. When it stops after revision 1, a two-revision job is left half finished and the developer has to notice the stall and restart it manually.",
+      "acceptance": [
+        "After revision 1 is accepted with auto-continue on, revision 2 starts in a new run without any manual command.",
+        "A new run folder or a worker 'spawned' record appears shortly after the acceptance, before the worker exits.",
+        "The series is not reported complete while a pending revision remains."
+      ],
+      "edgeCases": [
+        "If no revision remains pending, the series ends after the accepted revision without starting another run.",
+        "If auto-continue is off, DevTeam stops after the accepted revision and waits for the developer.",
+        "If the next revision's request text is already prepared, the auto-started run uses that prepared text."
+      ],
+      "pitfalls": [
+        "Do not mark the run complete or let the worker exit while the next revision is still pending and auto-continue is on.",
+        "Do not rely on the developer re-issuing a command to start revision 2.",
+        "A retry after a failed launch must not create two runs for the same next revision."
+      ],
+      "rules": [],
+      "facts": []
+    }
+  ],
+  "outOfScope": [
+    "Changing how a revision is authored or accepted",
+    "Any Tinkerdeck feature; this is about DevTeam itself"
+  ],
+  "nonFunctional": [
+    {
+      "area": "reliability",
+      "statement": "Auto-continue starts the next pending revision after the current one is accepted, without operator action, and the run records it.",
+      "acceptance": "After acceptance with auto-continue on, a new run folder or worker 'spawned' record exists before the original worker exits."
+    }
+  ],
+  "risks": [
+    "Only the auto-continue launch failed; the cause may be the launcher, the run's 'NotProven' readiness, or the series being marked complete early, so a fix in the wrong place may not resolve it.",
+    "Revision 2 was prepared but never launched, so there may be no end-to-end test of the auto-continue path."
+  ],
+  "tensions": [],
+  "glossary": [
+    "Revision: one unit of work in a series, with its own request text and run.",
+    "Series: an ordered set of revisions that is meant to run to completion.",
+    "Auto-continue: a series setting that starts the next revision without asking the developer."
+  ],
+  "questions": [],
+  "coverage": [
+    {
+      "topic": "users",
+      "status": "open",
+      "note": "The operator of a revision series is implied but not described in detail."
+    },
+    {
+      "topic": "data",
+      "status": "open",
+      "note": "Revision and series state is implied (pending, accepted, complete) but not specified."
+    },
+    {
+      "topic": "permissions",
+      "status": "not-applicable",
+      "note": "No access-control behaviour was discussed."
+    },
+    {
+      "topic": "validation",
+      "status": "open",
+      "note": "The run's 'NotProven' readiness may affect auto-continue; this is unconfirmed."
+    },
+    {
+      "topic": "states",
+      "status": "open",
+      "note": "The run moved from accepted to 'Feature complete' while revision 2 was still pending; the intended states are not yet agreed."
+    },
+    {
+      "topic": "duplicates",
+      "status": "open",
+      "note": "It is not stated whether a retry could start the same revision twice."
+    },
+    {
+      "topic": "volume",
+      "status": "not-applicable",
+      "note": "No data volumes were discussed."
+    },
+    {
+      "topic": "deletion",
+      "status": "not-applicable",
+      "note": "Deleting revisions or runs was not discussed."
+    },
+    {
+      "topic": "privacy",
+      "status": "not-applicable",
+      "note": "No personal or sensitive data was discussed."
+    },
+    {
+      "topic": "quality",
+      "status": "open",
+      "note": "Reliability of auto-continue is the subject of the report but has no agreed target yet."
+    }
+  ],
+  "assumptions": [
+    "The intended behaviour is that auto-continue starts revision 2 after revision 1 is accepted, based on DevTeam's own announcement and the prepared pending revision."
+  ]
+}

@@ -137,14 +137,71 @@ describe("EmptyState / Banner / Dialog", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Could not read");
   });
 
-  it("dialog focuses the first (default) action", () => {
+  it("A4: dialog focuses the first (default) action, exposes one named dialog and runs each action", async () => {
+    const stop = vi.fn();
+    const keep = vi.fn();
     render(
-      <Dialog title="Quit?" actions={[{ label: "Stop and quit", onClick: vi.fn() }, { label: "Keep running", onClick: vi.fn() }]}>
+      <Dialog title="Quit?" actions={[{ label: "Stop and quit", onClick: stop }, { label: "Keep running", onClick: keep }]}>
         2 terminals are running.
       </Dialog>,
     );
     expect(screen.getByRole("button", { name: "Stop and quit" })).toHaveFocus();
     expect(screen.getByRole("dialog", { name: "Quit?" })).toBeInTheDocument();
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    await userEvent.click(screen.getByRole("button", { name: "Keep running" }));
+    expect(keep).toHaveBeenCalledTimes(1);
+    expect(stop).not.toHaveBeenCalled();
+  });
+
+  it("R8/A3: dialog is a side pane whose named close control runs the last (cancel) action", async () => {
+    const stop = vi.fn();
+    const cancel = vi.fn();
+    render(
+      <Dialog title="Quit?" actions={[{ label: "Stop and quit", onClick: stop }, { label: "Cancel", onClick: cancel }]}>
+        2 terminals are running.
+      </Dialog>,
+    );
+    expect(document.querySelector('[class*="ZestResponsiveLayout-module_sidePane"]')).not.toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Close Quit?" }));
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(stop).not.toHaveBeenCalled();
+  });
+
+  it("R8/A3: Escape dismisses the side pane through the cancel action", async () => {
+    const confirm = vi.fn();
+    const cancel = vi.fn();
+    render(
+      <Dialog title="Delete Qonsol?" actions={[{ label: "Delete", onClick: confirm }, { label: "Cancel", onClick: cancel }]}>
+        This removes the app.
+      </Dialog>,
+    );
+    await userEvent.keyboard("{Escape}");
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
+  it("R8/A3: a dialog with no actions keeps its content and offers no close path at all", async () => {
+    render(
+      <Dialog title="Update to 1.3.0" actions={[]}>
+        Downloading. 50%
+      </Dialog>,
+    );
+    expect(screen.getByText("Downloading. 50%")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).toBeNull();
+    await userEvent.keyboard("{Escape}");
+    expect(screen.getByRole("dialog", { name: "Update to 1.3.0" })).toBeInTheDocument();
+  });
+
+  it("R8: a confirmation dialog keeps its title, body and action words in the pane", () => {
+    render(
+      <Dialog title="Delete Qonsol?" actions={[{ label: "Delete", kind: "danger", onClick: vi.fn() }, { label: "Cancel", onClick: vi.fn() }]}>
+        This removes the app and its terminals.
+      </Dialog>,
+    );
+    const dialog = screen.getByRole("dialog", { name: "Delete Qonsol?" });
+    expect(dialog).toHaveTextContent("This removes the app and its terminals.");
+    expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
   });
 });
 

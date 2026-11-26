@@ -1,3 +1,5 @@
+// @ts-expect-error -- Node's fs is available to the test runner; the window build ships no Node types.
+import { readFileSync } from "node:fs";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
@@ -34,6 +36,10 @@ function controller(over: Partial<FinderController> = {}): FinderController {
     ...over,
   } as FinderController;
 }
+
+// The layout requirement is CSS-only, so the test reads the stylesheet Vite would ship.
+const cwd = (globalThis as unknown as { process: { cwd(): string } }).process.cwd();
+const finderCss = () => readFileSync(`${cwd}/src/features/themes/Themes.module.css`, "utf8");
 
 describe("ThemeFinder", () => {
   it("has an Online and an On this PC tab", async () => {
@@ -96,5 +102,30 @@ describe("ThemeFinder", () => {
   it("says where the themes come from", () => {
     render(<ThemeFinder finder={controller()} />);
     expect(screen.getByText(/open-vsx\.org/i)).toBeTruthy();
+  });
+
+  it("R7: the finder fills its container instead of demanding a wider fixed width", () => {
+    const css = finderCss();
+    const block = css.match(/\.finder\s*\{([^}]*)\}/)?.[1] ?? "";
+    expect(block).toMatch(/width:\s*100%/);
+    expect(block).toMatch(/min-width:\s*0/);
+    expect(block).not.toMatch(/min\(\s*640px/);
+    expect(css).not.toMatch(/\.finder\s*\{[^}]*80vw/s);
+  });
+
+  it("R7: a long theme name stays inside its row instead of widening it", () => {
+    const css = finderCss();
+    const cardBody = css.match(/\.cardBody\s*\{([^}]*)\}/)?.[1] ?? "";
+    const cardTitle = css.match(/\.cardTitle\s*\{([^}]*)\}/)?.[1] ?? "";
+    expect(cardBody).toMatch(/min-width:\s*0/);
+    expect(cardTitle).toMatch(/min-width:\s*0/);
+    expect(cardTitle).toMatch(/overflow-wrap:\s*anywhere/);
+  });
+
+  it("R7: an empty search shows its message inside the finder, not past its edge", () => {
+    render(<ThemeFinder finder={controller({ entries: [] })} />);
+    const message = screen.getByText(/Nothing found/);
+    expect(message).toBeInTheDocument();
+    expect(screen.queryByRole("listitem")).toBeNull();
   });
 });

@@ -1,0 +1,235 @@
+{
+  "summary": "Revision 2 extends revision 1's explorer instead of adding a parallel one. R13 adds a 'home' source to the existing pure explorerRoot() in src/features/explorer/root.ts and an optional homeFolder argument; App fetches that path once through one new thin explorer_home command (USERPROFILE, the same lookup themes_cmds.rs already uses) and passes it down, so when no app root applies (home view, editor with no tab or an unsaved tab) the panel roots at the user's home folder. useExplorer's existing Up machinery, already used by Misc roots, is then allowed for home roots too, so Up climbs one folder at a time and from a drive root reaches the existing explorer_drives list. No tab code is touched anywhere on the root path, so a root change cannot close or alter a tab; this supersedes revision 1's A5 'home has no root' hint, which now only appears if the core cannot report a home folder. R6 turns the shared registry's F5 entry into a toggleApp id (every F5 variant maps to it, so F5 never means refresh), drops refresh's key, and keeps App's single global key listener registered once: the handler calls a live toggleApp closure through a ref, and toggleApp reads view, app and states at press time, computes appButton(app.terminals.map(stateOf)) exactly as AppHeader does, then calls the same startAll / stopAll the on-screen button calls (no terminals -> no-op, matching the disabled button). Home and editor views still preventDefault so F5 is a true no-op. Runtime's existing transition guard already makes a repeated start a no-op, so rapid F5 presses cannot start a second copy. R7 removes the finder's min(640px, 80vw) demand and makes it fill and wrap inside its container. R8 adds one small adapter, SidePane, over the approved jattac.libs.web.zest-responsive-layout 2.8.0 (verified: ISC, peer React ^18.2 with 18.3.1 installed, no runtime deps, ~12 kB JS, and its published ESM bundle injects its own stylesheet at import time, so the earlier missing-CSS rejection does not apply). Dialog keeps its exact props/actions API and renders its body and actions inside the adapter's pane; an optional cancel flag on an action (defaulting to the last action) gives Escape, the pane close control and the backdrop a safe cancel, while the first action still gets focus and exactly one role=dialog with the title as its accessible name remains. BranchMenu renders its existing filter and list in the same pane. The command palette is untouched. A ZestLayoutThemeProvider at the App root passes the existing light/dark choice. Scale and cost: R13 still reads exactly one level per folder, reuses revision 1's 100-level LRU cache and bounded Rust listing, and adds one env lookup plus one IPC at startup; Up costs one level read. R6 is O(number of terminals) only at key press, no polling. R7/R8 are pure CSS/layout: the pane mounts only while a dialog is open, keeps no timers, and the package's animations are GPU transform/opacity. No new Rust crate, Tauri plugin, capability permission or CSP change. USR-004 is honoured by running and extending the existing Dialog and BranchMenu tests before editing them.",
+  "impact": {
+    "touches": [
+      "src/features/explorer/root.ts (adds the home source and an optional homeFolder)",
+      "src/features/explorer/useExplorer.ts (allows Up for a home root)",
+      "src/features/explorer/ExplorerPanel.tsx (renders the home-rooted tree and its Up)",
+      "src/api/explorer.ts (typed home lookup)",
+      "src-tauri/src/features/explorer/mod.rs (home folder lookup)",
+      "src-tauri/src/features/explorer/commands.rs (explorer_home command)",
+      "src-tauri/src/lib.rs (register explorer_home)",
+      "src/App.tsx (home state, live F5 toggle, palette refresh hint removal, theme provider, dialog cancel)",
+      "src/shared/shortcuts.ts (F5 becomes toggleApp; refresh loses its key)",
+      "src/features/apps/UtilitiesMenu.tsx (remove the F5 refresh hint)",
+      "src/features/git/GitBar.tsx (remove the F5 refresh title)",
+      "src/features/command-palette/CommandPalette.tsx (remove F5 refresh help text; mark cancel actions)",
+      "src/features/updates/UpdateUI.tsx (mark its cancel action)",
+      "src/features/themes/Themes.module.css (finder fills and wraps in its container)",
+      "src/features/apps/Dialog.tsx and Dialog.module.css (render through the side-pane adapter, optional cancel action)",
+      "src/features/git/BranchMenu.tsx and Git.module.css (render through the side-pane adapter)",
+      "package.json and package-lock.json (approved jattac responsive-layout dependency)"
+    ],
+    "reuses": [
+      "src/state/editorGroups.ts ownerOf (same path-to-owner lookup the tab groups use)",
+      "src/features/explorer/root.ts parentFolder/isDriveRoot (existing Up maths)",
+      "src/features/explorer/useExplorer.ts (level loading, 100-level LRU cache, locked levels, drive list, resetKey)",
+      "src/api/explorer.ts explorer_list/explorer_drives and src-tauri features::explorer list_level/drives",
+      "src/state/model.ts appButton and the launcher's startAll/stopAll actions",
+      "src-tauri/src/runtime.rs transition guard (an already-started terminal is not started twice)",
+      "src/shared/shortcuts.ts APP_SHORTCUTS, matchShortcut, isAppShortcut, and the terminal's key forwarding",
+      "src/features/apps/Sidebar explorer section and App's existing palette action list",
+      "src/features/apps/Dialog.module.css body/actions/button rules inside the new pane",
+      "existing App dialog state (pendingSave, pendingDelete, pendingCloseConsole, pendingSwitch, restore, quit)",
+      "src-tauri/src/themes_cmds.rs USERPROFILE lookup pattern for the home folder",
+      "src/state/model.ts normalizeSlashes"
+    ],
+    "adds": [
+      "explorer_home command returning the user's home folder, with a typed explorerApi.home() wrapper",
+      "a 'home' explorer root source in root.ts and useExplorer",
+      "src/features/apps/SidePane.tsx + SidePane.module.css (small adapter over ZestResponsiveLayout)",
+      "package.json (declares jattac.libs.web.zest-responsive-layout ^2.8.0, with its reason)",
+      "package-lock.json (locks the resolved jattac.libs.web.zest-responsive-layout 2.8.0 dependency)",
+      "a toggleApp F5 shortcut id in the shared registry",
+      "A1, A2, A3 and A4 recorded below"
+    ]
+  },
+  "scope": [
+    "package.json",
+    "package-lock.json",
+    "src/App.tsx",
+    "src/App*.test.tsx",
+    "src/api/explorer.ts",
+    "src/api/explorer.test.ts",
+    "src/shared/shortcuts.ts",
+    "src/shared/shortcuts.test.ts",
+    "src/features/explorer/**",
+    "src/features/apps/Dialog.tsx",
+    "src/features/apps/Dialog.module.css",
+    "src/features/apps/SidePane.tsx",
+    "src/features/apps/SidePane.module.css",
+    "src/features/apps/SidePane.test.tsx",
+    "src/features/apps/components.test.tsx",
+    "src/features/apps/Sidebar.explorer.test.tsx",
+    "src/features/apps/UtilitiesMenu.tsx",
+    "src/features/apps/UtilitiesMenu.test.tsx",
+    "src/features/themes/Themes.module.css",
+    "src/features/themes/ThemeFinder.test.tsx",
+    "src/features/git/BranchMenu.tsx",
+    "src/features/git/GitBar.tsx",
+    "src/features/git/Git.module.css",
+    "src/features/git/git.test.tsx",
+    "src/features/command-palette/CommandPalette.tsx",
+    "src/features/command-palette/CommandPalette.test.tsx",
+    "src/features/updates/UpdateUI.tsx",
+    "src/features/updates/updates.test.tsx",
+    "src-tauri/src/features/explorer/**",
+    "src-tauri/src/lib.rs",
+    "src-tauri/tests/explorer.rs"
+  ],
+  "components": [
+    {
+      "name": "ExplorerRootRules",
+      "path": "src/features/explorer/root.ts",
+      "requirements": ["R13", "A1"]
+    },
+    {
+      "name": "ExplorerNavigation",
+      "path": "src/features/explorer/useExplorer.ts",
+      "requirements": ["R13"]
+    },
+    {
+      "name": "ExplorerPanel",
+      "path": "src/features/explorer/ExplorerPanel.tsx",
+      "requirements": ["R13"]
+    },
+    {
+      "name": "ExplorerApi",
+      "path": "src/api/explorer.ts",
+      "requirements": ["R13", "A1"]
+    },
+    {
+      "name": "ExplorerCore",
+      "path": "src-tauri/src/features/explorer/mod.rs",
+      "requirements": ["R13", "A1"]
+    },
+    {
+      "name": "ExplorerCommands",
+      "path": "src-tauri/src/features/explorer/commands.rs",
+      "requirements": ["R13", "A1"]
+    },
+    {
+      "name": "CommandRegistration",
+      "path": "src-tauri/src/lib.rs",
+      "requirements": ["R13", "A1"]
+    },
+    {
+      "name": "AppWindow",
+      "path": "src/App.tsx",
+      "requirements": ["R13", "R6", "R8"]
+    },
+    {
+      "name": "ShortcutRegistry",
+      "path": "src/shared/shortcuts.ts",
+      "requirements": ["R6"]
+    },
+    {
+      "name": "UtilitiesMenuHints",
+      "path": "src/features/apps/UtilitiesMenu.tsx",
+      "requirements": ["R6"]
+    },
+    {
+      "name": "GitBarHints",
+      "path": "src/features/git/GitBar.tsx",
+      "requirements": ["R6"]
+    },
+    {
+      "name": "PaletteHelp",
+      "path": "src/features/command-palette/CommandPalette.tsx",
+      "requirements": ["R6"]
+    },
+    {
+      "name": "CommandPaletteDialogs",
+      "path": "src/features/command-palette/CommandPalette.tsx",
+      "requirements": ["R8", "A3"]
+    },
+    {
+      "name": "ThemeFinderLayout",
+      "path": "src/features/themes/Themes.module.css",
+      "requirements": ["R7"]
+    },
+    {
+      "name": "SidePaneAdapter",
+      "path": "src/features/apps/SidePane.tsx",
+      "requirements": ["R8", "A2", "A3"]
+    },
+    {
+      "name": "SharedDialog",
+      "path": "src/features/apps/Dialog.tsx",
+      "requirements": ["R8", "A3", "A4"]
+    },
+    {
+      "name": "BranchMenuPane",
+      "path": "src/features/git/BranchMenu.tsx",
+      "requirements": ["R8", "A3", "A4"]
+    },
+    {
+      "name": "UpdateDialogPane",
+      "path": "src/features/updates/UpdateUI.tsx",
+      "requirements": ["R8", "A3"]
+    },
+    {
+      "name": "PackageManifest",
+      "path": "package.json",
+      "requirements": ["R8", "A2"]
+    },
+    {
+      "name": "PackageLock",
+      "path": "package-lock.json",
+      "requirements": ["R8", "A2"]
+    }
+  ],
+  "additions": [
+    {
+      "id": "A1",
+      "title": "Ask the core for the user's home folder",
+      "why": "The home view and an editor with no file have to show the person's home folder, and the window must not guess or hard-code a Windows path.",
+      "parent": "R13",
+      "kind": "enabling",
+      "touches": ["api", "data"],
+      "acceptance": [
+        "In the home view, or in the editor with no tab open or an unsaved tab, the explorer's top folder is the same folder Windows calls the user's home folder.",
+        "The home path comes from one typed src/api function backed by one thin Tauri command; no home path is written anywhere in the window code.",
+        "When the core cannot determine a home folder the explorer shows its existing no-root message instead of an error, and no listing request is made."
+      ]
+    },
+    {
+      "id": "A2",
+      "title": "Add the approved responsive-layout package and prove it is usable",
+      "why": "R8 names the jattac responsive-layout library as the source of the side panes, and an earlier jattac package had to be rejected because its published build shipped no CSS.",
+      "parent": "R8",
+      "kind": "enabling",
+      "touches": ["ui", "tests"],
+      "acceptance": [
+        "npm install succeeds with jattac.libs.web.zest-responsive-layout ^2.8.0 alongside React 18.3.1 with no peer-dependency error, and package.json plus package-lock.json record it.",
+        "A pane rendered by the adapter is styled without any separate CSS import, because the published 2.8.0 ESM bundle injects its own stylesheet on import.",
+        "The lockfile records the exact published 2.8.0 version, and the dependency is named with its reason in the design."
+      ]
+    },
+    {
+      "id": "A3",
+      "title": "Keep focus, Escape and cancel behaviour when dialogs move to the pane",
+      "why": "Moving confirmations into a side pane must not make a destructive dialog easier to misfire or impossible to dismiss from the keyboard.",
+      "parent": "R8",
+      "kind": "enabling",
+      "touches": ["ui", "tests"],
+      "acceptance": [
+        "Opening a dialog still focuses its first (default) action and exposes exactly one role=dialog named by its title.",
+        "Escape, the pane's close control and the backdrop all run the dialog's marked cancel action (defaulting to its last action), never its destructive one; when a dialog has no action, as while an update installs, there is no close path.",
+        "Every existing confirmation flow (stop-and-save, delete app, close console, switch branch, restore, quit, update, help, theme finder) still completes or cancels through the same buttons."
+      ]
+    },
+    {
+      "id": "A4",
+      "title": "Pin the current dialog and branch menu behaviour before changing them",
+      "why": "The shared Dialog and BranchMenu were already shipped, so their current behaviour has to be frozen by tests before their shell is replaced (USR-004).",
+      "parent": "R8",
+      "kind": "enabling",
+      "touches": ["tests"],
+      "acceptance": [
+        "Before any production edit, the existing Dialog and BranchMenu tests are run and extended to pin first-action focus, role and accessible name, per-action callbacks, branch filtering and picking, loading text, and Escape closing.",
+        "After the pane change those same behaviours pass, with only the deliberately changed presentation (side pane instead of centred modal) asserted differently."
+      ]
+    }
+  ]
+}

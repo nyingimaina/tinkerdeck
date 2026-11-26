@@ -1,0 +1,24 @@
+{
+  "findings": [
+    {
+      "cites": "R6",
+      "severity": "advisory",
+      "file": "src/App.shortcuts.test.tsx",
+      "line": 471,
+      "evidence": "The home and editor no-op tests (lines 471 and 488) render a fresh App that never had an app selected, so `app` is null and App.tsx:376's `view !== \"app\"` guard is never exercised against a remembered app. No test opens an app (which calls L.selectApp, App.tsx:283), returns Home/editor (setView only, selectedAppId persists at App.tsx:107), and then presses F5. Removing the `view !== \"app\"` half of App.tsx:376 would leave both tests green.",
+      "description": "R6's edge case \"F5 in the home or editor view is a true no-op: it does not fall back to acting on a remembered selected app\" has no test. The feature behaves correctly today, but the risk the requirement names is unproven because the only no-op tests run without any previously selected app."
+    }
+  ],
+  "verifications": [
+    {
+      "id": "QA-1",
+      "status": "fixed",
+      "evidence": "Two new tests now exist: src/App.shortcuts.test.tsx:430 \"pressing F5 twice in quick succession starts once and then stops, never starting a terminal twice\" and :454 \"pressing F5 repeatedly while a start is in progress never starts a second copy\". The first fires two F5 presses while startAll synchronously reports t1=starting/t2=stopped, then asserts startAll called once, stopAll once, and the button settles back to Start all; the second presses F5 twice while a terminal reports starting and asserts stopAll twice, startAll never, and a single settled stopped state. Either test fails if the second press re-issued a start (startAll count) or left the app half-started (the Start all waitFor would not resolve). I ran `npx vitest run src/App.shortcuts.test.tsx` (22/22 pass) and the full `npx vitest run` (51 files, 549 tests pass); `npm run lint` (tsc --noEmit) also passes."
+    },
+    {
+      "id": "QA-2",
+      "status": "open",
+      "evidence": "Still no test asserts the command palette is outside a side pane. `grep` for `ZestResponsiveLayout-module_sidePane` over src tests finds only src/features/apps/components.test.tsx:164, src/features/updates/updates.test.tsx:185,203, src/features/git/git.test.tsx:170 and src/features/apps/SidePane.test.tsx:8; none is in CommandPalette.test.tsx or any palette/App test. CommandPalette.test.tsx (lines 36, 81, etc.) still asserts only `getByRole(\"dialog\", { name: \"Command palette\" })`, focus, actions and Escape, all of which survive wrapping the palette in SidePane. CommandPalette.tsx:89 still renders its own `div role=\"dialog\" className={styles.panel}`, but the build report (developer-r2.json) lists no new palette-container test, so a regression moving the palette into a side pane would pass every existing test."
+    }
+  ]
+}

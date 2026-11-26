@@ -1,0 +1,13 @@
+{
+  "summary": "One conflict: R6 makes F5 the Start all / Stop all toggle and forbids it refreshing anywhere, which makes the earlier accepted requirement 20261125-153618:R4 (\"F5 refreshes\") untrue, and neither the design nor a recorded decision says which side wins; the rest of R13/R6/R7/R8 is consistent.",
+  "conflicts": [
+    {
+      "requirement": "R6",
+      "against": "20261125-153618:R4",
+      "kind": "regression",
+      "owner": "requirements",
+      "why": "R6 permanently takes F5 away from refresh (\"F5 never refreshes on any modifier combination\") and the design implements that by rewriting the F5 entry in src/shared/shortcuts.ts and the global handler in src/App.tsx, but the earlier accepted requirement promised that same key refreshes. Both cannot hold, and the design does not record that the earlier requirement is superseded or which one wins, so the builder has no rule for what to do with the old F5-refresh promises or their tests.",
+      "evidence": "R6: \"In the app view, F5 runs the same Start all / Stop all action as the app's on-screen button, choosing Start or Stop exactly as the button would at the moment F5 is pressed. ... F5 never refreshes on any modifier combination.\" Design impact.touches: \"src/shared/shortcuts.ts (F5 becomes toggleApp, refresh loses its key)\" and \"src/App.tsx (home wiring, F5 toggle via live ref, palette entries, theme provider)\". 20261125-153618:R4: \"Add VS Code-style keyboard shortcuts while keeping the existing app shortcuts: Ctrl+B toggles the sidebar, F5 refreshes, Ctrl+Shift+P opens the command palette ... Done when: Ctrl+B toggles the sidebar; F5 refreshes; Ctrl+Shift+P opens the command palette ...\""
+    }
+  ]
+}

@@ -140,6 +140,17 @@ pub fn list_level_with(
     }
 }
 
+/// The user's home folder, read from `USERPROFILE` only, with no disk access (R13, A1).
+///
+/// Returns `None` when the environment cannot say where home is, so the window can show its
+/// existing no-root hint instead of guessing a path.
+pub fn home_folder() -> Option<String> {
+    std::env::var_os("USERPROFILE")
+        .map(PathBuf::from)
+        .filter(|path| !path.as_os_str().is_empty())
+        .map(|path| path.to_string_lossy().to_string())
+}
+
 /// The Windows drive roots, the level above every folder hierarchy (R5).
 pub fn drives() -> Vec<Entry> {
     use windows_sys::Win32::Storage::FileSystem::GetLogicalDrives;

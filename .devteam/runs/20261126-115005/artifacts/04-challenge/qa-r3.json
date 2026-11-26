@@ -1,0 +1,10 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "QA-2",
+      "status": "fixed",
+      "evidence": "src/features/command-palette/CommandPalette.test.tsx:49-54 now has \"R8: the command palette stays a palette and is not moved into a side pane\": it renders the palette and asserts both that the role=dialog has no ancestor matching '[class*=\"ZestResponsiveLayout-module_sidePane\"]' and that the document contains no element with that class at all. That class is exactly the package pane element (verified in node_modules/jattac.libs.web.zest-responsive-layout/dist/ZestResponsiveLayout.esm.js, where the SidePane renders class 'ZestResponsiveLayout-module_sidePane__HlT8j' around its content, and SidePane.test.tsx:8,51 proves the selector matches a rendered SidePane). Wrapping CommandPalette in SidePane (or moving it into any ZestResponsiveLayout pane) would now make both assertions fail. I ran `npx vitest run src/features/command-palette/CommandPalette.test.tsx` (9/9 pass), the full `npm test` (51 files, 550 tests pass) and `npm run lint` (tsc --noEmit, clean)."
+    }
+  ]
+}

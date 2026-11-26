@@ -9,7 +9,7 @@ use std::path::Path;
 use std::process::Command;
 use tempfile::tempdir;
 use tinkerdeck_lib::features::explorer::{
-    drives, list_level, list_level_with, Listing, MAX_RETURNED, MAX_SCANNED,
+    drives, home_folder, list_level, list_level_with, Listing, MAX_RETURNED, MAX_SCANNED,
 };
 
 fn folder(path: &Path) {
@@ -242,6 +242,15 @@ fn a1_scanning_stops_at_the_scan_limit() {
     assert_eq!(listing.entries.len(), 5);
     assert_eq!(listing.total, 10);
     assert!(listing.truncated);
+}
+
+#[test]
+fn a1_home_folder_reads_only_the_user_profile() {
+    let expected = std::env::var_os("USERPROFILE")
+        .map(|value| value.to_string_lossy().to_string())
+        .filter(|value| !value.is_empty());
+
+    assert_eq!(home_folder(), expected);
 }
 
 #[test]

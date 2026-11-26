@@ -268,7 +268,7 @@ export function HelpDialog({ version, autoCheck, phase, upToDate, available, err
           right to add or switch. Typing <code>exit</code> in the first console just starts a fresh shell.
         </li>
         <li>Pull is fast-forward only. For merges, rebases or force pushes use a console.</li>
-        <li>Live state refreshes by itself while the window is visible. Press <b>⟳</b> or F5 to refresh now. Ctrl+B hides the sidebar.</li>
+        <li>Live state refreshes by itself while the window is visible. Press <b>⟳</b> to refresh now. Ctrl+B hides the sidebar.</li>
         <li>A terminal owns everything it starts: background processes it launches end when it stops.</li>
         <li>Do not put passwords in commands. Use environment variables or a .env file.</li>
       </ul>

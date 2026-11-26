@@ -545,6 +545,65 @@
           "scope": ""
         }
       ]
+    },
+    {
+      "id": "A1",
+      "text": "Ask the core for the user\u0027s home folder. The home view and an editor with no file have to show the person\u0027s home folder, and the window must not guess or hard-code a Windows path.",
+      "acceptance": [
+        "In the home view, or in the editor with no tab open or an unsaved tab, the explorer\u0027s top folder is the same folder Windows calls the user\u0027s home folder.",
+        "The home path comes from one typed src/api function backed by one thin Tauri command; no home path is written anywhere in the window code.",
+        "The command reads only USERPROFILE and does no disk scan, so it costs nothing on startup; when the core cannot determine a home folder no listing request is made and the panel falls back to its existing no-root hint instead of an error."
+      ],
+      "rationale": "The home view and an editor with no file have to show the person\u0027s home folder, and the window must not guess or hard-code a Windows path.",
+      "derivedFrom": "R13",
+      "edgeCases": [],
+      "pitfalls": [],
+      "rules": [],
+      "facts": []
+    },
+    {
+      "id": "A2",
+      "text": "Add the approved responsive-layout package and prove it is usable. R8 names the jattac responsive-layout library as the source of the side panes, and an earlier jattac package had to be rejected because its published build shipped no CSS.",
+      "acceptance": [
+        "npm install succeeds with jattac.libs.web.zest-responsive-layout ^2.8.0 alongside React 18.3.1 with no peer-dependency error, and package.json plus package-lock.json record it.",
+        "A pane rendered by the adapter is styled without any separate CSS import, because the published 2.8.0 ESM bundle injects its own stylesheet on import.",
+        "The lockfile records the exact published 2.8.0 version, and the dependency is named with its reason in the design."
+      ],
+      "rationale": "R8 names the jattac responsive-layout library as the source of the side panes, and an earlier jattac package had to be rejected because its published build shipped no CSS.",
+      "derivedFrom": "R8",
+      "edgeCases": [],
+      "pitfalls": [],
+      "rules": [],
+      "facts": []
+    },
+    {
+      "id": "A3",
+      "text": "Keep focus, Escape and cancel behaviour when dialogs move to the pane. Moving confirmations into a side pane must not make a destructive dialog easier to misfire or impossible to dismiss from the keyboard.",
+      "acceptance": [
+        "Opening a dialog still focuses its first (default) action and exposes exactly one role=dialog named by its title.",
+        "The pane\u0027s close control has an accessible name and, together with Escape, runs the dialog\u0027s cancel action, which defaults to its last action and is never the destructive one; the desktop overlay dims but does not close, matching today\u0027s dialog backdrop, and a dialog with no actions (update downloading or installing) has no close path at all.",
+        "Every existing confirmation flow (stop-and-save, delete app, close console, switch branch, restore, quit, update, help, theme finder) still completes or cancels through the same buttons and keeps its content, fields, buttons and actions; the recorded R8 supersession of 20261125-153618:R2 covers presentation only, so every dialog is still present."
+      ],
+      "rationale": "Moving confirmations into a side pane must not make a destructive dialog easier to misfire or impossible to dismiss from the keyboard.",
+      "derivedFrom": "R8",
+      "edgeCases": [],
+      "pitfalls": [],
+      "rules": [],
+      "facts": []
+    },
+    {
+      "id": "A4",
+      "text": "Pin the current dialog and branch menu behaviour before changing them. The shared Dialog and BranchMenu were already shipped, so their current behaviour has to be frozen by tests before their shell is replaced (USR-004).",
+      "acceptance": [
+        "Before any production edit, the existing Dialog and BranchMenu tests are run and extended to pin first-action focus, role and accessible name, per-action callbacks, branch filtering and picking, loading text, and Escape closing.",
+        "After the pane change those same behaviours pass, with only the deliberately changed presentation (side pane instead of centred modal, plus the accessibility-mandated named close control) asserted differently."
+      ],
+      "rationale": "The shared Dialog and BranchMenu were already shipped, so their current behaviour has to be frozen by tests before their shell is replaced (USR-004).",
+      "derivedFrom": "R8",
+      "edgeCases": [],
+      "pitfalls": [],
+      "rules": [],
+      "facts": []
     }
   ],
   "questions": [],

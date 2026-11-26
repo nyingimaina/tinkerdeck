@@ -7,7 +7,7 @@
 - **A status strip** at the bottom with the version and a sidebar toggle that always agrees with Ctrl+B.
 - **Parts appear when wanted.** The git tools and the console can be hidden and shown (**Show git tools**, **Hide console**), so an app opens uncluttered.
 - **Command palette: Ctrl+Shift+P.** Lists every action with its shortcut: add or edit an app, start, stop and restart, git, console, editor, themes, updates, help and **Reset layout**. An action that cannot run right now says why.
-- **Keyboard shortcuts**: Ctrl+B sidebar, F5 refresh, Ctrl+Shift+P palette, Ctrl+Alt+T switch light/dark. They also work while a terminal has focus, and every other key still goes to the shell.
+- **Keyboard shortcuts**: Ctrl+B sidebar, F5 Start all / Stop all in the app view, Ctrl+Shift+P palette, Ctrl+Alt+T switch light/dark. They also work while a terminal has focus, and every other key still goes to the shell.
 - Release helper for maintainers: `scripts\ship.ps1` asks which of bump, build, commit, push and release to do, then does them together.
 
 ## 2.0.0
@@ -78,7 +78,7 @@
 - Control channel: loopback only, per-launch token.
 
 **Interface**
-- Live state: git status, changes, history, branch list and project folders refresh by themselves (`jattac-web-poller`), pause while the window is hidden, and back off when nothing changes. **⟳ Refresh** button and F5 refresh everything now.
+- Live state: git status, changes, history, branch list and project folders refresh by themselves (`jattac-web-poller`), pause while the window is hidden, and back off when nothing changes. **⟳ Refresh** button refreshes everything now.
 - Tabs use `jattac.libs.web.zest-tabs`.
 - Any number of consoles under the Console tab, with a VS Code style side list; typing `exit` in the first console starts a fresh shell, extra consoles close themselves.
 - Other shells: Windows PowerShell, PowerShell 7, Command Prompt, Git Bash and WSL; a default for the app plus a per-terminal override and a choice per console.

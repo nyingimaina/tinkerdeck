@@ -189,6 +189,7 @@ pub fn run() {
             themes_cmds::themes_read_local,
             features::explorer::commands::explorer_list,
             features::explorer::commands::explorer_drives,
+            features::explorer::commands::explorer_home,
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {

@@ -81,6 +81,22 @@ describe("GitBar", () => {
     expect([git.fetch, git.pull, git.push, git.sync].map((f) => (f as ReturnType<typeof vi.fn>).mock.calls.length)).toEqual([1, 1, 1, 1]);
   });
 
+  it("R6: the refresh control no longer tells the user F5 refreshes", () => {
+    render(
+      <GitBar
+        git={controller()}
+        onSwitch={vi.fn()}
+        onOpenChanges={vi.fn()}
+        onOpenHistory={vi.fn()}
+        onOpenConsole={vi.fn()}
+        onRefresh={vi.fn()}
+      />,
+    );
+    const refresh = screen.getByRole("button", { name: "Refresh" });
+    expect(refresh).toHaveAttribute("title", "Refresh now");
+    expect(refresh.getAttribute("title")).not.toContain("F5");
+  });
+
   it("disables everything while an operation runs and shows its name", () => {
     bar(controller({ busy: "Pull" }));
     for (const n of [/Fetch/, /Pull/, /Push/, /Sync/, /Switch branch/]) expect(screen.getByRole("button", { name: n })).toBeDisabled();
@@ -116,35 +132,44 @@ describe("GitBar", () => {
 
 describe("BranchMenu", () => {
   const branches = { current: "main", local: ["main", "feature/login", "fix-login"], remote: ["release", "login-v2"] };
+  const menu = () => within(screen.getByRole("dialog", { name: "Switch branch" }));
 
-  it("marks the current branch, disables it, and offers remote branches separately", async () => {
+  it("A4: marks the current branch, disables it, and offers remote branches separately", async () => {
     const onPick = vi.fn();
     render(<BranchMenu branches={branches} onPick={onPick} onClose={vi.fn()} />);
-    expect(screen.getByRole("button", { name: /✓ main/ })).toBeDisabled();
-    expect(screen.getByText(/On the remote/)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: /release/ }));
+    expect(menu().getByRole("button", { name: /✓ main/ })).toBeDisabled();
+    expect(menu().getByText(/On the remote/)).toBeInTheDocument();
+    await userEvent.click(menu().getByRole("button", { name: /release/ }));
     expect(onPick).toHaveBeenCalledWith("release");
   });
 
-  it("filters both lists as you type", async () => {
+  it("A4: filters both lists as you type", async () => {
     render(<BranchMenu branches={branches} onPick={vi.fn()} onClose={vi.fn()} />);
     await userEvent.type(screen.getByLabelText("Filter branches"), "LOGIN");
-    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual(["feature/login", "fix-login", "⇣ login-v2"]);
+    expect(menu().getAllByRole("button").map((b) => b.textContent)).toEqual(["feature/login", "fix-login", "⇣ login-v2"]);
     await userEvent.type(screen.getByLabelText("Filter branches"), "zzz");
-    expect(screen.getByText("No branch matches.")).toBeInTheDocument();
+    expect(menu().getByText("No branch matches.")).toBeInTheDocument();
   });
 
-  it("Escape closes and the filter box is focused", async () => {
+  it("A4: the filter box is focused and Escape closes the menu", async () => {
     const onClose = vi.fn();
     render(<BranchMenu branches={branches} onPick={vi.fn()} onClose={onClose} />);
     expect(screen.getByLabelText("Filter branches")).toHaveFocus();
     await userEvent.keyboard("{Escape}");
-    expect(onClose).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("shows loading until branches arrive", () => {
+  it("A4: shows loading until branches arrive", () => {
     render(<BranchMenu branches={null} onPick={vi.fn()} onClose={vi.fn()} />);
-    expect(screen.getByText("Loading…")).toBeInTheDocument();
+    expect(menu().getByText("Loading…")).toBeInTheDocument();
+  });
+
+  it("R8/A3: the branch menu is a side pane whose named close control closes it", async () => {
+    const onClose = vi.fn();
+    render(<BranchMenu branches={branches} onPick={vi.fn()} onClose={onClose} />);
+    expect(document.querySelector('[class*="ZestResponsiveLayout-module_sidePane"]')).not.toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Close Switch branch" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { api, errorText, pickFolder, type ShellInfo } from "./api/tauri";
+import { explorerApi } from "./api/explorer";
 import { AppFooter } from "./features/apps/AppFooter";
 import { AppHeader } from "./features/apps/AppHeader";
 import { Banner } from "./features/apps/Banner";
@@ -17,6 +18,7 @@ import { TabStrip } from "./features/terminals/TabStrip";
 import { TerminalHost } from "./features/terminals/TerminalHost";
 import { consoleExitAction, consoleId, consoleTitle, isConsoleId } from "./state/console";
 import {
+  appButton,
   canStop,
   isUp,
   nameFromPath,
@@ -87,12 +89,16 @@ export function App() {
   const [manualCheck, setManualCheck] = useState(false); // the user pressed Check for updates: show its result
   const [folderExists, setFolderExists] = useState<Record<string, boolean>>({});
   const [shells, setShells] = useState<ShellInfo[]>([]);
+  const [homeFolder, setHomeFolder] = useState<string | null>(null);
   const [paneCollapsed, setPaneCollapsed] = useState(readCollapsed);
   const [refreshKey, setRefreshKey] = useState(0);
   const [consoleNotice, setConsoleNotice] = useState<Record<string, string>>({});
   const autoStarted = useRef<Set<string>>(new Set());
   const prevKinds = useRef<Record<string, string>>({});
   const lastAutoRestart = useRef<Record<string, number>>({});
+  // F5 mirrors the on-screen Start all / Stop all button. The key listener is registered once,
+  // so it calls this ref, which is refreshed every render and reads the live view and app (R6).
+  const toggleAppNow = useRef<() => void>(() => {});
   // The control that opened the git drawer, so closing it hands focus back instead of leaving
   // it on the now-hidden Close button (R8).
   const gitReturnFocus = useRef<HTMLElement | null>(null);
@@ -141,14 +147,15 @@ export function App() {
       return !c;
     });
 
-  // keyboard: the shared registry drives Ctrl+B, F5, Ctrl+Shift+P and Ctrl+Alt+T (VS Code habits)
+  // keyboard: the shared registry drives Ctrl+B, F5 (Start all / Stop all), Ctrl+Shift+P and
+  // Ctrl+Alt+T (VS Code habits). F5 is always prevented, so it never reloads the webview (R6).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const id = matchShortcut(e);
       if (!id) return;
       e.preventDefault();
       if (id === "toggleSidebar") toggleSidebar();
-      else if (id === "refresh") refreshAll();
+      else if (id === "toggleApp") toggleAppNow.current();
       else if (id === "commandPalette") setPaletteOpen(true);
       else if (id === "toggleTheme") void T.toggleKind();
     };
@@ -163,6 +170,20 @@ export function App() {
     Promise.resolve()
       .then(() => api.listShells())
       .then((s) => live && setShells(s))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  // The user's home folder comes from the core once, so the explorer can root there in the home
+  // view or an editor with no file without the window guessing a path (R13, A1). When the core
+  // cannot report one, it stays null and the explorer keeps its existing no-root hint.
+  useEffect(() => {
+    let live = true;
+    explorerApi
+      .home()
+      .then((path) => live && setHomeFolder(path))
       .catch(() => {});
     return () => {
       live = false;
@@ -348,6 +369,15 @@ export function App() {
     L.touchApp(id);
   };
 
+  // F5 runs exactly what the app's on-screen button would at this moment: the same appButton
+  // decision over the live terminal states, the same startAll / stopAll calls, and nothing at
+  // all outside the app view or for an app with no terminals (R6).
+  toggleAppNow.current = () => {
+    if (view !== "app" || !app || app.terminals.length === 0) return;
+    if (appButton(app.terminals.map((t) => L.stateOf(t.id))) === "stop") L.actions.stopAll(app.id);
+    else startAll(app.id);
+  };
+
   /** Hide the console by selecting a terminal in the same app; the shell keeps running (R8). */
   const hideConsole = () => {
     if (!app) return;
@@ -368,11 +398,12 @@ export function App() {
     if (onConsole) hideConsole();
   };
 
-  // The Files explorer follows where the user is (R4, R5): the selected app's root in the app
-  // view, the root of the app that owns the active editor tab, or the parent folder of a Misc
-  // (app-less) file. The same deepest-root lookup the tab groups use decides the owner.
+  // The Files explorer follows where the user is (R4, R5, R13): the selected app's root in the app
+  // view, the root of the app that owns the active editor tab, the parent folder of a Misc
+  // (app-less) file, or the user's home folder when no app root or file path applies. The same
+  // deepest-root lookup the tab groups use decides the owner.
   const activePath = editor.tabs.find((t) => t.id === editor.activeId)?.path ?? null;
-  const explorer = explorerRoot({ view, apps: apps ?? [], selectedAppId: L.selectedAppId, activePath });
+  const explorer = explorerRoot({ view, apps: apps ?? [], selectedAppId: L.selectedAppId, activePath, homeFolder });
   // A change of view, selected app or active tab discards any temporary Up navigation (R4, R5).
   const explorerResetKey = `${view}|${L.selectedAppId ?? ""}|${activePath ?? ""}`;
 
@@ -382,7 +413,8 @@ export function App() {
   // rather than failing when chosen.
   const paletteActions: PaletteAction[] = [
     { id: "toggleSidebar", label: "Toggle sidebar", shortcut: shortcutKeys("toggleSidebar"), run: toggleSidebar },
-    { id: "refresh", label: "Refresh everything", shortcut: shortcutKeys("refresh"), run: refreshAll },
+    // Refresh has no keyboard shortcut any more: F5 is the app toggle (R6).
+    { id: "refresh", label: "Refresh everything", run: refreshAll },
     { id: "toggleTheme", label: "Switch light/dark theme", shortcut: shortcutKeys("toggleTheme"), run: () => void T.toggleKind() },
     { id: "commandPalette", label: "Open command palette", shortcut: shortcutKeys("commandPalette"), run: () => setPaletteOpen(true) },
     { id: "editor", label: view === "editor" ? "Close editor" : "Open editor", run: () => setView((v) => (v === "editor" ? "home" : "editor")) },

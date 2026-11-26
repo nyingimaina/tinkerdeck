@@ -1,17 +1,18 @@
-// Which folder the Files explorer shows (R4, R5). Pure and disk-free: it only works out the
+// Which folder the Files explorer shows (R4, R5, R13). Pure and disk-free: it only works out the
 // folder, so it can be tested without a window.
 //
 // - app view: the selected app's root;
 // - editor view: the root of the app that owns the active tab, found with the same deepest-root
 //   lookup the tab groups use, or that loose (Misc) file's parent folder;
-// - home view, no tab or an unsaved tab: nothing applies, so the panel shows a hint (A5).
+// - home view, no tab or an unsaved tab: no app root or file path applies, so the explorer roots at
+//   the user's home folder (R13). Only when the core cannot report a home folder does nothing apply.
 import { ownerOf } from "../../state/editorGroups";
 import { normalizeSlashes, type AppDef } from "../../state/model";
 
 export type ExplorerView = "home" | "app" | "editor";
 
-/** "app" is an app's root, "misc" a loose file's parent folder, "none" nothing applies. */
-export type ExplorerRootSource = "app" | "misc" | "none";
+/** "app" is an app's root, "misc" a loose file's parent folder, "home" the user's home folder, "none" nothing applies. */
+export type ExplorerRootSource = "app" | "misc" | "home" | "none";
 
 export interface ExplorerRoot {
   /** The absolute folder to browse, or null when nothing applies. */
@@ -26,6 +27,8 @@ export interface ExplorerRootOptions {
   apps: Pick<AppDef, "id" | "name" | "root">[];
   selectedAppId: string | null;
   activePath: string | null;
+  /** The user's home folder from the core, or null when it cannot be determined (R13, A1). */
+  homeFolder?: string | null;
 }
 
 const tidy = (path: string) => normalizeSlashes(path).replace(/\\+$/, "");
@@ -53,7 +56,13 @@ export function parentFolder(folder: string): string | null {
   return parent;
 }
 
-export function explorerRoot({ view, apps, selectedAppId, activePath }: ExplorerRootOptions): ExplorerRoot {
+export function explorerRoot({
+  view,
+  apps,
+  selectedAppId,
+  activePath,
+  homeFolder = null,
+}: ExplorerRootOptions): ExplorerRoot {
   const none: ExplorerRoot = { root: null, appId: null, source: "none" };
 
   if (view === "app") {
@@ -71,5 +80,9 @@ export function explorerRoot({ view, apps, selectedAppId, activePath }: Explorer
     return root ? { root, appId: null, source: "misc" } : none;
   }
 
-  return none;
+  // Home view, an editor with no tab, or an unsaved tab: no app root or file path applies, so the
+  // explorer roots at the user's home folder (R13), and only when the core cannot report one is
+  // nothing shown.
+  const home = homeFolder ? folderOf(homeFolder) : null;
+  return home ? { root: home, appId: null, source: "home" } : none;
 }

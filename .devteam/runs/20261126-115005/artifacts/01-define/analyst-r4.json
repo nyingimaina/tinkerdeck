@@ -1,0 +1,362 @@
+{
+  "summary": "This is revision 2 of 3 of a larger feature (R13 to R8). It adds the sidebar Files explorer's remaining root rules: when no app root applies, the explorer roots at the user's home folder, with Up climbing one level at a time on Windows until it reaches the drive list, and changing the root never touches open tabs. It changes F5 so that, in the app view only, it runs exactly the same Start all / Stop all action as the on-screen button (skipping non-executable terminals once R11 lands), and does nothing at all in the home and editor views. It fixes the theme finder so its rows stay inside the dialog with no horizontal overflow. Finally it presents the shared Dialog - and every dialog built on it - and the git BranchMenu as responsive side panes from the project's approved jattac responsive-layout package, keeping the command palette as a palette; every existing dialog remains present with its content and actions, only its presentation changes. This revision records two supersessions explicitly: R6 supersedes the earlier accepted requirement 20261125-153618:R4, which promised that F5 refreshes; R8 supersedes the earlier accepted requirement 20261125-153618:R2 only in its promise that no existing dialog is redesigned or replaced (dialog presentation now moves to side panes), while R2's promise that every existing screen, panel, dialog and the footer remains present still holds.",
+  "requirements": [
+    {
+      "id": "R13",
+      "text": "When no app root applies (the home view, the editor view with no tab open, or an active tab with no path such as a new unsaved file), the explorer roots at the user's home folder. On Windows the level above any folder root is a list of the available drives; Up from a root folder climbs one level at a time and from a drive reaches the drive list. Changing the root never closes or changes any open tab.",
+      "acceptance": [
+        "In the home view, the explorer's top folder is the user's home folder.",
+        "In the editor view with no tab open, the explorer roots at the home folder.",
+        "With a new unsaved file as the active tab, the explorer roots at the home folder.",
+        "Up from the home folder climbs one level at a time and eventually reaches the drive list.",
+        "The drive list shows the available drives, and opening a drive lists its top-level folders and files.",
+        "Changing the root does not close or alter any open tab."
+      ],
+      "rationale": "Windows has no single filesystem root, and the explorer must always open somewhere sensible even when the user is not in an app or has no saved file. The home folder is the only root that still applies when neither an app root nor a file path is available.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "A drive that cannot be read shows as locked when opened instead of raising an error.",
+        "An unreadable home folder shows a locked or message state and the rest of the app stays usable.",
+        "A drive that has been removed between listing and opening is reported without breaking the tree.",
+        "Switching from an app-owned tab to a misc file moves the root from the app's root folder to that file's parent folder, and its Up still reaches the drive list.",
+        "Switching back to the home view from an app or editor view roots the explorer at the home folder without closing any tab."
+      ],
+      "pitfalls": [
+        "The explorer must not assume a single filesystem root on Windows.",
+        "The drive list must be obtained without scanning the contents of every drive.",
+        "The home folder must not be hard-coded as the root when an app root or a Misc file path applies.",
+        "Changing the root must never close, reorder or alter open editor tabs."
+      ],
+      "rules": [
+        "USR-002",
+        "USR-003",
+        "USR-004",
+        "USR-006"
+      ],
+      "facts": [
+        {
+          "subject": "explorer root",
+          "attribute": "no app root applies",
+          "op": "equals",
+          "value": "user home folder",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "explorer top level",
+          "attribute": "list",
+          "op": "equals",
+          "value": "drives",
+          "unit": "",
+          "scope": "Windows"
+        }
+      ]
+    },
+    {
+      "id": "R6",
+      "text": "In the app view, F5 runs the same Start all / Stop all action as the app's on-screen button, choosing Start or Stop exactly as the button would at the moment F5 is pressed. Non-executable terminals are skipped (see R11). In the home and editor views F5 does nothing: it does not refresh, start or stop anything, or change the view. F5 never refreshes on any modifier combination. This supersedes the earlier accepted requirement 20261125-153618:R4, which promised that F5 refreshes: the old F5-refresh action, the F5 shortcut entry, and every menu, palette and help hint that advertises F5 as refresh are replaced by this requirement, and the tests that asserted F5 means refresh are updated to assert the new behaviour.",
+      "acceptance": [
+        "In the app view with the app fully stopped and the button showing Start all, pressing F5 starts the executable terminals.",
+        "In the app view with executable terminals running, pressing F5 stops them.",
+        "Pressing F5 produces the same result as pressing the on-screen Start all / Stop all button at that moment.",
+        "Pressing F5 in the home view neither starts nor stops anything, does not refresh and does not change the view.",
+        "Pressing F5 in the editor view neither starts nor stops anything, does not refresh and does not change the view.",
+        "F5 skips non-executable terminals exactly as the button does.",
+        "F5 works while a terminal has focus, is handed back to the window, and never reaches the shell.",
+        "F5 with Shift, Ctrl or Alt still does not refresh.",
+        "No menu, palette entry or help text still tells the user that F5 refreshes.",
+        "The tests that previously asserted F5 refreshes now assert that F5 is Start all / Stop all in the app view and a no-op elsewhere."
+      ],
+      "rationale": "The developer chose F5 for the app's bulk start/stop instead of refresh, and that decision supersedes the earlier requirement that F5 refreshes. F5 must read the live state at press time, because a handler that closed over its first render's state would act on the wrong view or app.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Pressing F5 twice quickly does not leave the app half-started or start a terminal twice.",
+        "Pressing F5 while a start or stop is already in progress does not start a second copy of the app.",
+        "With every terminal executable, F5 behaves exactly like the old Start all / Stop all button.",
+        "A user who relied on F5 to refresh can still refresh from the refresh buttons and the palette entry; F5 itself no longer refreshes anywhere.",
+        "F5 in the home or editor view is a true no-op: it does not fall back to acting on a remembered selected app."
+      ],
+      "pitfalls": [
+        "The key handler must read the current view, selected app and button state at press time rather than a value captured when the handler was first registered.",
+        "F5 must not keep its old refresh action alongside the new toggle.",
+        "Any hint or test that still says F5 refreshes contradicts the new binding and must be brought in line, not left in place.",
+        "The default must be prevented so the webview does not reload the page when F5 does nothing."
+      ],
+      "rules": [
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "F5",
+          "attribute": "action in app view",
+          "op": "equals",
+          "value": "Start all / Stop all toggle",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "F5",
+          "attribute": "action in home and editor views",
+          "op": "equals",
+          "value": "none",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "F5",
+          "attribute": "refresh on any modifier combination",
+          "op": "must-not",
+          "value": "refresh",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "F5 refresh promise (20261125-153618:R4)",
+          "attribute": "status",
+          "op": "equals",
+          "value": "superseded by R6",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "text": "In the theme picker's find dialog, the theme rows fit inside the dialog's left and right edges with no horizontal overflow on desktop or mobile widths.",
+      "acceptance": [
+        "Opening the theme finder shows every theme row fully inside the dialog's horizontal bounds, with no row clipped at the right edge.",
+        "At a narrow, mobile-width window the rows still fit with no horizontal overflow.",
+        "A very long theme name stays inside its row instead of pushing the row past the edge."
+      ],
+      "rationale": "The finder asks for content wider than the dialog that contains it, so rows run past the right edge and the dialog looks broken. Fixing the layout directly keeps this small fix independent of the later side-pane work.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "A search that matches no themes shows its empty message inside the dialog bounds.",
+        "When the finder later moves into a side pane, its rows still fit that container."
+      ],
+      "pitfalls": [
+        "The finder must respect its container's actual width instead of demanding a content width wider than the container.",
+        "The fix must not change theme behaviour beyond layout."
+      ],
+      "rules": [
+        "USR-002",
+        "USR-004",
+        "USR-006"
+      ],
+      "facts": [
+        {
+          "subject": "theme finder",
+          "attribute": "horizontal overflow",
+          "op": "must-not",
+          "value": "exceed its container",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "text": "The shared Dialog and every dialog built on it (including the theme finder and the confirmation dialogs) plus the git BranchMenu are presented as responsive side panes from the project's approved jattac responsive-layout package, instead of centred modals. Every existing screen, panel, dialog and the footer remains present, and each dialog keeps the same content, fields, buttons, actions and close paths it has today; only its presentation changes from a centred modal to a side pane. This requirement supersedes the earlier accepted requirement 20261125-153618:R2 only in its promise that no existing dialog is redesigned or replaced: that presentation clause no longer holds for these dialogs, while R2's promise that every existing screen, panel, dialog and the footer is still present keeps holding. The command palette stays a palette and is not moved to a side pane. Before building this part, verify that the package's published build installs cleanly and ships its CSS; if it cannot be used, stop this part and report, and the other requirements still ship.",
+      "acceptance": [
+        "The shared dialog, including the theme finder, opens as a side pane rather than a centred modal.",
+        "An existing confirmation dialog opened from the app (for example deleting an app or closing a running console) appears as a side pane.",
+        "The git BranchMenu opens as a side pane rather than a centred modal.",
+        "Every dialog that exists today - including the theme finder, the confirmation dialogs and any other dialog the app opens - is still present after the change and none is removed.",
+        "Each moved dialog keeps the same content, fields, buttons and actions it has today, and still opens and closes as it does today; only the presentation container changes.",
+        "The earlier promise 20261125-153618:R2 that no existing dialog is redesigned or replaced is recorded as superseded for dialog presentation by this requirement, while its promise that every existing screen, panel, dialog and the footer remains present still holds.",
+        "The command palette is not moved into a side pane and still opens as a palette.",
+        "Each side pane opens, closes and shows its content without clipping at a narrow mobile-width viewport.",
+        "Dismissing a side pane leaves the user's current work unchanged.",
+        "The package's styles actually apply in the built window."
+      ],
+      "rationale": "The developer asked to replace modals with the jattac responsive-layout side panes because they fit mobile devices better. That request contradicts an earlier accepted promise that no dialog is redesigned or replaced, so this requirement states which side wins for dialog presentation (the side panes) while keeping that earlier promise's other half intact: every dialog stays present and behaves the same, only its presentation changes. An earlier jattac package was rejected for shipping without its CSS, so the package must be verified before the build depends on it.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "The theme finder inside the side pane still shows every row without horizontal overflow (R7).",
+        "A side pane can be dismissed with the keyboard, and its close control has an accessible name.",
+        "A dialog with an empty actions list (for example the update dialog while it is downloading or installing) still offers no close path in its side-pane form, exactly as it does today.",
+        "Every existing dialog still opens from the same control and closes by the same means as today; only the container around its content is a side pane.",
+        "If the package fails to install or its CSS is missing, the attempt is reported and the other requirements remain deliverable without it."
+      ],
+      "pitfalls": [
+        "The supersession of 20261125-153618:R2's 'no dialog redesigned or replaced' clause must be recorded in the requirement text, not left implicit, or the builder will not know which promise wins for existing dialog behaviour.",
+        "The supersession covers dialog presentation only; the earlier promise that every existing screen, panel, dialog and the footer is still present must not be read as overturned, so no dialog may be dropped.",
+        "Moving a dialog must not remove or change its content, fields, buttons, actions or close paths - only where it is presented.",
+        "The package must be checked to install and ship CSS before any screen depends on it.",
+        "Only the command palette is excluded; every Dialog user and the branch menu must move, or some screens keep modals while others do not.",
+        "The instability of the package must not take down the rest of the feature: the earlier parts must not depend on this part."
+      ],
+      "rules": [
+        "USR-001",
+        "USR-002",
+        "USR-003",
+        "USR-004",
+        "USR-006"
+      ],
+      "facts": [
+        {
+          "subject": "dialog presentation",
+          "attribute": "style",
+          "op": "equals",
+          "value": "responsive side pane",
+          "unit": "",
+          "scope": "shared Dialog and every dialog built on it, plus the git BranchMenu"
+        },
+        {
+          "subject": "existing screens, panels, dialogs and footer (20261125-153618:R2)",
+          "attribute": "presence",
+          "op": "must",
+          "value": "remain present",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "dialog content, fields, buttons, actions and close paths",
+          "attribute": "change",
+          "op": "must-not",
+          "value": "be removed or altered",
+          "unit": "",
+          "scope": "existing dialogs"
+        },
+        {
+          "subject": "20261125-153618:R2 'no dialog redesigned or replaced' clause",
+          "attribute": "status",
+          "op": "equals",
+          "value": "superseded by R8 for dialog presentation only",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "command palette",
+          "attribute": "form",
+          "op": "must-not",
+          "value": "become a side pane",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    }
+  ],
+  "roles": [
+    "Desktop app user: opens, browses and edits files on their own machine; one local user with the operating system's own access rights, not a signed-in role."
+  ],
+  "outOfScope": [
+    "Revision 3 work R9 to R12: creating, renaming, moving, dragging and deleting files and folders, the per-terminal executable flag, refresh's shortcut removal beyond the F5 change, and the command palette mobile-first pass.",
+    "Placing the editor inside the app view as a tab or split pane.",
+    "Changing Ctrl+O or the editor's existing file picker behaviour.",
+    "Moving the command palette into a side pane.",
+    "Redesigning the theme picker beyond the find dialog's fit and the move to a side pane.",
+    "Removing any existing dialog, or changing what an existing dialog's content, buttons or actions do.",
+    "Adding any keyboard shortcut for refresh."
+  ],
+  "nonFunctional": [
+    {
+      "area": "performance",
+      "statement": "Listing one folder level of an ordinary folder stays responsive; a folder with a few thousand entries is shown without freezing the window.",
+      "acceptance": "Opening a folder with about 2,000 entries shows its listing and the window remains interactive; the explorer loads only the requested level, not the whole subtree."
+    },
+    {
+      "area": "reliability",
+      "statement": "Repeating F5 while a start or stop is already running does not start a second copy or leave the app half-started.",
+      "acceptance": "Pressing F5 rapidly during an in-progress start or stop leaves the app in a single, consistent started or stopped state."
+    },
+    {
+      "area": "accessibility",
+      "statement": "The explorer tree and the replaced side panes are usable from the keyboard, with visible focus and a named close control.",
+      "acceptance": "A user can expand and collapse folders, open a file and close a side pane using the keyboard alone, and focus is always visible."
+    },
+    {
+      "area": "responsiveness",
+      "statement": "The theme finder and the replacement side panes fit narrow, mobile-width windows without clipping or horizontal overflow.",
+      "acceptance": "At a 360px-wide window, every theme row and every side pane's content is fully visible with no horizontal scrolling of the page."
+    }
+  ],
+  "risks": [
+    "R6 reverses an earlier accepted promise that F5 refreshes; any leftover F5-refresh hint, shortcut entry or test will contradict the new binding unless it is updated with the change.",
+    "R8 changes how every dialog is presented, which contradicts the earlier accepted promise 20261125-153618:R2 that no dialog is redesigned or replaced; the supersession is now explicit, but the builder must still keep every dialog present and its content and actions unchanged.",
+    "The F5 handler is registered once and can capture the initial view and app; if it reads stale state it will act on the wrong view or app.",
+    "The jattac side-pane package is not yet verified to install and ship its CSS, so R8 may have to be reported as blocked while the rest ships.",
+    "The explorer can browse as high as the operating system allows, including a misc file's parent folder, which may expose sensitive folders to anyone using the machine.",
+    "Large or noisy folders such as node_modules and .git can make the explorer slow; the agreed hide list and one-level loading limit the cost."
+  ],
+  "tensions": [],
+  "glossary": [
+    "Explorer root: the top-level folder the explorer starts from, chosen automatically from where the user is.",
+    "App root: the top-level folder configured for an app, which defines the files belonging to that app.",
+    "Misc file: a file whose path lies outside every app root; the explorer roots at its parent folder.",
+    "Drive list: on Windows, the top-level list of available drives, reached by going Up past a drive.",
+    "Start all / Stop all button: the on-screen control that starts or stops the app's terminals; F5 invokes the same action in the app view.",
+    "Side pane: a panel that slides in from the side of the window and is sized to fit narrow or mobile-width screens.",
+    "Theme finder: the search dialog in the theme picker that lists available themes."
+  ],
+  "questions": [],
+  "coverage": [
+    {
+      "topic": "users",
+      "status": "assumed",
+      "note": "A single local desktop user with the operating system's own access rights; the home, app and editor views are context, not user roles."
+    },
+    {
+      "topic": "data",
+      "status": "assumed",
+      "note": "This revision adds no new persisted fields. The explorer root is derived from the current view and active tab; expanded folders and scroll position are kept only for the session. Moving dialogs to side panes adds no stored data, and every dialog's content and actions stay as they are today. The per-terminal executable field lands in revision 3 (R11)."
+    },
+    {
+      "topic": "permissions",
+      "status": "answered",
+      "note": "Browsing goes as high as the operating system permissions allow; there is no app-level restriction beyond rooting at the app's folder while working in an app."
+    },
+    {
+      "topic": "validation",
+      "status": "assumed",
+      "note": "An unreadable folder shows as locked rather than raising an error; a missing or removed path is reported without breaking the tree; F5 in the home and editor views is a no-op; a failed side-pane package check is reported and R8 stops."
+    },
+    {
+      "topic": "states",
+      "status": "assumed",
+      "note": "Empty folder shows an empty state; a locked or unreadable folder shows a locked state; listing shows a loading state; the drive list is the top state; every dialog keeps its current open, content and close states, only presented in a side pane; F5 shows no separate state but mirrors the Start all / Stop all button, including while a start or stop is in progress."
+    },
+    {
+      "topic": "duplicates",
+      "status": "assumed",
+      "note": "Pressing F5 twice quickly must not start a terminal twice or leave the app half-started; changing the root must not create or duplicate tabs."
+    },
+    {
+      "topic": "volume",
+      "status": "assumed",
+      "note": "The explorer loads one folder level at a time and hides node_modules, .git, target and dist by default behind a Show hidden control, so a folder with a few thousand entries stays responsive; the drive list is obtained without scanning drive contents."
+    },
+    {
+      "topic": "deletion",
+      "status": "not-applicable",
+      "note": "Deleting files and folders is revision 3 (R9); this revision only reads the file system and moves dialogs to side panes."
+    },
+    {
+      "topic": "privacy",
+      "status": "assumed",
+      "note": "No data leaves the machine; the explorer can browse any path the operating system allows, including a misc file's parent folder, and no additional hiding of dotfiles is added beyond the agreed build/VCS hide list."
+    },
+    {
+      "topic": "quality",
+      "status": "assumed",
+      "note": "Explorer listing reads only the requested level and stays responsive on large folders; the tree and side panes are keyboard-usable with visible focus and a named close control; the side panes fit a 360px-wide window; the package is verified to install and ship CSS before use; R8 records the earlier 20261125-153618:R2 'no dialog redesigned' promise as superseded for dialog presentation only, with every dialog still present and unchanged in content and actions."
+    }
+  ],
+  "assumptions": [
+    "users: There is one local desktop user with the operating system's own access rights; the home, app and editor views are context, not user roles or permissions.",
+    "data: This revision adds no new persisted fields. The explorer root is derived from the current view and active tab, and expanded folders and scroll position are kept only for the session. Moving dialogs to side panes adds no stored data, and every dialog keeps its current content and actions. The per-terminal executable field lands in revision 3 (R11).",
+    "validation: An unreadable folder shows as locked rather than raising an error; a missing or removed path is reported without breaking the tree; F5 in the home and editor views is a no-op; a failed side-pane package check is reported and R8 stops.",
+    "states: An empty folder shows an empty state; a locked or unreadable folder shows a locked state; listing shows a loading state; the drive list is the top state; every dialog keeps its current open, content and close states, only presented in a side pane; F5 shows no separate state but mirrors the Start all / Stop all button, including while a start or stop is in progress.",
+    "duplicates: Pressing F5 twice quickly must not start a terminal twice or leave the app half-started; changing the explorer root must not create or duplicate tabs.",
+    "volume: The explorer loads one folder level at a time and hides node_modules, .git, target and dist by default behind a Show hidden control, so a folder with a few thousand entries stays responsive; the drive list is obtained without scanning drive contents.",
+    "privacy: No data leaves the machine; the explorer can browse any path the operating system allows, including a misc file's parent folder, and no additional hiding of dotfiles is added beyond the agreed build/VCS hide list.",
+    "quality: Explorer listing reads only the requested level and stays responsive on large folders; the tree and side panes are keyboard-usable with visible focus and a named close control; the side panes fit a 360px-wide window; the package is verified to install and ship CSS before use.",
+    "R6 supersedes the earlier accepted requirement 20261125-153618:R4 that promised F5 refreshes. The old F5-refresh behaviour, the F5 shortcut entry, every menu/palette/help hint advertising F5 as refresh, and the tests asserting F5 refreshes are replaced by R6. Refresh remains available from its on-screen buttons and the palette entry, with no keyboard shortcut (R12 in revision 3 formalises the shortcut removal).",
+    "R8 supersedes the earlier accepted requirement 20261125-153618:R2 only in its promise that no existing dialog is redesigned or replaced: every dialog (and the branch menu) moves from a centred modal to a responsive side pane. R2's promise that every existing screen, panel, dialog and the footer remains present still holds, and each dialog keeps its current content, fields, buttons, actions and close paths; only the presentation changes.",
+    "The user's home folder is the explorer root whenever no app root and no file path apply, and the drive list is reachable by going Up; this is the assistant's proposed default and the builder did not object.",
+    "Expanded-folder and scroll state is kept only for the session and is not required to survive a restart.",
+    "F5 is swallowed in the home and editor views so it cannot reload the webview or act on a remembered selected app.",
+    "The theme finder's width fix is delivered on its own even though R8 later moves it into a side pane, so the overflow is fixed regardless of R8's outcome.",
+    "The exact jattac responsive-layout package is the approved one recorded by the design; if its published build does not install cleanly or ship its CSS, R8 is stopped and reported while R13, R6 and R7 still ship."
+  ]
+}

@@ -29,6 +29,7 @@
     "dompurify": "^3.5.0",
     "framer-motion": "^14.14.0",
     "jattac-web-poller": "^1.0.0",
+    "jattac.libs.web.zest-responsive-layout": "^2.8.0",
     "jattac.libs.web.zest-tabs": "^0.5.0",
     "marked": "^18.3.0",
     "react": "^18.3.1",

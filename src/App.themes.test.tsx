@@ -50,6 +50,7 @@ vi.mock("./api/explorer", () => ({
   explorerApi: {
     list: vi.fn(async (path: string) => ({ path, entries: [], total: 0, truncated: false, locked: false })),
     drives: vi.fn(async () => []),
+    home: vi.fn(async () => null),
   },
 }));
 

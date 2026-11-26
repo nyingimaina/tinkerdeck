@@ -1,0 +1,27 @@
+/* Full-window host for the package's fixed side pane; it blocks the app behind it just as
+   the old dialog backdrop did, while the package's own overlay does the dimming. */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+.pane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  color: var(--text);
+}
+.close {
+  align-self: flex-end;
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  color: var(--text);
+}
+.close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

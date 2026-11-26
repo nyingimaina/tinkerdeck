@@ -1,4 +1,4 @@
-export type AppShortcutId = "toggleSidebar" | "refresh" | "commandPalette" | "toggleTheme";
+export type AppShortcutId = "toggleSidebar" | "toggleApp" | "commandPalette" | "toggleTheme";
 
 export interface AppShortcut {
   id: AppShortcutId;
@@ -10,7 +10,7 @@ export interface AppShortcut {
 /** The one list of app-level shortcuts, shared by the window handler, the terminal and the palette. */
 export const APP_SHORTCUTS: readonly AppShortcut[] = [
   { id: "toggleSidebar", label: "Toggle sidebar", keys: "Ctrl+B" },
-  { id: "refresh", label: "Refresh everything", keys: "F5" },
+  { id: "toggleApp", label: "Start all / Stop all", keys: "F5" },
   { id: "commandPalette", label: "Open command palette", keys: "Ctrl+Shift+P" },
   { id: "toggleTheme", label: "Switch light/dark theme", keys: "Ctrl+Alt+T" },
 ];
@@ -29,14 +29,14 @@ export interface KeyEventLike {
 }
 
 /**
- * Which app shortcut, if any, a key event means. Ctrl+B and F5 keep their old meaning;
- * Ctrl+Shift+P opens the palette and Ctrl+Alt+T switches the theme. The editor's own
- * Ctrl+S/N/O/W are deliberately not matched here.
+ * Which app shortcut, if any, a key event means. Ctrl+B toggles the sidebar, every F5 variant
+ * is the app's Start all / Stop all toggle (F5 never refreshes), Ctrl+Shift+P opens the palette
+ * and Ctrl+Alt+T switches the theme. The editor's own Ctrl+S/N/O/W are deliberately not matched.
  */
 export function matchShortcut(e: KeyEventLike): AppShortcutId | null {
   const k = e.key.toLowerCase();
   if (e.ctrlKey && !e.shiftKey && !e.altKey && k === "b") return "toggleSidebar";
-  if (e.key === "F5") return "refresh";
+  if (e.key === "F5") return "toggleApp";
   if (e.ctrlKey && e.shiftKey && !e.altKey && k === "p") return "commandPalette";
   if (e.ctrlKey && e.altKey && !e.shiftKey && k === "t") return "toggleTheme";
   return null;

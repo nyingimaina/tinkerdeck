@@ -180,6 +180,33 @@ describe("update UI", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Installing");
   });
 
+  it("R8/A3: the update dialog is a side pane whose named close control runs the cancel action", async () => {
+    const h2 = dialog();
+    expect(document.querySelector('[class*="ZestResponsiveLayout-module_sidePane"]')).not.toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Close Update to 1.3.0" }));
+    expect(h2.onClose).toHaveBeenCalledTimes(1);
+    expect(h2.onInstall).not.toHaveBeenCalled();
+  });
+
+  it("R8: the update dialog keeps its notes, size and actions inside the pane", () => {
+    dialog();
+    expect(screen.getByRole("dialog", { name: "Update to 1.3.0" })).toHaveTextContent("Faster.");
+    expect(screen.getByText(/4\.0 MB/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Update and restart" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+  });
+
+  it("R8/A3: while downloading the side pane offers no close path, exactly as before", async () => {
+    render(
+      <UpdateDialog info={info} phase="downloading" progress={{ done: 2_100_000, total: 4_200_000 }} error={null} runningCount={0} onInstall={vi.fn()} onClose={vi.fn()} />,
+    );
+    expect(document.querySelector('[class*="ZestResponsiveLayout-module_sidePane"]')).not.toBeNull();
+    expect(screen.getByRole("dialog", { name: "Update to 1.3.0" })).toBeInTheDocument();
+    expect(screen.queryByRole("button")).toBeNull();
+    await userEvent.keyboard("{Escape}");
+    expect(screen.getByRole("dialog", { name: "Update to 1.3.0" })).toBeInTheDocument();
+  });
+
   it("an error is shown and the buttons come back so it can be retried", () => {
     dialog({ error: "Could not reach the update server." });
     expect(screen.getByRole("alert")).toHaveTextContent("Could not reach");

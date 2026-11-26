@@ -65,7 +65,7 @@ export function UtilitiesMenu({ editorActive, onEditor, onCheckUpdates, updatesB
             {updateAvailable && ` (${updateAvailable})`}
           </button>
           <button role="menuitem" aria-label="Refresh everything" onClick={() => run(onRefresh)}>
-            <span aria-hidden="true">⟳</span> Refresh <kbd>F5</kbd>
+            <span aria-hidden="true">⟳</span> Refresh
           </button>
           <button role="menuitem" aria-label="Help" onClick={() => run(onHelp)}>
             <span aria-hidden="true">?</span> Help

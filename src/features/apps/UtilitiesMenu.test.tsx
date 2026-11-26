@@ -39,6 +39,14 @@ describe("UtilitiesMenu", () => {
     expect(screen.queryByRole("menu")).toBeNull();
   });
 
+  it("R6: the Refresh item no longer tells the user F5 refreshes", async () => {
+    render(<UtilitiesMenu {...props()} />);
+    await userEvent.click(screen.getByRole("button", { name: "Utilities" }));
+    const refresh = screen.getByRole("menuitem", { name: "Refresh everything" });
+    expect(refresh).toHaveTextContent("Refresh");
+    expect(refresh).not.toHaveTextContent("F5");
+  });
+
   it("R3: choosing an action runs it once and closes the menu", async () => {
     const p = props();
     render(<UtilitiesMenu {...p} />);

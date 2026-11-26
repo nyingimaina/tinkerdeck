@@ -10,21 +10,33 @@ const key = (k: string, mods: Partial<Omit<KeyEventLike, "key">> = {}): KeyEvent
 });
 
 describe("app shortcut registry", () => {
-  it("R4: maps Ctrl+B, F5, Ctrl+Shift+P and Ctrl+Alt+T to their actions", () => {
+  it("R6: maps Ctrl+B, F5, Ctrl+Shift+P and Ctrl+Alt+T to their actions", () => {
     expect(matchShortcut(key("b", { ctrlKey: true }))).toBe("toggleSidebar");
-    expect(matchShortcut(key("F5"))).toBe("refresh");
+    expect(matchShortcut(key("F5"))).toBe("toggleApp");
     expect(matchShortcut(key("P", { ctrlKey: true, shiftKey: true }))).toBe("commandPalette");
     expect(matchShortcut(key("t", { ctrlKey: true, altKey: true }))).toBe("toggleTheme");
   });
 
-  it("R4: the palette labels come from the same registry", () => {
+  it("R6: F5 is the app toggle and refresh has no key at all", () => {
     expect(APP_SHORTCUTS.map((s) => [s.id, s.keys])).toEqual([
       ["toggleSidebar", "Ctrl+B"],
-      ["refresh", "F5"],
+      ["toggleApp", "F5"],
       ["commandPalette", "Ctrl+Shift+P"],
       ["toggleTheme", "Ctrl+Alt+T"],
     ]);
     expect(shortcutKeys("commandPalette")).toBe("Ctrl+Shift+P");
+  });
+
+  it("R6: every modifier combination of F5 still means the app toggle, never refresh", () => {
+    for (const e of [
+      key("F5"),
+      key("F5", { shiftKey: true }),
+      key("F5", { ctrlKey: true }),
+      key("F5", { altKey: true }),
+      key("F5", { ctrlKey: true, shiftKey: true, altKey: true }),
+    ]) {
+      expect(matchShortcut(e)).toBe("toggleApp");
+    }
   });
 
   it("A3: forwards exactly the app shortcuts and leaves shell keys alone", () => {

@@ -1,0 +1,25 @@
+{
+  "summary": "Slice 3 of revision 2. BranchMenu now renders through the approved SidePane adapter (title and named close control \"Switch branch\"), keeping its filter box focus, local/remote sections, per-branch buttons, loading text and Escape close, with the pane-filling CSS in Git.module.css so long names wrap. UpdateDialog already builds on the shared Dialog, so it is now a side pane; tests prove the pane, the named close running onClose, unchanged content/actions, and no close path while downloading/installing. package.json and package-lock.json already record jattac.libs.web.zest-responsive-layout ^2.8.0 / 2.8.0 and the package injects its own CSS; a test now reads both files to prove A2. npm run lint, npm run build and the full window suite (547 tests) pass.",
+  "tests": [
+    { "name": "A2: package.json and package-lock.json record the approved 2.8.0 responsive-layout package", "file": "src/features/apps/SidePane.test.tsx", "requirements": ["A2"] },
+    { "name": "R8/A2: renders its content inside the approved package's side pane with its own stylesheet", "file": "src/features/apps/SidePane.test.tsx", "requirements": ["R8", "A2"] },
+    { "name": "A3: the close control has an accessible name and runs the close action", "file": "src/features/apps/SidePane.test.tsx", "requirements": ["A3"] },
+    { "name": "A3: Escape dismisses a pane that has a close action", "file": "src/features/apps/SidePane.test.tsx", "requirements": ["A3"] },
+    { "name": "A3: a pane with no close action has no close control and Escape does nothing", "file": "src/features/apps/SidePane.test.tsx", "requirements": ["A3"] },
+    { "name": "R8: at a 360px-wide window the package uses its full-width mobile pane", "file": "src/features/apps/SidePane.test.tsx", "requirements": ["R8"] },
+    { "name": "A4: dialog focuses the first (default) action, exposes one named dialog and runs each action", "file": "src/features/apps/components.test.tsx", "requirements": ["A4"] },
+    { "name": "R8/A3: dialog is a side pane whose named close control runs the last (cancel) action", "file": "src/features/apps/components.test.tsx", "requirements": ["R8", "A3"] },
+    { "name": "R8/A3: Escape dismisses the side pane through the cancel action", "file": "src/features/apps/components.test.tsx", "requirements": ["R8", "A3"] },
+    { "name": "R8/A3: a dialog with no actions keeps its content and offers no close path at all", "file": "src/features/apps/components.test.tsx", "requirements": ["R8", "A3"] },
+    { "name": "R8: a confirmation dialog keeps its title, body and action words in the pane", "file": "src/features/apps/components.test.tsx", "requirements": ["R8"] },
+    { "name": "A4: marks the current branch, disables it, and offers remote branches separately", "file": "src/features/git/git.test.tsx", "requirements": ["A4"] },
+    { "name": "A4: filters both lists as you type", "file": "src/features/git/git.test.tsx", "requirements": ["A4"] },
+    { "name": "A4: the filter box is focused and Escape closes the menu", "file": "src/features/git/git.test.tsx", "requirements": ["A4"] },
+    { "name": "A4: shows loading until branches arrive", "file": "src/features/git/git.test.tsx", "requirements": ["A4"] },
+    { "name": "R8/A3: the branch menu is a side pane whose named close control closes it", "file": "src/features/git/git.test.tsx", "requirements": ["R8", "A3"] },
+    { "name": "R8/A3: the update dialog is a side pane whose named close control runs the cancel action", "file": "src/features/updates/updates.test.tsx", "requirements": ["R8", "A3"] },
+    { "name": "R8: the update dialog keeps its notes, size and actions inside the pane", "file": "src/features/updates/updates.test.tsx", "requirements": ["R8"] },
+    { "name": "R8/A3: while downloading the side pane offers no close path, exactly as before", "file": "src/features/updates/updates.test.tsx", "requirements": ["R8", "A3"] }
+  ],
+  "kickbacks": []
+}

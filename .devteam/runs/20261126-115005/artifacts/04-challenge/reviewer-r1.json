@@ -1,0 +1,37 @@
+{
+  "findings": [
+    {
+      "cites": "USR-006",
+      "severity": "blocking",
+      "file": "src/features/apps/SidePane.tsx",
+      "line": 37,
+      "evidence": "ZestResponsiveLayout is rendered with no ZestLayoutThemeProvider (grep finds no ZestLayoutThemeProvider/useZestLayoutTheme anywhere in src), so the package's useZestLayoutTheme() falls back to 'light' and paints the pane with its light --zest-pane-bg hsla(0,0%,100%,.95) (white). Meanwhile SidePane.module.css:13 sets .pane color to var(--text), Dialog.tsx:28-30 puts the title/body on a transparent .dialog (Dialog.module.css .dialog has background:transparent) and .body uses color var(--muted). The app's default theme is dark (src/themes/builtin.ts:5 DEFAULT_THEME_ID='tinkerdeck-dark') where --text=#ece8dc and --muted=#a0a4ab (builtin.ts:19-20 / global.css:19-20), so in the default theme the dialog title is near-white on a near-white pane (~1.05:1) and body text ~2.5:1. The architect's impact list for App.tsx even names a 'theme provider', which was not added.",
+      "description": "Every dialog that moved to the side pane (confirmations, update, help, theme finder) is unreadable in the app's default dark theme: the package pane stays light while the dialog text keeps the app's light colours. USR-006 requires readable/contrasting theme combinations; the pane needs the app theme (ZestLayoutThemeProvider, or a pane background taken from the app theme)."
+    },
+    {
+      "cites": "R6",
+      "severity": "blocking",
+      "file": "README.md",
+      "line": 54,
+      "evidence": "README.md:54 still lists '**F5** refresh'; docs/ui-tidy-up-plan.md:133 has '| **F5** | Refresh everything |' and :267 '| P2 | Refresh everything | Always | F5 |' (also :147 'Ctrl+B and F5 are unchanged'); CHANGELOG.md:10 and :81 also state F5 refreshes. None of these were updated in this change.",
+      "description": "The user-facing shortcut documentation still tells the user that F5 refreshes, contradicting R6 ('No menu, palette entry or help text still tells the user that F5 refreshes') and its pitfall that any leftover F5-refresh hint must be brought in line. All user-visible F5-refresh wording must now describe Start all / Stop all."
+    },
+    {
+      "cites": "A2",
+      "severity": "advisory",
+      "file": "package.json",
+      "line": 30,
+      "evidence": "package.json:30 declares framer-motion ^14.14.0 while its jattac.libs.web.zest-tabs ^0.5.0 dependency (line 33) peer-requires framer-motion '^10.0.0 || ^11.0.0 || ^12.0.0' (node_modules/jattac.libs.web.zest-tabs/package.json:37, package-lock.json:3812). There is no .npmrc, so a plain npm install/ci still raises ERESOLVE; the build report says installation needed --legacy-peer-deps.",
+      "description": "A2 clause 1 ('npm install succeeds ... with no peer-dependency error') is not demonstrated; only the manifest/lockfile version clause is. The conflict is pre-existing (zest-tabs vs framer-motion 14), but the acceptance as written is unmet and the test only reads the two JSON files."
+    },
+    {
+      "cites": "R6",
+      "severity": "advisory",
+      "file": "src/App.shortcuts.test.tsx",
+      "line": 419,
+      "evidence": "The only in-progress F5 test (line 419) presses F5 once with a terminal already 'starting'; no test dispatches two rapid F5 presses or a press during an in-flight start/stop and then asserts the app lands in one consistent state. The other F5 tests (lines 400, 414, 424, 435, 453, 491) also press once each.",
+      "description": "R6's reliability acceptance 'Pressing F5 rapidly during an in-progress start or stop leaves the app in a single, consistent started or stopped state' is not proven by a test."
+    }
+  ],
+  "verifications": []
+}

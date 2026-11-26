@@ -2,7 +2,7 @@ import { useState } from "react";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { CommandPalette, type PaletteAction } from "./CommandPalette";
+import { CommandPalette, HelpDialog, type PaletteAction } from "./CommandPalette";
 
 function Harness() {
   const [open, setOpen] = useState(false);
@@ -18,7 +18,7 @@ function Harness() {
 
 const actions = (): PaletteAction[] => [
   { id: "sidebar", label: "Toggle sidebar", shortcut: "Ctrl+B", run: vi.fn() },
-  { id: "refresh", label: "Refresh everything", shortcut: "F5", run: vi.fn() },
+  { id: "refresh", label: "Refresh everything", run: vi.fn() },
   { id: "palette", label: "Open command palette", shortcut: "Ctrl+Shift+P", run: vi.fn() },
   { id: "theme", label: "Switch light/dark theme", shortcut: "Ctrl+Alt+T", run: vi.fn() },
   { id: "reset", label: "Reset layout", run: vi.fn() },
@@ -37,13 +37,20 @@ describe("CommandPalette", () => {
     expect(within(dialog).getByLabelText("Search commands")).toHaveFocus();
     for (const [label, keys] of [
       ["Toggle sidebar", "Ctrl+B"],
-      ["Refresh everything", "F5"],
       ["Open command palette", "Ctrl+Shift+P"],
       ["Switch light/dark theme", "Ctrl+Alt+T"],
     ]) {
       expect(within(dialog).getByRole("button", { name: new RegExp(label) })).toHaveTextContent(keys);
     }
+    expect(within(dialog).getByRole("button", { name: /Refresh everything/ })).toHaveTextContent("No shortcut");
     expect(within(dialog).getByRole("button", { name: /Reset layout/ })).toHaveTextContent("No shortcut");
+  });
+
+  it("R8: the command palette stays a palette and is not moved into a side pane", () => {
+    setup();
+    const dialog = screen.getByRole("dialog", { name: "Command palette" });
+    expect(dialog.closest('[class*="ZestResponsiveLayout-module_sidePane"]')).toBeNull();
+    expect(document.querySelector('[class*="ZestResponsiveLayout-module_sidePane"]')).toBeNull();
   });
 
   it("A1: choosing an action runs it once and closes the palette", async () => {
@@ -117,5 +124,24 @@ describe("CommandPalette", () => {
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("dialog", { name: "Command palette" })).toBeNull();
     expect(opener).toHaveFocus();
+  });
+
+  it("R6: the help text no longer advertises F5 as refresh", () => {
+    render(
+      <HelpDialog
+        version="2.2.0"
+        autoCheck={false}
+        phase="idle"
+        upToDate={false}
+        available={null}
+        error={null}
+        onAutoCheck={vi.fn()}
+        onCheckNow={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    const dialog = screen.getByRole("dialog", { name: "Help" });
+    expect(dialog).toHaveTextContent(/refresh now/);
+    expect(dialog).not.toHaveTextContent("F5");
   });
 });

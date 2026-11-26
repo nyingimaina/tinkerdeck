@@ -1,0 +1,15 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "REV-1",
+      "status": "fixed",
+      "evidence": "src/features/apps/SidePane.tsx:11-19 now defines paneTheme with background: var(--panel), color: var(--text), --zest-pane-bg: var(--panel), --zest-pane-divider: var(--border), --zest-pane-close: var(--text), and line 57 passes it as sidePane.style. The installed 2.8.0 bundle merges that object onto the pane element (style: Object.assign(Object.assign({},z),{width:...})), so the pane is painted with the app's --panel (#1b1e23 in the default tinkerdeck-dark theme) and inherits --text (#ece8dc), instead of the package's light hsla(0,0%,100%,.95). The new test 'R8: the pane takes the app theme's panel and text colours so dialogs stay readable in the dark theme' (src/features/apps/SidePane.test.tsx:72) asserts those theme colours are on the pane; the full suite (51 files, 551 tests) passes. No ZestLayoutThemeProvider is needed because the per-pane inline vars win over the package's stylesheet."
+    },
+    {
+      "id": "REV-2",
+      "status": "fixed",
+      "evidence": "Every remaining user-visible F5-refresh wording in the tracked docs now describes the new binding: README.md:54 reads 'F5 start all / stop all in the app view (a no-op elsewhere)'; docs/ui-tidy-up-plan.md:109 gives the Refresh entry 'no keyboard shortcut', :133 lists 'F5 | Start all / Stop all', :147 says 'F5 is no longer a refresh', :218 no longer shows '(F5)' for Refresh, and :267 gives 'Refresh everything' 'No shortcut'; CHANGELOG.md:10 names 'F5 Start all / Stop all in the app view' and :81 no longer ties F5 to refresh. A search of tracked *.md/*.txt for F5 finds no remaining refresh claim (the F5 mentions in installer/output/*.md are gitignored generated artifacts, not source)."
+    }
+  ]
+}

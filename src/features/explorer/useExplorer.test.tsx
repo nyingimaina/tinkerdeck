@@ -187,7 +187,72 @@ describe("useExplorer", () => {
     expect(api.list).toHaveBeenLastCalledWith("C:\\c\\d", false);
   });
 
-  it("A5 with no root nothing applies, so no folder is read", async () => {
+  it("R13 a home root offers Up that climbs one folder at a time until the drive list", async () => {
+    const { result } = await mount({ root: "C:\\Users\\me", source: "home" });
+    expect(result.current.canGoUp).toBe(true);
+
+    act(() => result.current.up());
+    expect(result.current.currentRoot).toBe("C:\\Users");
+    act(() => result.current.up());
+    expect(result.current.currentRoot).toBe("C:\\");
+    act(() => result.current.up());
+    await flush();
+
+    expect(result.current.atDrives).toBe(true);
+    expect(result.current.canGoUp).toBe(false);
+    expect(api.drives).toHaveBeenCalledTimes(1);
+    expect(result.current.drives.map((d) => d.name)).toEqual(["C:"]);
+  });
+
+  it("R13 a drive that cannot be read shows as locked when opened instead of raising", async () => {
+    api.list.mockImplementation(async (path: string) => {
+      if (path === "D:\\") throw new Error("The device is not ready");
+      return listing(path);
+    });
+    const { result } = await mount({ root: "C:\\Users\\me", source: "home" });
+
+    act(() => result.current.openDrive({ name: "D:", path: "D:\\", isDir: true, locked: false }));
+    await flush();
+
+    expect(result.current.atDrives).toBe(false);
+    expect(result.current.currentRoot).toBe("D:\\");
+    expect(result.current.rootLevel.locked).toBe(true);
+  });
+
+  it("R13 a drive removed between listing and opening is reported without breaking the tree", async () => {
+    api.list.mockImplementation(async (path: string) => {
+      if (path === "D:\\") throw new Error("The system cannot find the drive specified.");
+      return listing(path);
+    });
+    const { result, rerender } = await mount({ root: "C:\\Users\\me", source: "home" });
+
+    act(() => result.current.openDrive({ name: "D:", path: "D:\\", isDir: true, locked: false }));
+    await flush();
+    expect(result.current.rootLevel.locked).toBe(true);
+
+    // Browsing elsewhere still works: the removed drive left a locked level, not a broken tree.
+    rerender({ root: "C:\\Users\\me", source: "home", resetKey: "back" });
+    await flush();
+    expect(result.current.currentRoot).toBe("C:\\Users\\me");
+    expect(result.current.rootLevel.locked).toBe(false);
+  });
+
+  it("R13 an unreadable home folder shows a locked level and the rest keeps working", async () => {
+    api.list.mockImplementation(async (path: string) => {
+      if (path === "C:\\Users\\me") throw new Error("Access denied");
+      return listing(path);
+    });
+    const { result } = await mount({ root: "C:\\Users\\me", source: "home" });
+    expect(result.current.rootLevel.locked).toBe(true);
+    expect(result.current.canGoUp).toBe(true);
+
+    act(() => result.current.up());
+    await flush();
+    expect(result.current.currentRoot).toBe("C:\\Users");
+    expect(result.current.rootLevel.locked).toBe(false);
+  });
+
+  it("A1 with no root nothing applies, so no folder is read", async () => {
     const { result } = await mount({ root: null, source: "none" });
     expect(result.current.currentRoot).toBeNull();
     expect(result.current.rootLevel.listing).toBeNull();

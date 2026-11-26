@@ -1,0 +1,20 @@
+{
+  "seriesId": "db5bb811",
+  "revision": 2,
+  "predecessorRevision": 1,
+  "predecessorRunId": "20261126-075013",
+  "predecessorCommit": "43e2d47",
+  "scopeFiles": 31,
+  "touchedFiles": 8,
+  "touchedShare": 0.25806451612903225,
+  "touchedAfterBuildShare": 0,
+  "verdict": "amend",
+  "windowSeconds": 8570.5390944,
+  "successorDesignSeconds": 3705.5632316,
+  "fullyHidden": true,
+  "hiddenShare": 0.4323605774135281,
+  "savedSeconds": 2749.288849251613,
+  "trigger": "design-accepted",
+  "contractSource": "both",
+  "recordedAt": "2026-11-26T13:58:24.8808954+00:00"
+}

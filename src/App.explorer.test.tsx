@@ -8,7 +8,7 @@ const h = vi.hoisted(() => ({
   view: null as unknown,
   api: {} as Record<string, ReturnType<typeof vi.fn>>,
   ed: {} as Record<string, ReturnType<typeof vi.fn>>,
-  ex: { list: vi.fn(), drives: vi.fn() },
+  ex: { list: vi.fn(), drives: vi.fn(), home: vi.fn() },
 }));
 
 vi.mock("./api/tauri", () => {
@@ -131,8 +131,10 @@ beforeEach(() => {
   h.ed.pickOpenPaths.mockResolvedValue([]);
   h.ex.list.mockReset();
   h.ex.drives.mockReset();
+  h.ex.home.mockReset();
   h.ex.list.mockImplementation(async (path: string) => listing(path));
   h.ex.drives.mockResolvedValue([{ name: "C:", path: "C:\\", isDir: true, locked: false }]);
+  h.ex.home.mockResolvedValue(null);
   localStorage.clear();
 });
 
@@ -443,5 +445,74 @@ describe("the Files section with no apps", () => {
     expect(files).toBeInTheDocument();
     await waitFor(() => expect(h.ex.list).toHaveBeenCalledWith("C:\\loose", false));
     expect(screen.queryByRole("button", { name: /Home/ })).toBeNull();
+  });
+});
+
+describe("the home folder root (R13)", () => {
+  it("R13: the home view roots the explorer at the user's home folder", async () => {
+    h.ex.home.mockResolvedValue("C:\\Users\\me");
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+
+    await waitFor(() => expect(h.ex.list).toHaveBeenCalledWith("C:\\Users\\me", false));
+    const files = await screen.findByRole("region", { name: "Files" });
+    expect(files).toBeInTheDocument();
+  });
+
+  it("R13: the editor view with no tab open roots at the home folder", async () => {
+    h.ex.home.mockResolvedValue("C:\\Users\\me");
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    await openEditor();
+
+    await waitFor(() => expect(h.ex.list).toHaveBeenCalledWith("C:\\Users\\me", false));
+  });
+
+  it("R13: switching back to the home view keeps every open editor tab", async () => {
+    h.ex.home.mockResolvedValue("C:\\Users\\me");
+    h.ed.list.mockResolvedValue({ open: [entry("E:\\q\\README.md")], bin: [] });
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    await openEditor();
+    expect(await screen.findByRole("tab", { name: /README\.md/ })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /Home/ }));
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    await waitFor(() => expect(h.ex.list).toHaveBeenCalledWith("C:\\Users\\me", false));
+    expect(h.ed.close).not.toHaveBeenCalled();
+
+    await openEditor();
+    expect(await screen.findByRole("tab", { name: /README\.md/ })).toBeInTheDocument();
+  });
+
+  it("R13: switching from an app-owned tab to a misc file roots at its parent, and Up still reaches the drive list", async () => {
+    h.ex.home.mockResolvedValue("C:\\Users\\me");
+    h.ed.list.mockResolvedValue({ open: [entry("E:\\q\\src\\a.ts"), entry("C:\\loose\\notes.txt")], bin: [] });
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    await openEditor();
+
+    await waitFor(() => expect(h.ex.list).toHaveBeenCalledWith("E:\\q", false));
+    await userEvent.click(await screen.findByRole("tab", { name: /notes\.txt/ }));
+    await waitFor(() => expect(h.ex.list).toHaveBeenCalledWith("C:\\loose", false));
+
+    await userEvent.click(screen.getByRole("button", { name: "Up" }));
+    await waitFor(() => expect(h.ex.list).toHaveBeenCalledWith("C:\\", false));
+    await userEvent.click(screen.getByRole("button", { name: "Up" }));
+    await waitFor(() => expect(h.ex.drives).toHaveBeenCalled());
+  });
+
+  it("R13: an unreadable home folder shows as locked and the rest of the app stays usable", async () => {
+    h.ex.home.mockResolvedValue("C:\\Users\\me");
+    h.ex.list.mockImplementation(async (path: string) => {
+      if (path === "C:\\Users\\me") throw new Error("Access denied");
+      return listing(path);
+    });
+    render(<App />);
+
+    const files = await screen.findByRole("region", { name: "Files" });
+    await waitFor(() => expect(within(files).getByText(/can.t be read/)).toBeInTheDocument());
+    expect(screen.getByRole("heading", { name: "Home", level: 2 })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Apps" })).toBeInTheDocument();
   });
 });

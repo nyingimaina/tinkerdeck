@@ -1,0 +1,9 @@
+{
+  "rulings": [
+    {
+      "id": "A1",
+      "ruling": "allow",
+      "reason": "R13 already asks the explorer to open at the person's home folder whenever no app or file applies, so the app must ask Windows where that folder is, and reading the standard home-folder setting changes nothing a person would notice beyond the home root R13 already promises."
+    }
+  ]
+}

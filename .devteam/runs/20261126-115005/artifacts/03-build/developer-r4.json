@@ -1,0 +1,479 @@
+{
+  "summary": "Revision 3: fixed the single open finding REV-1. The approved responsive-layout package defaults its pane to a light background because no ZestLayoutThemeProvider wraps it, so in the default dark theme the dialog title/body kept the app's light text colours on a white pane (~1.05:1). SidePane now passes the pane the app theme's own CSS variables on the package's sidePane element (inline background var(--panel), color var(--text), --zest-pane-bg/--zest-pane-divider/--zest-pane-close* from --panel/--border/--text/--accent), so every dialog building on it (confirmations, theme finder, update, help) and the branch menu are readable in the default dark theme and in every other built-in or custom theme. No dialog content, actions or close paths changed. Added one R8 test in SidePane.test.tsx proving the pane takes the app panel/text colours; all earlier tests are unchanged. npm run lint, the focused suites and the full window suite (551 tests, 51 files) pass.",
+  "tests": [
+    {
+      "name": "A1 asks the core for the home folder through explorer_home",
+      "file": "src/api/explorer.test.ts",
+      "requirements": [
+        "A1"
+      ]
+    },
+    {
+      "name": "A1 returns null when the core cannot determine a home folder",
+      "file": "src/api/explorer.test.ts",
+      "requirements": [
+        "A1"
+      ]
+    },
+    {
+      "name": "R13 the home view roots at the user's home folder",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R13"
+      ]
+    },
+    {
+      "name": "R13 the editor view with no tab open roots at the home folder",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R13"
+      ]
+    },
+    {
+      "name": "R13 an unsaved tab with no path roots at the home folder",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R13"
+      ]
+    },
+    {
+      "name": "R13 an app root still wins over the home folder",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R13"
+      ]
+    },
+    {
+      "name": "R13 a Misc file still roots at its parent folder, not the home folder",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R13"
+      ]
+    },
+    {
+      "name": "A1 without a home folder from the core the home view has no root, so the panel shows its hint",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "A1"
+      ]
+    },
+    {
+      "name": "A1 without a home folder from the core an editor view with no path has no root",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "A1"
+      ]
+    },
+    {
+      "name": "R13 a home root offers Up that climbs one folder at a time until the drive list",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R13"
+      ]
+    },
+    {
+      "name": "R13 a drive that cannot be read shows as locked when opened instead of raising",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R13"
+      ]
+    },
+    {
+      "name": "R13 a drive removed between listing and opening is reported without breaking the tree",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R13"
+      ]
+    },
+    {
+      "name": "R13 an unreadable home folder shows a locked level and the rest keeps working",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R13"
+      ]
+    },
+    {
+      "name": "A1 with no root nothing applies, so no folder is read",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "A1"
+      ]
+    },
+    {
+      "name": "R13 a home root shows the home folder and Up climbs one level at a time until the drive list",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R13"
+      ]
+    },
+    {
+      "name": "R13 an unreadable home folder shows the locked state and the panel stays usable",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R13"
+      ]
+    },
+    {
+      "name": "A1 with no root it shows a hint and asks the core for nothing",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "A1"
+      ]
+    },
+    {
+      "name": "R13: the home view roots the explorer at the user's home folder",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R13"
+      ]
+    },
+    {
+      "name": "R13: the editor view with no tab open roots at the home folder",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R13"
+      ]
+    },
+    {
+      "name": "R13: switching back to the home view keeps every open editor tab",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R13"
+      ]
+    },
+    {
+      "name": "R13: switching from an app-owned tab to a misc file roots at its parent, and Up still reaches the drive list",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R13"
+      ]
+    },
+    {
+      "name": "R13: an unreadable home folder shows as locked and the rest of the app stays usable",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R13"
+      ]
+    },
+    {
+      "name": "a1_home_folder_reads_only_the_user_profile",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "A1"
+      ]
+    },
+    {
+      "name": "R6: maps Ctrl+B, F5, Ctrl+Shift+P and Ctrl+Alt+T to their actions",
+      "file": "src/shared/shortcuts.test.ts",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R6: F5 is the app toggle and refresh has no key at all",
+      "file": "src/shared/shortcuts.test.ts",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R6: every modifier combination of F5 still means the app toggle, never refresh",
+      "file": "src/shared/shortcuts.test.ts",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R6: in the app view with everything stopped, F5 starts all exactly as the button would",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R6: in the app view with a running terminal, F5 stops them exactly as the button would",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R6: F5 while a terminal is still starting stops it rather than starting a second copy",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R6: F5 in the home view is a true no-op and cannot reload the page",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R6: F5 in the editor view is a true no-op and leaves the view alone",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R6: F5 with Shift, Ctrl or Alt never refreshes in the home view",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R6: F5 does nothing for an app with no terminals, matching its disabled Start all button",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R4/R6: Ctrl+Alt+T switches the theme and Ctrl+B toggles the sidebar, while F5 no longer refreshes",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R4: the palette lists each app action with the same shortcut and choosing one runs it",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R4/R6: Ctrl+B keeps working after the header regroup while F5 no longer refreshes",
+      "file": "src/App.features.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "the Refresh button and the palette entry re-read terminal states and git now",
+      "file": "src/App.features.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R6: the Refresh item no longer tells the user F5 refreshes",
+      "file": "src/features/apps/UtilitiesMenu.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R6: the refresh control no longer tells the user F5 refreshes",
+      "file": "src/features/git/git.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R6: the help text no longer advertises F5 as refresh",
+      "file": "src/features/command-palette/CommandPalette.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R7: the finder fills its container instead of demanding a wider fixed width",
+      "file": "src/features/themes/ThemeFinder.test.tsx",
+      "requirements": [
+        "R7"
+      ]
+    },
+    {
+      "name": "R7: a long theme name stays inside its row instead of widening it",
+      "file": "src/features/themes/ThemeFinder.test.tsx",
+      "requirements": [
+        "R7"
+      ]
+    },
+    {
+      "name": "R7: an empty search shows its message inside the finder, not past its edge",
+      "file": "src/features/themes/ThemeFinder.test.tsx",
+      "requirements": [
+        "R7"
+      ]
+    },
+    {
+      "name": "R8/A2: renders its content inside the approved package's side pane with its own stylesheet",
+      "file": "src/features/apps/SidePane.test.tsx",
+      "requirements": [
+        "R8",
+        "A2"
+      ]
+    },
+    {
+      "name": "A3: the close control has an accessible name and runs the close action",
+      "file": "src/features/apps/SidePane.test.tsx",
+      "requirements": [
+        "A3",
+        "R8"
+      ]
+    },
+    {
+      "name": "A3: Escape dismisses a pane that has a close action",
+      "file": "src/features/apps/SidePane.test.tsx",
+      "requirements": [
+        "A3",
+        "R8"
+      ]
+    },
+    {
+      "name": "A3: a pane with no close action has no close control and Escape does nothing",
+      "file": "src/features/apps/SidePane.test.tsx",
+      "requirements": [
+        "A3",
+        "R8"
+      ]
+    },
+    {
+      "name": "R8: at a 360px-wide window the package uses its full-width mobile pane",
+      "file": "src/features/apps/SidePane.test.tsx",
+      "requirements": [
+        "R8"
+      ]
+    },
+    {
+      "name": "A4: dialog focuses the first (default) action, exposes one named dialog and runs each action",
+      "file": "src/features/apps/components.test.tsx",
+      "requirements": [
+        "A4",
+        "R8"
+      ]
+    },
+    {
+      "name": "R8/A3: dialog is a side pane whose named close control runs the last (cancel) action",
+      "file": "src/features/apps/components.test.tsx",
+      "requirements": [
+        "R8",
+        "A3"
+      ]
+    },
+    {
+      "name": "R8/A3: Escape dismisses the side pane through the cancel action",
+      "file": "src/features/apps/components.test.tsx",
+      "requirements": [
+        "R8",
+        "A3"
+      ]
+    },
+    {
+      "name": "R8/A3: a dialog with no actions keeps its content and offers no close path at all",
+      "file": "src/features/apps/components.test.tsx",
+      "requirements": [
+        "R8",
+        "A3"
+      ]
+    },
+    {
+      "name": "R8: a confirmation dialog keeps its title, body and action words in the pane",
+      "file": "src/features/apps/components.test.tsx",
+      "requirements": [
+        "R8"
+      ]
+    },
+    {
+      "name": "R8/A3: while downloading the side pane offers no close path, exactly as before",
+      "file": "src/features/updates/updates.test.tsx",
+      "requirements": [
+        "R8",
+        "A3"
+      ]
+    },
+    {
+      "name": "A2: package.json and package-lock.json record the approved 2.8.0 responsive-layout package",
+      "file": "src/features/apps/SidePane.test.tsx",
+      "requirements": [
+        "A2"
+      ]
+    },
+    {
+      "name": "A4: marks the current branch, disables it, and offers remote branches separately",
+      "file": "src/features/git/git.test.tsx",
+      "requirements": [
+        "A4"
+      ]
+    },
+    {
+      "name": "A4: filters both lists as you type",
+      "file": "src/features/git/git.test.tsx",
+      "requirements": [
+        "A4"
+      ]
+    },
+    {
+      "name": "A4: the filter box is focused and Escape closes the menu",
+      "file": "src/features/git/git.test.tsx",
+      "requirements": [
+        "A4"
+      ]
+    },
+    {
+      "name": "A4: shows loading until branches arrive",
+      "file": "src/features/git/git.test.tsx",
+      "requirements": [
+        "A4"
+      ]
+    },
+    {
+      "name": "R8/A3: the branch menu is a side pane whose named close control closes it",
+      "file": "src/features/git/git.test.tsx",
+      "requirements": [
+        "R8",
+        "A3"
+      ]
+    },
+    {
+      "name": "R8/A3: the update dialog is a side pane whose named close control runs the cancel action",
+      "file": "src/features/updates/updates.test.tsx",
+      "requirements": [
+        "R8",
+        "A3"
+      ]
+    },
+    {
+      "name": "R8: the update dialog keeps its notes, size and actions inside the pane",
+      "file": "src/features/updates/updates.test.tsx",
+      "requirements": [
+        "R8"
+      ]
+    },
+    {
+      "name": "R6: pressing F5 twice in quick succession starts once and then stops, never starting a terminal twice",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R6: pressing F5 repeatedly while a start is in progress never starts a second copy",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R8: the command palette stays a palette and is not moved into a side pane",
+      "file": "src/features/command-palette/CommandPalette.test.tsx",
+      "requirements": [
+        "R8"
+      ]
+    },
+    {
+      "name": "R8: the pane takes the app theme's panel and text colours so dialogs stay readable in the dark theme",
+      "file": "src/features/apps/SidePane.test.tsx",
+      "requirements": [
+        "R8"
+      ]
+    }
+  ],
+  "kickbacks": []
+}

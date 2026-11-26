@@ -1,0 +1,6 @@
+{
+  "ruling": "allow",
+  "reason": "R6's acceptance requires that no help text still tells the user F5 refreshes, and after the in-scope UI hints (Utilities menu, git bar title, command-palette help) were already corrected, the only remaining stale wording is in these three documentation files: README.md:54, docs/ui-tidy-up-plan.md:109/133/147/150/218/267 and CHANGELOG.md:10/81. They are project documentation about the shortcut, not shared code other features depend on, and no house rule (USR-001 to USR-006) forbids editing docs, so allowing them is the smallest change that makes the requirement true.",
+  "whyNotAutomatic": "",
+  "recommended": "allow"
+}

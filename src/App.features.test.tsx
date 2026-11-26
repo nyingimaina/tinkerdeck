@@ -53,6 +53,7 @@ vi.mock("./api/explorer", () => ({
   explorerApi: {
     list: vi.fn(async (path: string) => ({ path, entries: [], total: 0, truncated: false, locked: false })),
     drives: vi.fn(async () => []),
+    home: vi.fn(async () => null),
   },
 }));
 
@@ -479,7 +480,7 @@ describe("Left pane, refresh and shells", () => {
     localStorage.clear();
   });
 
-  it("R4: Ctrl+B and F5 keep working after the header regroup", async () => {
+  it("R4/R6: Ctrl+B keeps working after the header regroup while F5 no longer refreshes", async () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
 
@@ -489,11 +490,12 @@ describe("Left pane, refresh and shells", () => {
     expect(screen.getByRole("navigation", { name: "Apps" })).toBeInTheDocument();
 
     const shells = h.api.listShells.mock.calls.length;
-    await userEvent.keyboard("{F5}");
-    await waitFor(() => expect(h.api.listShells.mock.calls.length).toBeGreaterThan(shells));
+    fireEvent.keyDown(window, { key: "F5" });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(h.api.listShells.mock.calls.length).toBe(shells);
   });
 
-  it("the Refresh button and F5 re-read terminal states and git now", async () => {
+  it("the Refresh button and the palette entry re-read terminal states and git now", async () => {
     h.repo = repo();
     render(<App />);
     await openApp();
@@ -508,7 +510,9 @@ describe("Left pane, refresh and shells", () => {
     await userEvent.click(screen.getByRole("button", { name: "Refresh" })); // the one next to the git buttons
     await waitFor(() => expect(h.api.gitInfo.mock.calls.length).toBeGreaterThan(info2));
     const info3 = h.api.gitInfo.mock.calls.length;
-    await userEvent.keyboard("{F5}");
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
+    await userEvent.click(within(dialog).getByRole("button", { name: /Refresh everything/ }));
     await waitFor(() => expect(h.api.gitInfo.mock.calls.length).toBeGreaterThan(info3));
   });
 

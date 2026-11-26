@@ -1,0 +1,1524 @@
+{
+  "runId": "20261126-115005",
+  "options": {
+    "browser": "end",
+    "visible": false,
+    "document": false,
+    "referenceFolders": [],
+    "grantedFolders": []
+  },
+  "browser": {
+    "ran": false,
+    "passed": false,
+    "visible": false,
+    "document": false,
+    "seconds": 0,
+    "treeHash": "387500027D018ADB4432F5DB67C53F102186EE455B0C7F4E6301DEBA8C8F5755",
+    "reason": "this stack has no browser journeys",
+    "output": ""
+  },
+  "isVerification": false,
+  "stageSeconds": {
+    "define": 273.8810187,
+    "design": 3431.8984815,
+    "build": 4020.6366573000005,
+    "challenge": 5612.4273252
+  },
+  "timeCapExtensions": {},
+  "stageClockStart": {
+    "design": 2600.9990831,
+    "define": 166.5378334,
+    "build": 3366.6858452000006,
+    "challenge": 4817.5777455,
+    "prove": 0
+  },
+  "featureRequest": "This is revision 2 of 3 of a larger feature. Build only this revision.\r\n\r\nThe whole feature, as the person asked for it:\r\n# 1a. Sidebar file explorer: browsing and root rules (and 7 more)\r\n\r\nThis request comes from a conversation with the developer about their app.\r\nAnything marked suspected or not checked is a guess: confirm it in the code before building on it.\r\n\r\n## What this is about\r\nThe editor feels bolted on: files can be opened from outside the app, but inside the app there is no file explorer, and the existing file picker can only be reached once the editor view is showing. The developer wants one bundled feature, built in this order: (1) a VS Code-style file explorer in the sidebar with full file operations, plus palette entries for opening a file or folder; (2) F5 runs Start all / Stop all, with a new per-terminal \u0027executable\u0027 flag; (3) the theme finder stops overflowing its dialog; (4) the command palette gets a mobile-first CSS pass; (5) the shared Dialog and the branch menu become responsive side panes from a jattac npm package. The side panes go last because they are the largest piece and the package has not been named or checked yet. Parts 1-4 must not depend on part 5.\r\n\r\n## What to build or fix\r\n\r\n### 1. 1a. Sidebar file explorer: browsing and root rules (confirmed)\r\nAdd a Files explorer section to the sidebar, next to the apps list (as a second section or a tab; the layout is up to the builder). It shows a tree that loads one directory level at a time. Click a folder to expand or collapse it. Click a file to open it through the existing editor open path, which switches the main area to the editor view; if the file is already open, focus its tab instead of opening it again. Files with editor preview kinds (images, binaries) follow the editor\u0027s existing handling.\n\nWhat the explorer is rooted at depends on where the user is:\n- App view: the selected app\u0027s \u0060root\u0060 (every app definition has one, src/state/model.ts:27-31).\n- Editor view, active tab owned by an app: that app\u0027s root, found with the same owner lookup the tab groups already use (ownerOf in src/state/editorGroups.ts:33-40).\n- Editor view, active tab in the Misc group (a file outside every app root, for example one opened through \u0027Edit with Tinkerdeck\u0027 in Windows Explorer, which arrives as a launch argument at src-tauri/src/lib.rs:89 or as the \u0027editor-open\u0027 event at src-tauri/src/lib.rs:42-50): the file\u0027s parent folder. \u0027Up\u0027 climbs all the way to the drive list.\n- No tab open, an active tab with no path (a new unsaved file), or the home view: the user\u0027s home folder, with \u0027up\u0027 to the drive list.\nThe root moves as the active tab changes. Changing the root never closes or changes open tabs. In the editor view the sidebar may highlight the owning app, but that is optional.\n\nBackend: add a new Rust command that lists one directory level (name, kind file/folder, and whether it can be read). None exists today; src-tauri/src/editor_cmds.rs:26-85 only has open/new/load/save/close-style commands. Add a drive-list command for the top level on Windows (Windows has no single root; Windows is a target, see installer/tinkerdeck.iss). The listing may read any path; that matches the editor, which already opens any path (editor_open_any, src-tauri/src/editor_cmds.rs:72). A folder that can\u0027t be read shows as locked and does not raise an error.\n\nDefaults the builder should use (proposed, the developer did not object but did not explicitly confirm): hide node_modules, .git, target and dist by default; the home view shows home folder plus drives.\r\n\r\nEvidence:\r\n- src-tauri/src/editor_cmds.rs:26-85 (no directory-listing command)\r\n- src-tauri/src/editor_cmds.rs:72 (editor already opens any path)\r\n- src/state/model.ts:27-31 (app root field)\r\n- src/state/editorGroups.ts:9-23, :33-40 (ownerOf; files outside every root go to Misc)\r\n- src/App.tsx:70 (single view state home/app/editor)\r\n- src/App.tsx:507-508 (sidebar highlights an app only in app view)\r\n- src/App.tsx:524-545 (main area ternary)\r\n- src/App.tsx:114 (one global useEditor)\r\n- src-tauri/src/lib.rs:42-50, :89 (external opens)\r\n- developer answers: root follows the app owning the active tab; Misc tab roots at the file\u0027s parent folder with \u0027up\u0027 to drives\r\n\r\n### 2. 1b. Explorer file operations: create, rename, move, delete, drag and drop (confirmed)\r\nThe explorer supports, for both files and folders: create file, create folder, rename, move, delete, and drag and drop inside the tree (dropping an item onto a folder moves it there). All of these need new Rust commands. No user-facing file-operation commands exist in the backend today; the only fs::rename / remove_file calls in src-tauri are internal (atomic saves at src-tauri/src/editor.rs:98, buffer cleanup at src-tauri/src/editor.rs:290).\n\nDelete (confirmed by the developer): send the item to the Recycle Bin, after a confirm prompt. The prompt names the file or folder; for a folder it says everything inside goes with it. This needs a new dependency; no trash crate is in src-tauri/Cargo.toml. Proposed: the \u0027trash\u0027 crate.\n\nProposed rules, stated to the developer and not objected to, but not explicitly confirmed:\n- If the Recycle Bin can\u0027t take the item (for example some network or removable drives), refuse the delete with a message. Never fall back to a permanent delete.\n- Name clashes are refused with a clear message; nothing is silently overwritten.\n- Moving a folder into itself (or into one of its own descendants) is refused.\n- Renaming or moving a file that is open in a tab re-points that tab to the new path so it stays open (and its tab group is recomputed, since grouping is by path). Renaming or moving a folder does the same for every open file under it.\n- Deleting a file (or folder) that has open tabs closes those tabs. If any of them has unsaved changes, the single delete confirm prompt says so; there is no second prompt.\n- After any operation the affected folder level in the tree is refreshed.\r\n\r\nEvidence:\r\n- src-tauri/src/editor_cmds.rs:26-85 (no file-operation commands)\r\n- src-tauri/src/editor.rs:98 and :290 (only internal rename/remove uses)\r\n- grep \u0027trash\u0027 in src-tauri/Cargo.toml: no match\r\n- src/state/editorGroups.ts:33-40 (tabs grouped by path)\r\n- developer: \u0027include Creating, renaming, deleting, moving, or dragging files ... files and folders\u0027\r\n- developer: \u0027Recycle Bin, with a confirm prompt\u0027\r\n\r\n### 3. 1c. Palette entries \u0027Open file\u2026\u0027 and \u0027Open folder\u2026\u0027 (confirmed)\r\nThe file picker already exists in the editor (toolbar \u0027Open\u2026\u0027, Ctrl\u002BO, and the empty-state \u0027Open a file\u2026\u0027 button, all calling openDialog), but it can only be reached once the editor view is showing. Add \u0027Open file\u2026\u0027 to the command palette, reusing openDialog (src/api/editor.ts:22) and opening the chosen files in the editor view. Add \u0027Open folder\u2026\u0027 too, reusing pickFolder (src/api/tauri.ts:77); it roots the explorer at the chosen folder (the exact behaviour for a picked folder relative to the automatic root rules in 1a was not discussed; the builder should keep it simple, for example a picked folder stays the root until the active tab or view changes). Ctrl\u002BO stays as it is. The palette already has an \u0027Open editor\u0027 entry (src/App.tsx:378) and the top bar has an editor button (src/App.tsx:450-451); these stay.\r\n\r\nEvidence:\r\n- src/features/editor/EditorView.tsx:36, :65, :119 (existing picker entry points)\r\n- src/api/editor.ts:22 (openDialog)\r\n- src/api/tauri.ts:77 (pickFolder); src/App.tsx:285 (existing use)\r\n- src/shared/shortcuts.ts:12-15 (global shortcut list does not include the picker)\r\n- src/App.tsx:378, :450-451 (existing editor entry points)\r\n\r\n### 4. 2a. Per-terminal \u0027executable\u0027 flag (confirmed)\r\nEvery terminal gets an \u0027executable\u0027 flag, on by default. The user can turn it off for any terminal (add a switch where terminals are edited). Non-executable terminals are not started or stopped by Start all / Stop all or by F5; they can still be started and stopped one by one with their own buttons.\n- Add the field to the TS TerminalDef (src/state/model.ts:12-25) and the Rust TerminalDef (src-tauri/src/model.rs:10-31). In Rust it needs a serde default of true so existing configs load unchanged as executable.\n- start_all (src-tauri/src/commands.rs:131-141) and stop_all (src-tauri/src/commands.rs:154-165) skip non-executable terminals.\nProposed, stated to the developer and treated as accepted (not explicitly confirmed):\n- The Start/Stop button state (appButton, src/state/model.ts:126-137) counts only executable terminals, so the button always shows what pressing it will do. The app status dot (rollup, used in src/features/apps/AppHeader.tsx:13 and src/features/home/HomeScreen.tsx:59) probably should too.\n- The restore-on-launch prompt (src/state/useLauncher.ts:296-299, calls startAll) skips them automatically through start_all.\n- The engine\u0027s \u0027up\u0027 action has its own loop (src-tauri/src/engine.rs:233-246); add the same filter there, and its readiness wait must ignore skipped terminals.\r\n\r\nEvidence:\r\n- src/state/model.ts:12-25 (no executable field in TS)\r\n- src-tauri/src/model.rs:10-31 (no executable field in Rust)\r\n- src-tauri/src/commands.rs:131-141, :154-165 (start_all / stop_all iterate every terminal)\r\n- src/state/model.ts:126-137 (appButton / rollup)\r\n- src/state/useLauncher.ts:296-299\r\n- src-tauri/src/engine.rs:233-246\r\n- developer: \u0027by default all terminals should be executable, but we should be able to mark any ... as non-executable\u0027\r\n\r\n### 5. 2b. F5 toggles Start all / Stop all; refresh loses its key (confirmed)\r\nF5 runs exactly the action of the app\u0027s Start all / Stop all button (whichever appButton shows, src/state/model.ts:135-137), which skips non-executable terminals (item 2a). F5 acts only in the app view. In the home and editor views it does nothing, even though a remembered selectedAppId exists (src/state/useLauncher.ts:66).\n- The global key handler is registered once with empty deps (src/App.tsx:143-156), so it closes over its initial state. Use a ref (or correct deps) to read the current view, selected app and button state at press time.\n- Keep preventDefault for F5 in all views (src/App.tsx:145-147) so it is a true no-op outside the app view. Guess, not checked: without it the webview might reload the page on F5.\n- F5 is an app shortcut that terminals hand back to the window (src/shared/shortcuts.ts:49-51), so it works while a terminal has focus and never reaches the shell. That is intended.\n- The matcher treats any F5 press as the shortcut whatever modifiers are held (src/shared/shortcuts.ts:39); keep or tighten as appropriate, but refresh must not be on any F5 variant.\nRefresh gets no shortcut at all (developer: \u0027No shortcut: button and palette only\u0027). It stays reachable from the palette \u0027Refresh everything\u0027 entry (src/App.tsx:375), the Utilities menu item (src/features/apps/UtilitiesMenu.tsx:67-68) and the git bar button (src/features/git/GitBar.tsx:81). Remove every place that advertises F5 as refresh: the shortcuts.ts entry and matcher (src/shared/shortcuts.ts:13, :39), the palette entry\u0027s shortcut label (src/App.tsx:375), the UtilitiesMenu \u003Ckbd\u003EF5\u003C/kbd\u003E (UtilitiesMenu.tsx:68), the GitBar title \u0027Refresh now (F5)\u0027 (GitBar.tsx:81), and the help text \u0027Press \u27F3 or F5 to refresh now\u0027 (src/features/command-palette/CommandPalette.tsx:271). Where the Start all / Stop all button or palette entry shows a key hint, show F5. Update the tests that assert F5 means refresh (src/shared/shortcuts.test.ts:15, src/App.features.test.tsx:488, src/App.shortcuts.test.tsx:119) and add tests for the new F5 behaviour, including the no-op in home and editor views. Do not move refresh to Ctrl\u002BR: it would take reverse history search away from the shell.\r\n\r\nEvidence:\r\n- src/shared/shortcuts.ts:13, :39, :49-51\r\n- src/App.tsx:143-156 (key handler, empty deps, preventDefault at :145-147)\r\n- src/App.tsx:149 (F5 runs refreshAll today)\r\n- src/App.tsx:375 (palette refresh entry); src/App.tsx:386-389 (Start all only in app view); src/App.tsx:550-551 (startAll/stopAll)\r\n- src/state/model.ts:135-137 (appButton)\r\n- src/features/apps/UtilitiesMenu.tsx:67-68; src/features/git/GitBar.tsx:81; src/features/command-palette/CommandPalette.tsx:271\r\n- src/shared/shortcuts.test.ts:15; src/App.features.test.tsx:488; src/App.shortcuts.test.tsx:119\r\n- developer: \u0027Nothing: F5 only works in the app view\u0027\r\n\r\n### 6. 3. Theme finder overflows its dialog (confirmed)\r\nClicking the theme Find button opens the ThemeFinder inside the shared Dialog (src/App.tsx:675-679). The Dialog is at most 460px wide (src/features/apps/Dialog.module.css:10), but the finder content asks for min(640px, 80vw) (src/features/themes/Themes.module.css:97-104). The theme rows are wider than the dialog and run past its right edge; the developer also finds the picker generally ugly. Fix the width directly, independent of the side-pane work in item 5: the finder content must fit its container (for example let the dialog be wider for the finder, or make the finder fill and wrap within the available width), with no horizontal overflow on desktop or mobile widths. The cause was seen in the CSS, not on screen.\r\n\r\nEvidence:\r\n- src/App.tsx:675-679\r\n- src/features/apps/Dialog.module.css:10 (max 460px)\r\n- src/features/themes/Themes.module.css:97-104 (min(640px, 80vw))\r\n\r\n### 7. 4. Command palette: mobile-first, desktop-aware CSS (confirmed)\r\nThe command palette stays a palette; it is NOT moved to a side pane. Give it a mobile-first, desktop-aware CSS pass only. Today it has no media queries: a fixed backdrop with 12vh top padding, a panel width of min(560px, 100%) and max-height 60vh (src/features/command-palette/CommandPalette.module.css:1-20). On a phone it should fill the width and sit near the top so the on-screen keyboard doesn\u0027t squeeze the list. The desktop look stays as it is now.\r\n\r\nEvidence:\r\n- src/features/command-palette/CommandPalette.module.css:1-20\r\n- grep @media in src/features/command-palette: no match\r\n- developer: \u0027exclude the command palette from migration ... only optimize for mobile first and desktop awareness\u0027\r\n\r\n### 8. 5. Replace modals with jattac responsive side panes (Dialog and BranchMenu) (not checked)\r\nReplace the shared Dialog (src/features/apps/Dialog.tsx:21-22; this includes the theme finder and every other dialog that uses it) and the git BranchMenu (src/features/git/BranchMenu.tsx:20) with side panes from the developer\u0027s jattac responsive-layout npm package, which fits mobile devices better than modals. The command palette is excluded (item 4). Build this last. The package has not been named: only jattac-web-poller and jattac.libs.web.zest-tabs are in package.json today (package.json:31-32). Before building, get the exact package name from the developer and check that its published build installs cleanly and ships its CSS; an earlier plan rejected a jattac package whose build was missing its CSS (docs/ui-tidy-up-plan.md:340). If the package proves unusable, stop and report; items 1-4 must ship regardless.\r\n\r\nEvidence:\r\n- src/features/apps/Dialog.tsx:21-22\r\n- src/features/git/BranchMenu.tsx:20\r\n- package.json:31-32 (no side-pane package installed)\r\n- docs/ui-tidy-up-plan.md:340 (earlier jattac package rejected for missing CSS)\r\n\r\n## Not part of this\r\n- Putting the editor inside the app view (as a tab or split next to the terminals). Needs decisions on cross-app tabs and main-area layout; a separate issue for later (src/App.tsx:70, :524).\r\n- Terminal hosts are rendered only in the app branch of the main-area ternary (src/App.tsx:583-612), so they leave the tree while the editor shows. Not checked whether this loses scrollback or other state; separate issue.\r\n- Migrating the command palette to a side pane (explicitly excluded; it only gets the CSS pass in item 4).\r\n- Changing Ctrl\u002BO or the editor\u0027s existing picker behaviour.\r\n- Any shortcut for refresh (developer chose button and palette only).\r\n\r\n## Not settled yet (do not treat as fact)\r\n- The exact npm name of the jattac responsive side-pane package, and whether its published build ships its CSS. Item 5 is blocked until this is known.\r\n- Not explicitly confirmed by the developer (proposed and not objected to): the hide list node_modules/.git/target/dist; home view shows home folder plus drives; Recycle Bin failure refuses rather than permanently deleting; name clashes refused; no moving a folder into itself; rename/move re-points open tabs; delete closes open tabs with one combined unsaved-changes prompt; the Start/Stop button and status dot count only executable terminals; the engine \u0027up\u0027 action skips non-executable terminals.\r\n- How \u0027Open folder\u2026\u0027 from the palette interacts with the automatic explorer root rules (how long a picked root persists) was not discussed.\r\n- Not checked: whether the webview reloads the page on F5 if preventDefault is not called.\r\n\r\n## Requirements agreed in the conversation\r\n\r\nThe developer and the assistant already agreed these while talking. Build on them; do not ask again what they settle.\r\n\r\n- **R1**: The app provides an Open File menu item that launches the system file picker and opens the selected file in the editor, and the editor\u0027s existing open controls remain available.\r\n  - Done when: An Open File entry is available from the app\u0027s menu or command palette even when the editor view is not the current view.\r\n  - Done when: Choosing Open File launches the operating system file picker.\r\n  - Done when: Selecting a file in the picker opens it in the editor.\r\n  - Done when: The editor\u0027s Open... toolbar button, Ctrl\u002BO shortcut, and empty-state Open a file... button launch the same picker.\r\n- **R2**: A file explorer is shown in the side pane and displays a tree of folders and files that the user can navigate.\r\n  - Done when: The side pane contains an explorer area for files.\r\n  - Done when: The explorer shows the folders and files under its root folder.\r\n  - Done when: Clicking a folder expands or collapses it.\r\n- **R3**: Clicking a file in the explorer opens that file in the editor.\r\n  - Done when: Clicking a file in the explorer opens it in an editor tab.\r\n  - Done when: The clicked file becomes the active document.\r\n- **R4**: The side-pane explorer root follows the app the user is working in: while the user is in the app view the explorer\u0027s top folder is the selected app\u0027s root folder, and while the user is in the editor view it is the root folder of the app that owns the active editor tab, found with the same path-to-owning-app lookup the tab groups use.\r\n  - Done when: While the user is in the app view, the explorer\u0027s top folder is the selected app\u0027s root folder.\r\n  - Done when: While the user is in the editor view, the explorer\u0027s top folder is the root folder of the app that owns the active editor tab.\r\n  - Done when: The user does not have to choose a root by hand when an app root is available.\r\n- **R5**: When the active editor tab belongs to no app (the misc group), for example a loose file opened through \u0027Edit with Tinkerdeck\u0027 from outside every app root, the explorer is rooted at that file\u0027s parent folder and moving up climbs all the way to the drive list.\r\n  - Done when: While the active editor tab is in the misc group, the explorer\u0027s top folder is that file\u0027s parent folder.\r\n  - Done when: Moving up from that parent folder climbs the folder hierarchy and reaches the drive list.\r\n  - Done when: Switching the active tab between misc files changes the explorer root to the newly active file\u0027s parent folder.\r\n- **R6**: Pressing F5 in the app view toggles start/stop of the app instead of refreshing, by invoking the same Start all / Stop all action the on-screen button uses. In the home and editor views F5 does nothing.\r\n  - Done when: Pressing F5 in the app view when the app is stopped starts it.\r\n  - Done when: Pressing F5 in the app view when the app is running stops it.\r\n  - Done when: F5 performs the same action as the Start all / Stop all button.\r\n  - Done when: F5 toggles the whole app rather than only the selected terminal.\r\n  - Done when: Non-executable terminals are skipped by F5, exactly as they are skipped by the button (see R11).\r\n  - Done when: Pressing F5 in the home view or the editor view neither starts nor stops anything.\r\n- **R7**: In the theme picker\u0027s find dialog, the theme rows fit inside the dialog and do not overflow past its right edge.\r\n  - Done when: Opening the theme find dialog shows every theme row within the dialog\u0027s left and right edges.\r\n  - Done when: No theme row is clipped or extends past the right edge at the dialog\u0027s normal size.\r\n- **R8**: Modal-style popups other than the command palette are replaced with responsive side panes from a jattac layout library on npm, which fits mobile devices; the shared dialog (including the theme finder) and the branch menu move to side panes, while the command palette stays a palette.\r\n  - Done when: The shared dialog, including the theme finder, is presented as a jattac side pane instead of a centred modal.\r\n  - Done when: The branch menu is presented as a jattac side pane instead of a centred modal.\r\n  - Done when: The command palette is not moved into a side pane.\r\n  - Done when: Each side pane opens, closes, and shows its content without clipping on a narrow mobile-width viewport.\r\n- **R9**: The explorer lets the user create, rename, delete and move files and folders, and move them by drag-and-drop inside the explorer. Deleting asks for confirmation first and sends the item to the Recycle Bin, where it can be restored, instead of removing it permanently.\r\n  - Done when: The user can create a new file and a new folder in the explorer.\r\n  - Done when: The user can rename an existing file and an existing folder.\r\n  - Done when: The user can delete a file and a folder.\r\n  - Done when: Deleting an item asks for confirmation before anything is removed.\r\n  - Done when: After the user confirms, the deleted item is in the Recycle Bin and can be restored from there.\r\n  - Done when: The user can move a file and a folder to another folder.\r\n  - Done when: The user can drag an item in the explorer and drop it onto a folder to move it there.\r\n- **R10**: The command palette stays a palette and is optimised to be mobile-first and desktop-aware, rather than being migrated into a responsive side pane.\r\n  - Done when: On a narrow mobile-width viewport the command palette is usable and its list is not squeezed by the on-screen keyboard.\r\n  - Done when: On a desktop-width viewport the command palette keeps its current palette layout.\r\n  - Done when: The command palette\u0027s popup mechanism is unchanged; it remains a palette, not a side pane.\r\n- **R11**: Each terminal has an executable setting that is on by default; the user can mark a terminal as non-executable, and non-executable terminals are not started by the Start all / Stop all action or by F5 (which calls that same action).\r\n  - Done when: A newly added terminal is executable by default.\r\n  - Done when: The user can mark any terminal as non-executable and mark it executable again.\r\n  - Done when: Start all does not start terminals marked non-executable.\r\n  - Done when: F5, because it invokes the same action, does not start terminals marked non-executable.\r\n  - Done when: A non-executable terminal can still be started and stopped on its own with its own controls.\r\n- **R12**: Refresh is available only from its on-screen buttons and the command palette; no keyboard shortcut refreshes.\r\n  - Done when: The refresh buttons in the Utilities menu and the git bar still refresh.\r\n  - Done when: The command palette\u0027s \u0027Refresh everything\u0027 entry still refreshes.\r\n  - Done when: No keyboard shortcut performs refresh, and the palette entry shows no shortcut key hint.\r\n\r\nNot part of this: Placing the editor inside the app view as a tab or split pane; noted as a possible separate issue, not agreed as part of this work.; Adding an Open folder... entry to the command palette or making it choose the explorer root by hand; proposed by the assistant but not agreed by the developer.; Changing what the app\u0027s start or stop action itself does, beyond letting the user mark individual terminals non-executable; the F5 key binding and the terminal executable flag are the only changes there.; Redesigning the theme picker beyond the find dialog\u0027s fit and the move to a side pane.; Moving the command palette into a side pane; it stays a palette, only made mobile-first and desktop-aware.; Adding a keyboard shortcut for refresh; the developer chose buttons and the palette only.\r\n\r\n\u003C!--devteam-requirements:eyJzdW1tYXJ5IjoiVGhlIGVkaXRvciBzaG91bGQgc3RvcCBmZWVsaW5nIGxpa2UgYSBzZXBhcmF0ZSB0b29sLCBhbmQgYWxsIG9mIHRoaXMgd29yayBzaGlwcyBhcyBvbmUgZmVhdHVyZSBidWlsdCBpbiB0aGlzIG9yZGVyOiBmaXJzdCB0aGUgc2lkZWJhciBmaWxlIGV4cGxvcmVyLCB0aGVuIEY1IGFzIHN0YXJ0L3N0b3AsIHRoZW4gdGhlIHRoZW1lIGZpbmRlciBmaXR0aW5nIGl0cyBib3gsIGFuZCBsYXN0IHRoZSBtb3ZlIGZyb20gbW9kYWxzIHRvIGphdHRhYyBzaWRlIHBhbmVzLCBzbyB0aGUgZmlyc3QgdGhyZWUgY2FuIHN0aWxsIHNoaXAgaWYgdGhlIHBhY2thZ2UgcHJvdmVzIHVudXNhYmxlLiBJbnNpZGUgdGhlIGFwcCB0aGUgdXNlciBjYW4gaW52b2tlIGFuIE9wZW4gRmlsZSBhY3Rpb24gdGhhdCBsYXVuY2hlcyB0aGUgc3lzdGVtIGZpbGUgcGlja2VyLCBhbmQgYSBWUyBDb2RlLWxpa2UgZmlsZSBleHBsb3JlciBpbiB0aGUgc2lkZSBwYW5lIGxldHMgdGhlbSBleHBhbmQgZm9sZGVycywgb3BlbiBmaWxlcyBieSBjbGlja2luZywgYW5kIGNyZWF0ZSwgcmVuYW1lLCBkZWxldGUgKHNlbmRpbmcgaXRlbXMgdG8gdGhlIFJlY3ljbGUgQmluIGFmdGVyIGEgY29uZmlybWF0aW9uIHByb21wdCksIG1vdmUgYW5kIGRyYWcgZmlsZXMgYW5kIGZvbGRlcnMuIFRoZSBleHBsb3JlciByb290IGZvbGxvd3Mgd2hlcmUgdGhlIHVzZXIgaXM6IGluIHRoZSBhcHAgdmlldyBpdCBpcyB0aGUgc2VsZWN0ZWQgYXBwXHUwMDI3cyByb290LCBpbiB0aGUgZWRpdG9yIHZpZXcgaXQgaXMgdGhlIHJvb3Qgb2YgdGhlIGFwcCB0aGF0IG93bnMgdGhlIGFjdGl2ZSBlZGl0b3IgdGFiLCBmb3IgYSB0YWIgdGhhdCBiZWxvbmdzIHRvIG5vIGFwcCBpdCBpcyB0aGF0IGZpbGVcdTAwMjdzIHBhcmVudCBmb2xkZXIgY2xpbWJpbmcgdG8gdGhlIGRyaXZlIGxpc3QsIGFuZCB3aXRoIG5vIGZpbGUgcGF0aCBpdCBpcyB0aGUgdXNlclx1MDAyN3MgaG9tZSBmb2xkZXIuIEY1IG5vdyBjYWxscyB0aGUgc2FtZSBTdGFydCBhbGwgLyBTdG9wIGFsbCBhY3Rpb24gYXMgdGhlIG9uLXNjcmVlbiBidXR0b24gaW5zdGVhZCBvZiByZWZyZXNoaW5nLCBidXQgb25seSBpbiB0aGUgYXBwIHZpZXc7IGluIHRoZSBob21lIGFuZCBlZGl0b3Igdmlld3MgRjUgZG9lcyBub3RoaW5nLCBhbmQgcmVmcmVzaCBrZWVwcyBubyBrZXlib2FyZCBzaG9ydGN1dCwgc3RheWluZyBvbiBpdHMgYnV0dG9ucyBhbmQgaW4gdGhlIGNvbW1hbmQgcGFsZXR0ZS4gVGVybWluYWxzIGFyZSBleGVjdXRhYmxlIGJ5IGRlZmF1bHQgYnV0IGNhbiBiZSBtYXJrZWQgbm9uLWV4ZWN1dGFibGUgc28gRjUgYW5kIFN0YXJ0IGFsbCBza2lwIHRoZW0uIFRoZSB0aGVtZSBwaWNrZXJcdTAwMjdzIGZpbmQgZGlhbG9nIG5vIGxvbmdlciBvdmVyZmxvd3MgaXRzIHJpZ2h0IGVkZ2UsIGFuZCB0aGUgc2hhcmVkIGRpYWxvZyAoaW5jbHVkaW5nIHRoZSB0aGVtZSBmaW5kZXIpIGFuZCB0aGUgYnJhbmNoIG1lbnUgbW92ZSB0byByZXNwb25zaXZlIGphdHRhYyBzaWRlIHBhbmVzIHRoYXQgZml0IG1vYmlsZSBkZXZpY2VzLCB3aGlsZSB0aGUgY29tbWFuZCBwYWxldHRlIHN0YXlzIGEgcGFsZXR0ZSBhbmQgaXMgb25seSBtYWRlIG1vYmlsZS1maXJzdCBhbmQgZGVza3RvcC1hd2FyZS4gU3RpbGwgdW5kZWNpZGVkOiB0aGUgZXhhY3QgamF0dGFjIHBhY2thZ2UsIGFuZCB0aGUgYXNzaXN0YW50XHUwMDI3cyBwcm9wb3NlZCBkZXRhaWxzIGZvciBkdXBsaWNhdGUgdGFicywgbGFyZ2UgZm9sZGVycywgdW5yZWFkYWJsZSBmb2xkZXJzLCBvciBhIGhpZGRlbi1mb2xkZXIgbGlzdC4iLCJyZXF1aXJlbWVudHMiOlt7ImlkIjoiUjEiLCJ0ZXh0IjoiVGhlIGFwcCBwcm92aWRlcyBhbiBPcGVuIEZpbGUgbWVudSBpdGVtIHRoYXQgbGF1bmNoZXMgdGhlIHN5c3RlbSBmaWxlIHBpY2tlciBhbmQgb3BlbnMgdGhlIHNlbGVjdGVkIGZpbGUgaW4gdGhlIGVkaXRvciwgYW5kIHRoZSBlZGl0b3JcdTAwMjdzIGV4aXN0aW5nIG9wZW4gY29udHJvbHMgcmVtYWluIGF2YWlsYWJsZS4iLCJhY2NlcHRhbmNlIjpbIkFuIE9wZW4gRmlsZSBlbnRyeSBpcyBhdmFpbGFibGUgZnJvbSB0aGUgYXBwXHUwMDI3cyBtZW51IG9yIGNvbW1hbmQgcGFsZXR0ZSBldmVuIHdoZW4gdGhlIGVkaXRvciB2aWV3IGlzIG5vdCB0aGUgY3VycmVudCB2aWV3LiIsIkNob29zaW5nIE9wZW4gRmlsZSBsYXVuY2hlcyB0aGUgb3BlcmF0aW5nIHN5c3RlbSBmaWxlIHBpY2tlci4iLCJTZWxlY3RpbmcgYSBmaWxlIGluIHRoZSBwaWNrZXIgb3BlbnMgaXQgaW4gdGhlIGVkaXRvci4iLCJUaGUgZWRpdG9yXHUwMDI3cyBPcGVuLi4uIHRvb2xiYXIgYnV0dG9uLCBDdHJsXHUwMDJCTyBzaG9ydGN1dCwgYW5kIGVtcHR5LXN0YXRlIE9wZW4gYSBmaWxlLi4uIGJ1dHRvbiBsYXVuY2ggdGhlIHNhbWUgcGlja2VyLiJdLCJyYXRpb25hbGUiOiJUaGUgZGV2ZWxvcGVyIHdhbnRzIHVzZXJzIHRvIGJlIGFibGUgdG8gcGljayBhIGZpbGUgZnJvbSBpbnNpZGUgdGhlIGFwcCwgbm90IG9ubHkgd2hlbiBhIGZpbGUgaXMgb3BlbmVkIGZyb20gb3V0c2lkZSBpdC4iLCJkZXJpdmVkRnJvbSI6IiIsImVkZ2VDYXNlcyI6WyJDYW5jZWxsaW5nIHRoZSBwaWNrZXIgbGVhdmVzIHRoZSBjdXJyZW50IGVkaXRvciBjb250ZW50IGFuZCBhY3RpdmUgdGFiIHVuY2hhbmdlZC4iLCJTZWxlY3Rpbmcgc2V2ZXJhbCBmaWxlcyBpbiBvbmUgcGlja2VyIHNlc3Npb24gb3BlbnMgZWFjaCBzZWxlY3RlZCBmaWxlIHdpdGhvdXQgY2xvc2luZyBmaWxlcyB0aGF0IHdlcmUgYWxyZWFkeSBvcGVuLiJdLCJwaXRmYWxscyI6WyJUaGUgbmV3IG1lbnUgZW50cnkgbXVzdCBub3QgY3JlYXRlIGEgc2Vjb25kIGZpbGUtb3BlbmluZyBwYXRoIHdpdGggZGlmZmVyZW50IGJlaGF2aW91ciBmcm9tIHRoZSBlZGl0b3JcdTAwMjdzIGV4aXN0aW5nIG9wZW4gcGF0aC4iXSwicnVsZXMiOltdLCJmYWN0cyI6W119LHsiaWQiOiJSMiIsInRleHQiOiJBIGZpbGUgZXhwbG9yZXIgaXMgc2hvd24gaW4gdGhlIHNpZGUgcGFuZSBhbmQgZGlzcGxheXMgYSB0cmVlIG9mIGZvbGRlcnMgYW5kIGZpbGVzIHRoYXQgdGhlIHVzZXIgY2FuIG5hdmlnYXRlLiIsImFjY2VwdGFuY2UiOlsiVGhlIHNpZGUgcGFuZSBjb250YWlucyBhbiBleHBsb3JlciBhcmVhIGZvciBmaWxlcy4iLCJUaGUgZXhwbG9yZXIgc2hvd3MgdGhlIGZvbGRlcnMgYW5kIGZpbGVzIHVuZGVyIGl0cyByb290IGZvbGRlci4iLCJDbGlja2luZyBhIGZvbGRlciBleHBhbmRzIG9yIGNvbGxhcHNlcyBpdC4iXSwicmF0aW9uYWxlIjoiVGhlIGRldmVsb3BlciB3YW50cyBWUyBDb2RlLWxpa2UgcXVpY2sgbmF2aWdhdGlvbiBpbnNpZGUgdGhlIGFwcCBzbyB0aGUgZWRpdG9yIGZlZWxzIGludGVncmF0ZWQgcmF0aGVyIHRoYW4gYm9sdGVkIG9uLiIsImRlcml2ZWRGcm9tIjoiIiwiZWRnZUNhc2VzIjpbIkNvbGxhcHNpbmcgYSBmb2xkZXIgaGlkZXMgaXRzIGNoaWxkcmVuIHdpdGhvdXQgY2xvc2luZyBhbnkgZmlsZSBhbHJlYWR5IG9wZW5lZCBmcm9tIHRoYXQgZm9sZGVyLiIsIkFuIGVtcHR5IGZvbGRlciBjYW4gc3RpbGwgYmUgZXhwYW5kZWQgd2l0aG91dCBjYXVzaW5nIGFuIGVycm9yLiJdLCJwaXRmYWxscyI6WyJFeHBhbmRpbmcgb3IgY29sbGFwc2luZyBhIGZvbGRlciBtdXN0IG5vdCBjaGFuZ2UgdGhlIGFjdGl2ZSBlZGl0b3IgZG9jdW1lbnQuIl0sInJ1bGVzIjpbXSwiZmFjdHMiOltdfSx7ImlkIjoiUjMiLCJ0ZXh0IjoiQ2xpY2tpbmcgYSBmaWxlIGluIHRoZSBleHBsb3JlciBvcGVucyB0aGF0IGZpbGUgaW4gdGhlIGVkaXRvci4iLCJhY2NlcHRhbmNlIjpbIkNsaWNraW5nIGEgZmlsZSBpbiB0aGUgZXhwbG9yZXIgb3BlbnMgaXQgaW4gYW4gZWRpdG9yIHRhYi4iLCJUaGUgY2xpY2tlZCBmaWxlIGJlY29tZXMgdGhlIGFjdGl2ZSBkb2N1bWVudC4iXSwicmF0aW9uYWxlIjoiVGhlIGRldmVsb3BlciB3YW50cyB0aGUgdXNlciB0byB2aWV3IGZpbGVzIHF1aWNrbHkgYnkgY2xpY2tpbmcgdGhlbSBpbiB0aGUgZXhwbG9yZXIuIiwiZGVyaXZlZEZyb20iOiIiLCJlZGdlQ2FzZXMiOlsiQ2xpY2tpbmcgYSBmaWxlIGRvZXMgbm90IG1vZGlmeSB0aGUgZmlsZVx1MDAyN3MgY29udGVudHMgb24gZGlzay4iLCJDbGlja2luZyBhIGZvbGRlciB0b2dnbGVzIGl0cyBleHBhbnNpb24gYW5kIGRvZXMgbm90IG9wZW4gaXQgYXMgYSBmaWxlLiJdLCJwaXRmYWxscyI6WyJUaGUgZXhwbG9yZXIgbXVzdCB1c2UgdGhlIHNhbWUgZWRpdG9yIG9wZW4gcGF0aCBhcyB0aGUgZmlsZSBwaWNrZXIgc28gcHJldmlldyBhbmQgZXJyb3IgYmVoYXZpb3VyIHN0YXkgY29uc2lzdGVudC4iXSwicnVsZXMiOltdLCJmYWN0cyI6W119LHsiaWQiOiJSNCIsInRleHQiOiJUaGUgc2lkZS1wYW5lIGV4cGxvcmVyIHJvb3QgZm9sbG93cyB0aGUgYXBwIHRoZSB1c2VyIGlzIHdvcmtpbmcgaW46IHdoaWxlIHRoZSB1c2VyIGlzIGluIHRoZSBhcHAgdmlldyB0aGUgZXhwbG9yZXJcdTAwMjdzIHRvcCBmb2xkZXIgaXMgdGhlIHNlbGVjdGVkIGFwcFx1MDAyN3Mgcm9vdCBmb2xkZXIsIGFuZCB3aGlsZSB0aGUgdXNlciBpcyBpbiB0aGUgZWRpdG9yIHZpZXcgaXQgaXMgdGhlIHJvb3QgZm9sZGVyIG9mIHRoZSBhcHAgdGhhdCBvd25zIHRoZSBhY3RpdmUgZWRpdG9yIHRhYiwgZm91bmQgd2l0aCB0aGUgc2FtZSBwYXRoLXRvLW93bmluZy1hcHAgbG9va3VwIHRoZSB0YWIgZ3JvdXBzIHVzZS4iLCJhY2NlcHRhbmNlIjpbIldoaWxlIHRoZSB1c2VyIGlzIGluIHRoZSBhcHAgdmlldywgdGhlIGV4cGxvcmVyXHUwMDI3cyB0b3AgZm9sZGVyIGlzIHRoZSBzZWxlY3RlZCBhcHBcdTAwMjdzIHJvb3QgZm9sZGVyLiIsIldoaWxlIHRoZSB1c2VyIGlzIGluIHRoZSBlZGl0b3IgdmlldywgdGhlIGV4cGxvcmVyXHUwMDI3cyB0b3AgZm9sZGVyIGlzIHRoZSByb290IGZvbGRlciBvZiB0aGUgYXBwIHRoYXQgb3ducyB0aGUgYWN0aXZlIGVkaXRvciB0YWIuIiwiVGhlIHVzZXIgZG9lcyBub3QgaGF2ZSB0byBjaG9vc2UgYSByb290IGJ5IGhhbmQgd2hlbiBhbiBhcHAgcm9vdCBpcyBhdmFpbGFibGUuIl0sInJhdGlvbmFsZSI6IlRoZSBkZXZlbG9wZXIgc2FpZCBldmVyeSBhcHAgaGFzIGEgcm9vdCBkaXJlY3RvcnkgYW5kIHdhbnRzIHRoZSBleHBsb3JlciB0byBmb2xsb3cgaXQgYXV0b21hdGljYWxseSwgd2l0aCB0aGUgZWRpdG9yIHZpZXcgdXNpbmcgdGhlIGFwcCB0aGF0IG93bnMgdGhlIGFjdGl2ZSBlZGl0b3IgdGFiLiIsImRlcml2ZWRGcm9tIjoiIiwiZWRnZUNhc2VzIjpbIlN3aXRjaGluZyBmcm9tIG9uZSBhcHAgdG8gYW5vdGhlciBpbiB0aGUgYXBwIHZpZXcgY2hhbmdlcyB0aGUgZXhwbG9yZXIgcm9vdCB0byB0aGUgbmV3bHkgc2VsZWN0ZWQgYXBwXHUwMDI3cyByb290LiIsIlN3aXRjaGluZyB0aGUgYWN0aXZlIHRhYiBiZXR3ZWVuIGZpbGVzIG93bmVkIGJ5IGRpZmZlcmVudCBhcHBzIGNoYW5nZXMgdGhlIGV4cGxvcmVyIHJvb3QgdG8gdGhlIG5ld2x5IGFjdGl2ZSB0YWJcdTAwMjdzIG93bmluZyBhcHAuIiwiT3BlbmluZyBhIGZpbGUgZnJvbSB0aGUgZXhwbG9yZXIgc28gdGhhdCBpdCBiZWNvbWVzIHRoZSBhY3RpdmUgdGFiLCB3aGVyZSB0aGF0IGZpbGUgYmVsb25ncyB0byBhbm90aGVyIGFwcCwgbW92ZXMgdGhlIGV4cGxvcmVyIHJvb3QgdG8gdGhhdCBmaWxlXHUwMDI3cyBvd25pbmcgYXBwLiJdLCJwaXRmYWxscyI6WyJUaGUgZXhwbG9yZXIgcm9vdCBtdXN0IGZvbGxvdyB0aGUgYWN0aXZlIGVkaXRvciB0YWIsIHNvIGEgc3RhbGUgcm9vdCBsZWZ0IG92ZXIgZnJvbSB0aGUgcHJldmlvdXNseSBhY3RpdmUgdGFiIHdvdWxkIHNob3cgdGhlIHdyb25nIGZpbGVzLiIsIkEgZmlsZSB0aGF0IGxpZXMgb3V0c2lkZSBldmVyeSBhcHAgcm9vdCBtdXN0IGJlIHRyZWF0ZWQgYXMgYmVsb25naW5nIHRvIG5vIGFwcCwgbm90IGd1ZXNzZWQgaW50byBhbiBhcHAsIG9yIHRoZSBleHBsb3JlciB3aWxsIHJvb3QgYXQgdGhlIHdyb25nIGZvbGRlci4iLCJDaGFuZ2luZyB0aGUgcm9vdCBhcyB0aGUgYWN0aXZlIHRhYiBjaGFuZ2VzIG11c3Qgbm90IGNsb3NlIGFueSBvcGVuIHRhYnMuIl0sInJ1bGVzIjpbXSwiZmFjdHMiOltdfSx7ImlkIjoiUjUiLCJ0ZXh0IjoiV2hlbiB0aGUgYWN0aXZlIGVkaXRvciB0YWIgYmVsb25ncyB0byBubyBhcHAgKHRoZSBtaXNjIGdyb3VwKSwgZm9yIGV4YW1wbGUgYSBsb29zZSBmaWxlIG9wZW5lZCB0aHJvdWdoIFx1MDAyN0VkaXQgd2l0aCBUaW5rZXJkZWNrXHUwMDI3IGZyb20gb3V0c2lkZSBldmVyeSBhcHAgcm9vdCwgdGhlIGV4cGxvcmVyIGlzIHJvb3RlZCBhdCB0aGF0IGZpbGVcdTAwMjdzIHBhcmVudCBmb2xkZXIgYW5kIG1vdmluZyB1cCBjbGltYnMgYWxsIHRoZSB3YXkgdG8gdGhlIGRyaXZlIGxpc3QuIiwiYWNjZXB0YW5jZSI6WyJXaGlsZSB0aGUgYWN0aXZlIGVkaXRvciB0YWIgaXMgaW4gdGhlIG1pc2MgZ3JvdXAsIHRoZSBleHBsb3Jlclx1MDAyN3MgdG9wIGZvbGRlciBpcyB0aGF0IGZpbGVcdTAwMjdzIHBhcmVudCBmb2xkZXIuIiwiTW92aW5nIHVwIGZyb20gdGhhdCBwYXJlbnQgZm9sZGVyIGNsaW1icyB0aGUgZm9sZGVyIGhpZXJhcmNoeSBhbmQgcmVhY2hlcyB0aGUgZHJpdmUgbGlzdC4iLCJTd2l0Y2hpbmcgdGhlIGFjdGl2ZSB0YWIgYmV0d2VlbiBtaXNjIGZpbGVzIGNoYW5nZXMgdGhlIGV4cGxvcmVyIHJvb3QgdG8gdGhlIG5ld2x5IGFjdGl2ZSBmaWxlXHUwMDI3cyBwYXJlbnQgZm9sZGVyLiJdLCJyYXRpb25hbGUiOiJUaGUgZGV2ZWxvcGVyIGNob3NlIHRoYXQgYSBmaWxlIG91dHNpZGUgZXZlcnkgYXBwIHJvb3Qgc2hvdWxkIHJvb3QgdGhlIGV4cGxvcmVyIGF0IHRoYXQgZmlsZVx1MDAyN3Mgb3duIHBhcmVudCBmb2xkZXIsIHdpdGggXHUwMDI3dXBcdTAwMjcgY2xpbWJpbmcgdG8gdGhlIGRyaXZlcywgcmF0aGVyIHRoYW4gYXQgdGhlIGhvbWUgZm9sZGVyLiIsImRlcml2ZWRGcm9tIjoiIiwiZWRnZUNhc2VzIjpbIkEgbWlzYyBmaWxlIHRoYXQgc2l0cyBhdCB0aGUgcm9vdCBvZiBhIGRyaXZlIHJvb3RzIHRoZSBleHBsb3JlciBhdCB0aGF0IGRyaXZlLCBhbmQgbW92aW5nIHVwIHJlYWNoZXMgdGhlIGRyaXZlIGxpc3QuIiwiT3BlbmluZyBhIGxvb3NlIGZpbGUgc3VjaCBhcyBEOlxcbm90ZXNcXHRvZG8ubWQgcm9vdHMgdGhlIGV4cGxvcmVyIGF0IEQ6XFxub3RlcyBhbmQgZG9lcyBub3Qgc2hvdyB0aGUgaG9tZSBmb2xkZXIuIiwiU3dpdGNoaW5nIGZyb20gYW4gYXBwLW93bmVkIHRhYiB0byBhIG1pc2MgdGFiIG1vdmVzIHRoZSByb290IGZyb20gdGhlIGFwcFx1MDAyN3Mgcm9vdCBmb2xkZXIgdG8gdGhlIG1pc2MgZmlsZVx1MDAyN3MgcGFyZW50IGZvbGRlci4iLCJDaGFuZ2luZyB0aGUgZXhwbG9yZXIgcm9vdCB3aGVuIHRoZSBhY3RpdmUgdGFiIGJlY29tZXMgYSBtaXNjIGZpbGUgZG9lcyBub3QgY2xvc2UgYW55IG9wZW4gdGFicy4iXSwicGl0ZmFsbHMiOlsiQSBtaXNjIGZpbGUgd2l0aCBhIGtub3duIHBhdGggbXVzdCBub3QgYmUgcm9vdGVkIGF0IHRoZSBob21lIGZvbGRlci4iLCJUaGUgb3duZXIgbG9va3VwIG11c3Qgbm90IGZvcmNlIGEgZmlsZSBvdXRzaWRlIGV2ZXJ5IGFwcCByb290IGludG8gdGhlIG5lYXJlc3QgYXBwLCBvciB0aGUgZXhwbG9yZXIgd291bGQgcm9vdCBhdCB0aGUgd3JvbmcgZm9sZGVyIGluc3RlYWQgb2YgdGhlIGZpbGVcdTAwMjdzIHBhcmVudC4iXSwicnVsZXMiOltdLCJmYWN0cyI6W119LHsiaWQiOiJSNiIsInRleHQiOiJQcmVzc2luZyBGNSBpbiB0aGUgYXBwIHZpZXcgdG9nZ2xlcyBzdGFydC9zdG9wIG9mIHRoZSBhcHAgaW5zdGVhZCBvZiByZWZyZXNoaW5nLCBieSBpbnZva2luZyB0aGUgc2FtZSBTdGFydCBhbGwgLyBTdG9wIGFsbCBhY3Rpb24gdGhlIG9uLXNjcmVlbiBidXR0b24gdXNlcy4gSW4gdGhlIGhvbWUgYW5kIGVkaXRvciB2aWV3cyBGNSBkb2VzIG5vdGhpbmcuIiwiYWNjZXB0YW5jZSI6WyJQcmVzc2luZyBGNSBpbiB0aGUgYXBwIHZpZXcgd2hlbiB0aGUgYXBwIGlzIHN0b3BwZWQgc3RhcnRzIGl0LiIsIlByZXNzaW5nIEY1IGluIHRoZSBhcHAgdmlldyB3aGVuIHRoZSBhcHAgaXMgcnVubmluZyBzdG9wcyBpdC4iLCJGNSBwZXJmb3JtcyB0aGUgc2FtZSBhY3Rpb24gYXMgdGhlIFN0YXJ0IGFsbCAvIFN0b3AgYWxsIGJ1dHRvbi4iLCJGNSB0b2dnbGVzIHRoZSB3aG9sZSBhcHAgcmF0aGVyIHRoYW4gb25seSB0aGUgc2VsZWN0ZWQgdGVybWluYWwuIiwiTm9uLWV4ZWN1dGFibGUgdGVybWluYWxzIGFyZSBza2lwcGVkIGJ5IEY1LCBleGFjdGx5IGFzIHRoZXkgYXJlIHNraXBwZWQgYnkgdGhlIGJ1dHRvbiAoc2VlIFIxMSkuIiwiUHJlc3NpbmcgRjUgaW4gdGhlIGhvbWUgdmlldyBvciB0aGUgZWRpdG9yIHZpZXcgbmVpdGhlciBzdGFydHMgbm9yIHN0b3BzIGFueXRoaW5nLiJdLCJyYXRpb25hbGUiOiJUaGUgZGV2ZWxvcGVyIHNhaWQgdGhleSB3b3VsZCBtdWNoIHJhdGhlciBoYXZlIEY1IGRvIGEgc3RhcnQvc3RvcCB0b2dnbGUgb2YgdGhlIGFwcCB0aGFuIHJlZnJlc2gsIGNsYXJpZmllZCB0aGF0IEY1IHNob3VsZCBqdXN0IGNhbGwgdGhlIFN0YXJ0IGFsbCAvIFN0b3AgYWxsIGJ1dHRvbiBiZWhpbmQgdGhlIHNjZW5lcywgYW5kIHRoZW4gc2FpZCBGNSBvbmx5IHdvcmtzIGluIHRoZSBhcHAgdmlldy4iLCJkZXJpdmVkRnJvbSI6IiIsImVkZ2VDYXNlcyI6WyJUaGUgc2FtZSBGNSBwcmVzcyBkb2VzIG5vdCBib3RoIHJlZnJlc2ggYW5kIHRvZ2dsZSBzdGFydC9zdG9wLiIsIlJlZnJlc2ggcmVtYWlucyBhdmFpbGFibGUgZnJvbSBpdHMgb24tc2NyZWVuIGJ1dHRvbnMgYW5kIHRoZSBjb21tYW5kIHBhbGV0dGUgYWZ0ZXIgRjUgc3RvcHMgcmVmcmVzaGluZywgd2l0aCBubyBrZXlib2FyZCBzaG9ydGN1dCAoc2VlIFIxMikuIiwiUHJlc3NpbmcgRjUgd2hpbGUgYSBzdGFydCBvciBzdG9wIGlzIGFscmVhZHkgaW4gcHJvZ3Jlc3MgZG9lcyBub3QgbGVhdmUgdGhlIGFwcCBpbiBhIGhhbGYtc3RhcnRlZCBzdGF0ZS4iLCJXaXRoIGV2ZXJ5IHRlcm1pbmFsIGV4ZWN1dGFibGUsIEY1IHN0YXJ0cyBhbmQgc3RvcHMgZXZlcnkgdGVybWluYWwgZXhhY3RseSBhcyB0aGUgb2xkIFN0YXJ0IGFsbCAvIFN0b3AgYWxsIGJ1dHRvbiBkaWQuIiwiSW4gdGhlIGhvbWUgb3IgZWRpdG9yIHZpZXcgRjUgaXMgYSB0cnVlIG5vLW9wOiBpdCBkb2VzIG5vdCByZWZyZXNoLCByZWxvYWQsIG9yIGNoYW5nZSB0aGUgdmlldywgYW5kIGl0IGRvZXMgbm90IGZhbGwgYmFjayB0byBhY3Rpbmcgb24gdGhlIHJlbWVtYmVyZWQgc2VsZWN0ZWQgYXBwLiJdLCJwaXRmYWxscyI6WyJGNSBtdXN0IG5vdCBrZWVwIGl0cyBvbGQgcmVmcmVzaCBhY3Rpb24gYWxvbmdzaWRlIHRoZSBuZXcgc3RhcnQvc3RvcCB0b2dnbGUuIiwiQ2hhbmdpbmcgdGhlIEY1IGJpbmRpbmcgbXVzdCBub3QgcmVtb3ZlIHRoZSByZWZyZXNoIGFjdGlvbiBmcm9tIGl0cyBidXR0b25zIG9yIHRoZSBwYWxldHRlLiIsIkY1IGFuZCB0aGUgU3RhcnQgYWxsIC8gU3RvcCBhbGwgYnV0dG9uIG11c3Qgc3RheSB0aGUgc2FtZSBhY3Rpb24sIHNvIGEgY2hhbmdlIHRvIG9uZSBtdXN0IHNob3cgdXAgaW4gdGhlIG90aGVyLiIsIkY1IG11c3Qgbm90IGFjdCBvbiBhIHJlbWVtYmVyZWQgc2VsZWN0ZWQgYXBwIHdoaWxlIHRoZSB1c2VyIGlzIGluIHRoZSBob21lIG9yIGVkaXRvciB2aWV3LiJdLCJydWxlcyI6W10sImZhY3RzIjpbXX0seyJpZCI6IlI3IiwidGV4dCI6IkluIHRoZSB0aGVtZSBwaWNrZXJcdTAwMjdzIGZpbmQgZGlhbG9nLCB0aGUgdGhlbWUgcm93cyBmaXQgaW5zaWRlIHRoZSBkaWFsb2cgYW5kIGRvIG5vdCBvdmVyZmxvdyBwYXN0IGl0cyByaWdodCBlZGdlLiIsImFjY2VwdGFuY2UiOlsiT3BlbmluZyB0aGUgdGhlbWUgZmluZCBkaWFsb2cgc2hvd3MgZXZlcnkgdGhlbWUgcm93IHdpdGhpbiB0aGUgZGlhbG9nXHUwMDI3cyBsZWZ0IGFuZCByaWdodCBlZGdlcy4iLCJObyB0aGVtZSByb3cgaXMgY2xpcHBlZCBvciBleHRlbmRzIHBhc3QgdGhlIHJpZ2h0IGVkZ2UgYXQgdGhlIGRpYWxvZ1x1MDAyN3Mgbm9ybWFsIHNpemUuIl0sInJhdGlvbmFsZSI6IlRoZSBkZXZlbG9wZXIgZGVzY3JpYmVkIHRoZSB0aGVtZSBwaWNrZXIgYXMgdWdseSwgZXNwZWNpYWxseSB3aGVuIHRoZSBmaW5kIGJ1dHRvbiBvcGVucyB0aGUgZGlhbG9nLCBiZWNhdXNlIHRoZSByb3dzIG9mIG9mZmVyZWQgdGhlbWVzIGRvIG5vdCBmaXQgYW5kIHJ1biBwYXN0IGl0cyByaWdodCBlZGdlLiIsImRlcml2ZWRGcm9tIjoiIiwiZWRnZUNhc2VzIjpbIlRoZSByb3dzIHN0aWxsIGZpdCB3aXRob3V0IGhvcml6b250YWwgb3ZlcmZsb3cgd2hlbiB0aGUgd2luZG93IGlzIG5hcnJvd2VkLiIsIkEgbG9uZyB0aGVtZSBuYW1lIHN0YXlzIHdpdGhpbiB0aGUgZGlhbG9nIGluc3RlYWQgb2YgcHVzaGluZyB0aGUgcm93IHBhc3QgaXRzIHJpZ2h0IGVkZ2UuIl0sInBpdGZhbGxzIjpbIlRoZSBmaW5kZXJcdTAwMjdzIGxheW91dCBtdXN0IHJlc3BlY3QgdGhlIGRpYWxvZ1x1MDAyN3MgYWN0dWFsIHdpZHRoIHJhdGhlciB0aGFuIGRlbWFuZGluZyBhIGNvbnRlbnQgYm94IHdpZGVyIHRoYW4gdGhlIGRpYWxvZy4iXSwicnVsZXMiOltdLCJmYWN0cyI6W119LHsiaWQiOiJSOCIsInRleHQiOiJNb2RhbC1zdHlsZSBwb3B1cHMgb3RoZXIgdGhhbiB0aGUgY29tbWFuZCBwYWxldHRlIGFyZSByZXBsYWNlZCB3aXRoIHJlc3BvbnNpdmUgc2lkZSBwYW5lcyBmcm9tIGEgamF0dGFjIGxheW91dCBsaWJyYXJ5IG9uIG5wbSwgd2hpY2ggZml0cyBtb2JpbGUgZGV2aWNlczsgdGhlIHNoYXJlZCBkaWFsb2cgKGluY2x1ZGluZyB0aGUgdGhlbWUgZmluZGVyKSBhbmQgdGhlIGJyYW5jaCBtZW51IG1vdmUgdG8gc2lkZSBwYW5lcywgd2hpbGUgdGhlIGNvbW1hbmQgcGFsZXR0ZSBzdGF5cyBhIHBhbGV0dGUuIiwiYWNjZXB0YW5jZSI6WyJUaGUgc2hhcmVkIGRpYWxvZywgaW5jbHVkaW5nIHRoZSB0aGVtZSBmaW5kZXIsIGlzIHByZXNlbnRlZCBhcyBhIGphdHRhYyBzaWRlIHBhbmUgaW5zdGVhZCBvZiBhIGNlbnRyZWQgbW9kYWwuIiwiVGhlIGJyYW5jaCBtZW51IGlzIHByZXNlbnRlZCBhcyBhIGphdHRhYyBzaWRlIHBhbmUgaW5zdGVhZCBvZiBhIGNlbnRyZWQgbW9kYWwuIiwiVGhlIGNvbW1hbmQgcGFsZXR0ZSBpcyBub3QgbW92ZWQgaW50byBhIHNpZGUgcGFuZS4iLCJFYWNoIHNpZGUgcGFuZSBvcGVucywgY2xvc2VzLCBhbmQgc2hvd3MgaXRzIGNvbnRlbnQgd2l0aG91dCBjbGlwcGluZyBvbiBhIG5hcnJvdyBtb2JpbGUtd2lkdGggdmlld3BvcnQuIl0sInJhdGlvbmFsZSI6IlRoZSBkZXZlbG9wZXIgYXNrZWQgdG8gcmVwbGFjZSBtb2RhbHMgYW5kIHNpbWlsYXIgcG9wdXAgZGlhbG9ncyB3aXRoIHRoZSBqYXR0YWMgcmVzcG9uc2l2ZSBsYXlvdXQgbGlicmFyeSBmcm9tIG5wbSBiZWNhdXNlIGl0cyBzaWRlIHBhbmVzIGZpdCBtb2JpbGUgZGV2aWNlcywgYnV0IGV4cGxpY2l0bHkgZXhjbHVkZWQgdGhlIGNvbW1hbmQgcGFsZXR0ZSBmcm9tIHRoYXQgbWlncmF0aW9uLCBsZWF2aW5nIGl0IGFzIGEgcGFsZXR0ZS4iLCJkZXJpdmVkRnJvbSI6IiIsImVkZ2VDYXNlcyI6WyJUaGUgdGhlbWUgZmluZGVyLCBvbmNlIG1vdmVkIGludG8gYSBzaWRlIHBhbmUsIHN0aWxsIHNob3dzIGV2ZXJ5IHRoZW1lIHJvdyB3aXRob3V0IGhvcml6b250YWwgb3ZlcmZsb3cgKHNlZSBSNykuIiwiQSBzaWRlIHBhbmUgY2FuIGJlIGRpc21pc3NlZCB3aXRob3V0IGNoYW5naW5nIHRoZSB1c2VyXHUwMDI3cyBjdXJyZW50IHdvcmsuIiwiVGhlIGNvbW1hbmQgcGFsZXR0ZSBjb250aW51ZXMgdG8gd29yayBhcyBhIHBhbGV0dGUgb24gYm90aCBtb2JpbGUgYW5kIGRlc2t0b3Agd2lkdGhzLiJdLCJwaXRmYWxscyI6WyJUaGUgY2hvc2VuIGphdHRhYyBwYWNrYWdlIG11c3QgaW5zdGFsbCBjbGVhbmx5IGFuZCBpbmNsdWRlIGl0cyBDU1MgaW4gdGhlIHB1Ymxpc2hlZCBidWlsZDsgYW4gZWFybGllciBqYXR0YWMgcGFja2FnZSB3YXMgcmVqZWN0ZWQgYmVjYXVzZSBpdHMgQ1NTIGZpbGUgd2FzIG1pc3NpbmcuIiwiVGhlIGJyYW5jaCBtZW51IG11c3QgbW92ZSB0byBhIHNpZGUgcGFuZSB0b2dldGhlciB3aXRoIHRoZSBzaGFyZWQgZGlhbG9nOyBvbmx5IHRoZSBjb21tYW5kIHBhbGV0dGUga2VlcHMgaXRzIHBhbGV0dGUuIl0sInJ1bGVzIjpbXSwiZmFjdHMiOltdfSx7ImlkIjoiUjkiLCJ0ZXh0IjoiVGhlIGV4cGxvcmVyIGxldHMgdGhlIHVzZXIgY3JlYXRlLCByZW5hbWUsIGRlbGV0ZSBhbmQgbW92ZSBmaWxlcyBhbmQgZm9sZGVycywgYW5kIG1vdmUgdGhlbSBieSBkcmFnLWFuZC1kcm9wIGluc2lkZSB0aGUgZXhwbG9yZXIuIERlbGV0aW5nIGFza3MgZm9yIGNvbmZpcm1hdGlvbiBmaXJzdCBhbmQgc2VuZHMgdGhlIGl0ZW0gdG8gdGhlIFJlY3ljbGUgQmluLCB3aGVyZSBpdCBjYW4gYmUgcmVzdG9yZWQsIGluc3RlYWQgb2YgcmVtb3ZpbmcgaXQgcGVybWFuZW50bHkuIiwiYWNjZXB0YW5jZSI6WyJUaGUgdXNlciBjYW4gY3JlYXRlIGEgbmV3IGZpbGUgYW5kIGEgbmV3IGZvbGRlciBpbiB0aGUgZXhwbG9yZXIuIiwiVGhlIHVzZXIgY2FuIHJlbmFtZSBhbiBleGlzdGluZyBmaWxlIGFuZCBhbiBleGlzdGluZyBmb2xkZXIuIiwiVGhlIHVzZXIgY2FuIGRlbGV0ZSBhIGZpbGUgYW5kIGEgZm9sZGVyLiIsIkRlbGV0aW5nIGFuIGl0ZW0gYXNrcyBmb3IgY29uZmlybWF0aW9uIGJlZm9yZSBhbnl0aGluZyBpcyByZW1vdmVkLiIsIkFmdGVyIHRoZSB1c2VyIGNvbmZpcm1zLCB0aGUgZGVsZXRlZCBpdGVtIGlzIGluIHRoZSBSZWN5Y2xlIEJpbiBhbmQgY2FuIGJlIHJlc3RvcmVkIGZyb20gdGhlcmUuIiwiVGhlIHVzZXIgY2FuIG1vdmUgYSBmaWxlIGFuZCBhIGZvbGRlciB0byBhbm90aGVyIGZvbGRlci4iLCJUaGUgdXNlciBjYW4gZHJhZyBhbiBpdGVtIGluIHRoZSBleHBsb3JlciBhbmQgZHJvcCBpdCBvbnRvIGEgZm9sZGVyIHRvIG1vdmUgaXQgdGhlcmUuIl0sInJhdGlvbmFsZSI6IlRoZSBkZXZlbG9wZXIgd2FudHMgdGhlIGV4cGxvcmVyIHRvIGJlIGEgcmVhbCBmaWxlIG1hbmFnZXIsIGFuZCBjaG9zZSB0aGUgUmVjeWNsZSBCaW4gd2l0aCBhIGNvbmZpcm1hdGlvbiBwcm9tcHQgc28gYSBkZWxldGUgaXMgcmVjb3ZlcmFibGUgcmF0aGVyIHRoYW4gcGVybWFuZW50LiIsImRlcml2ZWRGcm9tIjoiIiwiZWRnZUNhc2VzIjpbIkEgY3JlYXRlLCByZW5hbWUgb3IgbW92ZSB0aGF0IHdvdWxkIGNvbGxpZGUgd2l0aCBhbiBleGlzdGluZyBuYW1lIG11c3Qgbm90IHNpbGVudGx5IG92ZXJ3cml0ZSB0aGUgZXhpc3RpbmcgaXRlbS4iLCJNb3Zpbmcgb3IgZHJhZ2dpbmcgYSBmb2xkZXIgaW50byBpdHNlbGYgbXVzdCBiZSByZWZ1c2VkLiIsIlJlbmFtaW5nIG9yIG1vdmluZyBhIGZpbGUgdGhhdCBpcyBvcGVuIGluIGEgdGFiIGtlZXBzIHRoYXQgdGFiIG9wZW4gd2l0aCB0aGUgaXRlbVx1MDAyN3MgbmV3IHBhdGguIiwiRGVsZXRpbmcgYSBmaWxlIHRoYXQgaXMgb3BlbiBpbiBhIHRhYiBjbG9zZXMgaXRzIHRhYjsgaWYgdGhlIHRhYiBoYXMgdW5zYXZlZCBjaGFuZ2VzIHRoZSB1c2VyIGlzIGFza2VkIGJlZm9yZSB0aGUgdGFiIGlzIGNsb3NlZC4iLCJDYW5jZWxsaW5nIHRoZSBkZWxldGUgY29uZmlybWF0aW9uIGxlYXZlcyB0aGUgaXRlbSBhbmQgYW55IG9wZW4gdGFiIHVuY2hhbmdlZC4iLCJJZiB0aGUgUmVjeWNsZSBCaW4gY2Fubm90IGFjY2VwdCB0aGUgaXRlbSwgZm9yIGV4YW1wbGUgb24gc29tZSBuZXR3b3JrIG9yIHJlbW92YWJsZSBkcml2ZXMsIHRoZSBkZWxldGUgaXMgcmVmdXNlZCB3aXRoIGEgbWVzc2FnZSBhbmQgbm90aGluZyBpcyBwZXJtYW5lbnRseSBkZWxldGVkLiJdLCJwaXRmYWxscyI6WyJGaWxlIG9wZXJhdGlvbnMgbXVzdCBhY3Qgb24gdGhlIHJlYWwgZmlsZSBzeXN0ZW0sIG5vdCBvbmx5IHRoZSBleHBsb3JlciB0cmVlLCBzbyB0aGUgdHJlZSBhbmQgZGlzayBtdXN0IHN0YXkgaW4gYWdyZWVtZW50IGFmdGVyIGVhY2ggb3BlcmF0aW9uLiIsIlRoZSBleHBsb3Jlclx1MDAyN3MgY3JlYXRlLCByZW5hbWUsIGRlbGV0ZSBhbmQgbW92ZSBhY3Rpb25zIG11c3QgcmV1c2Ugb25lIGZpbGUtb3BlcmF0aW9uIHBhdGggc28gdGhlaXIgZXJyb3IgYmVoYXZpb3VyIHN0YXlzIGNvbnNpc3RlbnQuIiwiQSBkZWxldGUgbXVzdCBuZXZlciBmYWxsIGJhY2sgdG8gcGVybWFuZW50IGRlbGV0aW9uIHdoZW4gdGhlIFJlY3ljbGUgQmluIGlzIHVuYXZhaWxhYmxlLiJdLCJydWxlcyI6W10sImZhY3RzIjpbXX0seyJpZCI6IlIxMCIsInRleHQiOiJUaGUgY29tbWFuZCBwYWxldHRlIHN0YXlzIGEgcGFsZXR0ZSBhbmQgaXMgb3B0aW1pc2VkIHRvIGJlIG1vYmlsZS1maXJzdCBhbmQgZGVza3RvcC1hd2FyZSwgcmF0aGVyIHRoYW4gYmVpbmcgbWlncmF0ZWQgaW50byBhIHJlc3BvbnNpdmUgc2lkZSBwYW5lLiIsImFjY2VwdGFuY2UiOlsiT24gYSBuYXJyb3cgbW9iaWxlLXdpZHRoIHZpZXdwb3J0IHRoZSBjb21tYW5kIHBhbGV0dGUgaXMgdXNhYmxlIGFuZCBpdHMgbGlzdCBpcyBub3Qgc3F1ZWV6ZWQgYnkgdGhlIG9uLXNjcmVlbiBrZXlib2FyZC4iLCJPbiBhIGRlc2t0b3Atd2lkdGggdmlld3BvcnQgdGhlIGNvbW1hbmQgcGFsZXR0ZSBrZWVwcyBpdHMgY3VycmVudCBwYWxldHRlIGxheW91dC4iLCJUaGUgY29tbWFuZCBwYWxldHRlXHUwMDI3cyBwb3B1cCBtZWNoYW5pc20gaXMgdW5jaGFuZ2VkOyBpdCByZW1haW5zIGEgcGFsZXR0ZSwgbm90IGEgc2lkZSBwYW5lLiJdLCJyYXRpb25hbGUiOiJUaGUgZGV2ZWxvcGVyIHNhaWQgdG8gZXhjbHVkZSB0aGUgY29tbWFuZCBwYWxldHRlIGZyb20gdGhlIHJlc3BvbnNpdmUtbGF5b3V0IG1pZ3JhdGlvbiwgbGVhdmUgaXQgYXMgaXQgaXMsIGFuZCBvbmx5IG9wdGltaXNlIGl0IGZvciBtb2JpbGUgZmlyc3QgYW5kIGRlc2t0b3AgYXdhcmVuZXNzLiIsImRlcml2ZWRGcm9tIjoiIiwiZWRnZUNhc2VzIjpbIk9wZW5pbmcgdGhlIHBhbGV0dGUgd2hpbGUgdGhlIG9uLXNjcmVlbiBrZXlib2FyZCBpcyBzaG93biBrZWVwcyB0aGUgbGlzdCB2aXNpYmxlLiIsIlJlc2l6aW5nIGJldHdlZW4gbW9iaWxlIGFuZCBkZXNrdG9wIHdpZHRocyBrZWVwcyB0aGUgcGFsZXR0ZSB1c2FibGUgd2l0aG91dCB0dXJuaW5nIGl0IGludG8gYSBzaWRlIHBhbmUuIl0sInBpdGZhbGxzIjpbIlRoZSBwYWxldHRlIG11c3Qgbm90IGJlIGNvbnZlcnRlZCBpbnRvIGEgc2lkZSBwYW5lIGFzIHBhcnQgb2YgdGhlIGphdHRhYyBtaWdyYXRpb24uIl0sInJ1bGVzIjpbXSwiZmFjdHMiOltdfSx7ImlkIjoiUjExIiwidGV4dCI6IkVhY2ggdGVybWluYWwgaGFzIGFuIGV4ZWN1dGFibGUgc2V0dGluZyB0aGF0IGlzIG9uIGJ5IGRlZmF1bHQ7IHRoZSB1c2VyIGNhbiBtYXJrIGEgdGVybWluYWwgYXMgbm9uLWV4ZWN1dGFibGUsIGFuZCBub24tZXhlY3V0YWJsZSB0ZXJtaW5hbHMgYXJlIG5vdCBzdGFydGVkIGJ5IHRoZSBTdGFydCBhbGwgLyBTdG9wIGFsbCBhY3Rpb24gb3IgYnkgRjUgKHdoaWNoIGNhbGxzIHRoYXQgc2FtZSBhY3Rpb24pLiIsImFjY2VwdGFuY2UiOlsiQSBuZXdseSBhZGRlZCB0ZXJtaW5hbCBpcyBleGVjdXRhYmxlIGJ5IGRlZmF1bHQuIiwiVGhlIHVzZXIgY2FuIG1hcmsgYW55IHRlcm1pbmFsIGFzIG5vbi1leGVjdXRhYmxlIGFuZCBtYXJrIGl0IGV4ZWN1dGFibGUgYWdhaW4uIiwiU3RhcnQgYWxsIGRvZXMgbm90IHN0YXJ0IHRlcm1pbmFscyBtYXJrZWQgbm9uLWV4ZWN1dGFibGUuIiwiRjUsIGJlY2F1c2UgaXQgaW52b2tlcyB0aGUgc2FtZSBhY3Rpb24sIGRvZXMgbm90IHN0YXJ0IHRlcm1pbmFscyBtYXJrZWQgbm9uLWV4ZWN1dGFibGUuIiwiQSBub24tZXhlY3V0YWJsZSB0ZXJtaW5hbCBjYW4gc3RpbGwgYmUgc3RhcnRlZCBhbmQgc3RvcHBlZCBvbiBpdHMgb3duIHdpdGggaXRzIG93biBjb250cm9scy4iXSwicmF0aW9uYWxlIjoiVGhlIGRldmVsb3BlciBzYWlkIGFsbCB0ZXJtaW5hbHMgc2hvdWxkIGJlIGV4ZWN1dGFibGUgYnkgZGVmYXVsdCBidXQgYW55IHRlcm1pbmFsIHNob3VsZCBiZSBtYXJrYWJsZSBhcyBub24tZXhlY3V0YWJsZSwgYW5kIHRob3NlIHNob3VsZCBub3QgYmUgc3RhcnRlZCBieSBGNSBvciBieSB0aGUgU3RhcnQgYWxsIC8gU3RvcCBhbGwgYnV0dG9uLiIsImRlcml2ZWRGcm9tIjoiIiwiZWRnZUNhc2VzIjpbIldpdGggbm8gdGVybWluYWwgbWFya2VkIG5vbi1leGVjdXRhYmxlLCBTdGFydCBhbGwgYW5kIEY1IHN0YXJ0IGV2ZXJ5IHRlcm1pbmFsIGFzIGJlZm9yZS4iLCJBIHRlcm1pbmFsIHdob3NlIHNhdmVkIGNvbmZpZyBwcmVkYXRlcyB0aGUgc2V0dGluZyBpcyB0cmVhdGVkIGFzIGV4ZWN1dGFibGUsIHNvIGFuIHVwZ3JhZGUgZG9lcyBub3QgY2hhbmdlIHdoaWNoIHRlcm1pbmFscyBzdGFydC4iXSwicGl0ZmFsbHMiOlsiTWFya2luZyBhIHRlcm1pbmFsIG5vbi1leGVjdXRhYmxlIG11c3Qgbm90IHJlbW92ZSBpdHMgb3duIHN0YXJ0IGFuZCBzdG9wIGNvbnRyb2xzLCBzaW5jZSB0aG9zZSB0ZXJtaW5hbHMgc3RpbGwgaGF2ZSB0byBiZSBydW5uYWJsZSBieSBoYW5kLiIsIlRoZSBleGVjdXRhYmxlIHNldHRpbmcgbXVzdCBzdGF5IGhvbmVzdCBhYm91dCB3aGF0IEY1IHdpbGwgZG8sIHNvIGEgdGVybWluYWwgdGhhdCBGNSB3aWxsIHNraXAgbXVzdCBiZSB2aXNpYmx5IG5vbi1leGVjdXRhYmxlIHJhdGhlciB0aGFuIGhpZGRlbi4iXSwicnVsZXMiOltdLCJmYWN0cyI6W119LHsiaWQiOiJSMTIiLCJ0ZXh0IjoiUmVmcmVzaCBpcyBhdmFpbGFibGUgb25seSBmcm9tIGl0cyBvbi1zY3JlZW4gYnV0dG9ucyBhbmQgdGhlIGNvbW1hbmQgcGFsZXR0ZTsgbm8ga2V5Ym9hcmQgc2hvcnRjdXQgcmVmcmVzaGVzLiIsImFjY2VwdGFuY2UiOlsiVGhlIHJlZnJlc2ggYnV0dG9ucyBpbiB0aGUgVXRpbGl0aWVzIG1lbnUgYW5kIHRoZSBnaXQgYmFyIHN0aWxsIHJlZnJlc2guIiwiVGhlIGNvbW1hbmQgcGFsZXR0ZVx1MDAyN3MgXHUwMDI3UmVmcmVzaCBldmVyeXRoaW5nXHUwMDI3IGVudHJ5IHN0aWxsIHJlZnJlc2hlcy4iLCJObyBrZXlib2FyZCBzaG9ydGN1dCBwZXJmb3JtcyByZWZyZXNoLCBhbmQgdGhlIHBhbGV0dGUgZW50cnkgc2hvd3Mgbm8gc2hvcnRjdXQga2V5IGhpbnQuIl0sInJhdGlvbmFsZSI6IlRoZSBkZXZlbG9wZXIgc2FpZCByZWZyZXNoIHNob3VsZCBoYXZlIG5vIHNob3J0Y3V0IGFuZCBzaG91bGQgYmUgcmVhY2hhYmxlIGZyb20gdGhlIGJ1dHRvbiBhbmQgcGFsZXR0ZSBvbmx5LCBsZWF2aW5nIEY1IHRvIFN0YXJ0IGFsbCAvIFN0b3AgYWxsLiIsImRlcml2ZWRGcm9tIjoiIiwiZWRnZUNhc2VzIjpbIlByZXNzaW5nIEY1IGluIGFueSB2aWV3IGRvZXMgbm90IHJlZnJlc2ggKGluIHRoZSBhcHAgdmlldyBpdCB0b2dnbGVzIHN0YXJ0L3N0b3A7IG90aGVyd2lzZSBpdCBkb2VzIG5vdGhpbmcpLiIsIkEgdXNlciB3aG8gcmVsaWVkIG9uIEY1IGZvciByZWZyZXNoIGNhbiBzdGlsbCByZWZyZXNoIGZyb20gdGhlIGJ1dHRvbnMgb3IgdGhlIHBhbGV0dGUuIl0sInBpdGZhbGxzIjpbIk5vIG1lbnUgb3IgdG9vbGJhciBoaW50IG1heSBzdGlsbCBhZHZlcnRpc2UgRjUgYXMgcmVmcmVzaC4iLCJUaGUgcmVmcmVzaCBidXR0b24gYW5kIHBhbGV0dGUgZW50cnkgbXVzdCBrZWVwIHdvcmtpbmcgYWZ0ZXIgdGhlIEY1IGJpbmRpbmcgaXMgcmVtb3ZlZCBmcm9tIHRoZSBzaG9ydGN1dCBsaXN0LiJdLCJydWxlcyI6W10sImZhY3RzIjpbXX1dLCJxdWVzdGlvbnMiOltdLCJjb3ZlcmFnZSI6W3sidG9waWMiOiJ1c2VycyIsInN0YXR1cyI6Im9wZW4iLCJub3RlIjoiTm8gdXNlciByb2xlcyBvciBwZXJtaXNzaW9ucyB3ZXJlIGRpc2N1c3NlZDsgdGhlIGZlYXR1cmUgaXMgZGVzY3JpYmVkIGZvciBhIHNpbmdsZSB1c2VyIG9mIHRoZSBkZXNrdG9wIGFwcC4gVGhlIGhvbWUvYXBwL2VkaXRvciB2aWV3cyBhcmUgY29udGV4dCwgbm90IHVzZXIgcm9sZXMuIn0seyJ0b3BpYyI6ImRhdGEiLCJzdGF0dXMiOiJvcGVuIiwibm90ZSI6IlRoZSBleHBsb3JlciByb290IHJ1bGUgaXMgZGVjaWRlZCBmb3IgYWxsIGNhc2VzOiBzZWxlY3RlZCBhcHBcdTAwMjdzIHJvb3QgaW4gdGhlIGFwcCB2aWV3LCB0aGUgYWN0aXZlIHRhYlx1MDAyN3Mgb3duaW5nIGFwcCByb290IGluIHRoZSBlZGl0b3IgdmlldywgYSBtaXNjIGZpbGVcdTAwMjdzIHBhcmVudCBmb2xkZXIgKHVwIHRvIHRoZSBkcml2ZSBsaXN0KSB3aGVuIHRoZSBhY3RpdmUgdGFiIGJlbG9uZ3MgdG8gbm8gYXBwLCBhbmQgdGhlIGhvbWUgZm9sZGVyIHdoZW4gbm8gZmlsZSBwYXRoIGFwcGxpZXMuIFRlcm1pbmFscyBjYXJyeSBhbiBleGVjdXRhYmxlIHNldHRpbmcgdGhhdCBkZWZhdWx0cyB0byBvbjsgdGhlIGFzc2lzdGFudCBwcm9wb3NlZCBzdG9yaW5nIGl0IGluIGJvdGggdGhlIFVJIGFuZCBSdXN0IHRlcm1pbmFsIG1vZGVscyB3aXRoIGEgbWlzc2luZyBzYXZlZCB2YWx1ZSByZWFkIGFzIGV4ZWN1dGFibGUsIHdoaWNoIHRoZSBkZXZlbG9wZXIgaGFzIG5vdCBjb25maXJtZWQuIFJlZnJlc2ggbm93IGhhcyBubyBrZXlib2FyZCBzaG9ydGN1dCAoYnV0dG9ucyBhbmQgcGFsZXR0ZSBvbmx5KSwgYW5kIEY1IGlzIGRlY2lkZWQgdG8gYWN0IG9ubHkgaW4gdGhlIGFwcCB2aWV3LiBXaGF0IGVsc2UgaXMgcmVtZW1iZXJlZCAobGFzdCByb290LCBleHBhbmRlZCBmb2xkZXJzLCByZWNlbnQgZmlsZXMpIGlzIHN0aWxsIG5vdCBkZWNpZGVkLiJ9LHsidG9waWMiOiJwZXJtaXNzaW9ucyIsInN0YXR1cyI6ImFuc3dlcmVkIiwibm90ZSI6IlRoZSBkZXZlbG9wZXIgc2FpZCBicm93c2luZyBnb2VzIGFzIGhpZ2ggYXMgdGhlIG9wZXJhdGluZyBzeXN0ZW0gcGVybWlzc2lvbnMgYWxsb3c7IG5vIGFwcC1sZXZlbCBhY2Nlc3MgcmVzdHJpY3Rpb24gd2FzIHJlcXVlc3RlZCBiZXlvbmQgcm9vdGluZyBhdCB0aGUgYXBwXHUwMDI3cyBmb2xkZXIgd2hpbGUgd29ya2luZyBpbiBhbiBhcHAuIn0seyJ0b3BpYyI6InZhbGlkYXRpb24iLCJzdGF0dXMiOiJvcGVuIiwibm90ZSI6IkY1IGluIHRoZSBob21lIGFuZCBlZGl0b3Igdmlld3MgaXMgZGVjaWRlZCB0byBkbyBub3RoaW5nLiBCZWhhdmlvdXIgZm9yIHVucmVhZGFibGUsIG1pc3NpbmcsIG9yIGludmFsaWQgZm9sZGVycyBhbmQgcGF0aHMgaXMgbm90IGRlY2lkZWQsIGFuZCB3aGF0IHRoZSB1c2VyIHNlZXMgd2hlbiBhIHN0YXJ0IG9yIHN0b3AgZmFpbHMgaXMgbm90IGRlY2lkZWQuIEZvciBmaWxlIG9wZXJhdGlvbnMsIHJlZnVzaW5nIGEgbmFtZSBjbGFzaCBvciBhIGZvbGRlciBtb3ZlZCBpbnRvIGl0c2VsZiBpcyByZWNvcmRlZCBhcyBhbiBhc3N1bXB0aW9uOyB0aGUgZXhhY3QgbWVzc2FnZXMsIHRoZSBkZWxldGUgY29uZmlybWF0aW9uIHdvcmRpbmcsIGFuZCB0aGUgbWVzc2FnZSBzaG93biB3aGVuIHRoZSBSZWN5Y2xlIEJpbiBjYW5ub3QgYWNjZXB0IGFuIGl0ZW0gYXJlIG5vdCBkZWNpZGVkLiBXaGV0aGVyIGFueXRoaW5nIGlzIHNob3duIHdoZW4gRjUgZmluZHMgbm90aGluZyB0byBzdGFydCBiZWNhdXNlIGV2ZXJ5IHRlcm1pbmFsIGlzIG5vbi1leGVjdXRhYmxlIGlzIGFsc28gbm90IGRlY2lkZWQuIn0seyJ0b3BpYyI6InN0YXRlcyIsInN0YXR1cyI6Im9wZW4iLCJub3RlIjoiRW1wdHksIGxvYWRpbmcsIGVycm9yIGFuZCBzdWNjZXNzIHN0YXRlcyBmb3IgdGhlIGV4cGxvcmVyIGFyZSBub3QgZGVjaWRlZCwgaW5jbHVkaW5nIHdoYXQgdGhlIGV4cGxvcmVyIHNob3dzIHdoaWxlIHRoZSByb290IGlzIGNoYW5naW5nIGFzIHRoZSBhY3RpdmUgdGFiIGNoYW5nZXMuIFRoZSBpbi1wcm9ncmVzcyBhbmQgZmFpbHVyZSBzdGF0ZXMgb2YgRjUsIGhvdyB0aGUgU3RhcnQgYWxsIC8gU3RvcCBhbGwgYnV0dG9uIGRlY2lkZXMgaXRzIFN0YXJ0L1N0b3AgbGFiZWwgd2hlbiBub24tZXhlY3V0YWJsZSB0ZXJtaW5hbHMgYXJlIGludm9sdmVkLCB0aGUgbm8tb3Agc3RhdGUgb2YgRjUgaW4gdGhlIGhvbWUgYW5kIGVkaXRvciB2aWV3cywgdGhlIG9wZW4vY2xvc2VkIHN0YXRlcyBvZiB0aGUgcmVwbGFjZWQgc2lkZSBwYW5lcywgdGhlIGRlbGV0ZSBjb25maXJtYXRpb24gcHJvbXB0LCBhbmQgdGhlIHN0YXRlcyBvZiBjcmVhdGUsIHJlbmFtZSwgZGVsZXRlIGFuZCBtb3ZlIGFyZSBhbHNvIG5vdCBkZWNpZGVkLiJ9LHsidG9waWMiOiJkdXBsaWNhdGVzIiwic3RhdHVzIjoib3BlbiIsIm5vdGUiOiJXaGV0aGVyIGNsaWNraW5nIGFuIGFscmVhZHktb3BlbiBmaWxlIHN3aXRjaGVzIHRvIGl0cyB0YWIgb3Igb3BlbnMgYSBkdXBsaWNhdGUgaXMgbm90IGRlY2lkZWQuIFRoZSBhc3Npc3RhbnQgcHJvcG9zZWQgZm9jdXNpbmcgdGhlIGV4aXN0aW5nIHRhYiwgYnV0IHRoZSBkZXZlbG9wZXIgaGFzIG5vdCBhY2NlcHRlZCBpdC4ifSx7InRvcGljIjoidm9sdW1lIiwic3RhdHVzIjoib3BlbiIsIm5vdGUiOiJIYW5kbGluZyBvZiBsYXJnZSBvciBub2lzeSBmb2xkZXJzIGlzIG5vdCBkZWNpZGVkLiBUaGUgYXNzaXN0YW50IHByb3Bvc2VkIGxhenkgbG9hZGluZyBvbmUgbGV2ZWwgYXQgYSB0aW1lIHdpdGggbm9kZV9tb2R1bGVzLCAuZ2l0LCB0YXJnZXQgYW5kIGRpc3QgaGlkZGVuIGJ5IGRlZmF1bHQsIGJ1dCB0aGUgZGV2ZWxvcGVyIGhhcyBub3QgYWNjZXB0ZWQgaXQuIn0seyJ0b3BpYyI6ImRlbGV0aW9uIiwic3RhdHVzIjoiYW5zd2VyZWQiLCJub3RlIjoiVGhlIGRldmVsb3BlciBjaG9zZSB0aGUgUmVjeWNsZSBCaW4gd2l0aCBhIGNvbmZpcm1hdGlvbiBwcm9tcHQsIHNvIGRlbGV0aW5nIGlzIHJlY292ZXJhYmxlIHJhdGhlciB0aGFuIHBlcm1hbmVudC4gQXNzaXN0YW50LXByb3Bvc2VkIGRldGFpbHMgc3RpbGwgdG8gYmUgY29uZmlybWVkOiB0aGUgXHUwMDI3dHJhc2hcdTAwMjcgUnVzdCBjcmF0ZSwgYSBwcm9tcHQgdGhhdCBuYW1lcyB0aGUgaXRlbSwgYSBmb2xkZXIgcHJvbXB0IHNheWluZyBldmVyeXRoaW5nIGluc2lkZSBnb2VzIHdpdGggaXQsIGZvbGRpbmcgYW55IHVuc2F2ZWQtY2hhbmdlcyB3YXJuaW5nIGludG8gdGhlIHNhbWUgc2luZ2xlIHByb21wdCwgYW5kIHJlZnVzaW5nIHRoZSBkZWxldGUgd2hlbiB0aGUgUmVjeWNsZSBCaW4gY2Fubm90IGFjY2VwdCB0aGUgaXRlbSB3aXRoIG5vIHBlcm1hbmVudCBmYWxsYmFjay4ifSx7InRvcGljIjoicHJpdmFjeSIsInN0YXR1cyI6Im9wZW4iLCJub3RlIjoiVGhlIGV4cGxvcmVyIGNhbiBicm93c2UgYXMgaGlnaCBhcyBPUyBwZXJtaXNzaW9ucyBhbGxvdywgYW5kIGEgbWlzYyBmaWxlIGV4cG9zZXMgaXRzIG93biBwYXJlbnQgZm9sZGVyLCB3aGljaCBtYXkgaG9sZCBzZW5zaXRpdmUgZmlsZXM7IHdoZXRoZXIgdG8gaGlkZSBkb3RmaWxlcyBvciByZXN0cmljdCBwYXRocyBpcyBub3QgZGVjaWRlZC4ifSx7InRvcGljIjoicXVhbGl0eSIsInN0YXR1cyI6Im9wZW4iLCJub3RlIjoiU2VjdXJpdHkgb2YgZGlyZWN0b3J5IGxpc3RpbmcgYW5kIGZpbGUgb3BlcmF0aW9ucywgcGVyZm9ybWFuY2Ugb24gbGFyZ2UgZm9sZGVycywgYW5kIGFjY2Vzc2liaWxpdHkgb2YgdGhlIHRyZWUgYXJlIG5vdCBkZWNpZGVkLiBUaGUgdGhlbWUgZmluZGVyIG92ZXJmbG93IGlzIGNhcHR1cmVkIGluIFI3LCB0aGUgbW9iaWxlLWZpdCBleHBlY3RhdGlvbiBmb3IgdGhlIGphdHRhYyBzaWRlIHBhbmVzIGluIFI4LCBhbmQgdGhlIHBhbGV0dGUgbW9iaWxlLWZpcnN0IGdvYWwgaW4gUjEwLCBidXQgdGhlIGV4YWN0IGphdHRhYyBwYWNrYWdlIHN0aWxsIGhhcyB0byBiZSBuYW1lZCBhbmQgdmVyaWZpZWQgdG8gaW5zdGFsbCBhbmQgc2hpcCBpdHMgQ1NTLCBhbmQgYWNjZXNzaWJpbGl0eSBhbmQgbGF5b3V0IGNoZWNrcyBhY3Jvc3MgdGhvc2Ugc3VyZmFjZXMgcmVtYWluIG9wZW4uIFRoZSBleGVjdXRhYmxlLXRlcm1pbmFsIGZsYWcgYWxzbyBuZWVkcyBhIHZpc2libGUsIGFjY2Vzc2libGUgY29udHJvbC4ifV0sImFzc3VtcHRpb25zIjpbIkFsbCBvZiB0aGlzIHdvcmsgc2hpcHMgYXMgb25lIGZlYXR1cmUsIGJ1aWx0IGluIHRoaXMgb3JkZXI6IHRoZSBleHBsb3JlciBmaXJzdCwgdGhlbiB0aGUgRjUgc3RhcnQvc3RvcCB0b2dnbGUsIHRoZW4gdGhlIHRoZW1lIGZpbmRlciB3aWR0aCBmaXgsIHRoZW4gdGhlIGphdHRhYyBzaWRlIHBhbmVzIGxhc3Qgc28gdGhlIGZpcnN0IHRocmVlIGNhbiBzaGlwIGlmIHRoZSBwYWNrYWdlIHR1cm5zIG91dCB0byBiZSB1bnVzYWJsZS4iLCJXaGVuIHRoZSBlZGl0b3IgdmlldyBpcyBzaG93aW5nIHdpdGggbm8gdGFiIG9wZW4gYXQgYWxsLCBvciB3aGVuIHRoZSBhY3RpdmUgdGFiIGlzIGEgbmV3IHVuc2F2ZWQgZmlsZSB3aXRoIG5vIHBhdGgsIG9yIGluIHRoZSBob21lIHZpZXcsIHRoZSBleHBsb3JlciByb290cyBhdCB0aGUgdXNlclx1MDAyN3MgaG9tZSBmb2xkZXIgd2l0aCB0aGUgZHJpdmUgbGlzdCByZWFjaGFibGUgYWJvdmUgaXQuIFRoaXMgaXMgdGhlIGFzc2lzdGFudFx1MDAyN3MgcHJvcG9zZWQgZGVmYXVsdCBhbmQgaXMgb25seSB1c2VkIHdoZW4gbm8gYXBwIGFuZCBubyBmaWxlIHBhdGggYXBwbHk7IHRoZSBkZXZlbG9wZXIgaGFzIG5vdCBleHBsaWNpdGx5IGNvbmZpcm1lZCBpdC4iLCJUaGUgYXBwIHRoYXQgb3ducyBhIGZpbGUgaXMgZGV0ZXJtaW5lZCBieSB3aGljaCBhcHAgcm9vdCBjb250YWlucyB0aGF0IGZpbGVcdTAwMjdzIHBhdGg7IGEgZmlsZSBvdXRzaWRlIGV2ZXJ5IGFwcCByb290IGJlbG9uZ3MgdG8gbm8gYXBwIGFuZCBjb3VudHMgYXMgbWlzYywgd2hpY2ggcm9vdHMgdGhlIGV4cGxvcmVyIGF0IHRoYXQgZmlsZVx1MDAyN3MgcGFyZW50IGZvbGRlci4iLCJPbiBXaW5kb3dzIHRoZSB0b3AgbGV2ZWwgaXMgdGhlIGxpc3Qgb2YgZHJpdmVzIHJhdGhlciB0aGFuIGEgc2luZ2xlIGZvbGRlciwgc28gXHUwMDI3bW92aW5nIHVwXHUwMDI3IHVsdGltYXRlbHkgcmVhY2hlcyB0aGUgZHJpdmUgbGlzdC4iLCJUaGUgZGV2ZWxvcGVyXHUwMDI3cyBcdTAwMjdqYXR0YWMgcmVzcG9uc2l2ZSBsYXlvdXQgbGliXHUwMDI3IGlzIGFzc3VtZWQgdG8gYmUgYSBqYXR0YWMgbnBtIGxheW91dCBwYWNrYWdlIHRoYXQgcHJvdmlkZXMgc2lkZSBwYW5lczsgdGhlIGV4YWN0IHBhY2thZ2UgbmFtZSBzdGlsbCBoYXMgdG8gYmUgc3VwcGxpZWQgYW5kIHZlcmlmaWVkIHRvIGluc3RhbGwgYW5kIHNoaXAgaXRzIENTUy4iLCJSZXBsYWNpbmcgbW9kYWxzIHdpdGggc2lkZSBwYW5lcyBpcyBhc3N1bWVkIHRvIGFsc28gZml4IHRoZSB0aGVtZSBmaW5kZXIgb3ZlcmZsb3cgYnkgbW92aW5nIHRoZSBmaW5kZXIgaW50byBhIHNpZGUgcGFuZSwgYnV0IHRoZSB3aWR0aCBmaXggaXMgc3RpbGwgZGVsaXZlcmVkIG9uIGl0cyBvd24gaW4gY2FzZSB0aGUgc2lkZS1wYW5lIHdvcmsgc2xpcHMuIiwiVGhlIGJhY2tlbmQgY3VycmVudGx5IGhhcyBubyBkaXJlY3RvcnktbGlzdGluZyBjb21tYW5kIGFuZCBubyB1c2VyLWZhY2luZyBmaWxlLW9wZXJhdGlvbiBjb21tYW5kcywgc28gdGhlIGV4cGxvcmVyIG5lZWRzIG5ldyBiYWNrZW5kIGNvbW1hbmRzIGZvciBsaXN0aW5nLCBjcmVhdGUsIHJlbmFtZSwgbW92ZSBhbmQgZGVsZXRlOyB0aGUgZXhpc3RpbmcgZm9sZGVyIHBpY2tlciBpcyBhc3N1bWVkIHJldXNhYmxlIGZvciBjaG9vc2luZyBhIHJvb3QuIiwiRm9yIHRoZSBmaWxlIG9wZXJhdGlvbnMsIGEgbmFtZSBjbGFzaCBpcyByZWZ1c2VkIHdpdGggYSBjbGVhciBtZXNzYWdlIGFuZCBub3RoaW5nIGlzIHNpbGVudGx5IG92ZXJ3cml0dGVuLCBhIGZvbGRlciBtb3ZlZCBpbnRvIGl0c2VsZiBpcyByZWZ1c2VkLCByZW5hbWluZyBvciBtb3ZpbmcgYW4gb3BlbiBmaWxlIHVwZGF0ZXMgaXRzIHRhYiBwYXRoIHNvIGl0IHN0YXlzIG9wZW4sIGFuZCBkZWxldGluZyBhbiBvcGVuIGZpbGUgY2xvc2VzIGl0cyB0YWIgYWZ0ZXIgYXNraW5nIGZpcnN0IGlmIHRoZXJlIGFyZSB1bnNhdmVkIGNoYW5nZXMuIFRoZXNlIGFyZSB0aGUgYXNzaXN0YW50XHUwMDI3cyBwcm9wb3NlZCBkZWZhdWx0cyBhbmQgYXJlIG5vdCB5ZXQgZXhwbGljaXRseSBjb25maXJtZWQgYnkgdGhlIGRldmVsb3Blci4iLCJEZWxldGluZyB1c2VzIHRoZSBSdXN0IFx1MDAyN3RyYXNoXHUwMDI3IGNyYXRlIChub3QgaW4gc3JjLXRhdXJpL0NhcmdvLnRvbWwgdG9kYXkpIHRvIG1vdmUgaXRlbXMgdG8gdGhlIFJlY3ljbGUgQmluLCB3aXRoIGEgc2luZ2xlIGNvbmZpcm1hdGlvbiBwcm9tcHQgdGhhdCBuYW1lcyB0aGUgaXRlbSwgc2F5cyB3aGVuIGEgZm9sZGVyXHUwMDI3cyBjb250ZW50cyBnbyB3aXRoIGl0LCBhbmQgaW5jbHVkZXMgYW55IHVuc2F2ZWQtY2hhbmdlcyB3YXJuaW5nOyB0aGUgYXNzaXN0YW50IHByb3Bvc2VkIHRoaXMgY3JhdGUgYW5kIHRoZXNlIHByb21wdCBkZXRhaWxzIGFuZCB0aGUgZGV2ZWxvcGVyIGNvbmZpcm1lZCBvbmx5IHRoZSBSZWN5Y2xlIEJpbiBhbmQgdGhlIGNvbmZpcm1hdGlvbiBwcm9tcHQuIiwiSWYgdGhlIFJlY3ljbGUgQmluIGNhbm5vdCBhY2NlcHQgYW4gaXRlbSwgZm9yIGV4YW1wbGUgb24gc29tZSBuZXR3b3JrIG9yIHJlbW92YWJsZSBkcml2ZXMsIHRoZSBkZWxldGUgaXMgcmVmdXNlZCB3aXRoIGEgbWVzc2FnZSBhbmQgZG9lcyBub3QgZmFsbCBiYWNrIHRvIHBlcm1hbmVudCBkZWxldGlvbjsgdGhpcyBpcyB0aGUgYXNzaXN0YW50XHUwMDI3cyBwcm9wb3NhbCwgbm90IHlldCBleHBsaWNpdGx5IGNvbmZpcm1lZCBieSB0aGUgZGV2ZWxvcGVyLiIsIlRoZSBhc3Npc3RhbnQgcHJvcG9zZWQgdGhhdCB0aGUgU3RhcnQgYWxsIC8gU3RvcCBhbGwgYnV0dG9uIGRlY2lkZXMgU3RhcnQgb3IgU3RvcCBmcm9tIHRoZSBydW5uaW5nIHN0YXRlIG9mIGV4ZWN1dGFibGUgdGVybWluYWxzIG9ubHksIHRoYXQgdGhlIGxhdW5jaC10aW1lIFx1MDAyN3N0YXJ0IHRoZSBhcHBzIHRoYXQgd2VyZSBydW5uaW5nIGxhc3QgdGltZVx1MDAyNyBwYXRoIHNraXBzIG5vbi1leGVjdXRhYmxlIHRlcm1pbmFscywgYW5kIHRoYXQgdGhlIGJhY2tlbmQgXHUwMDI3dXBcdTAwMjcgYWN0aW9uIHNraXBzIHRoZW0gdG9vOyB0aGUgYXNzaXN0YW50IGxhdGVyIHNhaWQgaXQgd291bGQgdHJlYXQgdGhlc2UgYXMgYWNjZXB0ZWQgdW5sZXNzIHRoZSBkZXZlbG9wZXIgb2JqZWN0ZWQsIGJ1dCB0aGUgZGV2ZWxvcGVyIGhhcyBub3QgZXhwbGljaXRseSBjb25maXJtZWQgdGhlbS4iLCJJbiB0aGUgaG9tZSBhbmQgZWRpdG9yIHZpZXdzIEY1IGlzIHN3YWxsb3dlZCAocHJldmVudERlZmF1bHQpIHNvIGl0IGlzIGEgdHJ1ZSBuby1vcCBhbmQgY2Fubm90IHRyaWdnZXIgYSB3ZWJ2aWV3IHBhZ2UgcmVsb2FkOyB0aGlzIGlzIHRoZSBhc3Npc3RhbnRcdTAwMjdzIHByb3Bvc2FsIGFuZCBoYXMgbm90IGJlZW4gZXhwbGljaXRseSBjb25maXJtZWQgYnkgdGhlIGRldmVsb3Blci4iLCJXaGV0aGVyIG1hcmtpbmcgYSBydW5uaW5nIHRlcm1pbmFsIG5vbi1leGVjdXRhYmxlIHN0b3BzIGl0LCBhbmQgd2hldGhlciBTdG9wIGFsbCBzdG9wcyBhIG5vbi1leGVjdXRhYmxlIHRlcm1pbmFsIHRoZSB1c2VyIHN0YXJ0ZWQgYnkgaGFuZCwgYXJlIG5vdCBkZWNpZGVkLiJdLCJyb2xlcyI6WyJEZXNrdG9wIGFwcCB1c2VyOiBvcGVucywgYnJvd3NlcyBhbmQgZWRpdHMgZmlsZXMsIGFuZCBtYXJrcyB0ZXJtaW5hbHMgZXhlY3V0YWJsZSBvciBub24tZXhlY3V0YWJsZTsgZWFjaCBhcHAgY2FycmllcyBpdHMgb3duIHJvb3QgZm9sZGVyLiJdLCJvdXRPZlNjb3BlIjpbIlBsYWNpbmcgdGhlIGVkaXRvciBpbnNpZGUgdGhlIGFwcCB2aWV3IGFzIGEgdGFiIG9yIHNwbGl0IHBhbmU7IG5vdGVkIGFzIGEgcG9zc2libGUgc2VwYXJhdGUgaXNzdWUsIG5vdCBhZ3JlZWQgYXMgcGFydCBvZiB0aGlzIHdvcmsuIiwiQWRkaW5nIGFuIE9wZW4gZm9sZGVyLi4uIGVudHJ5IHRvIHRoZSBjb21tYW5kIHBhbGV0dGUgb3IgbWFraW5nIGl0IGNob29zZSB0aGUgZXhwbG9yZXIgcm9vdCBieSBoYW5kOyBwcm9wb3NlZCBieSB0aGUgYXNzaXN0YW50IGJ1dCBub3QgYWdyZWVkIGJ5IHRoZSBkZXZlbG9wZXIuIiwiQ2hhbmdpbmcgd2hhdCB0aGUgYXBwXHUwMDI3cyBzdGFydCBvciBzdG9wIGFjdGlvbiBpdHNlbGYgZG9lcywgYmV5b25kIGxldHRpbmcgdGhlIHVzZXIgbWFyayBpbmRpdmlkdWFsIHRlcm1pbmFscyBub24tZXhlY3V0YWJsZTsgdGhlIEY1IGtleSBiaW5kaW5nIGFuZCB0aGUgdGVybWluYWwgZXhlY3V0YWJsZSBmbGFnIGFyZSB0aGUgb25seSBjaGFuZ2VzIHRoZXJlLiIsIlJlZGVzaWduaW5nIHRoZSB0aGVtZSBwaWNrZXIgYmV5b25kIHRoZSBmaW5kIGRpYWxvZ1x1MDAyN3MgZml0IGFuZCB0aGUgbW92ZSB0byBhIHNpZGUgcGFuZS4iLCJNb3ZpbmcgdGhlIGNvbW1hbmQgcGFsZXR0ZSBpbnRvIGEgc2lkZSBwYW5lOyBpdCBzdGF5cyBhIHBhbGV0dGUsIG9ubHkgbWFkZSBtb2JpbGUtZmlyc3QgYW5kIGRlc2t0b3AtYXdhcmUuIiwiQWRkaW5nIGEga2V5Ym9hcmQgc2hvcnRjdXQgZm9yIHJlZnJlc2g7IHRoZSBkZXZlbG9wZXIgY2hvc2UgYnV0dG9ucyBhbmQgdGhlIHBhbGV0dGUgb25seS4iXSwibm9uRnVuY3Rpb25hbCI6W3siYXJlYSI6InJlc3BvbnNpdmVuZXNzIiwic3RhdGVtZW50IjoiVGhlIHNpZGUtcGFuZSBzdXJmYWNlcyBmaXQgbmFycm93LCBtb2JpbGUtd2lkdGggdmlld3BvcnRzIHdpdGhvdXQgY2xpcHBpbmcgb3IgY29udGVudCBvdmVyZmxvdy4iLCJhY2NlcHRhbmNlIjoiQXQgYSBtb2JpbGUtd2lkdGggd2luZG93LCBlYWNoIHJlcGxhY2VkIHNpZGUgcGFuZSBvcGVucyBmdWxseSBvbiBzY3JlZW4gd2l0aCBubyBjb250ZW50IGN1dCBvZmYuIn0seyJhcmVhIjoidXNhYmlsaXR5Iiwic3RhdGVtZW50IjoiVGhlIHRoZW1lIGZpbmRlclx1MDAyN3Mgcm93cyBzdGF5IGZ1bGx5IHZpc2libGUgd2l0aGluIHRoZWlyIGNvbnRhaW5lci4iLCJhY2NlcHRhbmNlIjoiRXZlcnkgdGhlbWUgcm93IGlzIGZ1bGx5IHZpc2libGUgaW5zaWRlIHRoZSBkaWFsb2dcdTAwMjdzIGhvcml6b250YWwgYm91bmRzIHdpdGggbm8gaG9yaXpvbnRhbCBzY3JvbGxpbmcgb2YgYSByb3cuIn0seyJhcmVhIjoicmVzcG9uc2l2ZW5lc3MiLCJzdGF0ZW1lbnQiOiJUaGUgY29tbWFuZCBwYWxldHRlIGlzIG1vYmlsZS1maXJzdCBhbmQgZGVza3RvcC1hd2FyZSB3aXRob3V0IGJlY29taW5nIGEgc2lkZSBwYW5lLiIsImFjY2VwdGFuY2UiOiJPbiBhIG1vYmlsZS13aWR0aCB2aWV3cG9ydCB0aGUgcGFsZXR0ZSBzdGF5cyB1c2FibGUgd2l0aCB0aGUgb24tc2NyZWVuIGtleWJvYXJkIHNob3duLCBhbmQgb24gZGVza3RvcCBpdCBrZWVwcyBpdHMgY3VycmVudCBsYXlvdXQuIn1dLCJyaXNrcyI6WyJUaGUgZWRpdG9yIGlzIGEgc2luZ2xlIGdsb2JhbCBpbnN0YW5jZSB3aG9zZSB0YWJzIHNwYW4gYWxsIGFwcHMsIHdoaWxlIHRoZSBhcHAgdmlldyBpcyBzY29wZWQgdG8gb25lIGFwcDsgdGhpcyBtaXNtYXRjaCBpcyB0aGUgcmVhbCBkZXNpZ24gcmVhc29uIHRoZSB0d28gYXJlIHNlcGFyYXRlIHZpZXdzLCBhbmQgaXQgbWVhbnMgdGhlIGV4cGxvcmVyIHJvb3QgbW92ZXMgd2hlbmV2ZXIgdGhlIGFjdGl2ZSB0YWJcdTAwMjdzIG93bmluZyBhcHAgY2hhbmdlcy4iLCJUaGUgZXhwbG9yZXIgcm9vdCBmb2xsb3dzIHRoZSBhY3RpdmUgZWRpdG9yIHRhYiwgc28gdGhlIGZpbGUgdGhlIHVzZXIganVzdCBvcGVuZWQgY2FuIG1vdmUgdGhlIHJvb3Qgb3V0IGZyb20gdW5kZXIgdGhlIHRyZWUgdGhleSB3ZXJlIGJyb3dzaW5nOyB3aXRoIGEgbWlzYyBmaWxlIGl0IG5vdyBqdW1wcyB0byB0aGF0IGZpbGVcdTAwMjdzIHBhcmVudCBmb2xkZXIsIHdoaWNoIG1heSBiZSBtb3JlIHN1cnByaXNpbmcgaWYgaXQgaXMgbm90IG1hZGUgdmlzaWJsZS4iLCJUaGUgZXhpc3RpbmcgZmlsZSBwaWNrZXIgaXMgcmVhY2hhYmxlIG9ubHkgZnJvbSB0aGUgZWRpdG9yIHZpZXc7IGFkZGluZyBhIG1lbnUgaXRlbSBtYXkgc3RpbGwgbGVhdmUgaXQgaGFyZCB0byBmaW5kIGlmIHRoZSBtZW51IGlzIG5vdCBwcm9taW5lbnQuIiwiQSBkaXJlY3RvcnktbGlzdGluZyBjb21tYW5kIG1heSBiZSBhYmxlIHRvIHJlYWQgYW55IHBhdGggdGhlIGFwcCBwcm9jZXNzIGNhbiBhY2Nlc3M7IHRoZSBhbGxvd2VkIHJvb3QgYW5kIGFjY2VzcyBydWxlcyBiZXlvbmQgT1MgcGVybWlzc2lvbnMgYXJlIG5vdCBkZWNpZGVkLiIsIkxhcmdlIG9yIG5vaXN5IGZvbGRlcnMgc3VjaCBhcyBub2RlX21vZHVsZXMgYW5kIC5naXQgbWF5IG1ha2UgdGhlIGV4cGxvcmVyIHNsb3cgb3IgdW51c2FibGUgdW50aWwgbGF6eSBsb2FkaW5nIGFuZCBhIGhpZGUgbGlzdCBhcmUgZGVjaWRlZC4iLCJDbGlja2luZyBhIGZpbGUgdGhhdCBpcyBhbHJlYWR5IG9wZW4gbWF5IGNyZWF0ZSBkdXBsaWNhdGUgdGFicyB1bmxlc3MgdGhhdCBiZWhhdmlvdXIgaXMgZGVjaWRlZC4iLCJSZWZyZXNoIGhhcyBubyBrZXlib2FyZCBzaG9ydGN1dCBieSBkZWNpc2lvbiwgc28gdXNlcnMgd2hvIHJlbGllZCBvbiBGNSB0byByZWZyZXNoIG11c3QgdXNlIGl0cyBidXR0b25zIG9yIHRoZSBwYWxldHRlOyBGNSBub3cgbWVhbnMgc3RhcnQvc3RvcCBhbmQgb25seSBpbiB0aGUgYXBwIHZpZXcuIiwiRjUgaXMgYSBkZWxpYmVyYXRlIG5vLW9wIGluIHRoZSBob21lIGFuZCBlZGl0b3Igdmlld3MsIHNvIHVzZXJzIHRoZXJlIG1heSB0aGluayBGNSBpcyBicm9rZW47IGlmIHRoZSBrZXkgaXMgbm90IHN3YWxsb3dlZCB0aGUgd2VidmlldyBtYXkgYWxzbyByZWxvYWQgdGhlIHBhZ2UuIiwiSWYgdGhlIFN0YXJ0IGFsbCAvIFN0b3AgYWxsIGJ1dHRvbiBjb3VudHMgcnVubmluZyB0ZXJtaW5hbHMgdGhhdCBhcmUgbm9uLWV4ZWN1dGFibGUsIGEgaGFuZC1zdGFydGVkIG5vbi1leGVjdXRhYmxlIHRlcm1pbmFsIGNhbiBmbGlwIHRoZSBidXR0b24gdG8gU3RvcCB3aGlsZSBGNSB0aGVuIHNraXBzIHRoYXQgdGVybWluYWwsIHNvIHRoZSBidXR0b24gc3RhdGUgYW5kIEY1XHUwMDI3cyBhY3Rpb24gY2FuIGRpc2FncmVlIHVubGVzcyB0aGUgY291bnRpbmcgcnVsZSBpcyBkZWNpZGVkLiIsIkEgdGVybWluYWwgbWFya2VkIG5vbi1leGVjdXRhYmxlIGlzIHNraXBwZWQgYnkgRjUgYW5kIFN0YXJ0IGFsbCwgc28gYSB1c2VyIHdobyBmb3JnZXRzIHRoZSBzZXR0aW5nIG1heSB0aGluayB0aGUgYXBwIGRpZCBub3Qgc3RhcnQgdW5sZXNzIHRoZSBmbGFnIGlzIHZpc2libGUuIiwiVGhlIGV4YWN0IGphdHRhYyBwYWNrYWdlIGlzIHVua25vd24gYW5kIGFuIGVhcmxpZXIgamF0dGFjIHBhY2thZ2Ugc2hpcHBlZCB3aXRob3V0IGl0cyBDU1MsIHNvIHRoZSByZXBsYWNlbWVudCBjb3VsZCBicmVhayBzdHlsaW5nIHVudGlsIHRoZSBwYWNrYWdlIGlzIHZlcmlmaWVkOyB0aGUgd29yayBpcyBidW5kbGVkIGFzIG9uZSBmZWF0dXJlIHdpdGggdGhlIHNpZGUtcGFuZSByZXBsYWNlbWVudCBsYXN0IHNvIHRoZSBmaXJzdCB0aHJlZSBwaWVjZXMgY2FuIHN0aWxsIHNoaXAgaWYgdGhhdCBwYWNrYWdlIGlzIHVudXNhYmxlLiIsIlJlcGxhY2luZyB0aGUgc2hhcmVkIGRpYWxvZyBhbmQgdGhlIGJyYW5jaCBtZW51IHRvdWNoZXMgc2V2ZXJhbCBmZWF0dXJlcyBhdCBvbmNlLCBzbyBvbmUgYnJva2VuIHNpZGUgcGFuZSBjYW4gYWZmZWN0IG1vcmUgdGhhbiBvbmUgc2NyZWVuLiIsIklmIHRoZSBzaWRlLXBhbmUgcmVwbGFjZW1lbnQgaXMgZGVsaXZlcmVkIGxhdGVyIHRoYW4gdGhlIHRoZW1lIGZpeCwgdGhlIHRoZW1lIGZpbmRlciBvdmVyZmxvdyBzdGlsbCBuZWVkcyBpdHMgb3duIGZpeCBpbiB0aGUgbWVhbnRpbWUsIHdoaWNoIHRoZSBidWlsZGVyIGludGVuZHMgdG8gZGVsaXZlciBzZXBhcmF0ZWx5LiIsIkFkZGluZyBjcmVhdGUsIHJlbmFtZSBhbmQgbW92ZSB3cml0ZXMgZGlyZWN0bHkgdG8gdGhlIGZpbGUgc3lzdGVtLCBzbyBhIGJhZCBwYXRoIG9yIGEgZmFpbGVkIG9wZXJhdGlvbiBjb3VsZCBsb3NlIG9yIG1pc3BsYWNlIHVzZXIgZmlsZXMgdW5sZXNzIGNvbGxpc2lvbnMgYW5kIGVycm9yIGNhc2VzIGFyZSBoYW5kbGVkIGNhcmVmdWxseTsgZGVsZXRlcyBnbyB0aHJvdWdoIHRoZSBSZWN5Y2xlIEJpbiBidXQgY2FuIHN0aWxsIGJlIGludGVycnVwdGVkLiIsIkRlbGV0ZXMgZGVwZW5kIG9uIHRoZSBuZXcgUnVzdCBcdTAwMjd0cmFzaFx1MDAyNyBjcmF0ZSBhbmQgb24gdGhlIFJlY3ljbGUgQmluIGFjY2VwdGluZyB0aGUgaXRlbSwgc28gdXNlcnMgb24gc29tZSBuZXR3b3JrIG9yIHJlbW92YWJsZSBkcml2ZXMgY2Fubm90IGRlbGV0ZSBmaWxlcyBmcm9tIHRoZSBleHBsb3JlciBhdCBhbGwuIl0sInRlbnNpb25zIjpbXSwiZ2xvc3NhcnkiOlsiRmlsZSBwaWNrZXI6IHRoZSBvcGVyYXRpbmcgc3lzdGVtIGRpYWxvZyB1c2VkIHRvIGNob29zZSBvbmUgb3IgbW9yZSBmaWxlcy4iLCJGaWxlIGV4cGxvcmVyOiB0aGUgc2lkZS1wYW5lIHRyZWUgb2YgZm9sZGVycyBhbmQgZmlsZXMgdXNlZCB0byBuYXZpZ2F0ZSB0aGUgZmlsZSBzeXN0ZW0gYW5kIHRvIGNyZWF0ZSwgcmVuYW1lLCBkZWxldGUgYW5kIG1vdmUgaXRlbXMuIiwiUm9vdDogdGhlIHRvcC1sZXZlbCBmb2xkZXIgdGhlIGV4cGxvcmVyIHN0YXJ0cyBmcm9tLiIsIkFwcCByb290OiB0aGUgdG9wLWxldmVsIGZvbGRlciBjb25maWd1cmVkIGZvciBhbiBhcHAsIHdoaWNoIGRlZmluZXMgdGhlIGZpbGVzIGJlbG9uZ2luZyB0byB0aGF0IGFwcC4iLCJNaXNjIGdyb3VwOiB0aGUgdGFiIGdyb3VwIGZvciBmaWxlcyB3aG9zZSBwYXRoIGxpZXMgb3V0c2lkZSBldmVyeSBhcHAgcm9vdDsgYSBtaXNjIGZpbGUgcm9vdHMgdGhlIGV4cGxvcmVyIGF0IGl0cyBvd24gcGFyZW50IGZvbGRlciwgd2l0aCBcdTAwMjd1cFx1MDAyNyByZWFjaGluZyB0aGUgZHJpdmUgbGlzdC4iLCJDdXJyZW50IGFwcCB3aGlsZSBlZGl0aW5nOiB0aGUgYXBwIHRoYXQgb3ducyB0aGUgYWN0aXZlIGVkaXRvciB0YWI7IHdoZW4gdGhlIGFjdGl2ZSB0YWIgYmVsb25ncyB0byBubyBhcHAgKG1pc2MpLCB0aGVyZSBpcyBubyBjdXJyZW50IGFwcCBhbmQgdGhlIGV4cGxvcmVyIHJvb3RzIGF0IHRoYXQgZmlsZVx1MDAyN3MgcGFyZW50IGZvbGRlci4iLCJUaGVtZSBmaW5kZXI6IHRoZSBzZWFyY2ggZGlhbG9nIGluIHRoZSB0aGVtZSBwaWNrZXIgdGhhdCBsaXN0cyB0aGUgYXZhaWxhYmxlIHRoZW1lcy4iLCJDb21tYW5kIHBhbGV0dGU6IHRoZSBhcHAtd2lkZSBjb21tYW5kIHNlYXJjaCBwb3B1cDsgaXQgc3RheXMgYSBwYWxldHRlIGFuZCBpcyBvbmx5IG1hZGUgbW9iaWxlLWZpcnN0IGFuZCBkZXNrdG9wLWF3YXJlLiIsIlNpZGUgcGFuZTogYSBwYW5lbCB0aGF0IHNsaWRlcyBpbiBmcm9tIHRoZSBzaWRlIG9mIHRoZSB3aW5kb3cgYW5kIGlzIHNpemVkIHRvIGZpdCBuYXJyb3cgb3IgbW9iaWxlLXdpZHRoIHNjcmVlbnMuIiwiU3RhcnQgYWxsIC8gU3RvcCBhbGwgYnV0dG9uOiB0aGUgb24tc2NyZWVuIGNvbnRyb2wgdGhhdCBzdGFydHMgb3Igc3RvcHMgdGhlIGFwcFx1MDAyN3MgdGVybWluYWxzOyBGNSBpbnZva2VzIHRoZSBzYW1lIGFjdGlvbiwgYnV0IG9ubHkgaW4gdGhlIGFwcCB2aWV3LiIsIlN0YXJ0L3N0b3AgdG9nZ2xlOiB0aGUgYWN0aW9uIHRoYXQgc3RhcnRzIHRoZSBhcHAgd2hlbiBpdCBpcyBzdG9wcGVkIGFuZCBzdG9wcyBpdCB3aGVuIGl0IGlzIHJ1bm5pbmc7IGF2YWlsYWJsZSBmcm9tIEY1IG9ubHkgaW4gdGhlIGFwcCB2aWV3LiIsIkV4ZWN1dGFibGUgdGVybWluYWw6IGEgdGVybWluYWwgd2hvc2UgZXhlY3V0YWJsZSBzZXR0aW5nIGlzIG9uLCBzbyBTdGFydCBhbGwgLyBTdG9wIGFsbCBhbmQgRjUgaW5jbHVkZSBpdDsgYSB0ZXJtaW5hbCBtYXJrZWQgbm9uLWV4ZWN1dGFibGUgaXMgc2tpcHBlZCBieSB0aG9zZSBhbmQgbXVzdCBiZSBzdGFydGVkIGFuZCBzdG9wcGVkIG9uIGl0cyBvd24uIiwiUmVmcmVzaDogcmVsb2FkcyB0aGUgYXBwXHUwMDI3cyB0ZXJtaW5hbHMgb3IgZGF0YTsgaXQgaXMgYXZhaWxhYmxlIG9ubHkgZnJvbSBpdHMgb24tc2NyZWVuIGJ1dHRvbnMgYW5kIHRoZSBjb21tYW5kIHBhbGV0dGUsIHdpdGggbm8ga2V5Ym9hcmQgc2hvcnRjdXQuIiwiUmVjeWNsZSBCaW46IHRoZSBvcGVyYXRpbmcgc3lzdGVtXHUwMDI3cyByZWNvdmVyYWJsZSBob2xkaW5nIGFyZWEgZm9yIGRlbGV0ZWQgZmlsZXMgYW5kIGZvbGRlcnMsIGZyb20gd2hpY2ggYSBkZWxldGVkIGl0ZW0gY2FuIGJlIHJlc3RvcmVkLiJdfQ==--\u003E\r\n\r\nThese parts are already built and committed on this branch (use them, do not rebuild them):\r\n- Revision 1: R1 to R5 (commit 43e2d47)\r\n\r\nThis revision builds exactly these requirements (R13 to R8):\r\n- R13: When no app root applies (the home view, the editor view with no tab open, or an active tab with no path such as a new unsaved file), the explorer roots at the user\u0027s home folder. On Windows the level above any folder root is a list of the available drives; Up from a root folder climbs one level at a time and from a drive reaches the drive list. Changing the root never closes or changes any open tab.\r\n- R6: In the app view, F5 runs the same Start all / Stop all action as the app\u0027s on-screen button, choosing Start or Stop exactly as the button would at the moment F5 is pressed. Non-executable terminals are skipped (see R11). In the home and editor views F5 does nothing: it does not refresh, start or stop anything, or change the view. F5 never refreshes on any modifier combination.\r\n- R7: In the theme picker\u0027s find dialog, the theme rows fit inside the dialog\u0027s left and right edges with no horizontal overflow on desktop or mobile widths.\r\n- R8: The shared Dialog and every dialog built on it (including the theme finder and the confirmation dialogs) plus the git BranchMenu are presented as responsive side panes from the project\u0027s approved jattac responsive-layout package, instead of centred modals. The command palette stays a palette and is not moved to a side pane. Before building this part, verify that the package\u0027s published build installs cleanly and ships its CSS; if it cannot be used, stop this part and report, and the other requirements still ship.\r\n\r\nStill to come, not yours yet (do not build any of it now, and do not make it harder to add):\r\n- Revision 3: R9 to R12",
+  "packId": "tauri-desktop-app",
+  "status": "running",
+  "currentStage": "prove",
+  "stages": {
+    "define": "done",
+    "design": "done",
+    "build": "done",
+    "challenge": "done",
+    "prove": "running"
+  },
+  "defineRound": 5,
+  "designRound": 5,
+  "buildRound": 6,
+  "sliceHash": "D10C327A00325587",
+  "slicesDone": 3,
+  "sliceReports": [
+    {
+      "summary": "Built slice 1 of revision 2 (R13, A1): the Files explorer now roots at the user\u0027s home folder whenever no app root or file path applies (home view, editor with no tab, or an unsaved tab), with Up climbing one folder at a time and reaching the drive list from a drive root. The home path comes from the core: a pure home_folder() reading only USERPROFILE, exposed by a thin explorer_home command registered in lib.rs and wrapped by explorerApi.home(); App fetches it once and passes it to explorerRoot(). useExplorer allows Up for the new \u0022home\u0022 source and ExplorerPanel renders its existing tree and Up unchanged. When the core cannot report a home folder the root stays null and the panel keeps its no-root hint. Root changes remain derived state only, so no tab code is touched and open editor tabs are never closed or altered. R6, R7 and R8 are not built in this slice.",
+      "tests": [
+        {
+          "name": "A1 asks the core for the home folder through explorer_home",
+          "file": "src/api/explorer.test.ts",
+          "requirements": [
+            "A1"
+          ]
+        },
+        {
+          "name": "A1 returns null when the core cannot determine a home folder",
+          "file": "src/api/explorer.test.ts",
+          "requirements": [
+            "A1"
+          ]
+        },
+        {
+          "name": "R13 the home view roots at the user\u0027s home folder",
+          "file": "src/features/explorer/root.test.ts",
+          "requirements": [
+            "R13"
+          ]
+        },
+        {
+          "name": "R13 the editor view with no tab open roots at the home folder",
+          "file": "src/features/explorer/root.test.ts",
+          "requirements": [
+            "R13"
+          ]
+        },
+        {
+          "name": "R13 an unsaved tab with no path roots at the home folder",
+          "file": "src/features/explorer/root.test.ts",
+          "requirements": [
+            "R13"
+          ]
+        },
+        {
+          "name": "R13 an app root still wins over the home folder",
+          "file": "src/features/explorer/root.test.ts",
+          "requirements": [
+            "R13"
+          ]
+        },
+        {
+          "name": "R13 a Misc file still roots at its parent folder, not the home folder",
+          "file": "src/features/explorer/root.test.ts",
+          "requirements": [
+            "R13"
+          ]
+        },
+        {
+          "name": "A1 without a home folder from the core the home view has no root, so the panel shows its hint",
+          "file": "src/features/explorer/root.test.ts",
+          "requirements": [
+            "A1"
+          ]
+        },
+        {
+          "name": "A1 without a home folder from the core an editor view with no path has no root",
+          "file": "src/features/explorer/root.test.ts",
+          "requirements": [
+            "A1"
+          ]
+        },
+        {
+          "name": "R13 a home root offers Up that climbs one folder at a time until the drive list",
+          "file": "src/features/explorer/useExplorer.test.tsx",
+          "requirements": [
+            "R13"
+          ]
+        },
+        {
+          "name": "R13 a drive that cannot be read shows as locked when opened instead of raising",
+          "file": "src/features/explorer/useExplorer.test.tsx",
+          "requirements": [
+            "R13"
+          ]
+        },
+        {
+          "name": "R13 a drive removed between listing and opening is reported without breaking the tree",
+          "file": "src/features/explorer/useExplorer.test.tsx",
+          "requirements": [
+            "R13"
+          ]
+        },
+        {
+          "name": "R13 an unreadable home folder shows a locked level and the rest keeps working",
+          "file": "src/features/explorer/useExplorer.test.tsx",
+          "requirements": [
+            "R13"
+          ]
+        },
+        {
+          "name": "A1 with no root nothing applies, so no folder is read",
+          "file": "src/features/explorer/useExplorer.test.tsx",
+          "requirements": [
+            "A1"
+          ]
+        },
+        {
+          "name": "R13 a home root shows the home folder and Up climbs one level at a time until the drive list",
+          "file": "src/features/explorer/ExplorerPanel.test.tsx",
+          "requirements": [
+            "R13"
+          ]
+        },
+        {
+          "name": "R13 an unreadable home folder shows the locked state and the panel stays usable",
+          "file": "src/features/explorer/ExplorerPanel.test.tsx",
+          "requirements": [
+            "R13"
+          ]
+        },
+        {
+          "name": "A1 with no root it shows a hint and asks the core for nothing",
+          "file": "src/features/explorer/ExplorerPanel.test.tsx",
+          "requirements": [
+            "A1"
+          ]
+        },
+        {
+          "name": "R13: the home view roots the explorer at the user\u0027s home folder",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R13"
+          ]
+        },
+        {
+          "name": "R13: the editor view with no tab open roots at the home folder",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R13"
+          ]
+        },
+        {
+          "name": "R13: switching back to the home view keeps every open editor tab",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R13"
+          ]
+        },
+        {
+          "name": "R13: switching from an app-owned tab to a misc file roots at its parent, and Up still reaches the drive list",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R13"
+          ]
+        },
+        {
+          "name": "R13: an unreadable home folder shows as locked and the rest of the app stays usable",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R13"
+          ]
+        },
+        {
+          "name": "a1_home_folder_reads_only_the_user_profile",
+          "file": "src-tauri/tests/explorer.rs",
+          "requirements": [
+            "A1"
+          ]
+        }
+      ],
+      "kickbacks": []
+    },
+    {
+      "summary": "Built slice 2 of revision 2: R6, R7 and the shared side-pane shell of R8. R6 moves every F5 variant in src/shared/shortcuts.ts to a toggleApp shortcut (refresh keeps no key), and src/App.tsx now runs F5 through a ref refreshed every render so the one key listener reads the live view, selected app and terminal states at press time; it calls the same appButton decision and startAll/stopAll the on-screen Start all / Stop all button uses, does nothing in home/editor or for an app with no terminals, and always preventDefaults so the webview never reloads. All F5-refresh hints were removed from the Utilities menu, the GitBar refresh title and the palette Help text. R7 makes the theme finder fill its container (width 100%, min-width 0) with wrapping search/cards so rows and long names stay inside the dialog at desktop and mobile widths. R8/A2 adds jattac.libs.web.zest-responsive-layout ^2.8.0 (its published ESM injects its stylesheet, verified in the tarball and asserted by a test); installing needed --legacy-peer-deps only because of a pre-existing zest-tabs vs framer-motion 14 peer conflict that predates this slice. SidePane.tsx wraps ZestResponsiveLayout, deliberately omits the package\u0027s onClose so the desktop overlay only dims (as today\u0027s backdrop did), and adds a named Close control plus Escape that run the caller\u0027s cancel action; Dialog keeps its exact props, content, action order and first-action focus but now renders inside that pane, with the CSS filling the pane and actions wrapping at 360px. A dialog with no actions (the busy update dialog) still has no close path. Tests: npm run lint, targeted vitest (157), npm run build and the full window suite (543) all pass. BranchMenu, UpdateUI and the Rust core were not changed here; BranchMenu\u0027s move is a later slice and UpdateDialog already inherits the pane through the shared Dialog.",
+      "tests": [
+        {
+          "name": "R6: maps Ctrl\u002BB, F5, Ctrl\u002BShift\u002BP and Ctrl\u002BAlt\u002BT to their actions",
+          "file": "src/shared/shortcuts.test.ts",
+          "requirements": [
+            "R6"
+          ]
+        },
+        {
+          "name": "R6: F5 is the app toggle and refresh has no key at all",
+          "file": "src/shared/shortcuts.test.ts",
+          "requirements": [
+            "R6"
+          ]
+        },
+        {
+          "name": "R6: every modifier combination of F5 still means the app toggle, never refresh",
+          "file": "src/shared/shortcuts.test.ts",
+          "requirements": [
+            "R6"
+          ]
+        },
+        {
+          "name": "R6: in the app view with everything stopped, F5 starts all exactly as the button would",
+          "file": "src/App.shortcuts.test.tsx",
+          "requirements": [
+            "R6"
+          ]
+        },
+        {
+          "name": "R6: in the app view with a running terminal, F5 stops them exactly as the button would",
+          "file": "src/App.shortcuts.test.tsx",
+          "requirements": [
+            "R6"
+          ]
+        },
+        {
+          "name": "R6: F5 while a terminal is still starting stops it rather than starting a second copy",
+          "file": "src/App.shortcuts.test.tsx",
+          "requirements": [
+            "R6"
+          ]
+        },
+        {
+          "name": "R6: F5 in the home view is a true no-op and cannot reload the page",
+          "file": "src/App.shortcuts.test.tsx",
+          "requirements": [
+            "R6"
+          ]
+        },
+        {
+          "name": "R6: F5 in the editor view is a true no-op and leaves the view alone",
+          "file": "src/App.shortcuts.test.tsx",
+          "requirements": [
+            "R6"
+          ]
+        },
+        {
+          "name": "R6: F5 with Shift, Ctrl or Alt never refreshes in the home view",
+          "file": "src/App.shortcuts.test.tsx",
+          "requirements": [
+            "R6"
+          ]
+        },
+        {
+          "name": "R6: F5 does nothing for an app with no terminals, matching its disabled Start all button",
+          "file": "src/App.shortcuts.test.tsx",
+          "requirements": [
+            "R6"
+          ]
+        },
+        {
+          "name": "R4/R6: Ctrl\u002BAlt\u002BT switches the theme and Ctrl\u002BB toggles the sidebar, while F5 no longer refreshes",
+          "file": "src/App.shortcuts.test.tsx",
+          "requirements": [
+            "R6"
+          ]
+        },
+        {
+          "name": "R4: the palette lists each app action with the same shortcut and choosing one runs it",
+          "file": "src/App.shortcuts.test.tsx",
+          "requirements": [
+            "R6"
+          ]
+        },
+        {
+          "name": "R4/R6: Ctrl\u002BB keeps working after the header regroup while F5 no longer refreshes",
+          "file": "src/App.features.test.tsx",
+          "requirements": [
+            "R6"
+          ]
+        },
+        {
+          "name": "the Refresh button and the palette entry re-read terminal states and git now",
+          "file": "src/App.features.test.tsx",
+          "requirements": [
+            "R6"
+          ]
+        },
+        {
+          "name": "R6: the Refresh item no longer tells the user F5 refreshes",
+          "file": "src/features/apps/UtilitiesMenu.test.tsx",
+          "requirements": [
+            "R6"
+          ]
+        },
+        {
+          "name": "R6: the refresh control no longer tells the user F5 refreshes",
+          "file": "src/features/git/git.test.tsx",
+          "requirements": [
+            "R6"
+          ]
+        },
+        {
+          "name": "R6: the help text no longer advertises F5 as refresh",
+          "file": "src/features/command-palette/CommandPalette.test.tsx",
+          "requirements": [
+            "R6"
+          ]
+        },
+        {
+          "name": "R7: the finder fills its container instead of demanding a wider fixed width",
+          "file": "src/features/themes/ThemeFinder.test.tsx",
+          "requirements": [
+            "R7"
+          ]
+        },
+        {
+          "name": "R7: a long theme name stays inside its row instead of widening it",
+          "file": "src/features/themes/ThemeFinder.test.tsx",
+          "requirements": [
+            "R7"
+          ]
+        },
+        {
+          "name": "R7: an empty search shows its message inside the finder, not past its edge",
+          "file": "src/features/themes/ThemeFinder.test.tsx",
+          "requirements": [
+            "R7"
+          ]
+        },
+        {
+          "name": "R8/A2: renders its content inside the approved package\u0027s side pane with its own stylesheet",
+          "file": "src/features/apps/SidePane.test.tsx",
+          "requirements": [
+            "R8",
+            "A2"
+          ]
+        },
+        {
+          "name": "A3: the close control has an accessible name and runs the close action",
+          "file": "src/features/apps/SidePane.test.tsx",
+          "requirements": [
+            "A3",
+            "R8"
+          ]
+        },
+        {
+          "name": "A3: Escape dismisses a pane that has a close action",
+          "file": "src/features/apps/SidePane.test.tsx",
+          "requirements": [
+            "A3",
+            "R8"
+          ]
+        },
+        {
+          "name": "A3: a pane with no close action has no close control and Escape does nothing",
+          "file": "src/features/apps/SidePane.test.tsx",
+          "requirements": [
+            "A3",
+            "R8"
+          ]
+        },
+        {
+          "name": "R8: at a 360px-wide window the package uses its full-width mobile pane",
+          "file": "src/features/apps/SidePane.test.tsx",
+          "requirements": [
+            "R8"
+          ]
+        },
+        {
+          "name": "A4: dialog focuses the first (default) action, exposes one named dialog and runs each action",
+          "file": "src/features/apps/components.test.tsx",
+          "requirements": [
+            "A4",
+            "R8"
+          ]
+        },
+        {
+          "name": "R8/A3: dialog is a side pane whose named close control runs the last (cancel) action",
+          "file": "src/features/apps/components.test.tsx",
+          "requirements": [
+            "R8",
+            "A3"
+          ]
+        },
+        {
+          "name": "R8/A3: Escape dismisses the side pane through the cancel action",
+          "file": "src/features/apps/components.test.tsx",
+          "requirements": [
+            "R8",
+            "A3"
+          ]
+        },
+        {
+          "name": "R8/A3: a dialog with no actions keeps its content and offers no close path at all",
+          "file": "src/features/apps/components.test.tsx",
+          "requirements": [
+            "R8",
+            "A3"
+          ]
+        },
+        {
+          "name": "R8: a confirmation dialog keeps its title, body and action words in the pane",
+          "file": "src/features/apps/components.test.tsx",
+          "requirements": [
+            "R8"
+          ]
+        },
+        {
+          "name": "R8/A3: while downloading the side pane offers no close path, exactly as before",
+          "file": "src/features/updates/updates.test.tsx",
+          "requirements": [
+            "R8",
+            "A3"
+          ]
+        }
+      ],
+      "kickbacks": []
+    },
+    {
+      "summary": "Slice 3 of revision 2. BranchMenu now renders through the approved SidePane adapter (title and named close control \u0022Switch branch\u0022), keeping its filter box focus, local/remote sections, per-branch buttons, loading text and Escape close, with the pane-filling CSS in Git.module.css so long names wrap. UpdateDialog already builds on the shared Dialog, so it is now a side pane; tests prove the pane, the named close running onClose, unchanged content/actions, and no close path while downloading/installing. package.json and package-lock.json already record jattac.libs.web.zest-responsive-layout ^2.8.0 / 2.8.0 and the package injects its own CSS; a test now reads both files to prove A2. npm run lint, npm run build and the full window suite (547 tests) pass.",
+      "tests": [
+        {
+          "name": "A2: package.json and package-lock.json record the approved 2.8.0 responsive-layout package",
+          "file": "src/features/apps/SidePane.test.tsx",
+          "requirements": [
+            "A2"
+          ]
+        },
+        {
+          "name": "R8/A2: renders its content inside the approved package\u0027s side pane with its own stylesheet",
+          "file": "src/features/apps/SidePane.test.tsx",
+          "requirements": [
+            "R8",
+            "A2"
+          ]
+        },
+        {
+          "name": "A3: the close control has an accessible name and runs the close action",
+          "file": "src/features/apps/SidePane.test.tsx",
+          "requirements": [
+            "A3"
+          ]
+        },
+        {
+          "name": "A3: Escape dismisses a pane that has a close action",
+          "file": "src/features/apps/SidePane.test.tsx",
+          "requirements": [
+            "A3"
+          ]
+        },
+        {
+          "name": "A3: a pane with no close action has no close control and Escape does nothing",
+          "file": "src/features/apps/SidePane.test.tsx",
+          "requirements": [
+            "A3"
+          ]
+        },
+        {
+          "name": "R8: at a 360px-wide window the package uses its full-width mobile pane",
+          "file": "src/features/apps/SidePane.test.tsx",
+          "requirements": [
+            "R8"
+          ]
+        },
+        {
+          "name": "A4: dialog focuses the first (default) action, exposes one named dialog and runs each action",
+          "file": "src/features/apps/components.test.tsx",
+          "requirements": [
+            "A4"
+          ]
+        },
+        {
+          "name": "R8/A3: dialog is a side pane whose named close control runs the last (cancel) action",
+          "file": "src/features/apps/components.test.tsx",
+          "requirements": [
+            "R8",
+            "A3"
+          ]
+        },
+        {
+          "name": "R8/A3: Escape dismisses the side pane through the cancel action",
+          "file": "src/features/apps/components.test.tsx",
+          "requirements": [
+            "R8",
+            "A3"
+          ]
+        },
+        {
+          "name": "R8/A3: a dialog with no actions keeps its content and offers no close path at all",
+          "file": "src/features/apps/components.test.tsx",
+          "requirements": [
+            "R8",
+            "A3"
+          ]
+        },
+        {
+          "name": "R8: a confirmation dialog keeps its title, body and action words in the pane",
+          "file": "src/features/apps/components.test.tsx",
+          "requirements": [
+            "R8"
+          ]
+        },
+        {
+          "name": "A4: marks the current branch, disables it, and offers remote branches separately",
+          "file": "src/features/git/git.test.tsx",
+          "requirements": [
+            "A4"
+          ]
+        },
+        {
+          "name": "A4: filters both lists as you type",
+          "file": "src/features/git/git.test.tsx",
+          "requirements": [
+            "A4"
+          ]
+        },
+        {
+          "name": "A4: the filter box is focused and Escape closes the menu",
+          "file": "src/features/git/git.test.tsx",
+          "requirements": [
+            "A4"
+          ]
+        },
+        {
+          "name": "A4: shows loading until branches arrive",
+          "file": "src/features/git/git.test.tsx",
+          "requirements": [
+            "A4"
+          ]
+        },
+        {
+          "name": "R8/A3: the branch menu is a side pane whose named close control closes it",
+          "file": "src/features/git/git.test.tsx",
+          "requirements": [
+            "R8",
+            "A3"
+          ]
+        },
+        {
+          "name": "R8/A3: the update dialog is a side pane whose named close control runs the cancel action",
+          "file": "src/features/updates/updates.test.tsx",
+          "requirements": [
+            "R8",
+            "A3"
+          ]
+        },
+        {
+          "name": "R8: the update dialog keeps its notes, size and actions inside the pane",
+          "file": "src/features/updates/updates.test.tsx",
+          "requirements": [
+            "R8"
+          ]
+        },
+        {
+          "name": "R8/A3: while downloading the side pane offers no close path, exactly as before",
+          "file": "src/features/updates/updates.test.tsx",
+          "requirements": [
+            "R8",
+            "A3"
+          ]
+        }
+      ],
+      "kickbacks": []
+    }
+  ],
+  "revisionsUsed": 4,
+  "requirementKickbacks": 0,
+  "planReviewRounds": 1,
+  "planConflictHashes": [
+    "3D59F1EB7B9EA4BF",
+    "74223B8ACF792881",
+    "1D2A57FE059CC5C8"
+  ],
+  "sizeApproved": false,
+  "lastPlanConflicts": [],
+  "planRounds": [
+    {
+      "number": 1,
+      "at": "2026-11-26T12:06:40.6204882+00:00",
+      "outcome": "conflicts",
+      "conflicts": [
+        {
+          "requirement": "R13",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design says it adds jattac.libs.web.zest-responsive-layout, which its own scope does not allow.",
+          "evidence": "its impact (adds) names jattac.libs.web.zest-responsive-layout; the scope is package.json, package-lock.json, src/App.tsx, src/App*.test.tsx, src/shared/shortcuts.ts, src/shared/shortcuts.test.ts, src/api/explorer.ts, src/api/explorer.test.ts, src/features/explorer/**, src/features/apps/Dialog.tsx, src/features/apps/Dialog.module.css, src/features/apps/SidePane.tsx, src/features/apps/SidePane.module.css, src/features/apps/components.test.tsx, src/features/apps/Sidebar.explorer.test.tsx, src/features/apps/UtilitiesMenu.tsx, src/features/apps/UtilitiesMenu.test.tsx, src/features/themes/Themes.module.css, src/features/themes/ThemeFinder.test.tsx, src/features/git/BranchMenu.tsx, src/features/git/GitBar.tsx, src/features/git/Git.module.css, src/features/git/git.test.tsx, src/features/command-palette/CommandPalette.tsx, src/features/command-palette/CommandPalette.test.tsx, src-tauri/src/lib.rs, src-tauri/src/features/explorer/**, src-tauri/tests/explorer.rs."
+        }
+      ],
+      "resolution": "Sent back to the architect, who revised the design to settle it."
+    },
+    {
+      "number": 2,
+      "at": "2026-11-26T12:18:14.6690963+00:00",
+      "outcome": "conflicts",
+      "conflicts": [
+        {
+          "requirement": "R6",
+          "against": "20261125-153618:R4",
+          "kind": "regression",
+          "owner": "requirements",
+          "why": "R6 permanently takes F5 away from refresh (\u0022F5 never refreshes on any modifier combination\u0022) and the design implements that by rewriting the F5 entry in src/shared/shortcuts.ts and the global handler in src/App.tsx, but the earlier accepted requirement promised that same key refreshes. Both cannot hold, and the design does not record that the earlier requirement is superseded or which one wins, so the builder has no rule for what to do with the old F5-refresh promises or their tests.",
+          "evidence": "R6: \u0022In the app view, F5 runs the same Start all / Stop all action as the app\u0027s on-screen button, choosing Start or Stop exactly as the button would at the moment F5 is pressed. ... F5 never refreshes on any modifier combination.\u0022 Design impact.touches: \u0022src/shared/shortcuts.ts (F5 becomes toggleApp, refresh loses its key)\u0022 and \u0022src/App.tsx (home wiring, F5 toggle via live ref, palette entries, theme provider)\u0022. 20261125-153618:R4: \u0022Add VS Code-style keyboard shortcuts while keeping the existing app shortcuts: Ctrl\u002BB toggles the sidebar, F5 refreshes, Ctrl\u002BShift\u002BP opens the command palette ... Done when: Ctrl\u002BB toggles the sidebar; F5 refreshes; Ctrl\u002BShift\u002BP opens the command palette ...\u0022"
+        }
+      ],
+      "resolution": "You chose: Change the requirement to fit"
+    },
+    {
+      "number": 3,
+      "at": "2026-11-26T13:42:04.1091794+00:00",
+      "outcome": "conflicts",
+      "conflicts": [
+        {
+          "requirement": "R8",
+          "against": "20261125-153618:R2",
+          "kind": "regression",
+          "owner": "requirements",
+          "why": "R8 presents the shared Dialog and every dialog built on it as responsive side panes instead of centred modals, so every existing dialog is redesigned/replaced. The earlier accepted requirement R2 promises that every existing dialog is still present and none is redesigned or replaced. Both cannot hold at once, and neither the design nor the requirement text records R2 as superseded or says which side wins, so the builder has no rule for the existing dialog behaviour.",
+          "evidence": "R8 (analyst-r2): \u0022The shared Dialog and every dialog built on it (including the theme finder and the confirmation dialogs) plus the git BranchMenu are presented as responsive side panes from the project\u0027s approved jattac responsive-layout package, instead of centred modals.\u0022 / 20261125-153618:R2: \u0022Done when: All existing screens, panels, dialogs and the footer are still present after the tidy-up; none is redesigned or replaced.\u0022 / Design r4 summary: \u0022R8 adds one small adapter, SidePane, ... Dialog keeps its exact props/actions API and renders its body and actions inside the adapter\u0027s pane\u0022."
+        }
+      ],
+      "resolution": "You chose: Change the requirement to fit The next check found the plan consistent."
+    },
+    {
+      "number": 4,
+      "at": "2026-11-26T13:56:10.3409052+00:00",
+      "outcome": "consistent",
+      "conflicts": [],
+      "resolution": ""
+    }
+  ],
+  "planCheck": "consistent",
+  "planWaivedRules": [],
+  "setAsideRequirements": [],
+  "reusedChecks": {
+    "tauri-versions": "20261126-075013|2026-11-26T11:50:01.4951915\u002B00:00",
+    "tauri-web-typecheck": "20261126-075013|2026-11-26T11:50:01.4951915\u002B00:00",
+    "tauri-rust-format": "20261126-075013|2026-11-26T11:50:01.4951915\u002B00:00",
+    "tauri-web-tests": "20261126-075013|2026-11-26T11:50:01.4951915\u002B00:00",
+    "tauri-web-build": "20261126-075013|2026-11-26T11:50:01.4951915\u002B00:00",
+    "tauri-rust-lints": "20261126-075013|2026-11-26T11:50:01.4951915\u002B00:00",
+    "tauri-rust-tests": "20261126-075013|2026-11-26T11:50:01.4951915\u002B00:00",
+    "tauri-rust-build": "20261126-075013|2026-11-26T11:50:01.4951915\u002B00:00"
+  },
+  "tensionPair": [],
+  "tensionDiagnoses": {},
+  "specialists": [],
+  "specialistsDone": [],
+  "specialistCallbacks": 0,
+  "specialistHashes": {},
+  "ran": [
+    "define",
+    "design",
+    "build",
+    "challenge",
+    "prove"
+  ],
+  "accepted": {
+    "define/analyst": "artifacts/01-define/analyst-r5-add4.json",
+    "design/architect": "artifacts/02-design/architect-r5.json",
+    "design/planchecker": "artifacts/02-design/planchecker-r5.json",
+    "design/arbiter": "artifacts/02-design/arbiter-r5.json",
+    "build/developer": "artifacts/03-build/developer-r6.json",
+    "challenge/security": "artifacts/04-challenge/security-r6.json",
+    "challenge/qa": "artifacts/04-challenge/qa-r3.json",
+    "challenge/reviewer": "artifacts/04-challenge/reviewer-r6.json",
+    "build/arbiter": "artifacts/03-build/arbiter-r5.json"
+  },
+  "extraRounds": 3,
+  "queueIds": [
+    "QA-1",
+    "QA-2",
+    "REV-1",
+    "REV-2"
+  ],
+  "focusFindingId": "REV-2",
+  "itemShift": 3,
+  "passStamps": {
+    "CHANGELOG.md": "10732:639313070587952990",
+    "docs/ui-tidy-up-plan.md": "36347:639313070573893724",
+    "package.json": "1658:639312994495786311",
+    "README.md": "10038:639313070530864045",
+    "src-tauri/src/features/explorer/commands.rs": "825:639312985084634813",
+    "src-tauri/src/features/explorer/mod.rs": "5646:639312985034215483",
+    "src-tauri/src/lib.rs": "7762:639312985092015233",
+    "src-tauri/tests/explorer.rs": "8018:639312985230746748",
+    "src/api/explorer.test.ts": "2030:639312985302793850",
+    "src/api/explorer.ts": "1198:639312985281594133",
+    "src/App.editor.test.tsx": "4950:639312985747001699",
+    "src/App.explorer.test.tsx": "23305:639312986057092404",
+    "src/App.features.test.tsx": "28143:639312996648421923",
+    "src/App.layout.test.tsx": "18262:639312985754763167",
+    "src/App.shortcuts.test.tsx": "28770:639313046603943054",
+    "src/App.test.tsx": "24012:639312985770089083",
+    "src/App.themes.test.tsx": "8285:639312985765598261",
+    "src/App.tsx": "37159:639312995159968653",
+    "src/App.updatecheck.test.tsx": "4966:639312985792120411",
+    "src/App.updates.test.tsx": "9807:639312985781905040",
+    "src/features/apps/components.test.tsx": "13652:639312997515924325",
+    "src/features/apps/Dialog.module.css": "965:639312995882519731",
+    "src/features/apps/Dialog.tsx": "1541:639312995824508129",
+    "src/features/apps/SidePane.module.css": "616:639312995751496844",
+    "src/features/apps/SidePane.test.tsx": "3731:639313062606078369",
+    "src/features/apps/SidePane.tsx": "2731:639313062539153607",
+    "src/features/apps/UtilitiesMenu.test.tsx": "2915:639312996983321377",
+    "src/features/apps/UtilitiesMenu.tsx": "3008:639312995205199743",
+    "src/features/command-palette/CommandPalette.test.tsx": "6018:639313054802726871",
+    "src/features/command-palette/CommandPalette.tsx": "11289:639312995303483306",
+    "src/features/explorer/ExplorerPanel.test.tsx": "13399:639312986398538626",
+    "src/features/explorer/ExplorerPanel.tsx": "6980:639312985556070332",
+    "src/features/explorer/root.test.ts": "5538:639312986154338770",
+    "src/features/explorer/root.ts": "3609:639312985412692959",
+    "src/features/explorer/useExplorer.test.tsx": "11527:639312986326739293",
+    "src/features/explorer/useExplorer.ts": "9968:639312985487426715",
+    "src/features/git/BranchMenu.tsx": "2107:639313003902781210",
+    "src/features/git/Git.module.css": "5260:639313005816891635",
+    "src/features/git/git.test.tsx": "15342:639313004184894582",
+    "src/features/git/GitBar.tsx": "5204:639312995243379225",
+    "src/features/themes/ThemeFinder.test.tsx": "5483:639312999526608063",
+    "src/features/themes/Themes.module.css": "3328:639312995570275222",
+    "src/features/updates/updates.test.tsx": "12394:639313004605639461",
+    "src/shared/shortcuts.test.ts": "2518:639312994837768350",
+    "src/shared/shortcuts.ts": "2075:639312994690732766"
+  },
+  "scopeRestored": [],
+  "configStamp": "639312730475640621",
+  "scopePush": false,
+  "acceptCut": false,
+  "hostStamps": {
+    "REV-1": "2014:639312995697354791",
+    "REV-2": "9989:639312738795040094",
+    "QA-1": "26677:639312998517505590",
+    "QA-2": "5637:639312996933613405"
+  },
+  "verifying": [],
+  "settled": 0,
+  "confirmedSettles": 0,
+  "falseSettles": 0,
+  "preflightCalls": 0,
+  "groupRiders": [],
+  "groupHits": 0,
+  "groupMisses": 0,
+  "fullChecksRequired": [],
+  "scopedChecks": [],
+  "scopedFiles": 0,
+  "provedChecks": [],
+  "buildRanSincePass": false,
+  "fixFiles": {
+    "QA-1": [
+      "src/App.shortcuts.test.tsx"
+    ],
+    "QA-2": [
+      "src/features/command-palette/CommandPalette.test.tsx"
+    ],
+    "REV-1": [
+      "CHANGELOG.md",
+      "docs/ui-tidy-up-plan.md",
+      "README.md"
+    ],
+    "REV-2": [
+      "CHANGELOG.md",
+      "docs/ui-tidy-up-plan.md",
+      "README.md"
+    ]
+  },
+  "acceptedByYou": [],
+  "appAcceptsLoaded": true,
+  "claimedBuilt": [],
+  "confirmedBuilt": 1,
+  "builtWrong": 0,
+  "canaryPasses": 2,
+  "parked": [],
+  "reviewPasses": 4,
+  "costUsd": 0.737596596,
+  "budgetUsd": 10,
+  "agentCalls": 29,
+  "modelCalls": {
+    "opencode-go/deepseek-v4.1-flash": 28
+  },
+  "startedAt": "2026-11-26T11:50:05.5319859+00:00",
+  "updatedAt": "2026-11-26T16:39:35.1056338+00:00",
+  "findings": [
+    {
+      "id": "REV-1",
+      "source": "reviewer",
+      "cites": "USR-006",
+      "severity": "blocking",
+      "description": "Every dialog that moved to the side pane (confirmations, update, help, theme finder) is unreadable in the app\u0027s default dark theme: the package pane stays light while the dialog text keeps the app\u0027s light colours. USR-006 requires readable/contrasting theme combinations; the pane needs the app theme (ZestLayoutThemeProvider, or a pane background taken from the app theme).",
+      "file": "src/features/apps/SidePane.tsx",
+      "line": 37,
+      "evidence": "ZestResponsiveLayout is rendered with no ZestLayoutThemeProvider (grep finds no ZestLayoutThemeProvider/useZestLayoutTheme anywhere in src), so the package\u0027s useZestLayoutTheme() falls back to \u0027light\u0027 and paints the pane with its light --zest-pane-bg hsla(0,0%,100%,.95) (white). Meanwhile SidePane.module.css:13 sets .pane color to var(--text), Dialog.tsx:28-30 puts the title/body on a transparent .dialog (Dialog.module.css .dialog has background:transparent) and .body uses color var(--muted). The app\u0027s default theme is dark (src/themes/builtin.ts:5 DEFAULT_THEME_ID=\u0027tinkerdeck-dark\u0027) where --text=#ece8dc and --muted=#a0a4ab (builtin.ts:19-20 / global.css:19-20), so in the default theme the dialog title is near-white on a near-white pane (~1.05:1) and body text ~2.5:1. The architect\u0027s impact list for App.tsx even names a \u0027theme provider\u0027, which was not added.",
+      "status": "fixed",
+      "raisedRound": 1,
+      "fixedRound": 6,
+      "note": "confirmed by the whole Challenge after being built (src/features/apps/SidePane.tsx:11-19 now defines paneTheme with background: var(--panel), color: var(--text), --zest-pane-bg: var(--panel), --zest-pane-divider: var(--border), --zest-pane-close: var(--text), and line 57 passes it as sidePane.style. The installed 2.8.0 bundle merges that object onto the pane element (style: Object.assign(Object.assign({},z),{width:...})), so the pane is painted with the app\u0027s --panel (#1b1e23 in the default tinkerdeck-dark theme) and inherits --text (#ece8dc), instead of the package\u0027s light hsla(0,0%,100%,.95). The new test \u0027R8: the pane takes the app theme\u0027s panel and text colours so dialogs stay readable in the dark theme\u0027 (src/features/apps/SidePane.test.tsx:72) asserts those theme colours are on the pane; the full suite (51 files, 551 tests) passes. No ZestLayoutThemeProvider is needed because the per-pane inline vars win over the package\u0027s stylesheet.)",
+      "repeats": 0
+    },
+    {
+      "id": "REV-2",
+      "source": "reviewer",
+      "cites": "R6",
+      "severity": "blocking",
+      "description": "The user-facing shortcut documentation still tells the user that F5 refreshes, contradicting R6 (\u0027No menu, palette entry or help text still tells the user that F5 refreshes\u0027) and its pitfall that any leftover F5-refresh hint must be brought in line. All user-visible F5-refresh wording must now describe Start all / Stop all.",
+      "file": "README.md",
+      "line": 54,
+      "evidence": "README.md:54 still lists \u0027**F5** refresh\u0027; docs/ui-tidy-up-plan.md:133 has \u0027| **F5** | Refresh everything |\u0027 and :267 \u0027| P2 | Refresh everything | Always | F5 |\u0027 (also :147 \u0027Ctrl\u002BB and F5 are unchanged\u0027); CHANGELOG.md:10 and :81 also state F5 refreshes. None of these were updated in this change.",
+      "status": "fixed",
+      "raisedRound": 1,
+      "fixedRound": 6,
+      "note": "Every remaining user-visible F5-refresh wording in the tracked docs now describes the new binding: README.md:54 reads \u0027F5 start all / stop all in the app view (a no-op elsewhere)\u0027; docs/ui-tidy-up-plan.md:109 gives the Refresh entry \u0027no keyboard shortcut\u0027, :133 lists \u0027F5 | Start all / Stop all\u0027, :147 says \u0027F5 is no longer a refresh\u0027, :218 no longer shows \u0027(F5)\u0027 for Refresh, and :267 gives \u0027Refresh everything\u0027 \u0027No shortcut\u0027; CHANGELOG.md:10 names \u0027F5 Start all / Stop all in the app view\u0027 and :81 no longer ties F5 to refresh. A search of tracked *.md/*.txt for F5 finds no remaining refresh claim (the F5 mentions in installer/output/*.md are gitignored generated artifacts, not source).",
+      "repeats": 0
+    },
+    {
+      "id": "REV-3",
+      "source": "reviewer",
+      "cites": "A2",
+      "severity": "advisory",
+      "description": "A2 clause 1 (\u0027npm install succeeds ... with no peer-dependency error\u0027) is not demonstrated; only the manifest/lockfile version clause is. The conflict is pre-existing (zest-tabs vs framer-motion 14), but the acceptance as written is unmet and the test only reads the two JSON files.",
+      "file": "package.json",
+      "line": 30,
+      "evidence": "package.json:30 declares framer-motion ^14.14.0 while its jattac.libs.web.zest-tabs ^0.5.0 dependency (line 33) peer-requires framer-motion \u0027^10.0.0 || ^11.0.0 || ^12.0.0\u0027 (node_modules/jattac.libs.web.zest-tabs/package.json:37, package-lock.json:3812). There is no .npmrc, so a plain npm install/ci still raises ERESOLVE; the build report says installation needed --legacy-peer-deps.",
+      "status": "advisory",
+      "raisedRound": 1,
+      "repeats": 0
+    },
+    {
+      "id": "REV-4",
+      "source": "reviewer",
+      "cites": "R6",
+      "severity": "advisory",
+      "description": "R6\u0027s reliability acceptance \u0027Pressing F5 rapidly during an in-progress start or stop leaves the app in a single, consistent started or stopped state\u0027 is not proven by a test.",
+      "file": "src/App.shortcuts.test.tsx",
+      "line": 419,
+      "evidence": "The only in-progress F5 test (line 419) presses F5 once with a terminal already \u0027starting\u0027; no test dispatches two rapid F5 presses or a press during an in-flight start/stop and then asserts the app lands in one consistent state. The other F5 tests (lines 400, 414, 424, 435, 453, 491) also press once each.",
+      "status": "advisory",
+      "raisedRound": 1,
+      "repeats": 0
+    },
+    {
+      "id": "QA-1",
+      "source": "qa",
+      "cites": "R6",
+      "severity": "blocking",
+      "description": "R6\u0027s edge case \u0022Pressing F5 twice quickly does not leave the app half-started or start a terminal twice\u0022 and the reliability acceptance \u0022Pressing F5 rapidly during an in-progress start or stop leaves the app in a single, consistent started or stopped state\u0022 are unproven: the suite only ever presses F5 once per test.",
+      "file": "src/App.shortcuts.test.tsx",
+      "line": 419,
+      "evidence": "The only in-progress F5 test (line 419) presses F5 once with a terminal already reporting \u0060starting\u0060. No test dispatches F5 twice, and no test presses F5 repeatedly during a start/stop (grep for double presses finds only the six single \u0060press(\u0022F5\u0022)\u0060 calls at lines 400, 414, 424, 435, 453, 491 in this file plus single \u0060fireEvent.keyDown\u0060 calls in App.features.test.tsx:493).",
+      "status": "fixed",
+      "raisedRound": 1,
+      "fixedRound": 2,
+      "note": "Two new tests now exist: src/App.shortcuts.test.tsx:430 \u0022pressing F5 twice in quick succession starts once and then stops, never starting a terminal twice\u0022 and :454 \u0022pressing F5 repeatedly while a start is in progress never starts a second copy\u0022. The first fires two F5 presses while startAll synchronously reports t1=starting/t2=stopped, then asserts startAll called once, stopAll once, and the button settles back to Start all; the second presses F5 twice while a terminal reports starting and asserts stopAll twice, startAll never, and a single settled stopped state. Either test fails if the second press re-issued a start (startAll count) or left the app half-started (the Start all waitFor would not resolve). I ran \u0060npx vitest run src/App.shortcuts.test.tsx\u0060 (22/22 pass) and the full \u0060npx vitest run\u0060 (51 files, 549 tests pass); \u0060npm run lint\u0060 (tsc --noEmit) also passes.",
+      "repeats": 0
+    },
+    {
+      "id": "QA-2",
+      "source": "qa",
+      "cites": "R8",
+      "severity": "blocking",
+      "description": "R8\u0027s acceptance \u0022The command palette is not moved into a side pane and still opens as a palette\u0022 has no test: the palette could be wrapped in the SidePane and every existing palette/App test would still pass because role=dialog, focus and actions survive the change.",
+      "file": "src/features/command-palette/CommandPalette.test.tsx",
+      "line": 36,
+      "evidence": "Every palette test asserts only \u0060getByRole(\u0022dialog\u0022, { name: \u0022Command palette\u0022 })\u0060, focus, actions and Escape (lines 36, 81). \u0060CommandPalette.tsx:89\u0060 still renders its own \u0060\u003Cdiv role=\u0022dialog\u0022 ... className={styles.panel}\u003E\u0060, but no test asserts the palette is not inside \u0060ZestResponsiveLayout-module_sidePane\u0060; grep for \u0060ZestResponsiveLayout\u0060 finds assertions only in git.test.tsx, components.test.tsx, updates.test.tsx and SidePane.test.tsx, never for the palette.",
+      "status": "fixed",
+      "raisedRound": 1,
+      "fixedRound": 3,
+      "note": "src/features/command-palette/CommandPalette.test.tsx:49-54 now has \u0022R8: the command palette stays a palette and is not moved into a side pane\u0022: it renders the palette and asserts both that the role=dialog has no ancestor matching \u0027[class*=\u0022ZestResponsiveLayout-module_sidePane\u0022]\u0027 and that the document contains no element with that class at all. That class is exactly the package pane element (verified in node_modules/jattac.libs.web.zest-responsive-layout/dist/ZestResponsiveLayout.esm.js, where the SidePane renders class \u0027ZestResponsiveLayout-module_sidePane__HlT8j\u0027 around its content, and SidePane.test.tsx:8,51 proves the selector matches a rendered SidePane). Wrapping CommandPalette in SidePane (or moving it into any ZestResponsiveLayout pane) would now make both assertions fail. I ran \u0060npx vitest run src/features/command-palette/CommandPalette.test.tsx\u0060 (9/9 pass), the full \u0060npm test\u0060 (51 files, 550 tests pass) and \u0060npm run lint\u0060 (tsc --noEmit, clean).",
+      "repeats": 0
+    },
+    {
+      "id": "QA-3",
+      "source": "qa",
+      "cites": "R8",
+      "severity": "advisory",
+      "description": "R8\u0027s acceptance \u0022The shared dialog, including the theme finder, opens as a side pane\u0022 is covered only transitively. Adding one assertion that the opened Find themes dialog renders inside the side pane would pin the named surface directly.",
+      "file": "src/App.themes.test.tsx",
+      "line": 120,
+      "evidence": "The Find themes dialog is opened here and checked for its dialog name and Close button (lines 120-127), but the test never asserts the \u0060ZestResponsiveLayout-module_sidePane\u0060 container. It relies on components.test.tsx proving the shared Dialog is a side pane; App.tsx:727 does wrap ThemeFinder in Dialog, so the behaviour is correct today but no test at this surface would catch the finder reverting to a centred modal.",
+      "status": "advisory",
+      "raisedRound": 1,
+      "repeats": 0
+    },
+    {
+      "id": "QA-4",
+      "source": "qa",
+      "cites": "R7",
+      "severity": "advisory",
+      "description": "R7\u0027s \u0022At a narrow, mobile-width window the rows still fit with no horizontal overflow\u0022 (and the responsiveness non-functional acceptance at 360px) is guarded indirectly by the CSS assertions but has no explicit narrow-width test for the finder itself.",
+      "file": "src/features/themes/ThemeFinder.test.tsx",
+      "line": 100,
+      "evidence": "The R7 tests assert stylesheet rules only: \u0060.finder { width: 100%; min-width: 0 }\u0060 and \u0060.cardTitle { min-width: 0; overflow-wrap: anywhere }\u0060. The only 360px assertion in the suite is SidePane.test.tsx:72 (the package\u0027s mobileOverlay), so no test exercises the theme finder at a narrow window width.",
+      "status": "advisory",
+      "raisedRound": 1,
+      "repeats": 0
+    },
+    {
+      "id": "QA-5",
+      "source": "qa",
+      "cites": "A2",
+      "severity": "advisory",
+      "description": "A2 acceptance clause 1 (clean install with no peer-dependency error) is not proven by a test; only the manifest/lockfile version clause is. The reported use of --legacy-peer-deps suggests a plain install still surfaces the pre-existing peer conflict.",
+      "file": "src/features/apps/SidePane.test.tsx",
+      "line": 14,
+      "evidence": "The A2 test only reads package.json and package-lock.json for \u0060jattac.libs.web.zest-responsive-layout\u0060 ^2.8.0 / 2.8.0. The build report states installation required \u0060--legacy-peer-deps\u0060 because of a pre-existing zest-tabs vs framer-motion 14 peer conflict, so the acceptance phrase \u0022npm install succeeds ... with no peer-dependency error\u0022 is neither tested nor demonstrated by a plain install.",
+      "status": "advisory",
+      "raisedRound": 1,
+      "repeats": 0
+    },
+    {
+      "id": "QA-6",
+      "source": "qa",
+      "cites": "R6",
+      "severity": "advisory",
+      "description": "R6\u0027s edge case \u0022F5 in the home or editor view is a true no-op: it does not fall back to acting on a remembered selected app\u0022 has no test. The feature behaves correctly today, but the risk the requirement names is unproven because the only no-op tests run without any previously selected app.",
+      "file": "src/App.shortcuts.test.tsx",
+      "line": 471,
+      "evidence": "The home and editor no-op tests (lines 471 and 488) render a fresh App that never had an app selected, so \u0060app\u0060 is null and App.tsx:376\u0027s \u0060view !== \u0022app\u0022\u0060 guard is never exercised against a remembered app. No test opens an app (which calls L.selectApp, App.tsx:283), returns Home/editor (setView only, selectedAppId persists at App.tsx:107), and then presses F5. Removing the \u0060view !== \u0022app\u0022\u0060 half of App.tsx:376 would leave both tests green.",
+      "status": "advisory",
+      "raisedRound": 2,
+      "repeats": 0
+    }
+  ],
+  "lastChecks": [
+    {
+      "id": "no-secrets",
+      "name": "No secrets in code",
+      "passed": true,
+      "seconds": 0.2443977,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "SEC-001"
+      ]
+    },
+    {
+      "id": "no-debug-leftovers",
+      "name": "No debugging leftovers",
+      "passed": true,
+      "seconds": 0.0688159,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "QUAL-001"
+      ]
+    },
+    {
+      "id": "tauri-no-invoke-in-features",
+      "name": "Screens ask the core through src/api only",
+      "passed": true,
+      "seconds": 0.0769686,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-002"
+      ]
+    },
+    {
+      "id": "tauri-no-panics",
+      "name": "The Rust core does not panic",
+      "passed": true,
+      "seconds": 0.0469081,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-006"
+      ]
+    },
+    {
+      "id": "tauri-csp-set",
+      "name": "The window has a content security policy",
+      "passed": true,
+      "seconds": 0.0614043,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-004"
+      ]
+    },
+    {
+      "id": "tauri-least-privilege",
+      "name": "Permissions are small and specific",
+      "passed": true,
+      "seconds": 0.0611438,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-005"
+      ]
+    },
+    {
+      "id": "tauri-no-signing-key",
+      "name": "No signing keys in the project",
+      "passed": true,
+      "seconds": 0.1176604,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-009"
+      ]
+    },
+    {
+      "id": "tauri-versions",
+      "name": "One version number everywhere",
+      "passed": true,
+      "seconds": 0.2883002,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "Version 2.2.0 everywhere.",
+      "rules": [
+        "TAU-013"
+      ]
+    },
+    {
+      "id": "tauri-web-typecheck",
+      "name": "Window: type check",
+      "passed": true,
+      "seconds": 14.3548364,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "\u003E tinkerdeck@2.2.0 lint\r\n\u003E tsc --noEmit",
+      "rules": []
+    },
+    {
+      "id": "tauri-rust-format",
+      "name": "Core: formatting",
+      "passed": true,
+      "seconds": 1.4089285,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No new unformatted files (29 old one(s) are in the baseline and are not judged).",
+      "rules": [
+        "TAU-001"
+      ]
+    },
+    {
+      "id": "tauri-web-tests",
+      "name": "Window: tests, with coverage",
+      "passed": true,
+      "seconds": 62.806706,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "\u2026\n  .ZestTabs-module_scrollArrowRightBare__FMy96 {\r\n    position: absolute;\r\n    top: 0;\r\n    bottom: 0;\r\n    width: 2.75rem;\r\n    z-index: 2;\r\n    display: flex;\r\n    align-items: center;\r\n    justify-content: center;\r\n    border: none;\r\n    line-height: 1;\r\n  }\r\n\r\n  .ZestTabs-module_scrollArrowLeftBare__ajnXo {\r\n    left: 0;\r\n  }\r\n\r\n  .ZestTabs-module_scrollArrowRightBare__FMy96 {\r\n    right: 0;\r\n  }\r\n\r\n  /* A visible keyboard focus ring that needs no library colour: it follows the consumer\u0027s own\r\n     text colour and is sized in rem. */\r\n  .ZestTabs-module_tabItemBare__1xP2Q:focus-visible {\r\n    outline: 0.125rem solid currentColor;\r\n    outline-offset: 0.125rem;\r\n  }\r\n\r\n  /* \u2500\u2500 Desktop Awareness \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */\r\n  @media (min-width: 768px) {\r\n    .ZestTabs-module_tabItem__Dlj4s {\r\n      padding: 6px 20px;\r\n    }\r\n\r\n    .ZestTabs-module_scrollArrowLeft__OWxCj,\r\n    .ZestTabs-module_scrollArrowRight__wFiOJ {\r\n      width: 28px;\r\n    }\r\n  }\r\n}\r\n\r\n\r\nstderr | src/App.features.test.tsx \u003E Left pane, refresh and shells \u003E R6: the footer toggle and Ctrl\u002BB still agree while an app view has focus\r\nWarning: An update to ExplorerPanel inside a test was not wrapped in act(...).\r\n\r\nWhen testing, code that causes React state updates should be wrapped into act(...):\r\n\r\nact(() =\u003E {\r\n  /* fire events that update state */\r\n});\r\n/* assert on the output */\r\n\r\nThis ensures that you\u0027re testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\r\n    at ExplorerPanel (D:\\work\\nyingi\\code\\systems\\lite-commander\\src\\features\\explorer\\ExplorerPanel.tsx:202:26)\r\n    at div\r\n    at nav\r\n    at Sidebar (D:\\work\\nyingi\\code\\systems\\lite-commander\\src\\features\\apps\\Sidebar.tsx:12:3)\r\n    at div\r\n    at div\r\n    at App (D:\\work\\nyingi\\code\\systems\\lite-commander\\src\\App.tsx:77:36)",
+      "rules": [
+        "TAU-011"
+      ]
+    },
+    {
+      "id": "tauri-web-build",
+      "name": "Window: build",
+      "passed": true,
+      "seconds": 21.5185359,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "\u2026\ndist/assets/ecl-Cabwm37j.js                5.13 kB \u2502 gzip:   2.31 kB\r\ndist/assets/crystal-SjHAIU92.js            5.13 kB \u2502 gzip:   2.07 kB\r\ndist/assets/ruby-BK5aLJev.js               5.21 kB \u2502 gzip:   2.16 kB\r\ndist/assets/julia-DuME0IfC.js              5.39 kB \u2502 gzip:   2.14 kB\r\ndist/assets/vbscript-BuJXcnF6.js           5.82 kB \u2502 gzip:   2.57 kB\r\ndist/assets/mirc-CjQqDB4T.js               5.92 kB \u2502 gzip:   2.68 kB\r\ndist/assets/cobol-CWcv1MsR.js              6.20 kB \u2502 gzip:   2.96 kB\r\ndist/assets/scheme-C41bIUwD.js             6.37 kB \u2502 gzip:   2.39 kB\r\ndist/assets/python-BuPzkPfP.js             6.48 kB \u2502 gzip:   2.73 kB\r\ndist/assets/xquery-CQfU5ijd.js             6.62 kB \u2502 gzip:   2.56 kB\r\ndist/assets/pug-DukmZTjD.js                6.67 kB \u2502 gzip:   1.94 kB\r\ndist/assets/textile-CnDTJFAw.js            6.80 kB \u2502 gzip:   2.44 kB\r\ndist/assets/nsis-LY0VT_u5.js               7.06 kB \u2502 gzip:   3.08 kB\r\ndist/assets/nginx-DdIZxoE0.js              7.34 kB \u2502 gzip:   2.72 kB\r\ndist/assets/powershell-CFHJl5sT.js         7.77 kB \u2502 gzip:   3.33 kB\r\ndist/assets/haxe-H-WmDvRZ.js               7.89 kB \u2502 gzip:   2.95 kB\r\ndist/assets/gherkin-heZmZLOM.js            7.96 kB \u2502 gzip:   5.09 kB\r\ndist/assets/erlang-BNw1qcRV.js             8.07 kB \u2502 gzip:   2.89 kB\r\ndist/assets/verilog-C6RDOZhf.js            8.24 kB \u2502 gzip:   3.52 kB\r\ndist/assets/index-9Vd1Sug5.js              8.35 kB \u2502 gzip:   3.61 kB\r\ndist/assets/sas-B4kiWyti.js                9.33 kB \u2502 gzip:   4.11 kB\r\ndist/assets/perl-CdXCOZ3F.js               9.75 kB \u2502 gzip:   3.46 kB\r\ndist/assets/EditPane-BJCKJ944.js          10.13 kB \u2502 gzip:   3.67 kB\r\ndist/assets/clojure-BMjYHr_A.js           10.82 kB \u2502 gzip:   3.99 kB\r\ndist/assets/idl-BEugSyMb.js               11.63 kB \u2502 gzip:   4.52 kB\r\ndist/assets/dist-aC29w5Fz.js              12.74 kB \u2502 gzip:   5.62 kB\r\ndist/assets/dist-Bo8THpk4.js              14.70 kB \u2502 gzip:   5.96 kB\r\ndist/assets/dist-Gd0K31pL.js              16.34 kB \u2502 gzip:   7.46 kB\r\ndist/assets/javascript-qCveANmP.js        17.08 kB \u2502 gzip:   5.75 kB\r\ndist/assets/dist-CgLfOtZA.js              20.98 kB \u2502 gzip:   9.37 kB\r\ndist/assets/dist-vuHJPMnn.js              22.01 kB \u2502 gzip:  10.16 kB\r\ndist/assets/clike-B9uivgTg.js             22.30 kB \u2502 gzip:   7.86 kB\r\ndist/assets/dist-Cei9iXq-.js              23.09 kB \u2502 gzip:  10.40 kB\r\ndist/assets/stylus-B533Al4x.js            25.80 kB \u2502 gzip:   8.60 kB\r\ndist/assets/index-DTy5xkpg.js             26.94 kB \u2502 gzip:   8.91 kB\r\ndist/assets/css-BnMrqG3P.js               27.13 kB \u2502 gzip:   8.47 kB\r\ndist/assets/dist-Ca_2r2BX.js              28.28 kB \u2502 gzip:  12.84 kB\r\ndist/assets/dist-DcogHeZ_.js              28.79 kB \u2502 gzip:  11.71 kB\r\ndist/assets/dist-CnbmGvtp.js              30.85 kB \u2502 gzip:  12.67 kB\r\ndist/assets/purify.es-BKvm9NlY.js         31.55 kB \u2502 gzip:  12.23 kB\r\ndist/assets/dist-DJSGz2a7.js              32.36 kB \u2502 gzip:  13.08 kB\r\ndist/assets/sql-D0XecflT.js               37.05 kB \u2502 gzip:  10.94 kB\r\ndist/assets/dist-BQRnCWnL.js              45.12 kB \u2502 gzip:  15.63 kB\r\ndist/assets/dist-C5di2A7i.js              45.17 kB \u2502 gzip:  19.18 kB\r\ndist/assets/dist-C9vzmb63.js              50.40 kB \u2502 gzip:  19.95 kB\r\ndist/assets/marked.esm-CG1o1NHW.js        55.11 kB \u2502 gzip:  16.76 kB\r\ndist/assets/CommandPalette-lEqa5fY2.js    56.52 kB \u2502 gzip:  19.58 kB\r\ndist/assets/dist-A3jFHpMe.js              83.73 kB \u2502 gzip:  30.37 kB\r\ndist/assets/dist-BuNIHvu5.js              87.04 kB \u2502 gzip:  34.51 kB\r\ndist/assets/dist-DDLrQeWr.js              98.32 kB \u2502 gzip:  28.59 kB\r\ndist/assets/dist-B8-ywtpN.js             103.95 kB \u2502 gzip:  34.39 kB\r\ndist/assets/CodeSurface-CYL6Yttq.js      364.45 kB \u2502 gzip: 117.39 kB\r\ndist/assets/index-qlDXQdoh.js            701.97 kB \u2502 gzip: 209.79 kB\r\n\u2713 built in 12.51s\r\n\n\r\n(!) Some chunks are larger than 500 kB after minification. Consider:\r\n- Using dynamic import() to code-split the application\r\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\r\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.",
+      "rules": []
+    },
+    {
+      "id": "tauri-rust-lints",
+      "name": "Core: lints (clippy, warnings are errors)",
+      "passed": true,
+      "seconds": 10.2700767,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No clippy issues.",
+      "rules": [
+        "TAU-001"
+      ]
+    },
+    {
+      "id": "tauri-rust-tests",
+      "name": "Core: tests",
+      "passed": true,
+      "seconds": 31.3742296,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "\u2026\ntest register::tests::creates_the_servers_object_when_missing_and_is_idempotent ... ok\r\ntest register::tests::known_clients_have_their_documented_locations ... ok\r\ntest mcp::tests::the_guide_documents_every_command_line_flag_and_command ... ok\r\ntest register::tests::opencode_gets_a_local_command_array_under_mcp_and_keeps_its_other_settings ... ok\r\ntest register::tests::rejects_documents_it_cannot_safely_extend ... ok\r\ntest register::tests::removal_touches_only_our_entry ... ok\r\ntest register::tests::the_old_lite_commander_entry_is_removed_and_everything_else_is_kept ... ok\r\ntest register::tests::the_paste_snippet_is_valid_json_with_the_full_path ... ok\r\ntest register::tests::vs_code_uses_servers_with_a_stdio_type ... ok\r\ntest mcp::tests::the_tool_list_is_small_valid_and_cheap ... ok\r\ntest mcp::tests::the_guide_documents_every_tool_and_every_parameter_of_every_tool ... ok\r\ntest register::tests::a_file_it_cannot_parse_is_left_exactly_as_it_was ... ok\r\ntest register::tests::selection_defaults_to_the_detected_clients_and_names_unknown_ones ... ok\r\ntest register::tests::opencode_location_prefers_an_existing_jsonc_file ... ok\r\ntest register::tests::install_writes_a_new_file_and_a_second_run_changes_nothing ... ok\r\ntest register::tests::opencode_installs_into_a_real_file ... ok\r\ntest register::tests::a_byte_order_mark_and_an_empty_file_are_fine ... ok\r\ntest register::tests::installing_replaces_the_old_entry_with_the_new_one_in_a_real_file ... ok\r\ntest register::tests::uninstall_also_clears_a_leftover_old_entry ... ok\r\ntest register::tests::uninstall_removes_only_ours_and_ignores_missing_files ... ok\r\ntest register::tests::install_backs_up_the_original_once_and_preserves_other_settings ... ok\r\n\r\ntest result: ok. 54 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s\r\n\r\n\r\nrunning 0 tests\r\n\r\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\r\n\r\n\r\nrunning 14 tests\r\ntest a1_home_folder_reads_only_the_user_profile ... ok\r\ntest r5_drives_are_listed_as_drive_roots ... ok\r\ntest r4_a_missing_app_root_is_locked_instead_of_raising ... ok\r\ntest r2_an_empty_folder_lists_no_children_without_error ... ok\r\ntest r2_children_are_fetched_only_when_their_level_is_requested ... ok\r\ntest r2_an_unreadable_folder_is_locked_and_does_not_raise ... ok\r\ntest r2_lists_one_level_and_tells_folders_from_files ... ok\r\ntest r2_other_dot_named_entries_are_listed_normally ... ok\r\ntest r2_show_hidden_reveals_the_four_names_and_can_hide_them_again ... ok\r\ntest a1_folders_come_first_then_files_sorted_by_name ... ok\r\ntest a1_scanning_stops_at_the_scan_limit ... ok\r\ntest r2_hides_the_four_noisy_names_by_default_at_any_depth ... ok\r\ntest r2_listing_a_level_never_opens_its_child_folders ... ok\r\ntest a1_a_large_level_is_capped_with_total_and_truncated ... ok\r\n\r\ntest result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.89s\r\n\r\n\r\nrunning 0 tests\r\n\r\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\r\n\r\n\n    Finished \u0060test\u0060 profile [unoptimized \u002B debuginfo] target(s) in 6.90s\r\n     Running unittests src\\lib.rs (src-tauri\\target\\debug\\build\\tinkerdeck/a66a286f72f24cec\\out\\tinkerdeck_lib-a66a286f72f24cec.exe)\r\n     Running unittests src\\bin\\tdk\\main.rs (src-tauri\\target\\debug\\build\\tinkerdeck/850570da81c9492d\\out\\tdk-850570da81c9492d.exe)\r\n     Running unittests src\\main.rs (src-tauri\\target\\debug\\build\\tinkerdeck/bb7998b3975e9149\\out\\tinkerdeck-bb7998b3975e9149.exe)\r\n     Running tests\\explorer.rs (src-tauri\\target\\debug\\build\\tinkerdeck/d2731de29e61dd2d\\out\\explorer-d2731de29e61dd2d.exe)\r\n   Doc-tests tinkerdeck_lib",
+      "rules": [
+        "TAU-011"
+      ]
+    },
+    {
+      "id": "tauri-rust-build",
+      "name": "Core: the app compiles",
+      "passed": true,
+      "seconds": 1.4219779,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "Finished \u0060dev\u0060 profile [unoptimized \u002B debuginfo] target(s) in 1.12s",
+      "rules": []
+    },
+    {
+      "id": "tauri-web-tests",
+      "name": "Window: tests, with coverage",
+      "passed": true,
+      "seconds": 0,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "Not run again: the files this check looks at are unchanged since it last passed.",
+      "rules": [
+        "TAU-011"
+      ]
+    },
+    {
+      "id": "tauri-rust-tests",
+      "name": "Core: tests",
+      "passed": true,
+      "seconds": 0,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "Not run again: the files this check looks at are unchanged since it last passed.",
+      "rules": [
+        "TAU-011"
+      ]
+    }
+  ],
+  "fullGreenHash": "387500027D018ADB4432F5DB67C53F102186EE455B0C7F4E6301DEBA8C8F5755",
+  "baseline": [
+    {
+      "id": "no-secrets",
+      "name": "No secrets in code",
+      "passed": true,
+      "seconds": 0.0882946,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "SEC-001"
+      ]
+    },
+    {
+      "id": "no-debug-leftovers",
+      "name": "No debugging leftovers",
+      "passed": true,
+      "seconds": 0.07278,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "QUAL-001"
+      ]
+    },
+    {
+      "id": "tauri-no-invoke-in-features",
+      "name": "Screens ask the core through src/api only",
+      "passed": true,
+      "seconds": 0.0642987,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-002"
+      ]
+    },
+    {
+      "id": "tauri-no-panics",
+      "name": "The Rust core does not panic",
+      "passed": true,
+      "seconds": 0.0637338,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-006"
+      ]
+    },
+    {
+      "id": "tauri-csp-set",
+      "name": "The window has a content security policy",
+      "passed": true,
+      "seconds": 0.0590363,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-004"
+      ]
+    },
+    {
+      "id": "tauri-least-privilege",
+      "name": "Permissions are small and specific",
+      "passed": true,
+      "seconds": 0.0578585,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-005"
+      ]
+    },
+    {
+      "id": "tauri-no-signing-key",
+      "name": "No signing keys in the project",
+      "passed": true,
+      "seconds": 0.0979955,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-009"
+      ]
+    },
+    {
+      "id": "tauri-versions",
+      "name": "One version number everywhere",
+      "passed": true,
+      "seconds": 0,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "Not run again: the files this check looks at are unchanged since it last passed.",
+      "rules": [
+        "TAU-013"
+      ]
+    },
+    {
+      "id": "tauri-web-typecheck",
+      "name": "Window: type check",
+      "passed": true,
+      "seconds": 0,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "Not run again: the files this check looks at are unchanged since it last passed.",
+      "rules": []
+    },
+    {
+      "id": "tauri-rust-format",
+      "name": "Core: formatting",
+      "passed": true,
+      "seconds": 0,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "Not run again: the files this check looks at are unchanged since it last passed.",
+      "rules": [
+        "TAU-001"
+      ]
+    },
+    {
+      "id": "tauri-web-tests",
+      "name": "Window: tests, with coverage",
+      "passed": true,
+      "seconds": 0,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "Not run again: the files this check looks at are unchanged since it last passed.",
+      "rules": [
+        "TAU-011"
+      ]
+    },
+    {
+      "id": "tauri-web-build",
+      "name": "Window: build",
+      "passed": true,
+      "seconds": 0,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "Not run again: the files this check looks at are unchanged since it last passed.",
+      "rules": []
+    },
+    {
+      "id": "tauri-rust-lints",
+      "name": "Core: lints (clippy, warnings are errors)",
+      "passed": true,
+      "seconds": 0,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "Not run again: the files this check looks at are unchanged since it last passed.",
+      "rules": [
+        "TAU-001"
+      ]
+    },
+    {
+      "id": "tauri-rust-tests",
+      "name": "Core: tests",
+      "passed": true,
+      "seconds": 0,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "Not run again: the files this check looks at are unchanged since it last passed.",
+      "rules": [
+        "TAU-011"
+      ]
+    },
+    {
+      "id": "tauri-rust-build",
+      "name": "Core: the app compiles",
+      "passed": true,
+      "seconds": 0,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "Not run again: the files this check looks at are unchanged since it last passed.",
+      "rules": []
+    }
+  ],
+  "checkPassedOn": {
+    "tauri-versions": "F602DF312386869387F179D15366AA49096352F3ECC5198846BCCD1D05BB3E94",
+    "tauri-web-typecheck": "6879E72FCF8E84E6C0B13D84F783A0217AC8FF59170F423222F733A55D3205A3",
+    "tauri-rust-format": "4F7822986581F3B68AD03B9CECEA6728E60415F7C63EDC6641D75891CCA69E2E",
+    "tauri-web-tests": "3D86C247866E9898C6FBF369CB51092DD73B5EEB8D6ED979C49FFB51F275F485",
+    "tauri-web-build": "38C2D4AEEE79D21CB1E4AD4F00106ABA0B65468C58D3AA4A3998CCFEEE1EE726",
+    "tauri-rust-lints": "E07FCB2D088386400E8FB84BC7A9269BBA0F6332DF9FD2F9AFC88F411086B4A1",
+    "tauri-rust-tests": "2150DCE86CA0D3923C98F832B001B16F5AE4D90342BE2FE7947BFE116272AEF6",
+    "tauri-rust-build": "BA8E14BD4C3405F1B94BEF2EA04E394F9CAFD3232E83BFD06EA45ECA28CE9CFF"
+  },
+  "checkFailedOn": {},
+  "generatedByChecks": [],
+  "ignoredPaths": [],
+  "acceptedGaps": [],
+  "convertedFindings": [],
+  "scopeExtensions": [
+    "README.md",
+    "docs/ui-tidy-up-plan.md",
+    "CHANGELOG.md"
+  ],
+  "rulings": [],
+  "shortcuts": 0,
+  "routeHistory": [],
+  "amendments": [],
+  "scopeSeen": {},
+  "scopeRequestsMade": 1,
+  "skippedFolders": [],
+  "skippedFiles": [],
+  "skippedWhy": [],
+  "blockerKey": "scope|rev-2 requires all user-visible f5-refresh wording to describe the new start all / stop all binding (r6 acceptance: \u0027no menu, palette entry or help text still tells the user that f5 refreshes\u0027), but the remaining stale wording lives only in files outside the design\u0027s declared scope: readme.md:54 (\u0027**f5** refresh\u0027), docs/ui-tidy-up-plan.md:133 (\u0027**f5** | refresh everything\u0027), :147 (\u0027ctrl\u002Bb and f5 are unchanged\u0027), :150 (f5 forwarded as a refresh shortcut) and :267 (\u0027p2 | refresh everything | always | f5\u0027), and changelog.md:10 (\u0027f5 refresh\u0027) and :81 (\u0027f5 refresh everything now\u0027). every in-scope user-facing f5 hint (the utilities menu refresh item, the git bar refresh title and the command-palette help) was already updated and is covered by passing tests in src/features/apps/utilitiesmenu.test.tsx, src/features/git/git.test.tsx and src/features/command-palette/commandpalette.test.tsx, so r6\u0027s documentation clause cannot be met without editing these three files outside the design scope.|CHANGELOG.md,README.md,docs/ui-tidy-up-plan.md|0|0|0",
+  "blockerRepeats": 1,
+  "additionsJudgedFor": "D10C327A00325587",
+  "pendingAdditionIds": [],
+  "acceptedAdditions": [
+    {
+      "id": "A1",
+      "title": "Ask the core for the user\u0027s home folder",
+      "parent": "R13",
+      "why": "The home view and an editor with no file have to show the person\u0027s home folder, and the window must not guess or hard-code a Windows path.",
+      "decidedBy": "arbiter",
+      "reason": "A1: R13 already asks the explorer to open at the person\u0027s home folder whenever no app or file applies, so the app must ask Windows where that folder is, and reading the standard home-folder setting changes nothing a person would notice beyond the home root R13 already promises."
+    },
+    {
+      "id": "A2",
+      "title": "Add the approved responsive-layout package and prove it is usable",
+      "parent": "R8",
+      "why": "R8 names the jattac responsive-layout library as the source of the side panes, and an earlier jattac package had to be rejected because its published build shipped no CSS.",
+      "decidedBy": "arbiter",
+      "reason": "A1: R13 already asks the explorer to open at the person\u0027s home folder whenever no app or file applies, so the app must ask Windows where that folder is, and reading the standard home-folder setting changes nothing a person would notice beyond the home root R13 already promises."
+    },
+    {
+      "id": "A3",
+      "title": "Keep focus, Escape and cancel behaviour when dialogs move to the pane",
+      "parent": "R8",
+      "why": "Moving confirmations into a side pane must not make a destructive dialog easier to misfire or impossible to dismiss from the keyboard.",
+      "decidedBy": "arbiter",
+      "reason": "A1: R13 already asks the explorer to open at the person\u0027s home folder whenever no app or file applies, so the app must ask Windows where that folder is, and reading the standard home-folder setting changes nothing a person would notice beyond the home root R13 already promises."
+    },
+    {
+      "id": "A4",
+      "title": "Pin the current dialog and branch menu behaviour before changing them",
+      "parent": "R8",
+      "why": "The shared Dialog and BranchMenu were already shipped, so their current behaviour has to be frozen by tests before their shell is replaced (USR-004).",
+      "decidedBy": "arbiter",
+      "reason": "A1: R13 already asks the explorer to open at the person\u0027s home folder whenever no app or file applies, so the app must ask Windows where that folder is, and reading the standard home-folder setting changes nothing a person would notice beyond the home root R13 already promises."
+    }
+  ],
+  "designSeeded": false,
+  "preflightAnswered": false,
+  "analystQuestions": 0,
+  "analysisClosed": true,
+  "youDecided": 0,
+  "requirementsApproved": true,
+  "seriesProposed": true,
+  "seriesDeclined": false,
+  "seriesId": "db5bb811",
+  "revisionNumber": 2,
+  "title": "When no app root applies (the home view, the editor view with no tab open, or an\u2026 (and 3 more)",
+  "subtitle": "Revision 2 of 3 \u00B7 part of: 1a. Sidebar file explorer: browsing and root rules (and 7 more)",
+  "seriesBoundaryAnswered": false,
+  "signOffRounds": 2,
+  "changedFiles": [
+    "CHANGELOG.md",
+    "docs/ui-tidy-up-plan.md",
+    "package.json",
+    "README.md",
+    "src-tauri/src/features/explorer/commands.rs",
+    "src-tauri/src/features/explorer/mod.rs",
+    "src-tauri/src/lib.rs",
+    "src-tauri/tests/explorer.rs",
+    "src/api/explorer.test.ts",
+    "src/api/explorer.ts",
+    "src/App.editor.test.tsx",
+    "src/App.explorer.test.tsx",
+    "src/App.features.test.tsx",
+    "src/App.layout.test.tsx",
+    "src/App.shortcuts.test.tsx",
+    "src/App.test.tsx",
+    "src/App.themes.test.tsx",
+    "src/App.tsx",
+    "src/App.updatecheck.test.tsx",
+    "src/App.updates.test.tsx",
+    "src/features/apps/components.test.tsx",
+    "src/features/apps/Dialog.module.css",
+    "src/features/apps/Dialog.tsx",
+    "src/features/apps/SidePane.module.css",
+    "src/features/apps/SidePane.test.tsx",
+    "src/features/apps/SidePane.tsx",
+    "src/features/apps/UtilitiesMenu.test.tsx",
+    "src/features/apps/UtilitiesMenu.tsx",
+    "src/features/command-palette/CommandPalette.test.tsx",
+    "src/features/command-palette/CommandPalette.tsx",
+    "src/features/explorer/ExplorerPanel.test.tsx",
+    "src/features/explorer/ExplorerPanel.tsx",
+    "src/features/explorer/root.test.ts",
+    "src/features/explorer/root.ts",
+    "src/features/explorer/useExplorer.test.tsx",
+    "src/features/explorer/useExplorer.ts",
+    "src/features/git/BranchMenu.tsx",
+    "src/features/git/Git.module.css",
+    "src/features/git/git.test.tsx",
+    "src/features/git/GitBar.tsx",
+    "src/features/themes/ThemeFinder.test.tsx",
+    "src/features/themes/Themes.module.css",
+    "src/features/updates/updates.test.tsx",
+    "src/shared/shortcuts.test.ts",
+    "src/shared/shortcuts.ts"
+  ]
+}

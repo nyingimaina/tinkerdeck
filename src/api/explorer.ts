@@ -25,4 +25,6 @@ export const explorerApi = {
   list: (path: string, showHidden: boolean) => invoke<ExplorerListing>("explorer_list", { path, showHidden }),
   /** The Windows drive roots, the level above every folder hierarchy. */
   drives: () => invoke<ExplorerEntry[]>("explorer_drives"),
+  /** The user's home folder, or null when the core cannot determine one (R13, A1). */
+  home: () => invoke<string | null>("explorer_home"),
 };

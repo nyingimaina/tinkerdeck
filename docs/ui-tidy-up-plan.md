@@ -106,7 +106,7 @@ controls today.
 | 2 | **Shell** select | **Appearance** | Visible (never behind a dialog) | Not a transient; change saves immediately | **Yes** — saved by the core (`config.shell`) | Always in Appearance |
 | 3 | **✎ Editor** | **Utilities** | Hidden until **Utilities** is opened | Choosing it closes the menu and toggles the editor view | No | **Utilities** |
 | 4 | **⬆ Updates** (check now) | **Utilities** | Hidden until **Utilities** is opened | Choosing it closes the menu; result appears as B3/B4/B5 | No | **Utilities**; also **Help → Check now** and the always-visible update banner |
-| 5 | **⟳ Refresh** | **Utilities** | Hidden until **Utilities** is opened | Choosing it closes the menu | No | **Utilities**, **F5**, and the Git bar **⟳** |
+| 5 | **⟳ Refresh** | **Utilities** | Hidden until **Utilities** is opened | Choosing it closes the menu | No | **Utilities** and the Git bar **⟳** (no keyboard shortcut) |
 | 6 | **? Help** | **Utilities** | Hidden until **Utilities** is opened | Choosing it closes the menu and opens D9 | No | **Utilities** |
 | 7 | **🎨 Theme** menu trigger | **Appearance** | Visible (never behind a dialog) | *n/a* (a menu trigger) | The chosen theme is saved by the core | Always in Appearance |
 | 8 | **Find more themes…** | **Appearance** (inside the theme menu) | Hidden until the theme menu opens | Choosing it closes the menu and opens D1 | No | Theme menu |
@@ -130,7 +130,7 @@ row. Afterwards **Shell** and **Theme** are in **Appearance**, and **Updates** i
 | Shortcut | Action | Owner / where handled | Named group | Also reachable by | Notes |
 | --- | --- | --- | --- | --- | --- |
 | **Ctrl+B** | Toggle sidebar | Window handler in `App.tsx`; forwarded by the terminal | Brand / Navigation | Brand **☰** | Existing; unchanged. Works when the terminal or editor has focus. |
-| **F5** | Refresh everything | Window handler in `App.tsx`; forwarded by the terminal | Utilities | **Utilities → Refresh**; Git bar **⟳** | Existing; unchanged. |
+| **F5** | Start all / Stop all | Window handler in `App.tsx`; forwarded by the terminal | App workspace | App header **Start all / Stop all** | Was refresh before; now toggles the open app and is a no-op outside the app view. Refresh keeps no key. |
 | **Ctrl+S** | Save the active editor file | `EditorView.tsx` window handler | Editors | Editor toolbar **Save** | Existing; must keep working while the editor is focused. |
 | **Ctrl+Shift+S** | Save as | `EditorView.tsx` | Editors | **Save as…** | Existing. |
 | **Ctrl+N** | New editor file | `EditorView.tsx` | Editors | **New** | Existing. |
@@ -144,7 +144,7 @@ row. Afterwards **Shell** and **Theme** are in **Appearance**, and **Updates** i
 Conflict record (R4 edge case): the editor already owns **Ctrl+O** (open), **Ctrl+S**,
 **Ctrl+Shift+S**, **Ctrl+N** and **Ctrl+W**. The tidy-up does not add any app-level Ctrl+O
 (and does not add Ctrl+W or Ctrl+N). The palette is bound to **Ctrl+Shift+P**, which the
-editor does not use, and the theme toggle to **Ctrl+Alt+T**. Ctrl+B and F5 are unchanged.
+editor does not use, and the theme toggle to **Ctrl+Alt+T**. Ctrl+B is unchanged; **F5** is no longer a refresh (it toggles Start all / Stop all in the app view only).
 
 Pass-through (R4): the terminal's `attachCustomKeyEventHandler` forwards only the app
 shortcuts (Ctrl+B, F5, Ctrl+Shift+P, Ctrl+Alt+T) to the window and lets every other key go
@@ -215,7 +215,7 @@ column are the ones behind what was seen.
 
 | Screen | What was on screen | CSS checked | Result |
 | --- | --- | --- | --- |
-| Home | Four separate top-bar groups, left to right: **Brand** (☰, logo, "Tinkerdeck"), then **Appearance** (Shell "PowerShell 7", theme palette, ☀), **Create** (+ App in the accent colour) and **Utilities** (…). The advanced Editor / Check for updates / Refresh / Help are **not** in the bar; choosing **Utilities** listed exactly Editor, Check for updates, Refresh (F5) and Help. Sidebar expanded on the left (Home, Demo, Tools); Home shows Favourites / Recent / Add / All apps; the footer strip reads "Tinkerdeck" on the left and "v2.0.0" on the right. | `App.module.css`, `TopBar.module.css`, `UtilitiesMenu.module.css`, `Sidebar.module.css`, `HomeScreen.module.css`, `AppFooter.module.css` | Matches R3 |
+| Home | Four separate top-bar groups, left to right: **Brand** (☰, logo, "Tinkerdeck"), then **Appearance** (Shell "PowerShell 7", theme palette, ☀), **Create** (+ App in the accent colour) and **Utilities** (…). The advanced Editor / Check for updates / Refresh / Help are **not** in the bar; choosing **Utilities** listed exactly Editor, Check for updates, Refresh and Help. Sidebar expanded on the left (Home, Demo, Tools); Home shows Favourites / Recent / Add / All apps; the footer strip reads "Tinkerdeck" on the left and "v2.0.0" on the right. | `App.module.css`, `TopBar.module.css`, `UtilitiesMenu.module.css`, `Sidebar.module.css`, `HomeScreen.module.css`, `AppFooter.module.css` | Matches R3 |
 | App view | The git bar was one collapsed chip — "⎇ main ●", "↑2 ↓0", a ⟳ refresh and a ▾ toggle — with no Fetch/Pull/Push/Sync/Changes/History/Console until the ▾ toggle was chosen; choosing it showed the full tools and the toggle turned to ▴ (hide again). App header "Demo" with Start all / ⚙; tab strip api · web · >_ Console with Start/Stop/Restart; the terminal area; footer "v2.0.0". | `App.module.css`, `Git.module.css`, `TerminalHost.module.css`, `AppHeader.module.css` | Matches R5 |
 | Editor view | Opened from **Utilities → Editor**; same grouped top bar; New / Open… / Save / Save as… toolbar, Bin (0), the empty-state message and the "v2.0.0" footer. The separate editor view stayed separate and was not embedded in an app view. | `EditorView.module.css`, `App.module.css`, `AppFooter.module.css` | Matches R2 |
 | Utilities → Help | Choosing **Utilities → Help** opened the Help dialog over Home: a scrollable body, an Updates section (Version 2.0.0, "Check for updates automatically", Check now) and a **Close** button. Nothing of that body was in the window before the dialog was opened. | `CommandPalette.module.css`, `Dialog.module.css` | Matches R4 / R5 |
@@ -264,7 +264,7 @@ different names.
 | # | Command | Listed when | Shortcut |
 | --- | --- | --- | --- |
 | P1 | Toggle sidebar | Always | Ctrl+B |
-| P2 | Refresh everything | Always | F5 |
+| P2 | Refresh everything | Always | No shortcut |
 | P3 | Switch light/dark theme | Always | Ctrl+Alt+T |
 | P4 | Open command palette | Always | Ctrl+Shift+P |
 | P5 | Open editor / Close editor | Always | No shortcut |

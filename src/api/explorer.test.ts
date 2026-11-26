@@ -32,4 +32,18 @@ describe("explorerApi", () => {
     await expect(explorerApi.drives()).resolves.toEqual(drives);
     expect(invoke).toHaveBeenCalledWith("explorer_drives");
   });
+
+  it("A1 asks the core for the home folder through explorer_home", async () => {
+    invoke.mockResolvedValue("C:\\Users\\me");
+
+    await expect(explorerApi.home()).resolves.toBe("C:\\Users\\me");
+    expect(invoke).toHaveBeenCalledWith("explorer_home");
+  });
+
+  it("A1 returns null when the core cannot determine a home folder", async () => {
+    invoke.mockResolvedValue(null);
+
+    await expect(explorerApi.home()).resolves.toBeNull();
+    expect(invoke).toHaveBeenCalledWith("explorer_home");
+  });
 });

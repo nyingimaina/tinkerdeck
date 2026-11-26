@@ -274,7 +274,38 @@ describe("ExplorerPanel", () => {
     expect(screen.getByText(/This folder can't be read\./)).toBeInTheDocument();
   });
 
-  it("A5 with no root it shows a hint and asks the core for nothing", async () => {
+  it("R13 a home root shows the home folder and Up climbs one level at a time until the drive list", async () => {
+    api.list.mockImplementation(async (path: string) => listing(path, []));
+    renderPanel({ root: "C:\\Users\\me", source: "home" });
+    await flush();
+
+    expect(api.list).toHaveBeenCalledWith("C:\\Users\\me", false);
+    expect(screen.getByRole("button", { name: "Up" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Up" }));
+    await flush();
+    expect(api.list).toHaveBeenLastCalledWith("C:\\Users", false);
+
+    await userEvent.click(screen.getByRole("button", { name: "Up" }));
+    await flush();
+    expect(api.list).toHaveBeenLastCalledWith("C:\\", false);
+
+    await userEvent.click(screen.getByRole("button", { name: "Up" }));
+    await flush();
+    expect(api.drives).toHaveBeenCalled();
+    expect(screen.getByText("C:")).toBeInTheDocument();
+  });
+
+  it("R13 an unreadable home folder shows the locked state and the panel stays usable", async () => {
+    api.list.mockRejectedValue(new Error("Access denied"));
+    renderPanel({ root: "C:\\Users\\me", source: "home" });
+    await flush();
+
+    expect(screen.getByText(/This folder can't be read\./)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Show hidden" })).toBeInTheDocument();
+  });
+
+  it("A1 with no root it shows a hint and asks the core for nothing", async () => {
     const { rerender } = render(<ExplorerPanel root={null} onOpenFile={vi.fn()} />);
     await flush();
     expect(screen.getByText("Open an app or a file to browse its folder.")).toBeInTheDocument();

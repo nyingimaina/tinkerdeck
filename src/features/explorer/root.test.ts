@@ -91,11 +91,51 @@ describe("explorer root", () => {
     expect(at({ view: "editor", activePath: "E:\\loose\\file.txt" }).root).toBe("E:\\loose");
   });
 
-  it("A5 the home view has no root, so the panel shows a hint", () => {
-    expect(at({ view: "home" })).toEqual({ root: null, appId: null, source: "none" });
+  it("R13 the home view roots at the user's home folder", () => {
+    expect(at({ view: "home", homeFolder: "C:\\Users\\me" })).toEqual({
+      root: "C:\\Users\\me",
+      appId: null,
+      source: "home",
+    });
   });
 
-  it("A5 an editor view with no tab, or an unsaved tab, has no root", () => {
-    expect(at({ view: "editor", activePath: null })).toEqual({ root: null, appId: null, source: "none" });
+  it("R13 the editor view with no tab open roots at the home folder", () => {
+    expect(at({ view: "editor", activePath: null, homeFolder: "C:\\Users\\me" })).toEqual({
+      root: "C:\\Users\\me",
+      appId: null,
+      source: "home",
+    });
+  });
+
+  it("R13 an unsaved tab with no path roots at the home folder", () => {
+    expect(at({ view: "editor", activePath: null, homeFolder: "D:\\Users\\other" })).toEqual({
+      root: "D:\\Users\\other",
+      appId: null,
+      source: "home",
+    });
+  });
+
+  it("R13 an app root still wins over the home folder", () => {
+    expect(at({ view: "app", selectedAppId: "outer", homeFolder: "C:\\Users\\me" })).toEqual({
+      root: "C:\\work\\proj",
+      appId: "outer",
+      source: "app",
+    });
+  });
+
+  it("R13 a Misc file still roots at its parent folder, not the home folder", () => {
+    expect(at({ view: "editor", activePath: "E:\\loose\\file.txt", homeFolder: "C:\\Users\\me" })).toEqual({
+      root: "E:\\loose",
+      appId: null,
+      source: "misc",
+    });
+  });
+
+  it("A1 without a home folder from the core the home view has no root, so the panel shows its hint", () => {
+    expect(at({ view: "home", homeFolder: null })).toEqual({ root: null, appId: null, source: "none" });
+  });
+
+  it("A1 without a home folder from the core an editor view with no path has no root", () => {
+    expect(at({ view: "editor", activePath: null, homeFolder: null })).toEqual({ root: null, appId: null, source: "none" });
   });
 });

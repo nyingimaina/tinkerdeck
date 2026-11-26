@@ -23,9 +23,9 @@ const EMPTY_LEVEL: ExplorerLevelState = { listing: null, loading: false, locked:
 export const MAX_CACHED_LEVELS = 100;
 
 export interface ExploreOptions {
-  /** The folder to browse; null when nothing applies, so no request is made (A5). */
+  /** The folder to browse; null when nothing applies, so no request is made (R13). */
   root: string | null;
-  /** "misc" roots climb with Up; an "app" root is the top folder and offers no Up (R4, R5). */
+  /** "misc" and "home" roots climb with Up; an "app" root is the top folder and offers no Up (R4, R5, R13). */
   source?: ExplorerRootSource;
   /**
    * Changes when the view, selected app or active tab changes. Any Up navigation is discarded and
@@ -42,9 +42,9 @@ export interface ExplorerController {
   showHidden: boolean;
   /** Turn the hidden build/VCS names on or off; any level shown is refreshed (R2). */
   setShowHidden: (show: boolean) => void;
-  /** True only for a Misc root, so an app-rooted explorer keeps the app root as its top (R4). */
+  /** True for Misc and home roots, so an app-rooted explorer keeps the app root as its top (R4, R13). */
   canGoUp: boolean;
-  /** Climb one folder, or to the drive list from a drive root (R5). */
+  /** Climb one folder, or to the drive list from a drive root (R5, R13). */
   up: () => void;
   /** Browse a drive chosen from the drive list. */
   openDrive: (drive: ExplorerEntry) => void;
@@ -232,9 +232,9 @@ export function useExplorer({ root, source = "none", resetKey }: ExploreOptions)
 
   const refresh = useCallback(() => reloadShown(showHiddenRef.current), [reloadShown]);
 
-  const canGoUp = source === "misc" && !atDrives;
+  const canGoUp = (source === "misc" || source === "home") && !atDrives;
   const up = useCallback(() => {
-    if (source !== "misc" || atDrives) return;
+    if ((source !== "misc" && source !== "home") || atDrives) return;
     const parent = currentRoot ? parentFolder(currentRoot) : null;
     if (parent) setCurrentRoot(parent);
     else setAtDrives(true);

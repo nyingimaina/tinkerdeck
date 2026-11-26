@@ -1,0 +1,13 @@
+{
+  "summary": "R13, R6 and R7 hang together, but R8's move of every dialog to a side pane contradicts the earlier accepted promise that no existing dialog is redesigned or replaced (20261125-153618:R2), and the plan does not record which one wins.",
+  "conflicts": [
+    {
+      "requirement": "R8",
+      "against": "20261125-153618:R2",
+      "kind": "regression",
+      "owner": "requirements",
+      "why": "R8 presents the shared Dialog and every dialog built on it as responsive side panes instead of centred modals, so every existing dialog is redesigned/replaced. The earlier accepted requirement R2 promises that every existing dialog is still present and none is redesigned or replaced. Both cannot hold at once, and neither the design nor the requirement text records R2 as superseded or says which side wins, so the builder has no rule for the existing dialog behaviour.",
+      "evidence": "R8 (analyst-r2): \"The shared Dialog and every dialog built on it (including the theme finder and the confirmation dialogs) plus the git BranchMenu are presented as responsive side panes from the project's approved jattac responsive-layout package, instead of centred modals.\" / 20261125-153618:R2: \"Done when: All existing screens, panels, dialogs and the footer are still present after the tidy-up; none is redesigned or replaced.\" / Design r4 summary: \"R8 adds one small adapter, SidePane, ... Dialog keeps its exact props/actions API and renders its body and actions inside the adapter's pane\"."
+    }
+  ]
+}

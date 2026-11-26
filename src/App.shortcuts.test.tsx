@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConfigView } from "./state/model";
@@ -62,6 +62,7 @@ vi.mock("./api/explorer", () => ({
   explorerApi: {
     list: vi.fn(async (path: string) => ({ path, entries: [], total: 0, truncated: false, locked: false })),
     drives: vi.fn(async () => []),
+    home: vi.fn(async () => null),
   },
 }));
 
@@ -101,8 +102,18 @@ beforeEach(() => {
   h.ed.pickOpenPaths.mockResolvedValue([]);
   h.view = view();
   h.repo = null;
+  h.stateCb = null;
+  h.api.terminalStates.mockResolvedValue([]);
   localStorage.clear();
 });
+
+const press = (key: string, mods: KeyboardEventInit = {}) => {
+  const e = new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key, ...mods });
+  act(() => {
+    window.dispatchEvent(e);
+  });
+  return e;
+};
 
 describe("App app-level shortcuts", () => {
   it("R4: Ctrl+Shift+P opens the command palette and Escape closes it", async () => {
@@ -124,7 +135,9 @@ describe("App app-level shortcuts", () => {
 
     const dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     expect(within(dialog).getByRole("button", { name: /Toggle sidebar/ })).toHaveTextContent("Ctrl+B");
-    expect(within(dialog).getByRole("button", { name: /Refresh everything/ })).toHaveTextContent("F5");
+    const refresh = within(dialog).getByRole("button", { name: /Refresh everything/ });
+    expect(refresh).toHaveTextContent("No shortcut");
+    expect(refresh).not.toHaveTextContent("F5");
     expect(within(dialog).getByRole("button", { name: /Switch light\/dark theme/ })).toHaveTextContent("Ctrl+Alt+T");
 
     await userEvent.click(within(dialog).getByRole("button", { name: /Toggle sidebar/ }));
@@ -132,7 +145,7 @@ describe("App app-level shortcuts", () => {
     expect(screen.queryByRole("dialog", { name: "Command palette" })).toBeNull();
   });
 
-  it("R4: Ctrl+Alt+T switches the theme while Ctrl+B and F5 keep their old actions", async () => {
+  it("R4/R6: Ctrl+Alt+T switches the theme and Ctrl+B toggles the sidebar, while F5 no longer refreshes", async () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
 
@@ -145,8 +158,11 @@ describe("App app-level shortcuts", () => {
     expect(screen.getByRole("navigation", { name: "Apps" })).toBeInTheDocument();
 
     const shells = h.api.listShells.mock.calls.length;
+    const states = h.api.terminalStates.mock.calls.length;
     fireEvent.keyDown(window, { key: "F5" });
-    await waitFor(() => expect(h.api.listShells.mock.calls.length).toBeGreaterThan(shells));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(h.api.listShells.mock.calls.length).toBe(shells);
+    expect(h.api.terminalStates.mock.calls.length).toBe(states);
   });
 
   it("R4/R7: the editor keeps Ctrl+S, Ctrl+N, Ctrl+O and Ctrl+W while it has focus", async () => {
@@ -374,6 +390,150 @@ describe("App app-level shortcuts", () => {
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Command palette" })).toBeNull());
     await waitFor(() => expect(opener).toHaveFocus());
+  });
+
+  it("R6: in the app view with everything stopped, F5 starts all exactly as the button would", async () => {
+    render(<App />);
+    await openApp();
+    expect(screen.getByRole("button", { name: /Start all/ })).toBeInTheDocument();
+    const states = h.api.terminalStates.mock.calls.length;
+
+    const e = press("F5");
+    expect(e.defaultPrevented).toBe(true);
+    await waitFor(() => expect(h.api.startAll).toHaveBeenCalledWith("a1"));
+    expect(h.api.stopAll).not.toHaveBeenCalled();
+    // F5 is not a refresh any more.
+    expect(h.api.terminalStates.mock.calls.length).toBe(states);
+  });
+
+  it("R6: in the app view with a running terminal, F5 stops them exactly as the button would", async () => {
+    h.api.terminalStates.mockResolvedValue([{ terminalId: "t1", state: { kind: "running" } }]);
+    render(<App />);
+    await openApp();
+    expect(screen.getByRole("button", { name: /Stop all/ })).toBeInTheDocument();
+
+    press("F5");
+    await waitFor(() => expect(h.api.stopAll).toHaveBeenCalledWith("a1"));
+    expect(h.api.startAll).not.toHaveBeenCalled();
+  });
+
+  it("R6: F5 while a terminal is still starting stops it rather than starting a second copy", async () => {
+    h.api.terminalStates.mockResolvedValue([{ terminalId: "t1", state: { kind: "starting" } }]);
+    render(<App />);
+    await openApp();
+
+    press("F5");
+    await waitFor(() => expect(h.api.stopAll).toHaveBeenCalledWith("a1"));
+    expect(h.api.startAll).not.toHaveBeenCalled();
+  });
+
+  it("R6: pressing F5 twice in quick succession starts once and then stops, never starting a terminal twice", async () => {
+    // The core reports the start back at once; the second press must read that live state and
+    // stop, rather than ask for a second start and leave the app half-started (R6).
+    h.api.startAll.mockImplementationOnce(async () => {
+      h.stateCb?.({ terminalId: "t1", appId: "a1", state: { kind: "starting" } });
+      h.stateCb?.({ terminalId: "t2", appId: "a1", state: { kind: "stopped" } });
+    });
+    h.api.stopAll.mockImplementationOnce(async () => {
+      h.stateCb?.({ terminalId: "t1", appId: "a1", state: { kind: "stopped" } });
+    });
+    render(<App />);
+    await openApp();
+    await waitFor(() => expect(h.stateCb).not.toBeNull());
+    expect(screen.getByRole("button", { name: /Start all/ })).toBeInTheDocument();
+
+    press("F5");
+    press("F5");
+    await waitFor(() => expect(h.api.stopAll).toHaveBeenCalledWith("a1"));
+
+    expect(h.api.startAll).toHaveBeenCalledTimes(1);
+    expect(h.api.stopAll).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.getByRole("button", { name: /Start all/ })).toBeInTheDocument());
+  });
+
+  it("R6: pressing F5 repeatedly while a start is in progress never starts a second copy", async () => {
+    h.api.terminalStates.mockResolvedValue([{ terminalId: "t1", state: { kind: "starting" } }]);
+    render(<App />);
+    await openApp();
+    await waitFor(() => expect(h.stateCb).not.toBeNull());
+    expect(screen.getByRole("button", { name: /Stop all/ })).toBeInTheDocument();
+
+    press("F5");
+    press("F5");
+    await waitFor(() => expect(h.api.stopAll).toHaveBeenCalledTimes(2));
+
+    // Both presses saw the in-progress start and asked to stop; neither asked to start again.
+    expect(h.api.startAll).not.toHaveBeenCalled();
+    act(() => h.stateCb?.({ terminalId: "t1", appId: "a1", state: { kind: "stopped" } }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Start all/ })).toBeInTheDocument());
+  });
+
+  it("R6: F5 in the home view is a true no-op and cannot reload the page", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    const states = h.api.terminalStates.mock.calls.length;
+    const shells = h.api.listShells.mock.calls.length;
+
+    const e = press("F5");
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(e.defaultPrevented).toBe(true);
+    expect(h.api.startAll).not.toHaveBeenCalled();
+    expect(h.api.stopAll).not.toHaveBeenCalled();
+    expect(h.api.terminalStates.mock.calls.length).toBe(states);
+    expect(h.api.listShells.mock.calls.length).toBe(shells);
+    expect(screen.getByRole("heading", { name: "Home", level: 2 })).toBeInTheDocument();
+  });
+
+  it("R6: F5 in the editor view is a true no-op and leaves the view alone", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    await openEditor();
+    expect(await screen.findByRole("button", { name: "New file" })).toBeInTheDocument();
+    const states = h.api.terminalStates.mock.calls.length;
+
+    const e = press("F5");
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(e.defaultPrevented).toBe(true);
+    expect(h.api.startAll).not.toHaveBeenCalled();
+    expect(h.api.stopAll).not.toHaveBeenCalled();
+    expect(h.api.terminalStates.mock.calls.length).toBe(states);
+    expect(screen.getByRole("button", { name: "New file" })).toBeInTheDocument();
+  });
+
+  it("R6: F5 with Shift, Ctrl or Alt never refreshes in the home view", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    const states = h.api.terminalStates.mock.calls.length;
+    const shells = h.api.listShells.mock.calls.length;
+
+    for (const mods of [{ shiftKey: true }, { ctrlKey: true }, { altKey: true }, { ctrlKey: true, shiftKey: true }]) {
+      const e = press("F5", mods);
+      expect(e.defaultPrevented).toBe(true);
+    }
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(h.api.terminalStates.mock.calls.length).toBe(states);
+    expect(h.api.listShells.mock.calls.length).toBe(shells);
+    expect(h.api.startAll).not.toHaveBeenCalled();
+    expect(h.api.stopAll).not.toHaveBeenCalled();
+  });
+
+  it("R6: F5 does nothing for an app with no terminals, matching its disabled Start all button", async () => {
+    const base = view();
+    h.view = {
+      ...base,
+      config: { ...base.config, apps: [{ ...base.config.apps[0], terminals: [] }] },
+    };
+    render(<App />);
+    await openApp();
+    expect(screen.getByRole("button", { name: /Start all/ })).toBeDisabled();
+
+    press("F5");
+    await new Promise((r) => setTimeout(r, 0));
+    expect(h.api.startAll).not.toHaveBeenCalled();
+    expect(h.api.stopAll).not.toHaveBeenCalled();
   });
 
   it("R9: opening an app restores only the sidebar state and starts with the git drawer and console hidden", async () => {

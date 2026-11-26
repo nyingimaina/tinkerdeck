@@ -1,0 +1,45 @@
+{
+  "findings": [
+    {
+      "cites": "R6",
+      "severity": "blocking",
+      "file": "src/App.shortcuts.test.tsx",
+      "line": 419,
+      "evidence": "The only in-progress F5 test (line 419) presses F5 once with a terminal already reporting `starting`. No test dispatches F5 twice, and no test presses F5 repeatedly during a start/stop (grep for double presses finds only the six single `press(\"F5\")` calls at lines 400, 414, 424, 435, 453, 491 in this file plus single `fireEvent.keyDown` calls in App.features.test.tsx:493).",
+      "description": "R6's edge case \"Pressing F5 twice quickly does not leave the app half-started or start a terminal twice\" and the reliability acceptance \"Pressing F5 rapidly during an in-progress start or stop leaves the app in a single, consistent started or stopped state\" are unproven: the suite only ever presses F5 once per test."
+    },
+    {
+      "cites": "R8",
+      "severity": "blocking",
+      "file": "src/features/command-palette/CommandPalette.test.tsx",
+      "line": 36,
+      "evidence": "Every palette test asserts only `getByRole(\"dialog\", { name: \"Command palette\" })`, focus, actions and Escape (lines 36, 81). `CommandPalette.tsx:89` still renders its own `<div role=\"dialog\" ... className={styles.panel}>`, but no test asserts the palette is not inside `ZestResponsiveLayout-module_sidePane`; grep for `ZestResponsiveLayout` finds assertions only in git.test.tsx, components.test.tsx, updates.test.tsx and SidePane.test.tsx, never for the palette.",
+      "description": "R8's acceptance \"The command palette is not moved into a side pane and still opens as a palette\" has no test: the palette could be wrapped in the SidePane and every existing palette/App test would still pass because role=dialog, focus and actions survive the change."
+    },
+    {
+      "cites": "R8",
+      "severity": "advisory",
+      "file": "src/App.themes.test.tsx",
+      "line": 120,
+      "evidence": "The Find themes dialog is opened here and checked for its dialog name and Close button (lines 120-127), but the test never asserts the `ZestResponsiveLayout-module_sidePane` container. It relies on components.test.tsx proving the shared Dialog is a side pane; App.tsx:727 does wrap ThemeFinder in Dialog, so the behaviour is correct today but no test at this surface would catch the finder reverting to a centred modal.",
+      "description": "R8's acceptance \"The shared dialog, including the theme finder, opens as a side pane\" is covered only transitively. Adding one assertion that the opened Find themes dialog renders inside the side pane would pin the named surface directly."
+    },
+    {
+      "cites": "R7",
+      "severity": "advisory",
+      "file": "src/features/themes/ThemeFinder.test.tsx",
+      "line": 100,
+      "evidence": "The R7 tests assert stylesheet rules only: `.finder { width: 100%; min-width: 0 }` and `.cardTitle { min-width: 0; overflow-wrap: anywhere }`. The only 360px assertion in the suite is SidePane.test.tsx:72 (the package's mobileOverlay), so no test exercises the theme finder at a narrow window width.",
+      "description": "R7's \"At a narrow, mobile-width window the rows still fit with no horizontal overflow\" (and the responsiveness non-functional acceptance at 360px) is guarded indirectly by the CSS assertions but has no explicit narrow-width test for the finder itself."
+    },
+    {
+      "cites": "A2",
+      "severity": "advisory",
+      "file": "src/features/apps/SidePane.test.tsx",
+      "line": 14,
+      "evidence": "The A2 test only reads package.json and package-lock.json for `jattac.libs.web.zest-responsive-layout` ^2.8.0 / 2.8.0. The build report states installation required `--legacy-peer-deps` because of a pre-existing zest-tabs vs framer-motion 14 peer conflict, so the acceptance phrase \"npm install succeeds ... with no peer-dependency error\" is neither tested nor demonstrated by a plain install.",
+      "description": "A2 acceptance clause 1 (clean install with no peer-dependency error) is not proven by a test; only the manifest/lockfile version clause is. The reported use of --legacy-peer-deps suggests a plain install still surfaces the pre-existing peer conflict."
+    }
+  ],
+  "verifications": []
+}

@@ -1,18 +1,12 @@
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: grid;
-  place-items: center;
-  background: rgba(3, 6, 16, 0.55);
-}
+/* The pane provides the frame now, so the dialog fills it instead of being a centred box. */
 .dialog {
-  width: min(460px, 92vw);
-  padding: 20px 22px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--panel);
-  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 .dialog h3 {
   margin: 0 0 8px;
@@ -21,19 +15,25 @@
 .body {
   color: var(--muted);
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 .actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
   margin-top: 18px;
 }
 .btn {
-  height: 34px;
-  padding: 0 16px;
+  height: auto;
+  min-height: 34px;
+  max-width: 100%;
+  padding: 6px 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--panel-2);
+  color: var(--text);
+  white-space: normal;
 }
 .primary {
   background: var(--accent);

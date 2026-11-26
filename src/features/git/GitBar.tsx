@@ -78,7 +78,7 @@ export function GitBar({ git, onSwitch, onOpenChanges, onOpenHistory, onOpenCons
         </span>
 
         {onRefresh && (
-          <button onClick={onRefresh} aria-label="Refresh" title="Refresh now (F5)">
+          <button onClick={onRefresh} aria-label="Refresh" title="Refresh now">
             ⟳
           </button>
         )}

@@ -51,7 +51,7 @@ Losing the private key means installed copies cannot be updated automatically an
 
 ## Keyboard
 
-**Ctrl+Shift+P** opens the command palette, which lists every action with its shortcut. Other shortcuts: **Ctrl+B** sidebar, **F5** refresh, **Ctrl+Alt+T** switch light/dark; in the editor **Ctrl+S**, **Ctrl+N**, **Ctrl+O** and **Ctrl+W**. App shortcuts also work while a terminal has focus; every other key goes to the shell.
+**Ctrl+Shift+P** opens the command palette, which lists every action with its shortcut. Other shortcuts: **Ctrl+B** sidebar, **F5** start all / stop all in the app view (a no-op elsewhere), **Ctrl+Alt+T** switch light/dark; in the editor **Ctrl+S**, **Ctrl+N**, **Ctrl+O** and **Ctrl+W**. App shortcuts also work while a terminal has focus; every other key goes to the shell.
 
 ## Command line and LLM tools
 

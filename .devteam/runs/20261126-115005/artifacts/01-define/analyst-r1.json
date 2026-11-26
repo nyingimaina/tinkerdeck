@@ -1,0 +1,179 @@
+{
+  "summary": "This is revision 2 of 3 of a larger feature (R13 to R8). Tinkerdeck\u0027s editor stops feeling bolted on. The sidebar gains a VS Code-style Files explorer that loads one folder level at a time, hides the heavy build and VCS folders by default behind a Show hidden control, follows the project the user is working in (the selected app\u0027s root, the root of the app that owns the active editor tab, a loose file\u0027s parent folder, or the home folder with the drive list above it), and lets the user create, rename, move, drag and delete files and folders, with deletes going to the Recycle Bin after one confirmation. A command-palette \u0027Open file\u2026\u0027 entry launches the system picker from any view. F5 becomes the app view\u0027s Start all / Stop all toggle, terminals gain an executable flag that keeps them out of bulk start/stop, refresh loses its keyboard shortcut, the theme finder\u0027s rows stop overflowing, the command palette gets a mobile-first CSS pass without becoming a side pane, and last the shared dialog and branch menu move to the jattac responsive side panes.",
+  "requirements": [
+    {
+      "id": "R13",
+      "text": "When no app root applies (the home view, the editor view with no tab open, or an active tab with no path such as a new unsaved file), the explorer roots at the user\u0027s home folder. On Windows the level above any folder root is a list of the available drives; Up from a root folder climbs one level at a time and from a drive reaches the drive list. Changing the root never closes or changes any open tab.",
+      "acceptance": [
+        "In the home view, the explorer\u0027s top folder is the user\u0027s home folder.",
+        "In the editor view with no tab open, the explorer roots at the home folder.",
+        "With a new unsaved file as the active tab, the explorer roots at the home folder.",
+        "Up from the home folder climbs one level at a time and eventually reaches the drive list.",
+        "The drive list shows the available drives, and opening a drive lists its top-level folders and files.",
+        "Changing the root does not close or alter any open tab."
+      ],
+      "rationale": "Windows has no single filesystem root, and the explorer must always open somewhere sensible even when the user is not in an app or has no saved file.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "A drive that cannot be read shows as locked when opened instead of raising an error.",
+        "An unreadable home folder shows a locked or message state and the rest of the app stays usable.",
+        "A drive that has been removed between listing and opening is reported without breaking the tree."
+      ],
+      "pitfalls": [
+        "The explorer must not assume a single filesystem root on Windows.",
+        "The drive list must be obtained without scanning the contents of every drive.",
+        "The home folder must not be hard-coded as the root when an app root or a Misc file path applies."
+      ],
+      "rules": [
+        "PERF-001",
+        "TAU-012",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "explorer root",
+          "attribute": "no app root applies",
+          "op": "equals",
+          "value": "user home folder",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "explorer top level",
+          "attribute": "list",
+          "op": "equals",
+          "value": "drives",
+          "unit": "",
+          "scope": "Windows"
+        }
+      ]
+    },
+    {
+      "id": "R6",
+      "text": "In the app view, F5 runs the same Start all / Stop all action as the app\u0027s on-screen button, choosing Start or Stop exactly as the button would at the moment F5 is pressed. Non-executable terminals are skipped (see R11). In the home and editor views F5 does nothing: it does not refresh, start or stop anything, or change the view. F5 never refreshes on any modifier combination.",
+      "acceptance": [
+        "In the app view with the app fully stopped and the button showing Start all, pressing F5 starts the executable terminals.",
+        "In the app view with executable terminals running, pressing F5 stops them.",
+        "Pressing F5 produces the same result as pressing the on-screen Start all / Stop all button at that moment.",
+        "Pressing F5 in the home view neither starts nor stops anything, does not refresh and does not change the view.",
+        "Pressing F5 in the editor view neither starts nor stops anything, does not refresh and does not change the view.",
+        "F5 skips non-executable terminals exactly as the button does.",
+        "F5 works while a terminal has focus, is handed back to the window, and never reaches the shell.",
+        "F5 with Shift, Ctrl or Alt still does not refresh."
+      ],
+      "rationale": "The developer chose F5 for the app\u0027s bulk start/stop instead of refresh. F5 must read the live state at press time, because a handler that closed over its first render\u0027s state would act on the wrong view or app.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Pressing F5 twice quickly does not leave the app half-started or start a terminal twice.",
+        "Pressing F5 while a start or stop is already in progress does not start a second copy of the app.",
+        "With every terminal executable, F5 behaves exactly like the old Start all / Stop all button."
+      ],
+      "pitfalls": [
+        "The key handler must read the current view, selected app and button state at press time rather than a value captured when the handler was first registered.",
+        "F5 must not keep its old refresh action alongside the new toggle.",
+        "The default must be prevented so the webview does not reload the page when F5 does nothing."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "F5",
+          "attribute": "view where it acts",
+          "op": "equals",
+          "value": "app view",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "F5",
+          "attribute": "action in home and editor views",
+          "op": "equals",
+          "value": "none",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "text": "In the theme picker\u0027s find dialog, the theme rows fit inside the dialog\u0027s left and right edges with no horizontal overflow on desktop or mobile widths.",
+      "acceptance": [
+        "Opening the theme finder shows every theme row fully inside the dialog\u0027s horizontal bounds, with no row clipped at the right edge.",
+        "At a narrow, mobile-width window the rows still fit with no horizontal overflow.",
+        "A very long theme name stays inside its row instead of pushing the row past the edge."
+      ],
+      "rationale": "The finder asks for content wider than the dialog that contains it, so rows run past the right edge and the dialog looks broken. Fixing the layout directly keeps this small fix independent of the later side-pane work.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "A search that matches no themes shows its empty message inside the dialog bounds.",
+        "When the finder later moves into a side pane, its rows still fit that container."
+      ],
+      "pitfalls": [
+        "The finder must respect its container\u0027s actual width instead of demanding a content width wider than the container.",
+        "The fix must not change theme behaviour beyond layout."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-002",
+        "USR-004",
+        "USR-006"
+      ],
+      "facts": [
+        {
+          "subject": "theme finder",
+          "attribute": "horizontal overflow",
+          "op": "must-not",
+          "value": "exceed its container",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "text": "The shared Dialog and every dialog built on it (including the theme finder and the confirmation dialogs) plus the git BranchMenu are presented as responsive side panes from the project\u0027s approved jattac responsive-layout package, instead of centred modals. The command palette stays a palette and is not moved to a side pane. Before building this part, verify that the package\u0027s published build installs cleanly and ships its CSS; if it cannot be used, stop this part and report, and the other requirements still ship.",
+      "acceptance": [
+        "The shared dialog, including the theme finder, opens as a side pane rather than a centred modal.",
+        "An existing confirmation dialog opened from the app (for example deleting an app or closing a running console) appears as a side pane.",
+        "The git BranchMenu opens as a side pane rather than a centred modal.",
+        "The command palette is not moved into a side pane.",
+        "Each side pane opens, closes and shows its content without clipping at a narrow mobile-width viewport.",
+        "Dismissing a side pane leaves the user\u0027s current work unchanged.",
+        "The package\u0027s styles actually apply in the built window."
+      ],
+      "rationale": "The developer asked to replace modals with the jattac responsive-layout side panes because they fit mobile devices better. An earlier jattac package was rejected for shipping without its CSS, so the package must be verified before the build depends on it.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "The theme finder inside the side pane still shows every row without horizontal overflow (R7).",
+        "A side pane can be dismissed with the keyboard, and its close control has an accessible name.",
+        "If the package fails to install or its CSS is missing, the attempt is reported and R1-R7 and R9-R13 remain deliverable without it."
+      ],
+      "pitfalls": [
+        "The package must be checked to install and ship CSS before any screen depends on it.",
+        "Only the command palette is excluded; every Dialog user and the branch menu must move, or some screens keep modals while others do not.",
+        "The instability of the package must not take down the rest of the feature: the earlier parts must not depend on this part."
+      ],
+      "rules": [
+        "PERF-001",
+        "TAU-012",
+        "USR-001",
+        "USR-002",
+        "USR-003",
+        "USR-004",
+        "USR-006"
+      ],
+      "facts": []
+    }
+  ],
+  "questions": [],
+  "coverage": [],
+  "assumptions": [],
+  "roles": [],
+  "outOfScope": [],
+  "nonFunctional": [],
+  "risks": [],
+  "tensions": [],
+  "glossary": []
+}

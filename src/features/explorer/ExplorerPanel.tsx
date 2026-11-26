@@ -1,4 +1,4 @@
-// The Files explorer panel (R2, R3, R4, R5, A5). One directory level at a time: a folder is only
+// The Files explorer panel (R2, R3, R4, R5, R13). One directory level at a time: a folder is only
 // expanded (and only then read) when clicked, and a file is handed to the editor's existing open
 // path so preview, duplicate and error handling stay exactly as the picker already does it.
 import { memo, useEffect } from "react";
@@ -10,9 +10,9 @@ import type { ExplorerRootSource } from "./root";
 import styles from "./ExplorerPanel.module.css";
 
 export interface ExplorerPanelProps {
-  /** The folder the explorer follows; null when no app root or file path applies (A5). */
+  /** The folder the explorer follows; null when no app root, file path or home folder applies (R13). */
   root: string | null;
-  /** "misc" roots offer Up; an "app" root is the top folder (R4, R5). */
+  /** "misc" and "home" roots offer Up; an "app" root is the top folder (R4, R5, R13). */
   source?: ExplorerRootSource;
   /** Changes with the view, selected app and active tab, discarding temporary Up navigation. */
   resetKey?: string;

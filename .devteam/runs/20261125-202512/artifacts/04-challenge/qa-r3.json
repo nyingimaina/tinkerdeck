@@ -1,0 +1,20 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "QA-2",
+      "status": "fixed",
+      "evidence": "src/App.shortcuts.test.tsx:295-345 now drives every hideable tool from inside the palette dialog: 'Show git tools' then 'Hide git tools' (asserts aria-expanded true/false and the Fetch row appears/disappears), 'Git: show changes' then 'Close git drawer' then 'Git: show changes' again (asserts the Git complementary panel opens/closes/reopens), and 'Hide console' then 'Open console' (asserts host data-visible false/true and startTerminal called once, stopTerminal never). Ran npx vitest run src/App.shortcuts.test.tsx src/App.layout.test.tsx src/features/command-palette/CommandPalette.test.tsx -> 28 passed."
+    },
+    {
+      "id": "QA-3",
+      "status": "open",
+      "evidence": "The only restart tests remain App.layout.test.tsx:209-220 and src/App.features.test.tsx:455-472, both drive the sidebar flag with no console, dialog or banner open. No test unmounts App with a running console (startTerminal/console-a1:1) and asserts it is not started again or that old output is not restored, and no test reopens with a dialog, banner, branch menu, theme finder or app edit form open and asserts it is not reopened with stale content. src/App.shortcuts.test.tsx:347 opens a fresh app and only asserts the sidebar is restored and the git drawer/console start hidden."
+    },
+    {
+      "id": "QA-4",
+      "status": "open",
+      "evidence": "The only R10 test is src/App.test.tsx:392-407, which asserts cmdk is pinned to 1.1.1, loads on demand and renders a [cmdk-root]. The R1 plan tests at src/App.test.tsx:274 and 313 only check generic phrases. A grep for K1/K3/overflow-menu/React 18.3/WebView2/Licence/maintained/in-house/package decisions across every *.test.tsx returned no matches, so plan section 15 (docs/ui-tidy-up-plan.md:331-350) — the K1-K5 package-or-in-house decisions, the jattac overflow-menu unusable-file fallback, and the licence/maintenance/React-18.3/Tauri-webview confirmation — is still not asserted by any test and would not fail if removed."
+    }
+  ]
+}

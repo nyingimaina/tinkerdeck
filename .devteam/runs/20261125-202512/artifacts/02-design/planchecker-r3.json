@@ -1,0 +1,13 @@
+{
+  "summary": "Revision 2 is consistent for R6, R7, R9 and R10 as revised, but R8's demand that every optional part - explicitly including banners, extra panes and dialogs - has a working way to be hidden again is only answered for the git tools, the git drawer and the console; no banner or extra-pane hide path appears anywhere in the design.",
+  "conflicts": [
+    {
+      "requirement": "R8",
+      "against": "design",
+      "kind": "design",
+      "owner": "design",
+      "why": "R8 requires every optional part the user has opened, naming dialogs and banners, to be hideable again on demand. The design claims completeness but enumerates a hide path only for the git chip, the git drawer's Close and a new ConsoleNav 'Hide console'; for banners (lock, job warning, update, manual-update result, error) and extra panes it only says they stay, and no file in impact.touches or scope adds a hide control for them, so those parts keep no stated way back to the calm default view.",
+      "evidence": "R8: \"Any optional part the user has opened (the git drawer, the git tools, the console, extra panes, dialogs and banners) can be hidden again on demand\" and acceptance \"Every optional part that can be opened offers a hide control whenever hiding it leaves another workspace, and that control hides it.\" Design summary: \"Every optional part gets a working hide path: the git chip still collapses the tools, the drawer keeps Close, the console gets a Hide console control ...\" while it says only \"Every existing screen, panel, dialog, banner, the footer and the separate editor view stay\". impact.touches lists App.tsx (footer toggle wiring, palette command list, console hide and Reset layout handlers, controlled git-tools state, calm app open, sidebar restore), AppFooter, CommandPalette, ConsoleNav, GitBar, test setup, package files, tests and the plan doc - no banner or extra-pane hide control."
+    }
+  ]
+}

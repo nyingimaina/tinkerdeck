@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConfigView, StatePayload } from "./state/model";
@@ -105,6 +105,7 @@ beforeEach(() => {
   Object.values(h.api).forEach((f) => f.mockClear());
   h.view = baseView();
   h.states = [];
+  localStorage.clear();
   document.documentElement.dataset.theme = "";
 });
 
@@ -386,5 +387,106 @@ describe("App", () => {
 
     // The Help body shares the palette's chunk, and it was evaluated now, not during App's import.
     expect(lazyLoad.loaded.find((m) => m.name === "CommandPalette")?.atImport).toBe(false);
+  });
+
+  it("R10: the palette uses the pinned cmdk package, loaded on demand and never with the initial view", async () => {
+    // The palette module is never evaluated while App itself is imported: it is an on-demand chunk.
+    expect(lazyLoad.loaded.filter((m) => m.atImport && m.name === "CommandPalette")).toEqual([]);
+
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    // cmdk renders its own root, so the list is the package rather than a hand-rolled one.
+    expect(dialog.querySelector("[cmdk-root]")).not.toBeNull();
+
+    const packages = import.meta.glob("../package.json", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
+    const pkg = JSON.parse(Object.values(packages)[0] ?? "{}") as { dependencies?: Record<string, string> };
+    expect(pkg.dependencies?.cmdk).toBe("1.1.1");
+  });
+
+  it("R10: the plan records each building block's package or in-house choice with licence, maintenance and React 18.3 compatibility, and the jattac fallback", () => {
+    const plan = tidyUpPlan();
+    const section = plan.slice(plan.indexOf("## 15. Package decisions"));
+
+    // The table has one row per building block (K1-K5) and confirms both the licence/maintenance
+    // and the React 18.3 + Tauri WebView2 columns the acceptance depends on.
+    expect(section).toContain("Licence / maintenance");
+    expect(section).toContain("React 18.3 + Tauri WebView2");
+    expect(section).toContain("Reused without replacement");
+
+    const rows = section
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => /^\|\s*K[1-5]\s*\|/.test(line));
+    expect(rows, "the plan must have one row for each building block K1-K5").toHaveLength(5);
+
+    const cells = (row: string) => row.split("|").map((cell) => cell.trim());
+    for (const id of ["K1", "K2", "K3", "K4", "K5"]) {
+      const row = rows.find((line) => cells(line)[1] === id);
+      expect(row, `${id} is missing from the package decisions table`).toBeDefined();
+      const [, , block, decision, licence, react] = cells(row!);
+      expect(block, `${id} names its building block`).not.toBe("");
+      expect(decision, `${id} records a package or in-house decision`).not.toBe("");
+      expect(licence, `${id} records licence and maintenance`).not.toBe("");
+      expect(react, `${id} records React 18.3 + Tauri WebView2 compatibility`).not.toBe("");
+      // Anything not taken from a package states that it is in-house, not left unstated.
+      if (id !== "K1") expect(decision.toLowerCase()).toContain("in-house");
+    }
+
+    // K1 is the only package adopted, and it is the pinned cmdk with a free, maintained licence.
+    const k1 = cells(rows.find((line) => cells(line)[1] === "K1")!);
+    expect(k1[3]).toContain("cmdk 1.1.1");
+    expect(k1[4]).toContain("MIT");
+    expect(k1[4].toLowerCase()).toContain("maintained");
+
+    // K3 records the published jattac overflow-menu package as unusable (missing styles file) and
+    // states the fallback instead of forcing it in.
+    const k3 = cells(rows.find((line) => cells(line)[1] === "K3")!);
+    expect(k3[2]).toContain("Menus");
+    expect(k3[3]).toContain("In-house");
+    expect(k3[4]).toContain("jattac.libs.web.overflow-menu");
+    expect(k3[4]).toContain("dist/index.css");
+    expect(k3[4]).toContain("no such file");
+  });
+
+  it("R6: the footer toggle and Ctrl+B move the sidebar together and stay in step", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    const toggle = screen.getByRole("button", { name: "Toggle sidebar" });
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+
+    await userEvent.click(toggle);
+    expect(screen.getByRole("navigation", { name: "Apps (collapsed)" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Toggle sidebar" })).toHaveAttribute("aria-pressed", "true");
+
+    await userEvent.keyboard("{Control>}b{/Control}");
+    expect(screen.getByRole("navigation", { name: "Apps" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Toggle sidebar" })).toHaveAttribute("aria-pressed", "false");
+
+    await userEvent.keyboard("{Control>}b{/Control}");
+    expect(screen.getByRole("navigation", { name: "Apps (collapsed)" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Toggle sidebar" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("R6: a saved collapsed sidebar shows the footer toggle collapsed on the next start", async () => {
+    localStorage.setItem("td.sidebarCollapsed", "1");
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    expect(screen.getByRole("navigation", { name: "Apps (collapsed)" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Toggle sidebar" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("A2: an unexpected saved value starts expanded and only the existing sidebar key is written", async () => {
+    localStorage.setItem("td.sidebarCollapsed", "maybe");
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    expect(screen.getByRole("navigation", { name: "Apps" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Toggle sidebar" })).toHaveAttribute("aria-pressed", "false");
+
+    await userEvent.click(screen.getByRole("button", { name: "Toggle sidebar" }));
+    expect(localStorage.getItem("td.sidebarCollapsed")).toBe("1");
+    expect(Object.keys(localStorage).sort()).toEqual(["td.sidebarCollapsed"]);
   });
 });

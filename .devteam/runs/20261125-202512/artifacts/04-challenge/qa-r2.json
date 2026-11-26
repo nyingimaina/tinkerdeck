@@ -1,0 +1,34 @@
+{
+  "findings": [
+    {
+      "cites": "R9",
+      "severity": "advisory",
+      "file": "src/App.tsx",
+      "line": 288,
+      "evidence": "The new-app branch of handleSave ends with setView(\"app\") (App.tsx:288) after only L.selectApp(saved.id) (App.tsx:280); unlike openApp (App.tsx:238-249) it never calls setGitTab(null), setGitTabKept(null) or setGitToolsOpen(false), nor selects the app's first terminal. Sidebar onSelectTerminal also enters the app view without those resets (App.tsx:492-495), and onHome / the palette 'Go to Home' leave gitTab set (App.tsx:489, 358). GitDrawer renders whenever gitTabKept is non-null (App.tsx:613-619), so opening a just-created app, or re-entering via a sidebar terminal after leaving with the drawer open, shows the previous app's git drawer (and expanded git tools) instead of the calm default. App.features.test.tsx:415-439 only exercises the openApp path, so this bypass is untested.",
+      "description": "R9's calm app open (git tools collapsed, git drawer closed) is bypassed when the app view is entered by Add-app save or by clicking a sidebar terminal; a drawer left open in the previous app reappears, and no test covers those entry paths."
+    }
+  ],
+  "verifications": [
+    {
+      "id": "QA-1",
+      "status": "fixed",
+      "evidence": "src/App.tsx now keeps the drawer mounted: gitTabKept state (App.tsx:77-79), openGitTab sets both gitTab and gitTabKept (App.tsx:233-237), and the drawer renders inside <div hidden={gitTab === null}> (App.tsx:613-619) so ChangesView and its local `message` state (ChangesView.tsx:13) are not unmounted when the drawer is closed. src/App.layout.test.tsx:140-156 'R8: hiding the git drawer keeps an in-progress commit message when it is reopened' types 'wip: keep me', clicks 'Close git panel', reopens via /Changes/ and asserts the textarea still has the value. I ran `npx vitest run src/App.layout.test.tsx` and all 10 tests passed, including this one; if the drawer were unmounted the textarea would reset and the test would fail."
+    },
+    {
+      "id": "QA-2",
+      "status": "open",
+      "evidence": "Still no test queries the git-tools or git-drawer hide/show commands inside the palette dialog. src/App.shortcuts.test.tsx:222-254 lists the global names and app-only /Edit app/, /Start all/, /Stop all/, /Open console/, /New console/ plus the two 'Git: show changes/history' counts, but never /Show git tools/, /Hide git tools/ or /Close git drawer/. src/App.layout.test.tsx:95 and src/App.shortcuts.test.tsx:195 click 'Hide git tools', but GitBar.tsx:90 sets that aria-label on the chip toggle, so those clicks exercise the chip, not the palette. The only palette hide test remains 'Hide console' (src/App.shortcuts.test.tsx:286, src/App.features.test.tsx:378). No test opens the palette with the drawer open and selects 'Close git drawer'."
+    },
+    {
+      "id": "QA-3",
+      "status": "open",
+      "evidence": "The only restart tests are src/App.layout.test.tsx:209-220 and src/App.features.test.tsx:455-472, both unmount/re-render with only the sidebar flag changed (no console or dialog open). No test unmounts App with a running console open and asserts startTerminal is not called again / old output is not restored, and no test reopens with a dialog, banner, branch menu, theme finder or app edit form open and asserts it is not reopened with stale content. src/App.layout.test.tsx:193 exercises Reset layout (not a restart) against an open edit form."
+    },
+    {
+      "id": "QA-4",
+      "status": "open",
+      "evidence": "The only R10 test remains src/App.test.tsx:392-407, which asserts cmdk is pinned to 1.1.1 and a [cmdk-root] renders lazily. No test reads docs/ui-tidy-up-plan.md section 15 or asserts its K1-K5 decisions (plan lines 336-345), the jattac overflow-menu unusable-file fallback (K3), or the licence/maintenance/React-18.3/Tauri-webview confirmations required by R10 acceptance lines 1, 2, 4 and 5. The R1 plan tests (src/App.test.tsx:274, 313) check only generic phrases, not the R10-specific package decisions."
+    }
+  ]
+}

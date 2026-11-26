@@ -1,0 +1,27 @@
+{
+  "findings": [
+    {
+      "cites": "USR-006",
+      "severity": "blocking",
+      "file": "src/features/command-palette/CommandPalette.tsx",
+      "line": 43,
+      "evidence": "The Escape handler closes the palette with onClose() (line 43) and choose() closes it with onClose() (line 57); the component unmounts without saving or restoring document.activeElement. A jsdom probe that renders the palette exactly as App does (open -> input focused -> Escape -> unmount) leaves document.activeElement as BODY. The same gap exists for the git drawer hide control: App.tsx:615-617 wraps GitDrawer in <div hidden={gitTab === null}> and its onClose is () => setGitTab(null), so the focused Close button is hidden with no focus hand-off. The only .focus() calls in src are open-time focus (CommandPalette.tsx:36, Dialog.tsx:19); there is no focus restore anywhere.",
+      "description": "Keyboard users lose their place when a tool closes: after closing the palette with Escape focus drops to <body>, and closing the git drawer leaves focus on the hidden Close button. This fails the revision's accessibility requirement that the palette and every hide control 'return focus to a sensible place when a tool closes' (and the keyboard check 'closes the palette with Escape ... with visible focus at each step'). Capture the focused element when the palette/drawer opens and restore it on close (or move focus to a named control such as the palette trigger or the Changes/History control)."
+    },
+    {
+      "cites": "USR-006",
+      "severity": "advisory",
+      "file": "src/features/command-palette/CommandPalette.tsx",
+      "line": 78,
+      "evidence": "Command.List is given aria-label=\"Commands\" (line 78) but cmdk's List reads its `label` prop (default \"Suggestions\"), so the rendered listbox is aria-label=\"Suggestions\". Command.Item asChild (lines 80-104) wraps a <button role=\"button\"> (line 90), which overrides cmdk's role=\"option\"; the rendered DOM is <div role=\"listbox\" aria-label=\"Suggestions\"> containing <button role=\"button\" aria-selected=...>. Command.Input's aria-label=\"Search commands\" (line 73) is also overridden by cmdk's aria-labelledby to the hidden \"Command palette\" label.",
+      "description": "The packaged palette exposes an invalid combobox/listbox: the input is role=\"combobox\" with aria-activedescendant pointing at role=\"button\" items carrying an unsupported aria-selected, and the list is announced as \"Suggestions\" rather than the intended \"Commands\". Assistive-technology users cannot reliably hear which command is active or that it is selectable. Pass label=\"Commands\" to Command.List and keep cmdk's option role on the items (the rendered element can still be a <button>), and update the A1 role assertions to match."
+    }
+  ],
+  "verifications": [
+    {
+      "id": "REV-1",
+      "status": "fixed",
+      "evidence": "handleSave now routes a newly created app through the calm reset: if (!exists) openApp(saved.id, next) at src/App.tsx:289 instead of setView(\"app\"); openApp (src/App.tsx:238-249) clears gitTab and gitTabKept, sets gitToolsOpen false and selects the app's first terminal. src/App.layout.test.tsx:284-309 opens the previous app's git drawer, creates/saves 'Fresh', and asserts no Git drawer or Consoles panel, collapsed git tools and only the new app's terminal visible; it passes in the 13/13 App.layout.test.tsx run of the 428-test suite."
+    }
+  ]
+}

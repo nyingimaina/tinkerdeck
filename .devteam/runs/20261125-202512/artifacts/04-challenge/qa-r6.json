@@ -1,0 +1,48 @@
+{
+  "findings": [
+    {
+      "cites": "R7",
+      "severity": "advisory",
+      "file": "src/App.shortcuts.test.tsx",
+      "line": 222,
+      "evidence": "The palette coverage test enumerates the global rows (Toggle sidebar, Refresh everything, Switch light/dark theme, Open command palette, Open editor, Check for updates, Help, Go to Home, Find themes, Reset layout) plus a few app-only rows, but never asserts the plan's P11 'Add app' row that App.tsx:363 pushes when the config is not permanently locked; no other palette test mentions it (grep finds 'Add app' only as a pane in App.layout.test.tsx:294 and App.test.tsx:118).",
+      "description": "The plan's P11 'Add app' palette command is not proven; the R7 listing test would still pass if that row were dropped."
+    },
+    {
+      "cites": "R7",
+      "severity": "advisory",
+      "file": "src/App.shortcuts.test.tsx",
+      "line": 144,
+      "evidence": "The R4/R7 test proves Ctrl+S, Ctrl+N, Ctrl+O and Ctrl+W still save/create/open while the editor is focused, and App.shortcuts.test.tsx:222-235 lists the app-level rows, but no test asserts that Save/New/Open file are absent from the palette's app-level list.",
+      "description": "R7 acceptance 5's 'editor file commands are not listed as app commands' half has no negative assertion; only the 'continue to work' half is proven."
+    },
+    {
+      "cites": "R8",
+      "severity": "advisory",
+      "file": "src/App.shortcuts.test.tsx",
+      "line": 295,
+      "evidence": "This test hides the git tools, closes the git drawer and hides the console one at a time and checks each leaves; it does not assert the resulting calm view still shows the primary actions and the footer. App.layout.test.tsx:78 checks the footer only after hiding the git tools, and App.layout.test.tsx:113-138 (Reset layout) asserts the TerminalHost visibility and Show git tools but not the footer or primary actions.",
+      "description": "R8 acceptance 4 (after hiding the git tools, git drawer and console, the calm default shows the primary actions and the footer) has no single combined assertion, though each individual hide is tested."
+    },
+    {
+      "cites": "R6",
+      "severity": "advisory",
+      "file": "src/App.features.test.tsx",
+      "line": 443,
+      "evidence": "The focus test drives the footer toggle and Ctrl+B while an app view is focused; App.test.tsx:454 and App.layout.test.tsx:78 cover Home/app, but no test toggles the sidebar from the footer or with Ctrl+B while the separate editor view is mounted, though the editor view renders the Sidebar and AppFooter (App.tsx:483-497, 641-645).",
+      "description": "R6's edge case 'the footer toggle and Ctrl+B work the same when the terminal or editor has focus' is proven for the app view but not for the editor view."
+    }
+  ],
+  "verifications": [
+    {
+      "id": "QA-3",
+      "status": "fixed",
+      "evidence": "src/App.layout.test.tsx:230-247 now renders App, opens the app's Console (startTerminal called with console-a1:1), unmounts with the console open, remounts, reopens the app and asserts no host-console-a1:1 testid remains, host-t1 is visible and startTerminal is not called again. src/App.layout.test.tsx:249-282 opens the Switch branch dialog, Find themes dialog, Edit app form, the manual-update banner and the Help dialog, unmounts and remounts, then asserts every one is gone. Both tests pass in the run of App.layout.test.tsx (13/13)."
+    },
+    {
+      "id": "QA-4",
+      "status": "fixed",
+      "evidence": "src/App.test.tsx:409-452 slices docs/ui-tidy-up-plan.md at '## 15. Package decisions', requires the 'Licence / maintenance' and 'React 18.3 + Tauri WebView2' columns and the 'Reused without replacement' line, parses one K1-K5 row per building block with non-empty block/decision/licence/react cells and an explicit in-house decision for K2-K5, and asserts K1 is 'cmdk 1.1.1' MIT/actively maintained and K3 records the jattac.libs.web.overflow-menu 0.0.35 missing dist/index.css with its fallback. The test passes in the App.test.tsx run (27/27), and the plan section 15 content it reads exists at docs/ui-tidy-up-plan.md:331-350. tsc --noEmit passes."
+    }
+  ]
+}

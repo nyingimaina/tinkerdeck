@@ -1,0 +1,29 @@
+{
+  "summary": "The plan contradicts the earlier promise that opening an app shows neither the git tools nor the console until asked, leaves the editor's own commands out of the palette that must list every action, and disables the console's hide control in the one-workspace case.",
+  "conflicts": [
+    {
+      "requirement": "R9",
+      "against": "20261125-153618:R5",
+      "kind": "regression",
+      "owner": "requirements",
+      "why": "R9 restores an app's saved open git drawer and console when that app is opened, which makes the earlier R5 promise that opening an app shows neither the git tools nor the console until the user asks untrue; both requirements cannot hold at once, so the builder has to say which wins.",
+      "evidence": "R9: 'A part the user left open reopens open.' Design: 'opening an app restores that app's saved drawer and console'. 20261125-153618:R5: 'Opening an app that has a git repo and a console does not show the git tools or the console until the user asks for them.' and 'The git drawer stays hidden until opened, as it does today.'"
+    },
+    {
+      "requirement": "R8",
+      "against": "design",
+      "kind": "design",
+      "owner": "design",
+      "why": "R8 says every optional part that can be opened also has a control that hides it again, but the design disables the console's only hide control when the console is the only workspace, so a console on screen in that case cannot be hidden and the design's own Reset layout result cannot be reached.",
+      "evidence": "R8: 'Every optional part that can be opened also has a control that hides it again.' Design: 'the console gets a Hide console control that selects a terminal without closing the console' and 'Hide console is offered whenever another tab exists; in an app with no terminals the console is the only workspace, so the control is disabled with a reason.' A1: 'After a reset ... an open console is hidden by selecting a terminal.'"
+    },
+    {
+      "requirement": "R7",
+      "against": "design",
+      "kind": "design",
+      "owner": "design",
+      "why": "R7 requires the command palette to list every app action, but the design deliberately keeps the editor's own file commands (Ctrl+S save, Ctrl+N new file) off the palette, so the stated 'every action' acceptance cannot pass even though the palette opens while the editor is focused.",
+      "evidence": "R7: 'lists every app action with its name and its shortcut (or a clear note that it has none)' and 'The command palette opens with Ctrl+Shift+P even when the terminal or editor is focused.' Design: 'Value pickers and in-place data navigation ... the editor's own file commands ... stay on their always-visible controls, so the palette lists commands rather than data and no hidden control is left unreachable.'"
+    }
+  ]
+}

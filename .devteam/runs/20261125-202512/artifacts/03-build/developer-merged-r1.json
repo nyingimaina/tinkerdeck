@@ -1,0 +1,265 @@
+{
+  "summary": "Slice 1 of 3: gave the always-visible footer one sidebar toggle that shares paneCollapsed and the same toggleSidebar handler as Ctrl\u002BB, so the two cannot disagree and the footer stays on every screen (R6). Wired that toggle in App and made opening an app start calm: it now selects the app\u0027s first terminal (or clears the tab when the app has no terminals), so a console or git drawer left open on an earlier visit is not reopened, while a running console stays mounted and running (R9, A2). Expanded the app-level palette command list to the global commands and the commands that only exist while an app is open, and added working Reset layout and Hide console handlers that hide rather than close (R7/R8). The saved layout is still only the existing td.sidebarCollapsed key with its try/catch fallback; no per-app drawer/console state or new key is written. Added tests in AppFooter.test.tsx, App.test.tsx, App.features.test.tsx, App.shortcuts.test.tsx and a new App.layout.test.tsx, and cleared localStorage between cases so saved sidebar state cannot leak. Deferred to the other build slices (files not touched here): the cmdk palette swap with No shortcut notes and disabled reasons, the ConsoleNav Hide console button, controlled GitBar open/onOpenChange plus the git-tools palette toggle, package.json/package-lock.json and the plan doc. Verified with npm run lint, the targeted vitest files, the full suite (43 files, 414 tests pass) and npm run build. Slice 2 of the revision-2 build. Added cmdk 1.1.1 (MIT, exact) for the command palette and recorded it in package.json/package-lock.json; it lives only in the lazy CommandPalette chunk, not the entry chunk. CommandPalette now renders the list with cmdk (shouldFilter=false keeps the existing case-insensitive name filter), keeps each action a real named button with its real shortcut or a visible \u0027No shortcut\u0027 note, shows a visible disabled reason for commands that cannot run now, and keeps the \u0027No commands match.\u0027 empty result, choose-runs-once-and-closes and Escape. ConsoleNav gained a Hide console control that is disabled with a visible reason when the console is the only workspace. GitBar gained optional controlled open/onOpenChange props while uncontrolled callers keep their old behaviour. App.tsx now keeps gitToolsOpen as controlled state: openApp and Reset layout collapse the git tools, the palette offers Show/Hide git tools, Close git drawer and a Hide console item that is disabled with a reason in an app with no terminals. Added/updated A1 characterization tests plus R7/R8 tests. npm run lint, npm test (420 passed) and npm run build all pass. Finished slice 3 of the revision-2 tidy-up on top of the already-built AppShell, footer toggle, cmdk palette, ConsoleNav Hide control and controlled GitBar. Added the revision-2 plan content to docs/ui-tidy-up-plan.md (sections 11-16: footer toggle, full palette command list with real shortcuts or No shortcut, hide/reopen table, the single remembered td.sidebarCollapsed field, package decisions with the in-house reasons, and a revision-2 state check kept outside the S/P/D/B inventory rows so the R1 plan tests still pass). package.json/package-lock.json already pin cmdk 1.1.1 (MIT, React ^18||^19); src/test/setup.ts was left unchanged because the existing observer/scroll shims already satisfy cmdk. Added an R10 test proving the palette is cmdk (a [cmdk-root] element), cmdk is pinned in the manifest, and the palette module is not evaluated while App is imported. Stabilised one App.shortcuts focus assertion with waitFor after a full-run timing flake. npm run lint, npm run build and the full suite (43 files, 422 tests) pass; cmdk is emitted only in dist/assets/CommandPalette-*.js, not the entry chunk.",
+  "tests": [
+    {
+      "name": "R6: keeps one sidebar toggle that reads and reports the shared sidebar state",
+      "file": "src/features/apps/AppFooter.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R6: shows the footer toggle in its collapsed state when the sidebar is collapsed",
+      "file": "src/features/apps/AppFooter.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R6: the footer stays above optional parts: the toggle is rendered beside the version, never instead of it",
+      "file": "src/features/apps/AppFooter.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R6: the footer toggle and Ctrl\u002BB move the sidebar together and stay in step",
+      "file": "src/App.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R6: a saved collapsed sidebar shows the footer toggle collapsed on the next start",
+      "file": "src/App.test.tsx",
+      "requirements": [
+        "R6",
+        "R9"
+      ]
+    },
+    {
+      "name": "A2: an unexpected saved value starts expanded and only the existing sidebar key is written",
+      "file": "src/App.test.tsx",
+      "requirements": [
+        "A2",
+        "R9"
+      ]
+    },
+    {
+      "name": "R8: Hide console hides it without stopping it, and showing it again keeps the same running shell",
+      "file": "src/App.features.test.tsx",
+      "requirements": [
+        "R8"
+      ]
+    },
+    {
+      "name": "R9: switching between apps does not show the console or git drawer a previous visit left open",
+      "file": "src/App.features.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R6: the footer toggle and Ctrl\u002BB still agree while an app view has focus",
+      "file": "src/App.features.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R4/R7: the editor keeps Ctrl\u002BS, Ctrl\u002BN, Ctrl\u002BO and Ctrl\u002BW while it has focus",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R7"
+      ]
+    },
+    {
+      "name": "R5/R8: an app view starts with the git tools collapsed behind the branch chip and they hide again on demand",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R8"
+      ]
+    },
+    {
+      "name": "R7: the palette lists every app-level command with its real shortcut or no shortcut, and app-only ones only while an app is open",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R7"
+      ]
+    },
+    {
+      "name": "R7: a query that matches no command shows an empty result",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R7"
+      ]
+    },
+    {
+      "name": "R7: typing a hidden command\u0027s name finds it and runs it",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R7"
+      ]
+    },
+    {
+      "name": "R8: the palette hides a running console without stopping it, and showing it again keeps it running",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R8"
+      ]
+    },
+    {
+      "name": "R9: opening an app restores only the sidebar state and starts with the git drawer and console hidden",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R9",
+        "A2"
+      ]
+    },
+    {
+      "name": "R6: the footer toggle and Ctrl\u002BB keep the sidebar and footer in step, and the footer stays while tools are hidden",
+      "file": "src/App.layout.test.tsx",
+      "requirements": [
+        "R6"
+      ]
+    },
+    {
+      "name": "R7: the palette lists app-level commands and shows an empty result when a query matches none",
+      "file": "src/App.layout.test.tsx",
+      "requirements": [
+        "R7"
+      ]
+    },
+    {
+      "name": "R8: Reset layout returns the calm default without stopping a running terminal",
+      "file": "src/App.layout.test.tsx",
+      "requirements": [
+        "R8"
+      ]
+    },
+    {
+      "name": "R8: a console that is the only workspace cannot be hidden, so Reset layout leaves it on screen",
+      "file": "src/App.layout.test.tsx",
+      "requirements": [
+        "R8"
+      ]
+    },
+    {
+      "name": "R8: Reset layout does not close an app edit form or discard its unsaved input",
+      "file": "src/App.layout.test.tsx",
+      "requirements": [
+        "R8"
+      ]
+    },
+    {
+      "name": "R9: the sidebar state survives a restart and a corrupt saved value falls back to the calm default",
+      "file": "src/App.layout.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: an unreadable saved layout does not stop the app and starts expanded",
+      "file": "src/App.layout.test.tsx",
+      "requirements": [
+        "R9",
+        "A2"
+      ]
+    },
+    {
+      "name": "A2: opening an app reads no saved drawer or console state and only the sidebar key is written",
+      "file": "src/App.layout.test.tsx",
+      "requirements": [
+        "A2",
+        "R9"
+      ]
+    },
+    {
+      "name": "A1: still lists every action as a named button with its shortcut or a No shortcut note",
+      "file": "src/features/command-palette/CommandPalette.test.tsx",
+      "requirements": [
+        "A1"
+      ]
+    },
+    {
+      "name": "A1: choosing an action runs it once and closes the palette",
+      "file": "src/features/command-palette/CommandPalette.test.tsx",
+      "requirements": [
+        "A1"
+      ]
+    },
+    {
+      "name": "A1: Escape closes without running anything",
+      "file": "src/features/command-palette/CommandPalette.test.tsx",
+      "requirements": [
+        "A1"
+      ]
+    },
+    {
+      "name": "A1/R7: keeps the name filter and the \u0027No commands match.\u0027 empty result",
+      "file": "src/features/command-palette/CommandPalette.test.tsx",
+      "requirements": [
+        "A1",
+        "R7"
+      ]
+    },
+    {
+      "name": "R7: every app-level command shows its real shortcut or a clear No shortcut note",
+      "file": "src/features/command-palette/CommandPalette.test.tsx",
+      "requirements": [
+        "R7"
+      ]
+    },
+    {
+      "name": "R7/R8: a command that cannot run now is listed disabled with a visible reason and never runs",
+      "file": "src/features/command-palette/CommandPalette.test.tsx",
+      "requirements": [
+        "R7",
+        "R8"
+      ]
+    },
+    {
+      "name": "A1: keeps the console list\u0027s select, add and close behaviour after the hide control is added",
+      "file": "src/features/terminals/ConsoleNav.test.tsx",
+      "requirements": [
+        "A1"
+      ]
+    },
+    {
+      "name": "R8: Hide console hides it without closing, and is disabled with a visible reason when it is the only workspace",
+      "file": "src/features/terminals/ConsoleNav.test.tsx",
+      "requirements": [
+        "R8"
+      ]
+    },
+    {
+      "name": "A1: the chip still expands and collapses the tools for an uncontrolled caller",
+      "file": "src/features/git/GitBar.collapse.test.tsx",
+      "requirements": [
+        "A1"
+      ]
+    },
+    {
+      "name": "R8: a controlled caller collapses the tools from the chip and decides the new state",
+      "file": "src/features/git/GitBar.collapse.test.tsx",
+      "requirements": [
+        "R8"
+      ]
+    },
+    {
+      "name": "R8: Reset layout leaves banners without a Dismiss action on screen",
+      "file": "src/App.layout.test.tsx",
+      "requirements": [
+        "R8"
+      ]
+    },
+    {
+      "name": "R10: the palette uses the pinned cmdk package, loaded on demand and never with the initial view",
+      "file": "src/App.test.tsx",
+      "requirements": [
+        "R10"
+      ]
+    }
+  ],
+  "kickbacks": []
+}

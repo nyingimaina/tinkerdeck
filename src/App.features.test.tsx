@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConfigView } from "./state/model";
@@ -77,6 +77,7 @@ beforeEach(() => {
   h.states = [];
   h.repo = null;
   h.picked = null;
+  localStorage.clear();
 });
 
 describe("Home", () => {
@@ -366,6 +367,25 @@ describe("Consoles", () => {
     await waitFor(() => expect(h.api.startTerminal).toHaveBeenCalledWith("a1", "console-a1:1"));
   });
 
+  it("R8: Hide console hides it without stopping it, and showing it again keeps the same running shell", async () => {
+    render(<App />);
+    await openApp();
+    await userEvent.click(tab());
+    await waitFor(() => expect(h.api.startTerminal).toHaveBeenCalledWith("a1", "console-a1:1"));
+
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    const palette = await screen.findByRole("dialog", { name: "Command palette" });
+    await userEvent.click(within(palette).getByRole("button", { name: /Hide console/ }));
+
+    await waitFor(() => expect(screen.queryByRole("complementary", { name: "Consoles" })).toBeNull());
+    expect(screen.getByTestId("host-console-a1:1")).toHaveAttribute("data-visible", "false");
+    expect(h.api.stopTerminal).not.toHaveBeenCalled();
+
+    await userEvent.click(tab());
+    expect(screen.getByTestId("host-console-a1:1")).toHaveAttribute("data-visible", "true");
+    expect(h.api.startTerminal).toHaveBeenCalledTimes(1);
+  });
+
   it("deleting an app stops its running consoles first", async () => {
     render(<App />);
     await openApp();
@@ -391,7 +411,47 @@ describe("Consoles", () => {
   });
 });
 
+describe("Calm app opening (R9)", () => {
+  it("R9: switching between apps does not show the console or git drawer a previous visit left open", async () => {
+    h.repo = repo({ dirty: true });
+    h.api.gitChanges = vi.fn(async () => [{ path: "a.txt", status: "M", staged: false, conflict: false }]);
+    h.view = view([
+      { id: "a1", name: "Qonsol", root: "E:\\q", terminals: [T("t1", "api"), T("t2", "web")] },
+      { id: "a2", name: "Other", root: "E:\\o", terminals: [T("t3", "run")] },
+    ]);
+    render(<App />);
+    await openApp("Qonsol");
+    await userEvent.click(screen.getByRole("tab", { name: /Console/ }));
+    await waitFor(() => expect(h.api.startTerminal).toHaveBeenCalledWith("a1", "console-a1:1"));
+    await expandGit();
+    await userEvent.click(await screen.findByRole("button", { name: /Changes/ }));
+    expect(await screen.findByRole("complementary", { name: "Git" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /Home/ }));
+    await openApp("Other");
+    await userEvent.click(screen.getByRole("button", { name: /Home/ }));
+    await openApp("Qonsol");
+
+    expect(screen.queryByRole("complementary", { name: "Git" })).toBeNull();
+    expect(screen.queryByRole("complementary", { name: "Consoles" })).toBeNull();
+    expect(screen.getByTestId("host-console-a1:1")).toHaveAttribute("data-visible", "false");
+    expect(h.api.startTerminal).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("Left pane, refresh and shells", () => {
+  it("R6: the footer toggle and Ctrl+B still agree while an app view has focus", async () => {
+    render(<App />);
+    await openApp();
+    await userEvent.click(screen.getByRole("button", { name: "Toggle sidebar" }));
+    expect(screen.getByRole("navigation", { name: "Apps (collapsed)" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Toggle sidebar" })).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.keyDown(window, { key: "b", ctrlKey: true });
+    expect(screen.getByRole("navigation", { name: "Apps" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Toggle sidebar" })).toHaveAttribute("aria-pressed", "false");
+  });
+
   it("the sidebar collapses to a rail and back (button and Ctrl+B) and is remembered", async () => {
     localStorage.clear();
     const { unmount } = render(<App />);

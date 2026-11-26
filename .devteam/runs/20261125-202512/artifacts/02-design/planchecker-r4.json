@@ -1,0 +1,4 @@
+{
+  "summary": "Consistent: revision 2's design matches R6-R10 as narrowed in the requirements, settles the R7/cmdk tension with shouldFilter=false and the existing empty result, records a package or a reasoned in-house choice for every building block, keeps the App-shell edits necessary for the shared sidebar state and command list under characterization tests, and preserves the earlier calm-open and shortcut promises.",
+  "conflicts": []
+}

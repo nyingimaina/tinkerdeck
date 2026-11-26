@@ -68,4 +68,30 @@ describe("ConsoleNav", () => {
     await userEvent.click(screen.getByRole("button", { name: "Choose shell for a new console" }));
     expect(screen.getByText("No other shells found.")).toBeInTheDocument();
   });
+
+  it("A1: keeps the console list's select, add and close behaviour after the hide control is added", async () => {
+    const h = setup({ onHide: vi.fn() });
+    await userEvent.click(screen.getByRole("button", { name: "Console 2, Git Bash" }));
+    expect(h.onSelect).toHaveBeenCalledWith("console-a:2:gitbash");
+    await userEvent.click(screen.getByRole("button", { name: "New console" }));
+    expect(h.onAdd).toHaveBeenCalledWith(null);
+    await userEvent.click(screen.getByRole("button", { name: "Close Console 2" }));
+    expect(h.onClose).toHaveBeenCalledWith("console-a:2:gitbash");
+    expect(screen.getByRole("button", { name: "Close Console 1" })).toBeDisabled();
+  });
+
+  it("R8: Hide console hides it without closing, and is disabled with a visible reason when it is the only workspace", async () => {
+    const onHide = vi.fn();
+    const props = { consoles: entries, activeId: "console-a:1", stateOf: () => running, shells, onSelect: vi.fn(), onAdd: vi.fn(), onClose: vi.fn() };
+    const { rerender } = render(<ConsoleNav {...props} onHide={onHide} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Hide console" }));
+    expect(onHide).toHaveBeenCalledTimes(1);
+
+    rerender(<ConsoleNav {...props} onHide={onHide} hideDisabledReason="Only workspace: this app has no terminals." />);
+    const hide = screen.getByRole("button", { name: "Hide console" });
+    expect(hide).toBeDisabled();
+    expect(screen.getByText("Only workspace: this app has no terminals.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Close Console 1" })).toBeDisabled();
+  });
 });

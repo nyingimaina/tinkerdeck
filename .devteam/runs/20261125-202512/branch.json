@@ -1,0 +1,31 @@
+{
+  "Branch": "devteam/20261125-183618-regroup-top-bar-controls-and-5-more",
+  "Base": "main",
+  "Commit": null,
+  "Left": [
+    "ocs/ui-tidy-up-plan.md",
+    "package-lock.json",
+    "package.json",
+    "src/App.features.test.tsx",
+    "src/App.shortcuts.test.tsx",
+    "src/App.test.tsx",
+    "src/App.tsx",
+    "src/features/apps/AppFooter.module.css",
+    "src/features/apps/AppFooter.test.tsx",
+    "src/features/apps/AppFooter.tsx",
+    "src/features/command-palette/CommandPalette.module.css",
+    "src/features/command-palette/CommandPalette.test.tsx",
+    "src/features/command-palette/CommandPalette.tsx",
+    "src/features/git/GitBar.collapse.test.tsx",
+    "src/features/git/GitBar.tsx",
+    "src/features/terminals/ConsoleNav.module.css",
+    "src/features/terminals/ConsoleNav.test.tsx",
+    "src/features/terminals/ConsoleNav.tsx",
+    "src/App.layout.test.tsx"
+  ],
+  "MadeRepository": false,
+  "Finished": false,
+  "Merged": false,
+  "MergeCommit": null,
+  "BranchDeleted": false
+}

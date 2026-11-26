@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Command } from "cmdk";
 import type { UpdatePhase } from "../../state/useUpdates";
 import { Dialog } from "../apps/Dialog";
 import { UpdateSettingsBlock } from "../updates/UpdateUI";
@@ -9,6 +10,9 @@ export interface PaletteAction {
   label: string;
   /** Display text for the shortcut that also runs the action, e.g. "Ctrl+B". */
   shortcut?: string;
+  /** When true the command is listed but cannot run now; the reason is shown beside it. */
+  disabled?: boolean;
+  disabledReason?: string;
   run: () => void;
 }
 
@@ -18,13 +22,36 @@ interface Props {
 }
 
 /**
- * A small in-house command palette (revision 1): a fixed list of the actions the window
- * offers, filtered by name, with each action's shortcut beside it. Escape closes it;
- * choosing an action runs it and closes it.
+ * The command palette (R7/R10). cmdk 1.1.1 renders the searchable list inside the same dialog
+ * shell and button rows as before: every app-level action is a real button with its name, its
+ * real shortcut or a "No shortcut" note, and a visible reason when it cannot run now. Filtering
+ * stays the existing case-insensitive name match (cmdk's own filter is off, so the observable
+ * behaviour is unchanged), Escape closes it, and choosing an action runs it once and closes it.
  */
+/** A place worth returning focus to: still in the page, not inside a hidden panel, not disabled. */
+function canFocus(el: HTMLElement | null): el is HTMLElement {
+  return !!el && el.isConnected && el.closest("[hidden]") === null && !(el as HTMLButtonElement).disabled;
+}
+
 export function CommandPalette({ actions, onClose }: Props) {
   const [query, setQuery] = useState("");
   const input = useRef<HTMLInputElement>(null);
+  const returnFocus = useRef<HTMLElement | null>(null);
+
+  // Remember the control that opened the palette and hand focus back to it when the palette
+  // closes, so a keyboard user is not dropped on the page body (R7). When nothing was focused
+  // (opened by Ctrl+Shift+P from the page body) or that control is gone, land on the footer's
+  // always-visible sidebar toggle, a named control that stays on screen.
+  useEffect(() => {
+    const active = document.activeElement;
+    returnFocus.current = active instanceof HTMLElement && active !== document.body ? active : null;
+    return () => {
+      const target = returnFocus.current;
+      returnFocus.current = null;
+      if (canFocus(target)) target.focus();
+      else document.querySelector<HTMLElement>('button[aria-label="Toggle sidebar"]')?.focus();
+    };
+  }, []);
 
   useEffect(() => {
     input.current?.focus();
@@ -47,6 +74,7 @@ export function CommandPalette({ actions, onClose }: Props) {
   }, [actions, query]);
 
   const choose = (action: PaletteAction) => {
+    if (action.disabled) return;
     onClose();
     action.run();
   };
@@ -59,24 +87,45 @@ export function CommandPalette({ actions, onClose }: Props) {
       }}
     >
       <div role="dialog" aria-modal="true" aria-label="Command palette" className={styles.panel}>
-        <input
-          ref={input}
-          className={styles.search}
-          aria-label="Search commands"
-          placeholder="Type a command name."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <ul className={styles.list} aria-label="Commands">
-          {shown.map((action) => (
-            <li key={action.id}>
-              <button className={styles.item} onClick={() => choose(action)}>
-                <span className={styles.label}>{action.label}</span>
-                {action.shortcut && <kbd className={styles.kbd}>{action.shortcut}</kbd>}
-              </button>
-            </li>
-          ))}
-        </ul>
+        <Command shouldFilter={false} label="Command palette" className={styles.command}>
+          <Command.Input
+            ref={input}
+            className={styles.search}
+            aria-label="Search commands"
+            placeholder="Type a command name."
+            value={query}
+            onValueChange={setQuery}
+          />
+          <Command.List className={styles.list} aria-label="Commands">
+            {shown.map((action) => (
+              <Command.Item
+                key={action.id}
+                value={action.id}
+                disabled={action.disabled}
+                onSelect={() => choose(action)}
+                className={styles.item}
+                asChild
+              >
+                <button
+                  type="button"
+                  role="button"
+                  disabled={action.disabled}
+                  title={action.disabled ? action.disabledReason : undefined}
+                >
+                  <span className={styles.label}>{action.label}</span>
+                  {action.disabled && action.disabledReason && (
+                    <span className={styles.reason}>{action.disabledReason}</span>
+                  )}
+                  {action.shortcut ? (
+                    <kbd className={styles.kbd}>{action.shortcut}</kbd>
+                  ) : (
+                    <span className={styles.noShortcut}>No shortcut</span>
+                  )}
+                </button>
+              </Command.Item>
+            ))}
+          </Command.List>
+        </Command>
         {shown.length === 0 && <p className={styles.empty}>No commands match.</p>}
       </div>
     </div>

@@ -74,4 +74,36 @@ describe("GitBar branch chip", () => {
     const { container } = render(<GitBar git={controller({ info: null })} {...handlers()} collapsible defaultCollapsed />);
     expect(container).toBeEmptyDOMElement();
   });
+
+  it("A1: the chip still expands and collapses the tools for an uncontrolled caller", async () => {
+    render(<GitBar git={controller()} {...handlers()} collapsible defaultCollapsed />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Show git tools" }));
+    expect(screen.getByRole("button", { name: "Hide git tools" })).toHaveAttribute("aria-expanded", "true");
+    for (const name of toolNames) expect(screen.getByRole("button", { name })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Hide git tools" }));
+    expect(screen.getByRole("button", { name: "Show git tools" })).toHaveAttribute("aria-expanded", "false");
+    for (const name of toolNames) expect(screen.queryByRole("button", { name })).toBeNull();
+  });
+
+  it("R8: a controlled caller collapses the tools from the chip and decides the new state", async () => {
+    const onOpenChange = vi.fn();
+    const { rerender } = render(
+      <GitBar git={controller()} {...handlers()} collapsible open onOpenChange={onOpenChange} />,
+    );
+    expect(screen.getByRole("button", { name: "Hide git tools" })).toHaveAttribute("aria-expanded", "true");
+    for (const name of toolNames) expect(screen.getByRole("button", { name })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Hide git tools" }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    // still open until the parent applies the new state
+    expect(screen.getByRole("button", { name: /Fetch/ })).toBeInTheDocument();
+
+    rerender(<GitBar git={controller()} {...handlers()} collapsible open={false} onOpenChange={onOpenChange} />);
+    const chip = screen.getByRole("button", { name: "Show git tools" });
+    expect(chip).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button", { name: /Switch branch, current main/ })).toBeInTheDocument();
+    for (const name of toolNames) expect(screen.queryByRole("button", { name })).toBeNull();
+  });
 });

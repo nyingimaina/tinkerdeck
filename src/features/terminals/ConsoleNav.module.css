@@ -118,6 +118,30 @@
   background: var(--hover);
   color: var(--red);
 }
+.hide {
+  flex: none;
+  padding: 6px 8px 10px;
+}
+.hideButton {
+  width: 100%;
+  min-height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+}
+.hideButton:hover:not(:disabled) {
+  background: var(--hover);
+}
+.hideButton:disabled {
+  opacity: 0.55;
+}
+.hideReason {
+  margin: 6px 2px 0;
+  color: var(--muted);
+  font-size: 11px;
+}
 .notice {
   margin: 6px 8px 10px;
   padding: 6px 8px;

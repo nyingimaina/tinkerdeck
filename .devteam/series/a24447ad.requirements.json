@@ -494,6 +494,36 @@
           "scope": ""
         }
       ]
+    },
+    {
+      "id": "A1",
+      "text": "Characterization tests before the palette package swap and the new hide controls. The palette, footer, console list and git chip are merged code (USR-004) and this revision changes their internals and controls; freezing what they do today keeps filtering, the empty result, choose-then-run, Escape, the footer\u0027s current content and the chip/console behaviour from changing silently.",
+      "acceptance": [
+        "Before cmdk is added or the footer, console and git-tools controls change, tests pin today\u0027s palette filtering by name, the \u0027No commands match.\u0027 empty result, choose-runs-once-and-closes, Escape-closes, the footer\u0027s current version-only content, the git chip expand/collapse and the console list\u0027s select/add/close behaviour.",
+        "The full suite passes against the in-house palette and again after the cmdk swap with the same observable results, including each action still being a button with its name, its real shortcut or a \u0027No shortcut\u0027 note, and the empty result.",
+        "The new tests fail when the corresponding old behaviour is removed."
+      ],
+      "rationale": "The palette, footer, console list and git chip are merged code (USR-004) and this revision changes their internals and controls; freezing what they do today keeps filtering, the empty result, choose-then-run, Escape, the footer\u0027s current content and the chip/console behaviour from changing silently.",
+      "derivedFrom": "R10",
+      "edgeCases": [],
+      "pitfalls": [],
+      "rules": [],
+      "facts": []
+    },
+    {
+      "id": "A2",
+      "text": "Reuse the existing sidebar preference instead of a new layout record. R9 only needs the window-level sidebar state, and the sidebar\u0027s collapsed flag is already saved under td.sidebarCollapsed with a safe fallback, so keeping that key avoids a migration and makes it impossible to restore an app\u0027s git drawer or console at startup.",
+      "acceptance": [
+        "No new layout key or per-app layout field is written; the only saved layout value is the existing td.sidebarCollapsed flag.",
+        "A missing, unreadable or unexpected value starts the sidebar expanded; the value \u00271\u0027 starts it collapsed.",
+        "Opening an app never reads a saved git-tools, git-drawer or console state, and restoring the sidebar never starts or restarts a terminal."
+      ],
+      "rationale": "R9 only needs the window-level sidebar state, and the sidebar\u0027s collapsed flag is already saved under td.sidebarCollapsed with a safe fallback, so keeping that key avoids a migration and makes it impossible to restore an app\u0027s git drawer or console at startup.",
+      "derivedFrom": "R9",
+      "edgeCases": [],
+      "pitfalls": [],
+      "rules": [],
+      "facts": []
     }
   ],
   "questions": [],

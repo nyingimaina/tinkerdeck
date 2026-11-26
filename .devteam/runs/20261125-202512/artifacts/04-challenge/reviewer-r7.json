@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "cites": "USR-006",
+      "severity": "blocking",
+      "file": "src/features/command-palette/CommandPalette.tsx",
+      "line": 99,
+      "evidence": "The cmdk list keeps an invalid combobox/listbox structure. Command.List is given aria-label=\"Commands\" (line 99), but cmdk's List reads its `label` prop and hard-sets aria-label on the rendered div, so the listbox is actually named \"Suggestions\". Each Command.Item uses asChild (line 107) around a native <button role=\"button\"> (lines 109-111); Radix Primitive/Slot lets the child's role win, so cmdk's role=\"option\" is lost. A jsdom render of the palette (scratch probe) produced: <input role=\"combobox\" aria-label=\"Search commands\" aria-labelledby=\"radix-:r1:\"> and <div role=\"listbox\" aria-label=\"Suggestions\"> containing <button type=\"button\" role=\"button\" aria-selected=\"true\"> rows. The input also carries both aria-label and aria-labelledby, so its accessible name is the hidden \"Command palette\" text, not \"Search commands\".",
+      "description": "The packaged palette exposes an invalid combobox/listbox: a listbox whose children are role=\"button\" (not role=\"option\") with aria-selected (unsupported on a button), a list announced as \"Suggestions\" instead of the intended \"Commands\", and a search input named \"Command palette\" instead of \"Search commands\". Screen-reader and assistive-technology users cannot reliably discover the commands or hear which one is active, which fails USR-006 section 5.8 (support assistive technologies) and its accessibility requirement. Pass `label=\"Commands\"` to Command.List instead of aria-label, and keep cmdk's option role on the items (e.g. drop the child role=\"button\" so the slot's role=\"option\" applies, or render cmdk's default element), then update the A1 role assertions that expect buttons."
+    }
+  ],
+  "verifications": [
+    {
+      "id": "REV-3",
+      "status": "fixed",
+      "evidence": "Palette: CommandPalette.tsx:45-54 now records document.activeElement on mount and restores it in the unmount cleanup (after both Escape at line 62 and choose at line 78), skipping the page body and disconnected/hidden elements, and falling back to the always-visible footer button[aria-label=\"Toggle sidebar\"]. src/features/command-palette/CommandPalette.test.tsx:111-120 mounts the palette from a focused opener, presses Escape and asserts the opener has focus; it passes. Git drawer: App.tsx:241-245 records the opener in openGitTab, and closeGitTab (App.tsx:246-255) restores it (falling back to the Show/Hide git tools chip) instead of leaving focus on the hidden Close button; src/App.layout.test.tsx:158-174 clicks Changes, closes the drawer and asserts the Changes control regains focus while the Close button does not. The full suite passes (44 files, 432 tests)."
+    }
+  ]
+}

@@ -18,12 +18,16 @@ interface Props {
   /** `null` = the default shell. */
   onAdd: (shellId: string | null) => void;
   onClose: (id: string) => void;
+  /** Hide the console without closing it; the shell keeps running (R8). */
+  onHide?: () => void;
+  /** When set, hiding is not allowed now and the reason is shown beside the disabled control (R8). */
+  hideDisabledReason?: string | null;
   /** One-line note such as "Shell ended, restarted". */
   notice?: string | null;
 }
 
 /** The VS Code-style list of console instances, shown beside the terminal when the Console tab is open. */
-export function ConsoleNav({ consoles, activeId, stateOf, shells, onSelect, onAdd, onClose, notice }: Props) {
+export function ConsoleNav({ consoles, activeId, stateOf, shells, onSelect, onAdd, onClose, onHide, hideDisabledReason, notice }: Props) {
   const [menu, setMenu] = useState(false);
   const shellName = (id: string | null) => (id ? (shells.find((s) => s.id === id)?.name ?? id) : "default shell");
 
@@ -87,6 +91,21 @@ export function ConsoleNav({ consoles, activeId, stateOf, shells, onSelect, onAd
           </li>
         ))}
       </ul>
+      {onHide && (
+        <div className={styles.hide}>
+          <button
+            type="button"
+            className={styles.hideButton}
+            onClick={onHide}
+            disabled={!!hideDisabledReason}
+            aria-label="Hide console"
+            title={hideDisabledReason ?? "Hide the console; it keeps running"}
+          >
+            Hide console
+          </button>
+          {hideDisabledReason && <p className={styles.hideReason}>{hideDisabledReason}</p>}
+        </div>
+      )}
       {notice && (
         <p className={styles.notice} role="status">
           {notice}

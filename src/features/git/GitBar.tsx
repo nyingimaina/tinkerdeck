@@ -16,14 +16,25 @@ interface Props {
   collapsible?: boolean;
   /** Start collapsed, only meaningful with `collapsible`. Existing callers stay expanded. */
   defaultCollapsed?: boolean;
+  /** Controlled expanded state for the tool row; when set the component keeps no state of its own (R8). */
+  open?: boolean;
+  /** Called with the requested state when the chip is clicked, for controlled callers such as Reset layout. */
+  onOpenChange?: (open: boolean) => void;
 }
 
 /** Branch pill, fetch/pull/push/sync and links to the changes, history and console. Hidden outside a repository. */
-export function GitBar({ git, onSwitch, onOpenChanges, onOpenHistory, onOpenConsole, onRefresh, collapsible = false, defaultCollapsed = false }: Props) {
+export function GitBar({ git, onSwitch, onOpenChanges, onOpenHistory, onOpenConsole, onRefresh, collapsible = false, defaultCollapsed = false, open, onOpenChange }: Props) {
   const [menu, setMenu] = useState(false);
-  const [tools, setTools] = useState(() => !(collapsible && defaultCollapsed));
+  const [ownTools, setOwnTools] = useState(() => !(collapsible && defaultCollapsed));
+  const controlled = open !== undefined;
+  const tools = controlled ? open : ownTools;
   const { info, busy, message } = git;
   if (!info) return null; // loading, or not a repository
+
+  const setTools = (next: boolean) => {
+    if (!controlled) setOwnTools(next);
+    onOpenChange?.(next);
+  };
 
   const onBranch = !!info.branch;
   const off = !!busy;
@@ -74,7 +85,7 @@ export function GitBar({ git, onSwitch, onOpenChanges, onOpenHistory, onOpenCons
         {collapsible && (
           <button
             className={styles.toolsToggle}
-            onClick={() => setTools((v) => !v)}
+            onClick={() => setTools(!tools)}
             aria-expanded={tools}
             aria-label={tools ? "Hide git tools" : "Show git tools"}
             title={tools ? "Hide git tools" : "Show git tools"}

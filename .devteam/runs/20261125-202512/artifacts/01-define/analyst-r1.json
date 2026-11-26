@@ -1,0 +1,275 @@
+{
+  "summary": "This is revision 2 of 2 of a larger feature (R6 to R10). Tinkerdeck\u0027s window is cluttered: roughly ten ungrouped top-bar controls, up to six stacked parts in an app view and up to five banners all compete for attention, so a first-time user cannot see what matters. This feature is a tidy-up, not a redesign: the same screens, panels, dialogs, footer and separate editor view stay, but top-bar controls are grouped, advanced controls are hidden until needed, optional parts start hidden or collapsed and can be hidden again on demand, the last layout is remembered between sessions, VS Code-style shortcuts are added, and a command palette keeps every hidden action reachable by name. A written, inspected tidy-up plan is produced first. The requirements are mostly window (React) work; remembering the layout (R9) is stored with the core\u0027s existing saved settings so it survives a restart, and R10 adds new front-end npm dependencies that the plan must verify against React 18.3 and the Tauri webview.",
+  "requirements": [
+    {
+      "id": "R6",
+      "text": "Keep the footer, and make its toggle behave the same as the sidebar\u0027s Ctrl\u002BB toggle so the two stay in step.",
+      "acceptance": [
+        "Clicking the footer toggle and pressing Ctrl\u002BB produce the same result.",
+        "The footer remains visible."
+      ],
+      "rationale": "The developer wants to keep the footer but make its toggle match the sidebar\u0027s Ctrl\u002BB behaviour, so the two controls cannot disagree.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Using the footer toggle and then the keyboard shortcut does not leave the sidebar and footer out of sync.",
+        "The footer toggle and Ctrl\u002BB work the same when the terminal or editor has focus."
+      ],
+      "pitfalls": [
+        "Do not keep two independent toggle states for the sidebar and the footer."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-006",
+        "USR-001"
+      ],
+      "facts": [
+        {
+          "subject": "footer",
+          "attribute": "visibility",
+          "op": "must",
+          "value": "always visible",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "footer toggle",
+          "attribute": "effect",
+          "op": "equals",
+          "value": "same as Ctrl\u002BB",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "text": "Add a command palette that lists every app action with its name and its shortcut (or a clear note that it has none), so any control hidden from the default view can still be found and run by typing its name, and show an empty result when a query matches no action.",
+      "acceptance": [
+        "The command palette lists every action the app offers, each with the shortcut that runs it or a clear note that it has none.",
+        "Typing the name of a hidden control in the palette finds that control and runs it.",
+        "The palette opens with Ctrl\u002BShift\u002BP even when the terminal or editor is focused.",
+        "A query that matches no action shows an empty result."
+      ],
+      "rationale": "The developer confirmed the command palette; it also makes hiding safe, because any button tucked away stays reachable by typing its name.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "An action with two entry points today, such as Git through GitBar and GitDrawer, appears once in the palette rather than twice.",
+        "An action that only exists while an app is open is shown only then, or shown as unavailable with a reason, instead of failing when chosen.",
+        "Hide/show actions for each optional part appear in the palette, so an open part can also be hidden from there.",
+        "The palette adds a way to reach visible primary actions; it does not replace their buttons."
+      ],
+      "pitfalls": [
+        "Do not let the palette list only a subset of actions, leaving a hidden control unreachable.",
+        "Do not show a shortcut in the palette that the terminal or editor intercepts before it reaches the app.",
+        "Do not list the same action twice under different names."
+      ],
+      "rules": [
+        "USR-001",
+        "TAU-012",
+        "USR-006"
+      ],
+      "facts": [
+        {
+          "subject": "command palette",
+          "attribute": "action coverage",
+          "op": "equals",
+          "value": "every app action",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "command palette",
+          "attribute": "result on no match",
+          "op": "equals",
+          "value": "empty result",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "text": "Any optional part the user has opened (the git drawer, the console, extra panes, dialogs and banners) can be hidden again on demand, so after prolonged use the user can return to the calm default view without restarting the app, and hiding an open console keeps the terminal running with its output available.",
+      "acceptance": [
+        "Every optional part that can be opened also has a control that hides it again.",
+        "After hiding the open optional parts, the screen shows the default minimal view with the primary actions and the footer still visible.",
+        "A hidden part can be reopened from the same named place and via the command palette.",
+        "Hiding an open console keeps the terminal running and its output available instead of closing it."
+      ],
+      "rationale": "The developer said that besides starting out hidden, it must be possible to hide already-open things so the user can return to a calmer view after opening several tools without restarting.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Hiding a console that is receiving output removes it from view but keeps it running, so the output is still there when it is shown again.",
+        "Hiding one part leaves the rest of the layout as it was.",
+        "A part carrying a signal the user needs, such as a branch name or an available update, still surfaces that signal while hidden.",
+        "Hiding the git drawer does not change what the git tools do or lose an in-progress git message."
+      ],
+      "pitfalls": [
+        "Hiding must not close running terminals or lose their work.",
+        "Hiding must not make a part unreachable; every hidden part keeps a stated way back.",
+        "Returning to the calm view must not require restarting the app.",
+        "Hiding a dialog that holds unsaved input must not silently discard it."
+      ],
+      "rules": [
+        "TAU-012",
+        "PERF-001",
+        "USR-006",
+        "USR-003"
+      ],
+      "facts": [
+        {
+          "subject": "open console",
+          "attribute": "state after hide",
+          "op": "equals",
+          "value": "still running",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "console output",
+          "attribute": "after hide",
+          "op": "must",
+          "value": "remain available",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "optional parts",
+          "attribute": "hide control",
+          "op": "must",
+          "value": "each can be hidden again",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R9",
+      "text": "Remember the last layout between sessions: for each optional part the plan names, whether it is open, collapsed or hidden is saved when the app closes and restored when it reopens, so the user does not have to rearrange the screen each time; a first run, or an unreadable saved layout, starts in the default minimal view.",
+      "acceptance": [
+        "Reopening the app restores the previous session\u0027s open, collapsed or hidden state for the optional parts the plan covers.",
+        "A part the user hid stays hidden in the next session; a part the user left open reopens open.",
+        "On first run, or when no saved layout exists, the app starts in the default minimal view.",
+        "A saved layout that can no longer be applied falls back to the default for the affected part instead of failing."
+      ],
+      "rationale": "The developer asked to remember the layout; today only the sidebar\u0027s collapsed state is saved, so the other parts are forgotten and the screen must be rearranged every time.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "The remembered layout covers parts, not running processes: a hidden console is not restarted and does not bring back previous output.",
+        "A corrupt or unreadable saved layout falls back to the default minimal view rather than stopping the app from starting.",
+        "A dialog that was open when the app closed is not reopened with stale content unless the plan says dialogs are remembered.",
+        "The saved layout and the default layout have the same shape, so a part added later still has a place."
+      ],
+      "pitfalls": [
+        "Do not remember a state that hides a part the user can no longer find; hiding stays reversible.",
+        "Do not persist transient states such as a dismissed error or update banner as if they were layout.",
+        "Do not let restoring the layout restart terminals or duplicate work.",
+        "A failed or partial save must not leave the app unable to start in the default view."
+      ],
+      "rules": [
+        "PERF-001",
+        "USR-003",
+        "USR-006"
+      ],
+      "facts": [
+        {
+          "subject": "saved layout",
+          "attribute": "restore",
+          "op": "must",
+          "value": "previous open/collapsed/hidden state",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "saved layout",
+          "attribute": "fallback",
+          "op": "equals",
+          "value": "default minimal view",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "saved layout",
+          "attribute": "terminal processes",
+          "op": "must-not",
+          "value": "restart or duplicate",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "text": "Build the new UI building blocks from reliable, free, openly licensed, actively maintained npm packages that are confirmed to work with React 18.3 inside the Tauri webview, instead of hand-rolling them: the command palette, shortcut handling, menus, dialogs and resizable or collapsible panes each use an established package where a suitable one exists, house-rule jattac libraries are preferred where they perform the same function, and anything built in-house is a stated choice with a reason.",
+      "acceptance": [
+        "For each building block (command palette, keyboard shortcuts, menus, dialogs, resizable or collapsible panes) the plan names the package used or states that it is built in-house with the reason.",
+        "Each chosen package is free, openly licensed, actively maintained and confirmed to work with React 18.3 in the Tauri webview before the plan commits to it.",
+        "The chosen packages do not change what existing controls do, and every existing shortcut still works as R4 requires.",
+        "Where the app already has a suitable library (for example framer-motion, CodeMirror, xterm, jattac-web-poller or zest-tabs), the plan says whether it is reused before adding another.",
+        "Where a jattac house-rule library performs the same function, it is chosen, or the plan states why it does not fit."
+      ],
+      "rationale": "The developer asked that components use reliable, free, safe and well-supported packages rather than being written by hand, and the house rules already require the jattac web libraries in preference to other components where they fit.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "A package that is unmaintained, restrictively licensed or not free is not adopted, and the plan records the fallback.",
+        "A package whose latest version does not support React 18.3 or does not work in the Tauri webview is replaced by a compatible alternative or built in-house, and the plan says which.",
+        "A package whose default look clashes with the app\u0027s themes is styled to fit, or the plan records that it is not adopted.",
+        "A building block too small or specific for a package is built in-house, and the plan records that decision rather than adding a dependency.",
+        "A package that intercepts keys or focus differently still lets app-level shortcuts reach the app when the terminal or editor is focused."
+      ],
+      "pitfalls": [
+        "Do not adopt a package without checking that it works with React 18.3 and the Tauri webview.",
+        "Do not take on a large dependency for a trivial piece of UI, or one whose licence is unclear.",
+        "Do not let swapping a hand-built dialog or menu for a package drop its content, actions or keyboard behaviour."
+      ],
+      "rules": [
+        "USR-001",
+        "USR-003",
+        "TAU-012"
+      ],
+      "facts": [
+        {
+          "subject": "new UI packages",
+          "attribute": "supported React version",
+          "op": "equals",
+          "value": "18.3",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "new UI packages",
+          "attribute": "cost",
+          "op": "equals",
+          "value": "free",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "new UI packages",
+          "attribute": "license",
+          "op": "must",
+          "value": "openly licensed",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "new UI packages",
+          "attribute": "maintenance",
+          "op": "must",
+          "value": "actively maintained",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    }
+  ],
+  "questions": [],
+  "coverage": [],
+  "assumptions": [],
+  "roles": [],
+  "outOfScope": [],
+  "nonFunctional": [],
+  "risks": [],
+  "tensions": [],
+  "glossary": []
+}

@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "cites": "R9",
+      "severity": "blocking",
+      "file": "src/App.tsx",
+      "line": 279,
+      "evidence": "handleSave() lands a newly created app in the app view with `if (!exists) setView(\"app\")` (line 279) after only L.selectApp() (line 271); unlike openApp() (lines 233-238) it never does setGitTab(null) or setGitToolsOpen(false). gitTab is also not cleared on any leave-app path, e.g. the palette 'Go to Home' run `() => setView(\"home\")` (line 349) and Sidebar onHome (line 480), so an open git drawer survives; GitDrawer renders whenever gitTab is truthy (line 604). Result: from an app with the git drawer open (or after visiting Home with it open), choosing 'Add app' in the EditPane and saving opens the new app with the previous app's Git drawer already on screen (and, for a repo app, expanded git tools if gitToolsOpen was true).",
+      "description": "R9 requires every app to open in the calm default - git tools collapsed, git drawer closed, console hidden. Creating and opening an app via 'Add app' -> save bypasses the calm reset that openApp applies, so a stale git drawer (and possibly expanded git tools) reappears in the new app. Route this new-app app-view transition through the same reset used by openApp (setGitTab(null), setGitToolsOpen(false), select the app's first terminal) instead of calling setView(\"app\") directly."
+    },
+    {
+      "cites": "USR-003",
+      "severity": "advisory",
+      "file": "src/App.features.test.tsx",
+      "line": 389,
+      "evidence": "One full `npx vitest run` produced 2 intermittent failures - src/App.features.test.tsx > Consoles > 'deleting an app stops its running consoles first' and src/App.updatecheck.test.tsx > 'shows the update banner when there is a newer version' - while an immediate repeat of the same full suite passed 422/422. The targeted reruns of the affected files also passed.",
+      "description": "The suite is timing-sensitive/flaky under full parallel load; the build report claims a clean full run. Not certainly caused by this revision, but it should be stabilised before relying on the green result."
+    }
+  ],
+  "verifications": []
+}

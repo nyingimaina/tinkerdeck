@@ -1,0 +1,238 @@
+{
+  "summary": "Revision 2 of the Tinkerdeck tidy-up (R6-R10) builds directly on revision 1 and stays window-only: no Rust command, permission, CSP or config/data change. Every existing screen, panel, dialog, banner, the footer and the separate editor view stay. The window gains one persisted layout record in localStorage (the same mechanism as today's td.sidebarCollapsed key, which is migrated): a global sidebar flag plus, per app, the git tools open/collapsed state, the git drawer tab/closed state and the console open/closed state. First run or an unreadable record falls back per field to the calm default (sidebar expanded, git tools collapsed, drawer closed, console closed); dialogs, banners, the branch menu, the theme finder and the app edit form are deliberately not persisted because they are transient. App.tsx becomes the single source of that layout. The footer gains a toggle that calls the same toggleSidebar handler as Ctrl+B and the brand button, so the two cannot disagree (R6). The command palette lists every command the app offers - the global ones and the ones that exist only while an app or the editor is open - each with its real shortcut or a plain 'No shortcut' note, filters by name, and shows an empty result for an unmatched query (R7). Every optional part that can be opened has a hide control: the git drawer keeps its Close, the git tools collapse to the branch chip again, the console gets a Hide console control that selects a terminal without closing the console, and dialogs, banners, the branch menu, the theme finder and the edit pane keep their existing close/cancel/escape paths. Hiding the console never calls stopTerminal and never unmounts its xterm, so the shell and its output stay alive (R8). The git tools open state becomes controlled by the layout, and opening an app restores that app's saved drawer and console, with a restored open console getting a fresh shell only when the app view is opened and never any old output, and never starting at launch; a drawer saved for an app that is no longer a git repository falls back to closed and corrects the record (R9). A Reset layout command returns the saved record to defaults and hides (never closes) running consoles (R8). R10 package choices: the palette uses cmdk 1.1.1 and the single Dialog shell uses @radix-ui/react-dialog 1.3.1, both MIT and React 18 compatible, DOM-only inside the Chromium WebView2, with the existing CSP unchanged; shortcut handling stays in-house because the one matcher must also serve xterm's non-DOM attachCustomKeyEventHandler, so a DOM-only hook library would create a second key list that can drift and let the terminal swallow shortcuts; menus and the footer toggle stay in-house native components (the published jattac overflow-menu build injects hashed, unthemeable CSS, and Radix dropdown-menu would add eager initial weight for a four-item menu); the collapsible panes stay CSS show/hide because the requirement is hide/show, not resizing, and a pane library would replace the existing flex layout. Palette command list (R7): always Toggle sidebar (Ctrl+B), Refresh everything (F5), Switch light/dark theme (Ctrl+Alt+T), Open command palette (Ctrl+Shift+P), Open editor, Check for updates, Help, Add app, Go to Home and Reset layout (No shortcut); while an app is open, Start all terminals, Stop all terminals, Edit this app, Start selected terminal, Stop selected terminal, Restart selected terminal, Git fetch, Git pull, Git push, Git sync, Show/Hide git tools, Git: show changes, Git: show history, Hide git panel, Show console, Hide console and New console (all No shortcut; the git commands only when the app is a repository and the console commands only when the Console tab exists). Value pickers and in-place data navigation - the Shell selector, an individual theme choice, a branch choice, the theme-file import, the open-app and terminal rows, the editor's own file commands and context-specific dialog answers - stay on their always-visible controls, so the palette lists commands rather than data and no hidden control is left unreachable. Hide console is offered whenever another tab exists; in an app with no terminals the console is the only workspace, so the control is disabled with a reason. A saved drawer is restored only when the app is a git repository, and a saved expanded git-tools state for a non-repository app is corrected to collapsed, so a stale record never leaves an empty surface. The existing plan document keeps its inventory row format so its current checks in App.test stay green. Scale and cost: one localStorage read at startup and one tiny write per layout change, the record pruned to the known app ids; the palette is bounded by a fixed command set rather than by user data, so no paging or virtualization is needed; there is no new polling, network, backend or startup work, and cmdk is only fetched with the already-lazy palette chunk.",
+  "impact": {
+    "touches": [
+      "src/App.tsx (layout source of truth, footer toggle wiring, complete palette action list, console hide, reset layout, per-app restore)",
+      "src/features/apps/AppFooter.tsx and AppFooter.module.css (sidebar toggle in the footer)",
+      "src/features/apps/Dialog.tsx and Dialog.module.css (Radix dialog shell behind the same title/children/actions API)",
+      "src/features/command-palette/CommandPalette.tsx and CommandPalette.module.css (cmdk list, empty state, No shortcut note)",
+      "src/features/terminals/ConsoleNav.tsx and ConsoleNav.module.css (Hide console control)",
+      "src/features/git/GitBar.tsx (optional controlled tools-open props added additively; uncontrolled callers unchanged)",
+      "src/test/setup.ts (jsdom shims needed by the Radix dialog test path)",
+      "package.json and package-lock.json (cmdk and @radix-ui/react-dialog dependencies)",
+      "existing App, footer, palette, dialog, console and git-chip tests (characterization and updated expectations)",
+      "docs/ui-tidy-up-plan.md (revision 2 inventory, palette action list, saved fields, package decisions)",
+      "features: apps, command-palette, git, terminals"
+    ],
+    "reuses": [
+      "src/shared/shortcuts.ts APP_SHORTCUTS and shortcutKeys (the palette shows the existing Ctrl+B, F5, Ctrl+Shift+P and Ctrl+Alt+T; no new shortcut is invented)",
+      "src/state/useGit.ts and src/state/usePoller.ts (unchanged; a restored drawer only enables the existing on-demand watch)",
+      "src/state/useLauncher.ts selectTerminal, openConsoleTab, closeConsole and consoles (unchanged; hiding a console only selects another tab)",
+      "the existing Dialog title/children/actions API and CSS variables, so all nine dialogs keep their content and actions",
+      "the existing in-house UtilitiesMenu and ThemePicker menus, Sidebar rail and TerminalHost CSS hide pattern",
+      "the existing localStorage preference pattern and React.lazy/Suspense chunking (the palette stays lazy)",
+      "already-installed framer-motion, jattac.libs.web.zest-tabs and jattac-web-poller (no replacement, no new UI stack)"
+    ],
+    "adds": [
+      "src/shared/layout.ts (typed LayoutState, defaults, validated parse, legacy-key migration, bounded save/prune) and src/shared/layout.test.ts",
+      "src/App.layout.test.tsx (restore, fallback, hide-not-close console, reset layout, palette coverage)",
+      "cmdk 1.1.1 (MIT) for the command palette",
+      "@radix-ui/react-dialog 1.3.1 (MIT) for the one dialog shell",
+      "footer sidebar toggle, console Hide control, controlled git-tools props and the Reset layout command",
+      "'No shortcut' note and the full command list in the palette",
+      "revision 2 sections in docs/ui-tidy-up-plan.md"
+    ]
+  },
+  "scope": [
+    "src/App.tsx",
+    "src/App.test.tsx",
+    "src/App.shortcuts.test.tsx",
+    "src/App.features.test.tsx",
+    "src/App.layout.test.tsx",
+    "src/App.editor.test.tsx",
+    "src/App.themes.test.tsx",
+    "src/App.updatecheck.test.tsx",
+    "src/App.updates.test.tsx",
+    "src/shared/layout.ts",
+    "src/shared/layout.test.ts",
+    "src/features/apps/AppFooter.tsx",
+    "src/features/apps/AppFooter.module.css",
+    "src/features/apps/AppFooter.test.tsx",
+    "src/features/apps/Dialog.tsx",
+    "src/features/apps/Dialog.module.css",
+    "src/features/apps/components.test.tsx",
+    "src/features/command-palette/CommandPalette.tsx",
+    "src/features/command-palette/CommandPalette.module.css",
+    "src/features/command-palette/CommandPalette.test.tsx",
+    "src/features/terminals/ConsoleNav.tsx",
+    "src/features/terminals/ConsoleNav.module.css",
+    "src/features/terminals/ConsoleNav.test.tsx",
+    "src/features/git/GitBar.tsx",
+    "src/features/git/GitBar.collapse.test.tsx",
+    "src/features/updates/updates.test.tsx",
+    "src/test/setup.ts",
+    "package.json",
+    "package-lock.json",
+    "docs/ui-tidy-up-plan.md"
+  ],
+  "components": [
+    {
+      "name": "LayoutStore",
+      "path": "src/shared/layout.ts",
+      "requirements": ["R9", "A3"]
+    },
+    {
+      "name": "LayoutStoreTests",
+      "path": "src/shared/layout.test.ts",
+      "requirements": ["R9", "A3"]
+    },
+    {
+      "name": "AppShell",
+      "path": "src/App.tsx",
+      "requirements": ["R6", "R7", "R8", "R9", "A1"]
+    },
+    {
+      "name": "AppFooter",
+      "path": "src/features/apps/AppFooter.tsx",
+      "requirements": ["R6"]
+    },
+    {
+      "name": "AppFooterStyles",
+      "path": "src/features/apps/AppFooter.module.css",
+      "requirements": ["R6"]
+    },
+    {
+      "name": "AppFooterTests",
+      "path": "src/features/apps/AppFooter.test.tsx",
+      "requirements": ["R6", "A2"]
+    },
+    {
+      "name": "AppTestsUpdate",
+      "path": "src/App.test.tsx",
+      "requirements": ["R6", "R9"]
+    },
+    {
+      "name": "CommandPalette",
+      "path": "src/features/command-palette/CommandPalette.tsx",
+      "requirements": ["R7", "R10"]
+    },
+    {
+      "name": "CommandPaletteStyles",
+      "path": "src/features/command-palette/CommandPalette.module.css",
+      "requirements": ["R7", "R10"]
+    },
+    {
+      "name": "CommandPaletteTests",
+      "path": "src/features/command-palette/CommandPalette.test.tsx",
+      "requirements": ["R7", "R10", "A2"]
+    },
+    {
+      "name": "PaletteAndLayoutAppTests",
+      "path": "src/App.layout.test.tsx",
+      "requirements": ["R7", "R8", "R9", "A1", "A3"]
+    },
+    {
+      "name": "AppShortcutTestsUpdate",
+      "path": "src/App.shortcuts.test.tsx",
+      "requirements": ["R7", "R8", "R9"]
+    },
+    {
+      "name": "AppFeaturesTestsUpdate",
+      "path": "src/App.features.test.tsx",
+      "requirements": ["R8", "R9"]
+    },
+    {
+      "name": "Dialog",
+      "path": "src/features/apps/Dialog.tsx",
+      "requirements": ["R8", "R10"]
+    },
+    {
+      "name": "DialogStyles",
+      "path": "src/features/apps/Dialog.module.css",
+      "requirements": ["R10"]
+    },
+    {
+      "name": "DialogTests",
+      "path": "src/features/apps/components.test.tsx",
+      "requirements": ["R8", "R10", "A2"]
+    },
+    {
+      "name": "ConsoleNavPanel",
+      "path": "src/features/terminals/ConsoleNav.tsx",
+      "requirements": ["R8"]
+    },
+    {
+      "name": "ConsoleNavStyles",
+      "path": "src/features/terminals/ConsoleNav.module.css",
+      "requirements": ["R8"]
+    },
+    {
+      "name": "ConsoleNavTests",
+      "path": "src/features/terminals/ConsoleNav.test.tsx",
+      "requirements": ["R8"]
+    },
+    {
+      "name": "GitBarChip",
+      "path": "src/features/git/GitBar.tsx",
+      "requirements": ["R8", "R9"]
+    },
+    {
+      "name": "GitBarCollapseTests",
+      "path": "src/features/git/GitBar.collapse.test.tsx",
+      "requirements": ["R8", "R9"]
+    },
+    {
+      "name": "TestSetup",
+      "path": "src/test/setup.ts",
+      "requirements": ["R10"]
+    },
+    {
+      "name": "PackageManifest",
+      "path": "package.json",
+      "requirements": ["R10"]
+    },
+    {
+      "name": "PackageLock",
+      "path": "package-lock.json",
+      "requirements": ["R10"]
+    },
+    {
+      "name": "TidyUpPlanRevision2",
+      "path": "docs/ui-tidy-up-plan.md",
+      "requirements": ["R6", "R7", "R8", "R9", "R10"]
+    }
+  ],
+  "additions": [
+    {
+      "id": "A1",
+      "title": "Add a Reset layout command",
+      "why": "R8 asks that after prolonged use a person can get back to the calm default view without restarting, and the feature request named a Reset layout action; one command does that while keeping running consoles alive.",
+      "parent": "R8",
+      "kind": "behaviour",
+      "touches": ["ui", "tests"],
+      "acceptance": [
+        "The command palette lists Reset layout with a clear No shortcut note, and choosing it returns the saved layout to the defaults.",
+        "After a reset the sidebar is expanded, the git tools are collapsed, the git drawer is closed and an open console is hidden by selecting a terminal.",
+        "Reset never calls stopTerminal and never unmounts a console xterm, so running consoles and their output stay available.",
+        "Reset leaves the footer and the primary actions visible, and an open app edit form or dialog is not silently discarded.",
+        "Reopening the app after a reset starts in the default minimal view."
+      ]
+    },
+    {
+      "id": "A2",
+      "title": "Characterization tests before swapping the dialog and palette internals",
+      "why": "The dialog shell and palette are merged code (USR-004); freezing what they do today before replacing their internals keeps focus, actions, filtering and empty-state behaviour from silently changing.",
+      "parent": "R10",
+      "kind": "enabling",
+      "touches": ["tests"],
+      "acceptance": [
+        "Before the package changes, tests pin today's footer content, Dialog actions and first-action focus, palette filtering, empty result and choose-then-run behaviour, and the existing git-chip and console behaviour.",
+        "The full suite passes against the old code and again after the package swap.",
+        "The new tests fail when the corresponding old behaviour is removed."
+      ]
+    },
+    {
+      "id": "A3",
+      "title": "Migrate the existing sidebar preference into the layout record",
+      "why": "The sidebar's collapsed state is already saved under td.sidebarCollapsed; moving it into one validated layout record must not lose the choice of people who already collapsed their sidebar.",
+      "parent": "R9",
+      "kind": "enabling",
+      "touches": ["ui", "tests"],
+      "acceptance": [
+        "A profile with td.sidebarCollapsed set to 1 starts with the sidebar collapsed after the upgrade.",
+        "When a valid td.layout record exists it wins over the legacy key.",
+        "A missing or corrupt td.layout falls back to the legacy key or the default without throwing."
+      ]
+    }
+  ]
+}

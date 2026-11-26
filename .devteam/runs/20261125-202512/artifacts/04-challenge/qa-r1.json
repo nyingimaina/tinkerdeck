@@ -1,0 +1,77 @@
+{
+  "findings": [
+    {
+      "cites": "R8",
+      "severity": "blocking",
+      "file": "src/features/git/ChangesView.tsx",
+      "line": 13,
+      "evidence": "The commit-message draft is React state local to ChangesView (ChangesView.tsx:13 `const [message, setMessage] = useState(\"\")`). App renders GitDrawer only while gitTab is set (App.tsx:604) and its Close calls setGitTab(null) (App.tsx:606), so hiding the drawer unmounts ChangesView and a typed message is gone on reopen. useGit holds only the result message (useGit.ts:49 `GitMessage`), not the draft. No test hides then reopens the drawer with a draft in progress.",
+      "description": "Hiding the git drawer loses the in-progress commit message, so R8's edge case 'Hiding the git drawer does not ... lose an in-progress git message' is not met and is not covered by a test."
+    },
+    {
+      "cites": "R7",
+      "severity": "blocking",
+      "file": "src/App.tsx",
+      "line": 376,
+      "evidence": "App.tsx:376-382 adds palette rows 'Show git tools'/'Hide git tools' and 'Close git drawer' (and 'Open console' at 385), but no test queries any of these inside the palette dialog. The only palette hide test is 'Hide console' (App.features.test.tsx:378, App.shortcuts.test.tsx:286). App.shortcuts.test.tsx:215-255 only checks the two 'Git: show changes/history' row counts. R8's 'A hidden tool can be reopened ... via the command palette' is likewise untested for git tools, git drawer and console.",
+      "description": "R7's edge case that hide/show commands for every hideable tool (git tools, git drawer, console) appear in the palette and can hide/reopen the tool is proven only for the console; the git-tools and git-drawer palette commands have no test."
+    },
+    {
+      "cites": "R9",
+      "severity": "blocking",
+      "file": "src/App.layout.test.tsx",
+      "line": 191,
+      "evidence": "The only restart test (App.layout.test.tsx:191-202) and the sidebar restart test (App.features.test.tsx:455-472) exercise the sidebar flag with no console or dialog open. No test unmounts App with a running console and asserts startTerminal is not called again or old output is not restored. No test reopens with a dialog, banner, branch menu, theme finder or app edit form open and asserts it is not reopened with stale content.",
+      "description": "R9's restart edge cases - a console open at close is not restarted and old output is not restored, and a dialog/banner/branch menu/theme finder/app edit form open at close is not reopened with stale content - have no test; only the sidebar flag is exercised across a restart."
+    },
+    {
+      "cites": "R10",
+      "severity": "blocking",
+      "file": "src/App.test.tsx",
+      "line": 392,
+      "evidence": "The only R10 test (App.test.tsx:392-407) asserts cmdk is pinned and a [cmdk-root] renders lazily. No test asserts the plan (docs/ui-tidy-up-plan.md section 15) records a package or in-house reason for each building block (K1-K5), the jattac overflow-menu unusable-file fallback (K3), or licence/maintenance/React-18.3/Tauri-webview confirmation (acceptance lines 1, 2, 4, 5). The R1 plan tests (App.test.tsx:274, 313) check only generic phrases.",
+      "description": "R10's plan-based acceptance - each building block's package or in-house decision, the jattac fallback, licence/maintenance/React 18.3 compatibility and reuse-before-adding - is not proven by any test; only the cmdk adoption and lazy load are."
+    },
+    {
+      "cites": "R6",
+      "severity": "advisory",
+      "file": "src/App.shortcuts.test.tsx",
+      "line": 144,
+      "evidence": "The editor-focus test (App.shortcuts.test.tsx:144-171) covers Ctrl+S/N/O/W and Ctrl+Shift+P only. No test opens the editor and presses Ctrl+B or uses the footer toggle there; the app-view test (App.features.test.tsx:443) and TerminalHost.shortcuts.test.tsx:77 cover the terminal path but not the editor.",
+      "description": "R6's edge case that the footer toggle and Ctrl+B agree when the editor is focused is not directly tested."
+    },
+    {
+      "cites": "R7",
+      "severity": "advisory",
+      "file": "src/App.shortcuts.test.tsx",
+      "line": 222,
+      "evidence": "App.shortcuts.test.tsx:222-255 spot-checks 10 global names and 5 app-only names plus the two Git rows; it never asserts Add app, Start/Stop/Restart selected terminal, Git fetch/pull/push/sync, Show/Hide git tools or Close git drawer are present, so dropping one would not fail a test.",
+      "description": "The acceptance that the palette lists every app-level command in the plan's command list is only spot-checked, not asserted exhaustively."
+    },
+    {
+      "cites": "R7",
+      "severity": "advisory",
+      "file": "src/App.shortcuts.test.tsx",
+      "line": 164,
+      "evidence": "The editor test proves Ctrl+S/N/O/W still act while the editor is focused (App.shortcuts.test.tsx:144-171) but never asserts Save/New/Open are absent from the palette, and the R7 listing test (215-255) does not query for them.",
+      "description": "The acceptance clause that the editor's own file commands are not listed as palette commands is not asserted by any test."
+    },
+    {
+      "cites": "R8",
+      "severity": "advisory",
+      "file": "src/App.shortcuts.test.tsx",
+      "line": 195,
+      "evidence": "Reset-layout and console-hide tests keep a running console alive, but no test hides one optional tool (console or git tools) and asserts the other parts and the branch chip/banners are unchanged; GitBar.collapse.test.tsx:42-53 checks the chip only in its collapsed default, not after an app-level hide.",
+      "description": "R8's edge cases 'hiding one tool leaves the rest of the layout as it was' and 'a hidden tool still surfaces its signal' are not directly asserted."
+    },
+    {
+      "cites": "R7",
+      "severity": "advisory",
+      "file": "src/features/command-palette/CommandPalette.test.tsx",
+      "line": 36,
+      "evidence": "CommandPalette.test.tsx:36-43 chooses an action with userEvent.click, and no test runs a command with ArrowDown/Enter or asserts focus after the footer toggle, the Hide console control or palette close. The accessibility check requires running a command with the keyboard and visible focus at each step.",
+      "description": "The accessibility check's keyboard-only path (run a palette command with the keyboard, visible focus at each step, sensible focus after a tool closes) has no test."
+    }
+  ],
+  "verifications": []
+}

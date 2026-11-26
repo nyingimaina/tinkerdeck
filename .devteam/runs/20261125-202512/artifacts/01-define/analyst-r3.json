@@ -1,0 +1,454 @@
+{
+  "summary": "Revision 2 of 2 of the Tinkerdeck tidy-up builds R6-R10 on top of revision 1's grouping, calm defaults and shortcut registry. The same screens, panels, dialogs, footer and separate editor view stay. This revision adds a footer toggle kept in step with the sidebar's Ctrl+B (R6), makes the command palette list every app-level command with its shortcut or a 'No shortcut' note (R7), gives every optional part a working way to be hidden again while a running console keeps running (R8), remembers the safe window-level layout between sessions without reopening an app's git tools or console just because the app is opened (R9), and builds the new building blocks from free, openly licensed, actively maintained packages where a suitable one exists, recording any in-house choice with a reason (R10). The three earlier conflicts are resolved in these requirements: the revision-1 calm app-open promise wins over restoring an app's drawer or console, a part that is the only workspace keeps its hide control disabled with a reason instead of blanking the screen, and the palette covers app-level commands rather than the editor's always-visible file commands or view-local data pickers. All work is in the window (React); the saved layout uses the window's existing local preference store, so no Rust command, permission or config format changes.",
+  "roles": [
+    "Developer: reported the clutter, chose the tidy-up direction and approves the result.",
+    "First-time user (novice): does not yet know where Tinkerdeck's functions live and should see fewer controls.",
+    "Existing user: already uses Tinkerdeck and depends on functions that may now be hidden; nothing may become unreachable.",
+    "VS Code user: expects Ctrl+B, Ctrl+Shift+P and similar shortcuts to behave as they do in VS Code."
+  ],
+  "requirements": [
+    {
+      "id": "R6",
+      "text": "Keep the footer, and make its toggle behave the same as the sidebar's Ctrl+B toggle so the two stay in step.",
+      "acceptance": [
+        "Clicking the footer toggle and pressing Ctrl+B produce the same result: the sidebar collapses if it was expanded and expands if it was collapsed.",
+        "The footer remains visible on every screen and after open optional parts are hidden."
+      ],
+      "rationale": "The developer wants to keep the footer but make its toggle match the sidebar's Ctrl+B behaviour, so the two controls cannot disagree.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Using the footer toggle and then Ctrl+B does not leave the sidebar and footer out of step.",
+        "The footer toggle and Ctrl+B work the same when the terminal or editor has focus.",
+        "A saved collapsed sidebar shows the footer toggle in its collapsed state on the next start."
+      ],
+      "pitfalls": [
+        "Do not keep two independent toggle states for the sidebar and the footer.",
+        "Do not hide or remove the footer when optional parts are hidden."
+      ],
+      "rules": [
+        "USR-006",
+        "USR-005",
+        "USR-003"
+      ],
+      "facts": [
+        {
+          "subject": "footer",
+          "attribute": "visibility",
+          "op": "must",
+          "value": "always visible"
+        },
+        {
+          "subject": "footer toggle",
+          "attribute": "effect",
+          "op": "equals",
+          "value": "same as the Ctrl+B sidebar toggle"
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "text": "Add a command palette that lists every app-level command the app offers - the global commands and the commands that exist only while an app is open - each with its real shortcut or a clear 'No shortcut' note, so any command hidden from the default view can still be found and run by typing its name, and a query that matches no command shows an empty result. Controls that stay always visible and act on the current view or on data - the editor's own file commands (Ctrl+S save, Ctrl+N new, Ctrl+O open), the Shell and theme choices, the branch choice, app and terminal rows and context-specific dialog answers - are not app-level commands and stay on their visible controls instead of being listed as palette commands.",
+      "acceptance": [
+        "The palette lists every app-level command in the plan's command list, each with its real shortcut or a clear 'No shortcut' note.",
+        "Typing the name of a hidden app-level command finds that command and runs it.",
+        "The palette opens with Ctrl+Shift+P even when the terminal or editor is focused.",
+        "A query that matches no command shows an empty result.",
+        "The editor's own file commands are not listed as app commands and continue to work from the editor's visible controls while the editor is focused."
+      ],
+      "rationale": "The developer confirmed the command palette and it makes hiding safe, because any hidden control stays reachable by typing its name. The scope is app-level commands so the promise can hold for everything the user cannot otherwise see, while the editor's file commands remain on their always-visible editor controls instead of being duplicated as app commands.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "An app-level command with two entry points today, such as Git through the Git bar and the Git drawer, appears once in the palette rather than twice.",
+        "An app-level command that exists only while an app is open is shown then, or shown as unavailable with a reason, instead of failing when chosen.",
+        "Hide and show commands for each optional part appear in the palette, so an open part can also be hidden from there.",
+        "The palette adds a way to reach visible primary actions; it does not replace their buttons.",
+        "With the editor focused, Ctrl+S and Ctrl+N still save and create a file rather than being taken by the palette."
+      ],
+      "pitfalls": [
+        "Do not let the palette list only a subset of app-level commands, leaving a hidden control unreachable.",
+        "Do not list view-local value pickers, data rows or the editor's file commands as app commands, because they stay on always-visible controls and would mislead the user.",
+        "Do not show a shortcut in the palette that the terminal or editor intercepts before it reaches the app.",
+        "Do not list the same command twice under different names."
+      ],
+      "rules": [
+        "USR-001",
+        "USR-006",
+        "USR-005",
+        "USR-003"
+      ],
+      "facts": [
+        {
+          "subject": "command palette",
+          "attribute": "action coverage",
+          "op": "equals",
+          "value": "every app-level command in the plan's command list"
+        },
+        {
+          "subject": "command palette",
+          "attribute": "scope",
+          "op": "equals",
+          "value": "app-level commands, not view-local value pickers, data rows, context dialog answers or editor file commands"
+        },
+        {
+          "subject": "command palette",
+          "attribute": "result on no match",
+          "op": "equals",
+          "value": "empty result"
+        },
+        {
+          "subject": "command palette",
+          "attribute": "opening shortcut",
+          "op": "equals",
+          "value": "Ctrl+Shift+P"
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "text": "Any optional part the user has opened (the git drawer, the git tools, the console, extra panes, dialogs and banners) can be hidden again on demand, so after prolonged use the user can return to the calm default view without restarting the app. A part is hideable whenever hiding it leaves a usable workspace; where a part is the only workspace (for example a console in an app with no terminals), its hide control is shown disabled with a reason instead of leaving a blank screen. Hiding an open console never closes the terminal: it keeps running with its output available. A Reset layout command returns the visible optional parts to the calm default and hides, never closes, a running console where another workspace exists.",
+      "acceptance": [
+        "Every optional part that can be opened offers a hide control whenever hiding it leaves another workspace, and that control hides it.",
+        "When a part is the only workspace, its hide control is visibly disabled and states why; the app never blanks its only workspace.",
+        "After hiding the open, hideable optional parts, the screen shows the calm default view with the primary actions and the footer still visible.",
+        "A hidden part can be reopened from the same named place and via the command palette.",
+        "Hiding an open console keeps the terminal running and its output available for the rest of the session instead of closing it.",
+        "The Reset layout command is listed in the palette with a 'No shortcut' note and never stops a running terminal or unmounts a console."
+      ],
+      "rationale": "The developer said that besides starting out hidden, it must be possible to hide already-open things so the user can return to a calmer view after opening several tools without restarting. Some parts are the only thing on screen, so hiding them would leave nothing to work in; the hide control must say so rather than break the app view.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Hiding a console that is receiving output removes it from view but keeps it running, so the output is still there when it is shown again.",
+        "Hiding one part leaves the rest of the layout as it was.",
+        "A part carrying a signal the user needs, such as a branch name or an available update, still surfaces that signal while hidden.",
+        "Hiding the git drawer does not change what the git tools do or lose an in-progress git message.",
+        "A console that is the only workspace cannot be hidden; its hide control is disabled with a reason and Reset layout leaves it visible.",
+        "Hiding a dialog that holds unsaved input must not silently discard it."
+      ],
+      "pitfalls": [
+        "Hiding must not close running terminals or lose their work.",
+        "Hiding must not make a part unreachable; every hidden part keeps a stated way back.",
+        "Do not hide the only workspace and leave a blank screen.",
+        "Returning to the calm view must not require restarting the app.",
+        "Reset must not close a running console or discard an open dialog's unsaved input."
+      ],
+      "rules": [
+        "USR-006",
+        "USR-005",
+        "USR-003",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "open console",
+          "attribute": "state after hide",
+          "op": "equals",
+          "value": "still running"
+        },
+        {
+          "subject": "console output",
+          "attribute": "after hide",
+          "op": "must",
+          "value": "remain available"
+        },
+        {
+          "subject": "optional part",
+          "attribute": "hide control",
+          "op": "must",
+          "value": "offered whenever hiding it leaves another workspace"
+        },
+        {
+          "subject": "only workspace",
+          "attribute": "hide control",
+          "op": "equals",
+          "value": "disabled with a reason"
+        },
+        {
+          "subject": "Reset layout",
+          "attribute": "effect",
+          "op": "equals",
+          "value": "returns layout to the calm default without closing terminals"
+        }
+      ]
+    },
+    {
+      "id": "R9",
+      "text": "Remember the window's layout between sessions so the user does not have to rearrange the screen each time: the sidebar's expanded or collapsed state is saved when the app closes and restored when it reopens, and the plan lists any other window-level layout fields it saves, none of which may put an optional tool on screen. Opening an app always starts from the calm default view - its git tools collapsed, its git drawer closed and its console hidden - so a previous session's open drawer or console is never reopened just by opening the app, and the earlier promise that an app shows neither the git tools nor the console until the user asks for them still holds. A first run, or an unreadable or inapplicable saved layout, starts in the default minimal view, and restoring the layout never restarts terminals or restores old output.",
+      "acceptance": [
+        "Reopening the app restores every window-level layout field the plan lists, including at least the sidebar's expanded or collapsed state, as it was when the app closed.",
+        "Opening an app starts with its git tools collapsed, its git drawer closed and its console hidden, even when the previous session left them open.",
+        "On first run, or when no saved layout exists, the app starts in the default minimal view.",
+        "A saved layout that can no longer be applied, refers to a removed app, or cannot be read falls back to the default for the affected part instead of failing.",
+        "Restoring the layout never restarts a terminal, re-creates a console shell or brings back old terminal output."
+      ],
+      "rationale": "The developer asked to remember the layout. Remembering an app's open git drawer or console would break the earlier promise (20261125-153618:R5) that opening an app shows neither until the user asks, so this revision remembers only the safe window-level layout and keeps every app's optional parts calm when it is opened.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "The remembered layout covers layout, not running processes: a console that was open at close is not restarted and its old output is not restored.",
+        "A dialog, banner, branch menu, theme finder or app edit form that was open at close is not reopened with stale content.",
+        "Switching between apps during one session does not show an app's git drawer or console until the user asks for them in that visit.",
+        "A corrupt or partially written saved layout falls back per field and does not stop the app from starting.",
+        "A saved layout for an app id that no longer exists is ignored and does not grow the saved record without bound."
+      ],
+      "pitfalls": [
+        "Do not reopen the git drawer or console merely because the previous session left them open; that would break the calm start.",
+        "Do not restore layout by restarting terminals or duplicating work.",
+        "Do not let a corrupt or unreadable layout prevent the app from starting.",
+        "Do not persist transient banners or dialogs as if they were layout."
+      ],
+      "rules": [
+        "USR-003",
+        "USR-004",
+        "USR-006"
+      ],
+      "facts": [
+        {
+          "subject": "saved layout",
+          "attribute": "restored parts",
+          "op": "equals",
+          "value": "the sidebar state and any other window-level layout the plan lists"
+        },
+        {
+          "subject": "app open",
+          "attribute": "git tools, git drawer and console",
+          "op": "must",
+          "value": "start hidden until the user asks"
+        },
+        {
+          "subject": "saved layout",
+          "attribute": "fallback",
+          "op": "equals",
+          "value": "default minimal view"
+        },
+        {
+          "subject": "saved layout",
+          "attribute": "terminal processes",
+          "op": "must-not",
+          "value": "restart or duplicate"
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "text": "Build the new UI building blocks from reliable, free, openly licensed, actively maintained npm packages confirmed to work with React 18.3 inside the Tauri webview, instead of hand-rolling them: the command palette, shortcut handling, menus, dialogs and collapsible panes each use an established package where a suitable one exists. House-rule jattac libraries are preferred where they perform the same function and can be used as published; where a jattac package cannot be used as published, the plan records why and uses a maintained alternative or a stated in-house choice. Anything built in-house is a stated choice with a reason.",
+      "acceptance": [
+        "For each building block (command palette, keyboard shortcuts, menus, dialogs, collapsible panes) the plan names the package used or states that it is built in-house with the reason.",
+        "Each chosen package is free, openly licensed, actively maintained and confirmed to work with React 18.3 in the Tauri webview before the plan commits to it.",
+        "The chosen packages do not change what existing controls do, and every shortcut that worked before this revision still works.",
+        "Where the app already has a suitable library (for example framer-motion, CodeMirror, xterm, jattac-web-poller or zest-tabs), the plan says whether it is reused before adding another.",
+        "Where a jattac house-rule library performs the same function and can be used as published, the plan prefers it; where it cannot be used as published or does not fit, the plan states the reason for the alternative.",
+        "Package code needed only on demand (the palette and dialogs) is not loaded in the initial app view."
+      ],
+      "rationale": "The developer asked that components use reliable, free, safe and well-supported packages rather than being written by hand, and the house rules already require the jattac web libraries in preference to other components where they fit. Recording an in-house choice with a reason keeps a missing package a stated decision rather than an omission.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "A package that is unmaintained, restrictively licensed or not free is not adopted, and the plan records the fallback.",
+        "A package whose latest version does not support React 18.3 or does not work in the Tauri webview is replaced by a compatible alternative or built in-house, and the plan says which.",
+        "A package whose default look clashes with the app's themes is styled to fit, or the plan records that it is not adopted.",
+        "A building block too small or specific for a package is built in-house, and the plan records that decision rather than adding a dependency.",
+        "A package that intercepts keys or focus differently still lets app-level shortcuts reach the app when the terminal or editor is focused.",
+        "A published jattac package whose files are incomplete or unusable is recorded as such and replaced by a maintained alternative or a stated in-house choice."
+      ],
+      "pitfalls": [
+        "Do not adopt a package without checking that it works with React 18.3 and the Tauri webview.",
+        "Do not take on a large dependency for a trivial piece of UI, or one whose licence is unclear.",
+        "Do not let swapping a hand-built dialog or menu for a package drop its content, actions or keyboard behaviour.",
+        "Do not let new package code enter the initial app view where it is only needed on demand.",
+        "Do not replace a working jattac library without a stated reason."
+      ],
+      "rules": [
+        "USR-001",
+        "USR-003",
+        "USR-004",
+        "USR-006"
+      ],
+      "facts": [
+        {
+          "subject": "new UI packages",
+          "attribute": "supported React version",
+          "op": "equals",
+          "value": "18.3"
+        },
+        {
+          "subject": "new UI packages",
+          "attribute": "Tauri webview compatibility",
+          "op": "must",
+          "value": "confirmed before adoption"
+        },
+        {
+          "subject": "new UI packages",
+          "attribute": "cost",
+          "op": "equals",
+          "value": "free"
+        },
+        {
+          "subject": "new UI packages",
+          "attribute": "license",
+          "op": "must",
+          "value": "openly licensed"
+        },
+        {
+          "subject": "new UI packages",
+          "attribute": "maintenance",
+          "op": "must",
+          "value": "actively maintained"
+        },
+        {
+          "subject": "building blocks",
+          "attribute": "package choice",
+          "op": "must",
+          "value": "prefer a jattac house-rule library where it fits and can be used as published"
+        }
+      ]
+    }
+  ],
+  "outOfScope": [
+    "Redesigning screens, views, panels, dialogs or navigation flow, or moving the editor into the app view; the editor stays a separate full view.",
+    "Changing what existing functions do: only where they live, how they are grouped, whether they show by default, how they are hidden, what is remembered and which shortcuts reach them.",
+    "Moving the Shell or Theme controls behind a dialog.",
+    "Backend, data-storage, permission, CSP or config-format changes; the layout uses the window's existing local preference store.",
+    "Restoring terminal processes, console shells or old terminal output across a restart; only layout choices are remembered.",
+    "Reopening dialogs, banners, the branch menu, the theme finder or the app edit form with stale content after a restart.",
+    "Adding a phone layout; the window keeps its existing desktop minimum size."
+  ],
+  "nonFunctional": [
+    {
+      "area": "usability",
+      "statement": "A first-time user can point to opening an app, running a command, opening Git and toggling the sidebar without opening a hidden area, and any user can recover the calm default view after opening many tools.",
+      "acceptance": "With no prior knowledge, a tester opens an app, starts a terminal, opens the git drawer and the console, then hides them again or runs Reset layout, and the primary actions and footer stay visible throughout."
+    },
+    {
+      "area": "performance",
+      "statement": "The revision adds no avoidable up-front loading work: the palette and dialog package code load only when first needed, only the lightweight shortcut hook is part of the initial window because shortcuts must work at startup, and the saved layout costs one small local read at startup and one small local write per change.",
+      "acceptance": "A production build shows the palette and dialog package code in on-demand chunks rather than the entry chunk, and the shortcut hook does not measurably change startup time; opening the palette shows the full fixed command list within 150 ms on the app's minimum supported machine, and typing filters it without visible lag for fewer than 100 commands."
+    },
+    {
+      "area": "accessibility",
+      "statement": "The footer toggle, the palette and every hide control are fully keyboard operable, have visible focus and accessible names, and return focus to a sensible place when a part closes.",
+      "acceptance": "A keyboard-only tester opens the palette with Ctrl+Shift+P, filters by typing, runs a command with the keyboard, closes the palette with Escape, toggles the sidebar from the footer and hides a part without a mouse, with visible focus at each step."
+    },
+    {
+      "area": "reliability",
+      "statement": "The saved layout survives a normal restart, falls back per field to the calm default when missing or unreadable, and hiding a console never loses its process or output in the current session.",
+      "acceptance": "Closing and reopening the app restores the sidebar state; deleting or corrupting the saved layout still starts the app in the default view; a console that is hidden, then shown again, still holds its running shell and scrollback."
+    },
+    {
+      "area": "security",
+      "statement": "The revision adds no network, backend or permission surface, and the saved layout contains only layout flags and known app ids, never terminal content, commands or secrets.",
+      "acceptance": "A review of the change finds no new Tauri command, capability or remote request, and the local layout record contains no terminal output, command text, paths or tokens."
+    },
+    {
+      "area": "privacy",
+      "statement": "The remembered layout stays on the user's own machine and records only which parts were open, collapsed or hidden, not any personal or project content.",
+      "acceptance": "Inspecting the local preference store shows only layout flags and app ids; no names, paths, file contents or terminal text are written for this feature."
+    }
+  ],
+  "risks": [
+    "Hidden or grouped controls may be harder for existing users to find; the complete palette and the visible primary actions are the mitigation and must be checked on screen.",
+    "New shortcuts may be swallowed by xterm or the editor; the shared registry and the terminal pass-through must stay in step.",
+    "Replacing the hand-built Dialog with a package can change focus order, Escape and overlay-click behaviour; characterization tests must freeze today's behaviour first.",
+    "Adding cmdk, react-hotkeys-hook and a Radix dialog increases bundle size and dependency surface; the palette and dialog package code must stay out of the initial chunk, the shortcut hook must stay small, and every dependency must be licence-checked.",
+    "A restored collapsed sidebar could hide navigation from someone who forgot it; the rail's expand button, Ctrl+B and the footer toggle remain.",
+    "A corrupt or partially written local layout could stop the app starting; it must fall back per field.",
+    "In an app with no terminals the console is the only workspace; hiding it would blank the app view, so its hide control is disabled with a reason.",
+    "The earlier design restored an app's saved git drawer and console; this revision removes that restore, so the design and its saved per-app visibility fields must be updated to match R9."
+  ],
+  "tensions": [
+    {
+      "requirements": [
+        "R7",
+        "R10"
+      ],
+      "scenario": "R7 requires the palette to list every app-level command with an accurate shortcut and to show an empty result for an unmatched query, while R10 prefers replacing the hand-built palette with cmdk. cmdk must be configured so its filtering, empty state and shortcut labels match R7 exactly, or the package adoption wins and the acceptance wording must be revisited."
+    },
+    {
+      "requirements": [
+        "R8",
+        "R10"
+      ],
+      "scenario": "R8 requires every dialog and open part to keep its existing close, Escape and focus behaviour so a hidden part can always be recovered, while R10 prefers replacing the shared dialog shell with Radix's dialog. Radix's focus trap and Escape handling must be tailored to keep the same content, first-action focus and close paths, or the project must accept a visible change in how dialogs behave."
+    }
+  ],
+  "glossary": [
+    "Tinkerdeck: the Tauri desktop app whose window is being tidied up.",
+    "App: a group of terminals (a folder plus commands) that start and stop together.",
+    "App view: the screen for one app, with its header, tab strip, terminals, git tools and console.",
+    "Console: a shell opened in the Console tab, separate from the app's own terminals.",
+    "Git tools: the branch chip and the Fetch, Pull, Push, Sync, Changes, History and Console row.",
+    "Git drawer: the Changes or History detail panel opened from the git tools.",
+    "Footer: the always-visible status strip at the bottom of the window.",
+    "Group: a named place in the interface that holds related controls for one purpose.",
+    "Advanced control: a rarely used control hidden from the default view but still reachable from a named place.",
+    "App-level command: an action the window offers globally or while an app is open, as opposed to a value picker, a data row or an editor file command.",
+    "Command palette: the searchable list of app-level commands opened with Ctrl+Shift+P.",
+    "Calm default view: the minimal starting screen with optional tools hidden and the primary actions and footer still visible.",
+    "Remembered layout: the small set of layout choices saved between sessions.",
+    "Building block: a reusable piece of UI such as the palette, shortcut handling, a menu, a dialog or a collapsible pane.",
+    "Suitable package: a package that is free, openly licensed, actively maintained and works with React 18.3 inside the Tauri webview.",
+    "Characterization test: a test that freezes existing behaviour before that behaviour is changed."
+  ],
+  "questions": [],
+  "coverage": [
+    {
+      "topic": "users",
+      "status": "assumed",
+      "note": "One local person uses the app on their own machine; there are no accounts, sign-in, sharing or per-record permissions, so all four role descriptions have full access to every control."
+    },
+    {
+      "topic": "data",
+      "status": "assumed",
+      "note": "One small local layout record: the sidebar expanded/collapsed flag, plus any other window-level field the plan lists, stored in the window's existing local preference store. If any per-app field is kept it is bounded to known app ids. Transient dialogs and banners are not stored."
+    },
+    {
+      "topic": "permissions",
+      "status": "not-applicable",
+      "note": "The app has no accounts, ownership or sharing; the layout belongs to the person at the machine and is not synced or shared, so no permission rules are added."
+    },
+    {
+      "topic": "validation",
+      "status": "assumed",
+      "note": "No new typed form input is introduced. A corrupt, missing or inapplicable saved layout field falls back to its default silently, and a palette query with no match shows an empty result."
+    },
+    {
+      "topic": "states",
+      "status": "assumed",
+      "note": "Palette: full list, filtered list, empty result, closed. Saved layout: valid, missing, corrupt, referencing a removed app. Lazy parts: loading fallback then content. Console: running, ended, only workspace. Existing screens keep their current empty, loading and error states."
+    },
+    {
+      "topic": "duplicates",
+      "status": "assumed",
+      "note": "Single local user, so there are no concurrent editors. Each app-level command appears once in the palette; running a command twice behaves like pressing its button twice; hiding a console is not the same as closing it."
+    },
+    {
+      "topic": "volume",
+      "status": "assumed",
+      "note": "The layout record is bounded by the number of known apps; the palette is bounded by a fixed command list of fewer than 100 entries, so no paging or virtualization is added."
+    },
+    {
+      "topic": "deletion",
+      "status": "assumed",
+      "note": "Nothing is deleted by hiding. Reset layout only returns layout fields to their defaults and never closes terminals; deleting apps, terminals or files is unchanged and out of scope."
+    },
+    {
+      "topic": "privacy",
+      "status": "not-applicable",
+      "note": "Only layout flags and app ids are stored locally; no personal content, terminal text, file contents or telemetry is involved."
+    },
+    {
+      "topic": "quality",
+      "status": "assumed",
+      "note": "Usability, performance, accessibility, reliability, security and privacy expectations are stated in nonFunctional, each with a way to check it."
+    }
+  ],
+  "assumptions": [
+    "One local person uses the app on their own machine; there are no accounts, roles, sharing or per-record permissions, so every user can reach every control and nothing needs authorisation.",
+    "The remembered layout is stored in the window's existing local preference store, as the sidebar's collapsed state already is, not in a new Rust command or config file; it holds only layout flags (and known app ids if any per-app field is kept), so no backend, permission or CSP change is needed.",
+    "Only the sidebar's expanded/collapsed state is restored across sessions. Because the earlier promise 20261125-153618:R5 must still hold, the git tools, git drawer and console always start hidden when an app is opened, and a previous session's open drawer or console is never reopened.",
+    "The command palette lists app-level commands (the global ones and those that exist only while an app is open), not view-local value pickers, data navigation, context dialog answers or the editor's own file commands, which stay on their always-visible controls.",
+    "A console in an app with no terminals is the only workspace; its Hide console control stays visible but disabled with a reason, and Reset layout leaves it on screen rather than showing a blank app view.",
+    "Reset layout is a palette command with no shortcut; dialogs, banners, the branch menu, the theme finder and the app edit form are transient and are not remembered between sessions.",
+    "Hidden consoles keep running and keep their output for the current session, but terminal processes and old output are not restarted or restored after the app closes.",
+    "The app remains a desktop window with its current minimum size; no phone layout is added.",
+    "The advanced top-bar controls, groups and command names stay as revision 1's agreed plan; this revision does not redesign them.",
+    "Packages are chosen only after the plan confirms a free, open licence, active maintenance and React 18.3 plus Tauri-webview compatibility. Menus and the hide/collapse controls may stay in-house with the reason recorded; a published jattac package whose files are incomplete is recorded and replaced rather than forced in."
+  ]
+}

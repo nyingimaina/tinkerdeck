@@ -6,5 +6,13 @@
     "snippet": "Before any window code changes, produce a tidy-up plan that names every current\u2026 (and 4 mo\u2026",
     "costUsd": 0.5700604440000001,
     "final": true
+  },
+  {
+    "id": "20261125-202512",
+    "startedAt": "2026-11-25T20:25:12.6734679+00:00",
+    "status": "Running",
+    "snippet": "Keep the footer, and make its toggle behave the same as the sidebar\u0027s Ctrl\u002BB\u2026 (and 4 more)",
+    "costUsd": 0.9282659219999999,
+    "final": false
   }
 ]

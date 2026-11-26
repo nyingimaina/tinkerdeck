@@ -225,3 +225,149 @@ column are the ones behind what was seen.
 Lazy/eager is recorded in §7. The Ctrl+B key was pressed in the running window and reached the
 app (the sidebar collapsed), so the pass-through described in §6 is confirmed on screen. Every
 row above was seen during this run; no part of the check is left to a later manual pass.
+
+---
+
+# Revision 2 — footer toggle, command palette, hide paths, remembered layout (R6–R10, A2)
+
+Revision 2 builds on revision 1 and is window-only. It adds no screen, panel, dialog or view:
+the separate editor stays separate; the nine dialogs, six banners and the branch menu keep the
+close and dismiss controls they have today; and no Rust command, permission, CSP, config or
+stored data changes. It adds a footer sidebar toggle kept in step with Ctrl+B (R6), a command
+palette that lists every app-level command (R7), a Hide console control so each tool this
+revision opens can be hidden again (R8), restores only the existing sidebar flag (R9/A2) and
+records every building block's package decision (R10).
+
+## 11. Footer sidebar toggle (R6)
+
+The `Status` footer is always rendered on Home, the app view and the separate editor view. It
+carries one **Toggle sidebar** button that calls the same `toggleSidebar` handler Ctrl+B calls
+and reads the same `paneCollapsed` state, so the two cannot drift apart. `aria-pressed` tracks
+the collapsed state. Hiding optional parts never hides the footer.
+
+| # | Control | Named group | Shows by default | Hidden again by | State remembered | Reached from |
+| --- | --- | --- | --- | --- | --- | --- |
+| C1 | Footer **Toggle sidebar** | Status / Brand | Yes, on every screen | It is a toggle, not a transient | Reads `td.sidebarCollapsed` (the same flag Ctrl+B writes) | The footer strip; Ctrl+B does the same |
+
+## 12. Command palette (R7 / R10)
+
+The palette opens with **Ctrl+Shift+P** (and from its own **Open command palette** row), is
+mounted only while open, and filters its fixed list case-insensitively by name. Every row is a
+real button showing the action name and its real shortcut from the shared registry, or a
+visible **No shortcut** note; a row that cannot run now is disabled with a visible reason; a
+query that matches no action shows **No commands match.** It lists app-level commands only —
+not view-local value pickers, data rows, context dialog answers or the editor's own file
+commands, which stay on their always-visible controls. A command with two entry points today
+(Git through the Git bar and the Git drawer) appears once per action, never twice under
+different names.
+
+| # | Command | Listed when | Shortcut |
+| --- | --- | --- | --- |
+| P1 | Toggle sidebar | Always | Ctrl+B |
+| P2 | Refresh everything | Always | F5 |
+| P3 | Switch light/dark theme | Always | Ctrl+Alt+T |
+| P4 | Open command palette | Always | Ctrl+Shift+P |
+| P5 | Open editor / Close editor | Always | No shortcut |
+| P6 | Check for updates | Always | No shortcut |
+| P7 | Help | Always | No shortcut |
+| P8 | Go to Home | Always | No shortcut |
+| P9 | Find themes | Always | No shortcut |
+| P10 | Reset layout | Always | No shortcut |
+| P11 | Add app | Always except a permanently locked config | No shortcut |
+| P12 | Edit app | While an app is open | No shortcut |
+| P13 | Start all | While an app is open | No shortcut |
+| P14 | Stop all | While an app is open | No shortcut |
+| P15 | Start / Stop / Restart selected terminal | While an app is open with a terminal selected | No shortcut |
+| P16 | Git fetch / Git pull / Git push / Git sync | While an app is open and is a repository | No shortcut |
+| P17 | Git: show changes / Git: show history | While an app is open and is a repository | No shortcut |
+| P18 | Show git tools / Hide git tools | While an app is open and is a repository | No shortcut |
+| P19 | Close git drawer | While the git drawer is open | No shortcut |
+| P20 | Open console | While an app is open | No shortcut |
+| P21 | New console | While an app is open | No shortcut |
+| P22 | Hide console | While the Console tab is shown; disabled with a reason when it is the only workspace | No shortcut |
+
+The editor's own Ctrl+S, Ctrl+Shift+S, Ctrl+N, Ctrl+O and Ctrl+W keep saving, creating and
+opening files while the editor has focus; the palette does not take them (it uses
+Ctrl+Shift+P). Terminal pass-through in `src/shared/shortcuts.ts` still releases only the four
+app shortcuts to the window.
+
+## 13. Hide and reopen paths (R8)
+
+This revision gives a hide path exactly to the three tools it opens in an app view. Every hide
+control has a same-named way back and a palette command; nothing becomes unreachable.
+
+| # | Tool | Hide control | Reopen from | What survives hiding |
+| --- | --- | --- | --- | --- |
+| H1 | Git tools (Fetch / Pull / Push / Sync / Changes / History / Console row) | The branch-chip **Hide git tools** control, or the palette | The branch-chip **Show git tools**, or the palette | Nothing closes; the branch chip (branch name, dirty marker, ahead/behind, refresh) stays visible |
+| H2 | Git drawer (Changes / History) | **Close git panel**, or the palette **Close git drawer** | The git bar **Changes** / **History**, or the palette | An in-progress git message stays in the git state; the tools keep doing what they do |
+| H3 | Console (console list and terminal) | **Hide console** — disabled with a visible reason when it is the only workspace — or the palette | The **>_ Console** tab, the git bar **>_ Console**, or the palette **Open console** | The shell keeps running and its scrollback stays; the xterm is hidden with CSS, never unmounted or stopped |
+
+**Reset layout** is a palette command with a **No shortcut** note. It returns the sidebar to
+expanded (writing `td.sidebarCollapsed = "0"`), collapses the git tools, closes the git drawer
+and hides a hideable console. It never stops a terminal, closes a banner or discards an open
+dialog's unsaved input, and it leaves a console that is the only workspace on screen so the app
+view is never blank.
+
+Banners (folder lock, job warning, update, manual-update result, error), dialogs, the branch
+menu, the theme finder and the app edit form keep their current close and dismiss controls:
+this revision adds none for them, removes none, and Reset layout touches none of them.
+
+## 14. Remembered layout (R9 / A2)
+
+Only one layout field is remembered, the same sidebar flag revision 1 already used. No new key
+and no per-app field is written.
+
+| # | Field | Local key | Values | Written | Restored | Fallback |
+| --- | --- | --- | --- | --- | --- | --- |
+| L1 | Sidebar expanded / collapsed | `td.sidebarCollapsed` | `"1"` collapsed, anything else expanded | On each sidebar toggle and on Reset layout | One read at startup | Missing, unreadable or unexpected → expanded |
+
+Opening an app never reads a saved git-tools, git-drawer or console state: `openApp` collapses
+the git tools, clears the git drawer and selects the app's first terminal (or no tab when it
+has none), so a console or drawer left open on an earlier visit is not reopened. Restoring the
+sidebar never starts, restarts or re-creates a terminal, console shell or its old output.
+Transient banners, dialogs, the branch menu, the theme finder and the app edit form are not
+persisted and are never reopened with stale content.
+
+## 15. Package decisions (R10)
+
+Each building block this revision touches is listed with the package used, or the stated reason
+it stays in-house. No existing working jattac library is replaced.
+
+| # | Building block | Decision | Licence / maintenance | React 18.3 + Tauri WebView2 | In the initial view? |
+| --- | --- | --- | --- | --- | --- |
+| K1 | Command palette | **cmdk 1.1.1** | MIT; actively maintained, latest 1.1.1 | DOM-only, needs no Tauri API or CSP change, headless so the app's CSS variables theme it | No — only in the on-demand palette/dialog chunk |
+| K2 | Keyboard shortcuts | In-house `src/shared/shortcuts.ts` | n/a | It must also drive the non-DOM xterm pass-through, which a hook library cannot replace, and four shortcuts do not justify a dependency; unchanged | Yes (shortcuts must work at startup) |
+| K3 | Menus | In-house, existing ThemePicker / Utilities pattern | The published `jattac.libs.web.overflow-menu` 0.0.35 declares `./dist/index.css` in its exports but the tarball ships no such file, so it cannot be imported styled; kept per R2 | n/a | Existing |
+| K4 | Dialogs | In-house `Dialog` shell | Swapping to Radix would change focus behaviour and be a replacement R2 rules out | n/a | Shell eager; bodies lazy |
+| K5 | Collapsible panes | In-house CSS show/hide | No resizing is needed and a pane package would restructure the flex app view | n/a | Yes |
+
+Reused without replacement: `jattac.libs.web.zest-tabs` (tab strip), `jattac-web-poller`,
+`framer-motion`, CodeMirror and xterm. The other jattac house-rule libraries do not perform
+these functions: `zest-button`, `zest-textbox`, `zest-sidekick-menu`, `zest-responsive-layout`,
+`responsive-table` and `zest-file-upload` do not fit a footer toggle, a console Hide button, an
+existing sidebar, an existing layout, no tables and no uploads, so the native controls and
+existing CSS remain. Package code needed only on demand (cmdk) lands in the palette chunk, not
+the entry chunk.
+
+## 16. Revision 2 state check
+
+Every state below was exercised by mounting the real `App` component and driving the same
+controls a person uses (Vitest + Testing Library, the app's existing jsdom harness). The
+production build (`npm run build`) was inspected too: cmdk is emitted in
+`dist/assets/CommandPalette-*.js` and is not in the entry `dist/assets/index-*.js`.
+
+| Screen / state | What was driven | Result |
+| --- | --- | --- |
+| Home, footer toggle | Click the footer **Toggle sidebar**, then press Ctrl+B | Sidebar collapses and expands and the footer's `aria-pressed` follows each time; the footer stays on screen |
+| Home at a remembered collapsed start | Seed `td.sidebarCollapsed = "1"`, then render | Sidebar starts collapsed and the footer toggle starts pressed |
+| Saved value missing / unreadable / unexpected | Seed no key, a NUL-laced value, and `"maybe"` | Sidebar starts expanded, the app starts, and only `td.sidebarCollapsed` is ever written |
+| Command palette | Press Ctrl+Shift+P, list rows, type a hidden command's name, type a non-matching query | Every app-level command is a button with its shortcut or **No shortcut**; a hidden command is found and runs; a non-match shows **No commands match.** |
+| Editor focus | Focus the editor and press Ctrl+S / Ctrl+N | The editor still saves / creates; the palette does not take those keys |
+| App view, git tools | Expand the chip, then choose **Hide git tools** | The tool row goes away, the branch chip and footer remain |
+| App view, git drawer | Open Changes, then **Close git panel** | The drawer leaves; the git tools keep their state |
+| App view, console | Open the Console, then **Hide console**, then reopen it | The list and terminal leave and return; the shell keeps running and its output stays |
+| App view, only workspace | An app with no terminals, Console open | **Hide console** is disabled with the reason "Only workspace…"; Reset layout leaves the console on screen |
+| Reset layout | Palette **Reset layout** with a running terminal, open drawer, open console and an open edit form | Sidebar expanded, git tools collapsed, drawer closed, hideable console hidden; terminal not stopped, edit form and unsaved input untouched |
+| Calm app opening | Switch apps after leaving a drawer and console open on the first | Each app opens with git tools collapsed, drawer closed and console hidden |
+
+No part of the revision-2 check is deferred to a later manual pass.

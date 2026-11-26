@@ -74,6 +74,10 @@ export function App() {
   const [pendingSwitch, setPendingSwitch] = useState<{ branch: string; running: string[] } | null>(null);
   const [pendingCloseConsole, setPendingCloseConsole] = useState<{ appId: string; id: string; title: string } | null>(null);
   const [gitTab, setGitTab] = useState<GitTab | null>(null);
+  // The last tab shown keeps the drawer mounted while it is hidden, so a typed commit
+  // message survives the drawer being closed and reopened in the same visit (R8).
+  const [gitTabKept, setGitTabKept] = useState<GitTab | null>(null);
+  const [gitToolsOpen, setGitToolsOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [help, setHelp] = useState(false);
   const [updateOpen, setUpdateOpen] = useState(false);
@@ -87,6 +91,9 @@ export function App() {
   const autoStarted = useRef<Set<string>>(new Set());
   const prevKinds = useRef<Record<string, string>>({});
   const lastAutoRestart = useRef<Record<string, number>>({});
+  // The control that opened the git drawer, so closing it hands focus back instead of leaving
+  // it on the now-hidden Close button (R8).
+  const gitReturnFocus = useRef<HTMLElement | null>(null);
 
   const apps = L.config?.apps;
   const app = apps?.find((a) => a.id === L.selectedAppId) ?? null;
@@ -147,16 +154,6 @@ export function App() {
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // the palette lists the window's main actions, each with the shortcut that also runs it (R4)
-  const paletteActions: PaletteAction[] = [
-    { id: "toggleSidebar", label: "Toggle sidebar", shortcut: shortcutKeys("toggleSidebar"), run: toggleSidebar },
-    { id: "refresh", label: "Refresh everything", shortcut: shortcutKeys("refresh"), run: refreshAll },
-    { id: "toggleTheme", label: "Switch light/dark theme", shortcut: shortcutKeys("toggleTheme"), run: () => void T.toggleKind() },
-    { id: "editor", label: "Open editor", run: () => setView((v) => (v === "editor" ? "home" : "editor")) },
-    { id: "updates", label: "Check for updates", run: () => void checkForUpdates() },
-    { id: "help", label: "Help", run: () => setHelp(true) },
-  ];
 
   // installed shells (for the header dropdown, new consoles and the edit form)
   useEffect(() => {
@@ -236,16 +233,46 @@ export function App() {
 
   const openAdd = () => setEditing({ app: newApp(), isNew: true });
   const openEdit = (a: AppDef) => setEditing({ app: a, isNew: false });
-  const openApp = (id: string) => {
+  /** Show the drawer on a tab and remember it, so hiding keeps its contents mounted (R8). */
+  const showGitTab = (tab: GitTab) => {
+    setGitTab(tab);
+    setGitTabKept(tab);
+  };
+  const openGitTab = (tab: GitTab) => {
+    const active = document.activeElement;
+    gitReturnFocus.current = active instanceof HTMLElement && active !== document.body ? active : null;
+    showGitTab(tab);
+  };
+  const closeGitTab = () => {
+    setGitTab(null);
+    const target = gitReturnFocus.current;
+    gitReturnFocus.current = null;
+    if (target?.isConnected && target.closest("[hidden]") === null) target.focus();
+    else
+      document
+        .querySelector<HTMLElement>('button[aria-label="Show git tools"], button[aria-label="Hide git tools"]')
+        ?.focus();
+  };
+  const hideGitTab = () => {
+    setGitTab(null);
+    gitReturnFocus.current = null;
+  };
+  const openApp = (id: string, list: AppDef[] = apps ?? []) => {
     L.selectApp(id);
     L.touchApp(id);
-    setGitTab(null);
+    hideGitTab();
+    setGitTabKept(null);
+    setGitToolsOpen(false);
+    // A calm start (R9): open on the app's first terminal, or no tab at all when it has no
+    // terminals, so a console or drawer left open on an earlier visit is not reopened.
+    const target = list.find((a) => a.id === id);
+    L.selectTerminal(id, target?.terminals[0]?.id ?? "");
     setView("app");
   };
   const openConsole = () => {
     if (!app) return;
     L.openConsoleTab(app.id);
-    setGitTab(null);
+    hideGitTab();
     setView("app");
   };
 
@@ -272,7 +299,6 @@ export function App() {
   const handleSave = async (saved: AppDef) => {
     const exists = apps.some((a) => a.id === saved.id);
     const next = exists ? apps.map((a) => (a.id === saved.id ? saved : a)) : [...apps, saved];
-    if (!exists) L.selectApp(saved.id);
     // terminals removed from a running app must be stopped first, after confirmation
     const before = apps.find((a) => a.id === saved.id);
     const removed = (before?.terminals ?? []).filter((t) => !saved.terminals.some((s) => s.id === t.id)).map((t) => t.id);
@@ -280,7 +306,9 @@ export function App() {
     if (removedUp.length) setPendingSave({ apps: next, ids: removedUp });
     else {
       await commit(next);
-      if (!exists) setView("app");
+      // A newly created app opens through the same calm reset as any other app visit (R9),
+      // so it never inherits the previous app's expired drawer or expanded git tools.
+      if (!exists) openApp(saved.id, next);
     }
   };
 
@@ -317,6 +345,89 @@ export function App() {
     L.actions.startAll(id);
     L.touchApp(id);
   };
+
+  /** Hide the console by selecting a terminal in the same app; the shell keeps running (R8). */
+  const hideConsole = () => {
+    if (!app) return;
+    const first = app.terminals[0];
+    if (first) L.selectTerminal(app.id, first.id);
+  };
+
+  /** Return to the calm default without closing anything that is running (R8). */
+  const resetLayout = () => {
+    setPaneCollapsed(false);
+    try {
+      localStorage.setItem(COLLAPSE_KEY, "0");
+    } catch {
+      /* per-viewer convenience only */
+    }
+    hideGitTab();
+    setGitToolsOpen(false);
+    if (onConsole) hideConsole();
+  };
+
+  // The palette lists every app-level command the window offers, each with the shortcut that
+  // also runs it or a visible note when it has none (R7). Commands that only exist while an app
+  // is open are added then, and ones that cannot run now (no repository, no console) stay out
+  // rather than failing when chosen.
+  const paletteActions: PaletteAction[] = [
+    { id: "toggleSidebar", label: "Toggle sidebar", shortcut: shortcutKeys("toggleSidebar"), run: toggleSidebar },
+    { id: "refresh", label: "Refresh everything", shortcut: shortcutKeys("refresh"), run: refreshAll },
+    { id: "toggleTheme", label: "Switch light/dark theme", shortcut: shortcutKeys("toggleTheme"), run: () => void T.toggleKind() },
+    { id: "commandPalette", label: "Open command palette", shortcut: shortcutKeys("commandPalette"), run: () => setPaletteOpen(true) },
+    { id: "editor", label: view === "editor" ? "Close editor" : "Open editor", run: () => setView((v) => (v === "editor" ? "home" : "editor")) },
+    { id: "updates", label: "Check for updates", run: () => void checkForUpdates() },
+    { id: "help", label: "Help", run: () => setHelp(true) },
+    { id: "home", label: "Go to Home", run: () => setView("home") },
+    { id: "findThemes", label: "Find themes", run: () => setFinderOpen(true) },
+    { id: "resetLayout", label: "Reset layout", run: resetLayout },
+  ];
+  if (!(L.status?.locked && L.status.permanent)) paletteActions.push({ id: "addApp", label: "Add app", run: openAdd });
+  if (view === "app" && app) {
+    paletteActions.push(
+      { id: "editApp", label: "Edit app", run: () => openEdit(app) },
+      { id: "startAll", label: "Start all", run: () => startAll(app.id) },
+      { id: "stopAll", label: "Stop all", run: () => L.actions.stopAll(app.id) },
+    );
+    const activeTid = L.selectedTerminalId;
+    if (activeTid) {
+      paletteActions.push(
+        { id: "startTerminal", label: "Start selected terminal", run: () => L.actions.start(app.id, activeTid) },
+        { id: "stopTerminal", label: "Stop selected terminal", run: () => L.actions.stop(app.id, activeTid) },
+        { id: "restartTerminal", label: "Restart selected terminal", run: () => L.actions.restart(app.id, activeTid) },
+      );
+    }
+    if (git.info) {
+      paletteActions.push(
+        { id: "gitFetch", label: "Git fetch", run: () => void git.fetch() },
+        { id: "gitPull", label: "Git pull", run: () => void git.pull() },
+        { id: "gitPush", label: "Git push", run: () => void git.push() },
+        { id: "gitSync", label: "Git sync", run: () => void git.sync() },
+        { id: "gitChanges", label: "Git: show changes", run: () => openGitTab("changes") },
+        { id: "gitHistory", label: "Git: show history", run: () => openGitTab("history") },
+        {
+          id: "gitTools",
+          label: gitToolsOpen ? "Hide git tools" : "Show git tools",
+          run: () => setGitToolsOpen((v) => !v),
+        },
+      );
+      if (gitTab) paletteActions.push({ id: "gitClose", label: "Close git drawer", run: closeGitTab });
+    }
+    paletteActions.push(
+      { id: "openConsole", label: "Open console", run: openConsole },
+      { id: "newConsole", label: "New console", run: () => L.addConsole(app.id, null) },
+    );
+    if (onConsole) {
+      const onlyWorkspace = app.terminals.length === 0;
+      paletteActions.push({
+        id: "hideConsole",
+        label: "Hide console",
+        disabled: onlyWorkspace,
+        disabledReason: onlyWorkspace ? "Only workspace: this app has no terminals." : undefined,
+        run: hideConsole,
+      });
+    }
+  }
 
   return (
     <div className={styles.shell}>
@@ -443,12 +554,13 @@ export function App() {
               <GitBar
                 git={git}
                 onSwitch={requestSwitch}
-                onOpenChanges={() => setGitTab("changes")}
-                onOpenHistory={() => setGitTab("history")}
+                onOpenChanges={() => openGitTab("changes")}
+                onOpenHistory={() => openGitTab("history")}
                 onOpenConsole={openConsole}
                 onRefresh={refreshAll}
                 collapsible
-                defaultCollapsed
+                open={gitToolsOpen}
+                onOpenChange={setGitToolsOpen}
               />
               {app.terminals.length === 0 && !onConsole ? (
                 <EmptyState
@@ -507,6 +619,10 @@ export function App() {
                       stateOf={L.stateOf}
                       shells={shellChoices}
                       notice={consoleNotice[app.id] || null}
+                      onHide={hideConsole}
+                      hideDisabledReason={
+                        app.terminals.length === 0 ? "Only workspace: this app has no terminals." : null
+                      }
                       onSelect={(id) => L.selectConsole(app.id, id)}
                       onAdd={(shell) => L.addConsole(app.id, shell)}
                       onClose={(id) => {
@@ -517,10 +633,12 @@ export function App() {
                   </Suspense>
                 )}
               </div>
-              {gitTab && (
-                <Suspense fallback={null}>
-                  <GitDrawer git={git} tab={gitTab} onTab={setGitTab} onClose={() => setGitTab(null)} />
-                </Suspense>
+              {gitTabKept && (
+                <div hidden={gitTab === null}>
+                  <Suspense fallback={null}>
+                    <GitDrawer git={git} tab={gitTabKept} onTab={showGitTab} onClose={closeGitTab} />
+                  </Suspense>
+                </div>
               )}
             </>
           ) : null}
@@ -541,7 +659,11 @@ export function App() {
         </main>
       </div>
 
-      <AppFooter version={typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : ""} />
+      <AppFooter
+        version={typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : ""}
+        sidebarCollapsed={paneCollapsed}
+        onToggleSidebar={toggleSidebar}
+      />
 
       {paletteOpen && (
         <Suspense fallback={null}>

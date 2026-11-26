@@ -103,7 +103,7 @@ describe("App app-level shortcuts", () => {
 
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
     const dialog = await screen.findByRole("dialog", { name: "Command palette" });
-    expect(within(dialog).getByLabelText("Search commands")).toHaveFocus();
+    await waitFor(() => expect(within(dialog).getByLabelText("Search commands")).toHaveFocus());
 
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Command palette" })).toBeNull());
@@ -141,7 +141,7 @@ describe("App app-level shortcuts", () => {
     await waitFor(() => expect(h.api.listShells.mock.calls.length).toBeGreaterThan(shells));
   });
 
-  it("R4: the editor keeps Ctrl+S, Ctrl+N, Ctrl+O and Ctrl+W while it has focus", async () => {
+  it("R4/R7: the editor keeps Ctrl+S, Ctrl+N, Ctrl+O and Ctrl+W while it has focus", async () => {
     h.ed.takePending.mockResolvedValue(["C:/x/notes.md"]);
     h.ed.open.mockResolvedValue({ id: "n", path: "C:/x/notes.md", title: "notes.md", content: "# hello", dirty: false, eol: "lf", encoding: "utf-8" });
     h.ed.newDoc.mockResolvedValue({ id: "n2", path: null, title: "Untitled", content: "", dirty: false, eol: "lf", encoding: "utf-8" });
@@ -170,7 +170,7 @@ describe("App app-level shortcuts", () => {
     expect(await screen.findByRole("dialog", { name: "Command palette" })).toBeInTheDocument();
   });
 
-  it("R5: an app view starts with the git tools collapsed behind the branch chip and they hide again on demand", async () => {
+  it("R5/R8: an app view starts with the git tools collapsed behind the branch chip and they hide again on demand", async () => {
     h.repo = repo({ dirty: true });
     render(<App />);
     await openApp();
@@ -210,5 +210,174 @@ describe("App app-level shortcuts", () => {
     expect(await screen.findByRole("button", { name: "Open…" })).toBeInTheDocument();
     expect(screen.getByRole("contentinfo", { name: "Status" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Qonsol", level: 2 })).toBeNull();
+  });
+
+  it("R7: the palette lists every app-level command with its real shortcut or no shortcut, and app-only ones only while an app is open", async () => {
+    h.repo = repo();
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    let dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    for (const name of [
+      /Toggle sidebar/,
+      /Refresh everything/,
+      /Switch light\/dark theme/,
+      /Open command palette/,
+      /Open editor/,
+      /Check for updates/,
+      /Help/,
+      /Go to Home/,
+      /Find themes/,
+      /Reset layout/,
+    ]) {
+      expect(within(dialog).getByRole("button", { name })).toBeInTheDocument();
+    }
+    expect(within(dialog).getByRole("button", { name: /Toggle sidebar/ })).toHaveTextContent("Ctrl+B");
+    expect(within(dialog).getByRole("button", { name: /Open command palette/ })).toHaveTextContent("Ctrl+Shift+P");
+    expect(within(dialog).getByRole("button", { name: /Reset layout/ })).not.toHaveTextContent("Ctrl+");
+    // A command that only exists while an app is open is not offered before one is open.
+    expect(within(dialog).queryByRole("button", { name: /Edit app/ })).toBeNull();
+    expect(within(dialog).queryByRole("button", { name: /Start all/ })).toBeNull();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Command palette" })).toBeNull());
+
+    await openApp();
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    for (const name of [/Edit app/, /Start all/, /Stop all/, /Open console/, /New console/]) {
+      expect(within(dialog).getByRole("button", { name })).toBeInTheDocument();
+    }
+    // Git has two entry points in the bar, but one palette command each, never a duplicate.
+    await waitFor(() => expect(within(dialog).getAllByRole("button", { name: /Git: show changes/ })).toHaveLength(1));
+    expect(within(dialog).getAllByRole("button", { name: /Git: show history/ })).toHaveLength(1);
+  });
+
+  it("R7: a query that matches no command shows an empty result", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    await userEvent.type(within(dialog).getByLabelText("Search commands"), "zzzzzz");
+    expect(within(dialog).getByText("No commands match.")).toBeInTheDocument();
+  });
+
+  it("R7: typing a hidden command's name finds it and runs it", async () => {
+    h.repo = repo({ dirty: true });
+    h.api.gitChanges = vi.fn(async () => [{ path: "a.txt", status: "M", staged: false, conflict: false }]);
+    render(<App />);
+    await openApp();
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    await userEvent.type(within(dialog).getByLabelText("Search commands"), "changes");
+    await userEvent.click(within(dialog).getByRole("button", { name: /Git: show changes/ }));
+    expect(await screen.findByRole("complementary", { name: "Git" })).toBeInTheDocument();
+  });
+
+  it("R8: the palette hides a running console without stopping it, and showing it again keeps it running", async () => {
+    render(<App />);
+    await openApp();
+    await userEvent.click(screen.getByRole("tab", { name: /Console/ }));
+    await waitFor(() => expect(h.api.startTerminal).toHaveBeenCalledWith("a1", "console-a1:1"));
+
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    await userEvent.click(within(dialog).getByRole("button", { name: /Hide console/ }));
+    expect(screen.getByTestId("host-console-a1:1")).toHaveAttribute("data-visible", "false");
+    expect(h.api.stopTerminal).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("tab", { name: /Console/ }));
+    expect(screen.getByTestId("host-console-a1:1")).toHaveAttribute("data-visible", "true");
+    expect(h.api.startTerminal).toHaveBeenCalledTimes(1);
+  });
+
+  it("R7/R8: the palette hides and reopens the git tools, the git drawer and the console", async () => {
+    h.repo = repo({ dirty: true });
+    h.api.gitChanges = vi.fn(async () => [{ path: "a.txt", status: "M", staged: false, conflict: false }]);
+    render(<App />);
+    await openApp();
+
+    // Git tools: shown from the palette, then hidden again from the palette.
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    let dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    await userEvent.click(within(dialog).getByRole("button", { name: /Show git tools/ }));
+    expect(screen.getByRole("button", { name: "Hide git tools" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: /Fetch/ })).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    await userEvent.click(within(dialog).getByRole("button", { name: /Hide git tools/ }));
+    expect(screen.getByRole("button", { name: "Show git tools" })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("button", { name: /Fetch/ })).toBeNull();
+
+    // Git drawer: opened, closed and reopened from the palette.
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    await userEvent.click(within(dialog).getByRole("button", { name: /Git: show changes/ }));
+    expect(await screen.findByRole("complementary", { name: "Git" })).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    await userEvent.click(within(dialog).getByRole("button", { name: /Close git drawer/ }));
+    await waitFor(() => expect(screen.queryByRole("complementary", { name: "Git" })).toBeNull());
+
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    await userEvent.click(within(dialog).getByRole("button", { name: /Git: show changes/ }));
+    expect(await screen.findByRole("complementary", { name: "Git" })).toBeInTheDocument();
+
+    // Console: hidden and reopened from the palette, the running shell is never stopped.
+    await userEvent.click(screen.getByRole("tab", { name: /Console/ }));
+    await waitFor(() => expect(h.api.startTerminal).toHaveBeenCalledWith("a1", "console-a1:1"));
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    await userEvent.click(within(dialog).getByRole("button", { name: /Hide console/ }));
+    expect(screen.getByTestId("host-console-a1:1")).toHaveAttribute("data-visible", "false");
+    expect(h.api.stopTerminal).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    await userEvent.click(within(dialog).getByRole("button", { name: /Open console/ }));
+    expect(await screen.findByRole("complementary", { name: "Consoles" })).toBeInTheDocument();
+    expect(screen.getByTestId("host-console-a1:1")).toHaveAttribute("data-visible", "true");
+    expect(h.api.startTerminal).toHaveBeenCalledTimes(1);
+  });
+
+  it("R7: closing the palette with Escape returns focus to the control that had it, never the page body", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+
+    // Opened from the body (Ctrl+Shift+P with nothing focused), Escape lands on a named,
+    // always-visible control instead of leaving focus on <body>.
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    let dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    await waitFor(() => expect(within(dialog).getByLabelText("Search commands")).toHaveFocus());
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Command palette" })).toBeNull());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Toggle sidebar" })).toHaveFocus());
+
+    // Opened while a specific control had focus, Escape hands it back.
+    const opener = screen.getByRole("button", { name: "Hide sidebar" });
+    opener.focus();
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    await waitFor(() => expect(within(dialog).getByLabelText("Search commands")).toHaveFocus());
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Command palette" })).toBeNull());
+    await waitFor(() => expect(opener).toHaveFocus());
+  });
+
+  it("R9: opening an app restores only the sidebar state and starts with the git drawer and console hidden", async () => {
+    localStorage.setItem("td.sidebarCollapsed", "1");
+    h.repo = repo();
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    expect(screen.getByRole("navigation", { name: "Apps (collapsed)" })).toBeInTheDocument();
+
+    await openApp();
+    expect(screen.getByRole("button", { name: "Show git tools" })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("complementary", { name: "Git" })).toBeNull();
+    expect(screen.queryByRole("complementary", { name: "Consoles" })).toBeNull();
   });
 });

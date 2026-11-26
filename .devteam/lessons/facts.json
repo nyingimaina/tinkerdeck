@@ -392,12 +392,13 @@
       "anchors": [
         {
           "path": "src/App.tsx",
-          "hash": "381a0d08af877c337493"
+          "hash": "8d605b2c78015f5dba73"
         }
       ],
-      "at": "2026-11-25T16:45:39.3918182+00:00",
+      "at": "2026-11-25T22:02:16.2108745+00:00",
       "runs": [
-        "20261125-153618"
+        "20261125-153618",
+        "20261125-202512"
       ]
     },
     {
@@ -424,12 +425,13 @@
       "anchors": [
         {
           "path": "src/features/git/GitBar.tsx",
-          "hash": "cec24573fbb99a1727b9"
+          "hash": "3771b5d9bf3e6c5f39b6"
         }
       ],
-      "at": "2026-11-25T16:45:39.5451858+00:00",
+      "at": "2026-11-25T22:02:16.3151132+00:00",
       "runs": [
-        "20261125-153618"
+        "20261125-153618",
+        "20261125-202512"
       ]
     },
     {
@@ -472,12 +474,13 @@
       "anchors": [
         {
           "path": "src/App.editor.test.tsx",
-          "hash": "22ed36711aa8fc50de7e"
+          "hash": "46d9bfbd4be367d1fad9"
         }
       ],
-      "at": "2026-11-25T16:45:39.7067605+00:00",
+      "at": "2026-11-25T20:53:03.9632103+00:00",
       "runs": [
-        "20261125-153618"
+        "20261125-153618",
+        "20261125-202512"
       ]
     },
     {
@@ -488,12 +491,13 @@
       "anchors": [
         {
           "path": "src/App.features.test.tsx",
-          "hash": "c985878bf4b8b9f17ec6"
+          "hash": "04bb78b344de5e890c22"
         }
       ],
-      "at": "2026-11-25T16:45:39.7208187+00:00",
+      "at": "2026-11-25T22:02:16.2563705+00:00",
       "runs": [
-        "20261125-153618"
+        "20261125-153618",
+        "20261125-202512"
       ]
     },
     {
@@ -504,12 +508,13 @@
       "anchors": [
         {
           "path": "src/App.updatecheck.test.tsx",
-          "hash": "60a6407536204fa41c21"
+          "hash": "90a21e9296a16daca453"
         }
       ],
-      "at": "2026-11-25T16:45:39.7371409+00:00",
+      "at": "2026-11-25T20:53:03.995265+00:00",
       "runs": [
-        "20261125-153618"
+        "20261125-153618",
+        "20261125-202512"
       ]
     },
     {
@@ -520,12 +525,13 @@
       "anchors": [
         {
           "path": "src/App.updates.test.tsx",
-          "hash": "0231d1e6fa3005601535"
+          "hash": "f4c63719cddc35122a64"
         }
       ],
-      "at": "2026-11-25T16:45:39.7503151+00:00",
+      "at": "2026-11-25T20:53:04.011914+00:00",
       "runs": [
-        "20261125-153618"
+        "20261125-153618",
+        "20261125-202512"
       ]
     },
     {
@@ -536,12 +542,13 @@
       "anchors": [
         {
           "path": "src/App.themes.test.tsx",
-          "hash": "b462a44d9330ba805e55"
+          "hash": "1d01e13c069d8b01b7f2"
         }
       ],
-      "at": "2026-11-25T16:45:39.7660695+00:00",
+      "at": "2026-11-25T20:53:03.9800903+00:00",
       "runs": [
-        "20261125-153618"
+        "20261125-153618",
+        "20261125-202512"
       ]
     },
     {
@@ -552,12 +559,13 @@
       "anchors": [
         {
           "path": "src/App.test.tsx",
-          "hash": "80118d34d447618ab39f"
+          "hash": "6b0597c776deaf1d21aa"
         }
       ],
-      "at": "2026-11-25T16:45:39.7828895+00:00",
+      "at": "2026-11-25T22:02:16.2418369+00:00",
       "runs": [
-        "20261125-153618"
+        "20261125-153618",
+        "20261125-202512"
       ]
     },
     {
@@ -1358,6 +1366,1286 @@
       "at": "2026-11-25T19:03:20.5275502+00:00",
       "runs": [
         "20261125-153618"
+      ]
+    },
+    {
+      "text": "only the sidebar preference is persisted, in localStorage key \u0022td.sidebarCollapsed\u0022 (lines 59-66, 125-133); gitTab/help/updateOpen/finderOpen are useState only.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "8d605b2c78015f5dba73"
+        }
+      ],
+      "at": "2026-11-25T20:40:59.4108284+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "openApp() calls setGitTab(null) on every app open (lines 239-244), so R9\u0027s per-app drawer restore must replace that reset.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "8d605b2c78015f5dba73"
+        }
+      ],
+      "at": "2026-11-25T20:40:59.434529+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "the footer shows only the version and has no toggle today; src/features/apps/AppFooter.test.tsx:13-17 currently forbids any footer button.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/AppFooter.tsx",
+          "hash": "34675ae4c29d4e390ef2"
+        }
+      ],
+      "at": "2026-11-25T20:40:59.4492784+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "collapsible/defaultCollapsed exist but the tools open state is internal useState (lines 24, 74-86); add optional controlled props for R9.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/git/GitBar.tsx",
+          "hash": "3771b5d9bf3e6c5f39b6"
+        }
+      ],
+      "at": "2026-11-25T20:40:59.465636+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "the header has New console / shell menu but no hide control; R8 needs one.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/terminals/ConsoleNav.tsx",
+          "hash": "405649aa92db96fcf435"
+        }
+      ],
+      "at": "2026-11-25T20:40:59.4796156+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "openConsoleTab creates or selects a console (137-146), selectTerminal switches tabs (231-234), closeConsole removes; console entries are session-only.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/useLauncher.ts",
+          "hash": "5f3d9df6c1739be96704"
+        }
+      ],
+      "at": "2026-11-25T20:40:59.4955909+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "one xterm per opened terminal, hidden by CSS not unmounted (30-35, 132-134); App renders every console host (App.tsx:488-499), so hiding a console keeps its output.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/terminals/TerminalHost.tsx",
+          "hash": "2cd668bee9de53e7c78a"
+        }
+      ],
+      "at": "2026-11-25T20:40:59.5091816+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "hand-built list filters with includes() (44-47) and renders no \u0022no shortcut\u0022 note; revision 2 replaces it with cmdk.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "11dffeedbc82ac75969b"
+        }
+      ],
+      "at": "2026-11-25T20:40:59.5347508+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "jsdom gets ResizeObserver/IntersectionObserver/matchMedia/scrollTo/scrollIntoView shims; Radix Dialog may need pointer-capture shims here too.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/test/setup.ts",
+          "hash": "057185a9cc4da0f79907"
+        }
+      ],
+      "at": "2026-11-25T20:40:59.5504425+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "only jattac.libs.web.zest-tabs and jattac-web-poller are installed; no cmdk, Radix, react-hotkeys-hook or jattac overflow-menu.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "package.json",
+          "hash": "4e8da0405b6fe73dd932"
+        }
+      ],
+      "at": "2026-11-25T20:40:59.5642993+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "CSP (line 26) allows style-src \u0027self\u0027 \u0027unsafe-inline\u0027; no CSP change is needed for cmdk/Radix.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/tauri.conf.json",
+          "hash": "3cec1a56d73da5a247e5"
+        }
+      ],
+      "at": "2026-11-25T20:40:59.5795807+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "beforeEach (74-80) does not clear localStorage; add localStorage.clear() there once layout persistence exists or tests can inherit a restored console/drawer.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.features.test.tsx",
+          "hash": "04bb78b344de5e890c22"
+        }
+      ],
+      "at": "2026-11-25T20:40:59.6208719+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts AppFooter at src/features/apps/AppFooter.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/AppFooter.tsx",
+          "hash": "34675ae4c29d4e390ef2"
+        }
+      ],
+      "at": "2026-11-25T20:46:13.2609276+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts AppFooterStyles at src/features/apps/AppFooter.module.css.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/AppFooter.module.css",
+          "hash": "6cee27b3a3124541a7df"
+        }
+      ],
+      "at": "2026-11-25T20:46:13.2750525+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts AppFooterTests at src/features/apps/AppFooter.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/AppFooter.test.tsx",
+          "hash": "1d5a95a37365bf0820fa"
+        }
+      ],
+      "at": "2026-11-25T22:02:16.228091+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts CommandPalette at src/features/command-palette/CommandPalette.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "11dffeedbc82ac75969b"
+        }
+      ],
+      "at": "2026-11-25T20:53:03.943903+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts CommandPaletteStyles at src/features/command-palette/CommandPalette.module.css.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.module.css",
+          "hash": "0e49f473d4bd27a4feb9"
+        }
+      ],
+      "at": "2026-11-25T20:46:13.3323096+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts CommandPaletteTests at src/features/command-palette/CommandPalette.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.test.tsx",
+          "hash": "d942386562b3d76ef2c5"
+        }
+      ],
+      "at": "2026-11-25T22:02:16.2848822+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts AppShortcutTestsUpdate at src/App.shortcuts.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.shortcuts.test.tsx",
+          "hash": "b0c7ba76c54187b666c0"
+        }
+      ],
+      "at": "2026-11-25T20:46:13.3798644+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts Dialog at src/features/apps/Dialog.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/Dialog.tsx",
+          "hash": "abcbc6bc19b5ab9c070d"
+        }
+      ],
+      "at": "2026-11-25T20:46:13.4126+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts DialogStyles at src/features/apps/Dialog.module.css.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/Dialog.module.css",
+          "hash": "2546c464e3a6c23d9317"
+        }
+      ],
+      "at": "2026-11-25T20:46:13.4277181+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts DialogTests at src/features/apps/components.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/components.test.tsx",
+          "hash": "5c492a9fa2a64391e810"
+        }
+      ],
+      "at": "2026-11-25T20:46:13.4421296+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts ConsoleNavPanel at src/features/terminals/ConsoleNav.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/terminals/ConsoleNav.tsx",
+          "hash": "405649aa92db96fcf435"
+        }
+      ],
+      "at": "2026-11-25T20:46:13.4572275+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts ConsoleNavStyles at src/features/terminals/ConsoleNav.module.css.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/terminals/ConsoleNav.module.css",
+          "hash": "6c70210b5f710b826c4f"
+        }
+      ],
+      "at": "2026-11-25T20:46:13.473302+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts ConsoleNavTests at src/features/terminals/ConsoleNav.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/terminals/ConsoleNav.test.tsx",
+          "hash": "4abb764d7ca97e6c0577"
+        }
+      ],
+      "at": "2026-11-25T22:02:16.3018338+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts GitBarCollapseTests at src/features/git/GitBar.collapse.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/git/GitBar.collapse.test.tsx",
+          "hash": "cdf508580e9522cbbccd"
+        }
+      ],
+      "at": "2026-11-25T22:02:16.3316563+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts TestSetup at src/test/setup.ts.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/test/setup.ts",
+          "hash": "057185a9cc4da0f79907"
+        }
+      ],
+      "at": "2026-11-25T20:46:13.5338624+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts PackageManifest at package.json.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "package.json",
+          "hash": "4e8da0405b6fe73dd932"
+        }
+      ],
+      "at": "2026-11-25T20:46:13.5478392+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts PackageLock at package-lock.json.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "package-lock.json",
+          "hash": "f905855bf3fd1b7fce0a"
+        }
+      ],
+      "at": "2026-11-25T20:46:13.578525+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts TidyUpPlanRevision2 at docs/ui-tidy-up-plan.md.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "docs/ui-tidy-up-plan.md",
+          "hash": "474d3a17ea645aa8a280"
+        }
+      ],
+      "at": "2026-11-25T22:02:16.3467957+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts ShortcutRegistry at src/shared/shortcuts.ts.",
+      "role": "planchecker",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/shared/shortcuts.ts",
+          "hash": "70799bde5b2665706da5"
+        }
+      ],
+      "at": "2026-11-25T20:53:03.9097887+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts ShortcutRegistryTests at src/shared/shortcuts.test.ts.",
+      "role": "planchecker",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/shared/shortcuts.test.ts",
+          "hash": "2ea638221c5219e389ad"
+        }
+      ],
+      "at": "2026-11-25T20:53:03.9257475+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "The design puts UpdatesTestsUpdate at src/features/updates/updates.test.tsx.",
+      "role": "planchecker",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/updates/updates.test.tsx",
+          "hash": "2cea49a0611d37f35ed7"
+        }
+      ],
+      "at": "2026-11-25T20:53:04.027971+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "paletteActions currently has six entries and the palette is lazy; the footer has no toggle, and toggleSidebar writes localStorage td.sidebarCollapsed.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "8d605b2c78015f5dba73"
+        }
+      ],
+      "at": "2026-11-25T21:32:04.4862026+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "footer renders only the product name and version; no toggle exists today.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/AppFooter.tsx",
+          "hash": "34675ae4c29d4e390ef2"
+        }
+      ],
+      "at": "2026-11-25T21:32:04.5025689+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "the first console\u0027s Close button is disabled; console entries are runtime-only.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/terminals/ConsoleNav.tsx",
+          "hash": "405649aa92db96fcf435"
+        }
+      ],
+      "at": "2026-11-25T21:32:04.5173327+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "openApp() calls setGitTab(null) but does not reset the selected tab; with per-app restore dropped, R9 needs openApp to select the app\u0027s first terminal (or clear it when none) so the console starts hidden.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "8d605b2c78015f5dba73"
+        }
+      ],
+      "at": "2026-11-25T21:59:02.8575507+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "collapsible/defaultCollapsed exist but the tools open state is internal useState (lines 24, 74-86); add optional controlled open/onOpenChange props for Reset layout and the palette (R8), not for persistence.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/git/GitBar.tsx",
+          "hash": "3771b5d9bf3e6c5f39b6"
+        }
+      ],
+      "at": "2026-11-25T21:59:02.8773294+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "hand-built list filters with includes() (44-47) and renders no \u0022no shortcut\u0022 note; revision 2 swaps the list to cmdk inside the same lazy chunk (shouldFilter=false keeps the includes filter) and adds a No shortcut note and disabled reason; its ConfirmDialogs/HelpDialog exports must stay.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "11dffeedbc82ac75969b"
+        }
+      ],
+      "at": "2026-11-25T21:59:02.8952935+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "jsdom already shims ResizeObserver/IntersectionObserver/matchMedia/scrollTo/scrollIntoView; cmdk uses only these, so a new shim is needed only if a test shows otherwise.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/test/setup.ts",
+          "hash": "057185a9cc4da0f79907"
+        }
+      ],
+      "at": "2026-11-25T21:59:02.9122076+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "beforeEach (74-80) does not clear localStorage; add localStorage.clear() there and in App.test/App.layout so a saved sidebar state from another case cannot leak in.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.features.test.tsx",
+          "hash": "04bb78b344de5e890c22"
+        }
+      ],
+      "at": "2026-11-25T21:59:02.9465095+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "EmptyState (\u0022This app has no terminals.\u0022) shows only when app.terminals.length === 0 and no console tab is selected, so the console is the only workspace exactly when the app has no terminals and its console tab is selected (App.tsx:453).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "8d605b2c78015f5dba73"
+        }
+      ],
+      "at": "2026-11-25T22:05:53.3580842+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "palette actions are built just before \u0060return\u0060; app-only commands are gated by \u0060view === \u0022app\u0022 \u0026\u0026 app\u0060; openApp resets the per-app tab with \u0060L.selectTerminal(id, first?.id ?? \u0022\u0022)\u0060; resetLayout expands the sidebar, closes the drawer and hides a console without stopping anything.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "89d1f4494d43ab59b554"
+        }
+      ],
+      "at": "2026-11-26T04:17:22.8559733+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "\u0060selectTerminal(appId, \u0022\u0022)\u0060 clears the per-app choice, so \u0060selectedTerminalId\u0060 falls back to the app\u0027s first terminal or null (console hidden).",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/useLauncher.ts",
+          "hash": "5f3d9df6c1739be96704"
+        }
+      ],
+      "at": "2026-11-26T04:17:22.8755584+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "the footer always shows name\u002Bversion; the sidebar toggle renders only when \u0060onToggleSidebar\u0060 is passed and reads \u0060sidebarCollapsed\u0060 via \u0060aria-pressed\u0060.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/AppFooter.tsx",
+          "hash": "580a2f45781684ca1800"
+        }
+      ],
+      "at": "2026-11-26T04:17:22.891798+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "still the in-house list (PaletteAction = id/label/shortcut?/run); the cmdk swap and No shortcut/disabled notes are not built yet.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "11dffeedbc82ac75969b"
+        }
+      ],
+      "at": "2026-11-26T04:17:22.9088746+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "palette actions are built just before \u0060return\u0060; app-only commands are gated by \u0060view === \u0022app\u0022 \u0026\u0026 app\u0060; \u0060gitToolsOpen\u0060 is controlled state shared with GitBar; openApp and resetLayout both set it false and openApp selects the app\u0027s first terminal.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "9618842c831fa7d65303"
+        }
+      ],
+      "at": "2026-11-26T04:32:42.175115+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "cmdk 1.1.1 \u0060Command\u0060 with \u0060shouldFilter={false}\u0060 keeps the old includes() name filter; each \u0060Command.Item asChild\u0060 wraps a real \u0060\u003Cbutton role=\u0022button\u0022\u003E\u0060; undefined shortcut renders the \u0022No shortcut\u0022 note and \u0060disabled\u0060\u002B\u0060disabledReason\u0060 render a disabled row.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "22a39e076dd0a500015a"
+        }
+      ],
+      "at": "2026-11-26T04:32:42.1916854+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "optional \u0060onHide\u0060 renders the Hide console control; \u0060hideDisabledReason\u0060 disables it and shows the reason (only-workspace case).",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/terminals/ConsoleNav.tsx",
+          "hash": "2e96994ab32caffed990"
+        }
+      ],
+      "at": "2026-11-26T04:32:42.2081733+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "optional controlled \u0060open\u0060/\u0060onOpenChange\u0060; uncontrolled callers keep the internal state and \u0060collapsible defaultCollapsed\u0060 behaviour.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/git/GitBar.tsx",
+          "hash": "ee093cb5b55c79cf8956"
+        }
+      ],
+      "at": "2026-11-26T04:32:42.2201819+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "existing ResizeObserver/IntersectionObserver/scrollIntoView shims were enough for cmdk; no new shim was required.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/test/setup.ts",
+          "hash": "057185a9cc4da0f79907"
+        }
+      ],
+      "at": "2026-11-26T04:32:42.2351499+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "revision-2 sections 11-16 use C/P/H/L/K row labels so they do not match the S/P/D/B inventory regex tested in App.test.tsx.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "docs/ui-tidy-up-plan.md",
+          "hash": "53dae51b68fa01880757"
+        }
+      ],
+      "at": "2026-11-26T04:49:55.4398577+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "the R10 test reads package.json via import.meta.glob(\u0022../package.json\u0022, ?raw) and asserts a [cmdk-root] element plus cmdk 1.1.1.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.test.tsx",
+          "hash": "7f2997e72e9a5eb386e4"
+        }
+      ],
+      "at": "2026-11-26T04:49:55.454625+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "cmdk Command shouldFilter={false}; filtering stays includes() on the label, \u0022No commands match.\u0022 is rendered outside Command.List.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "22a39e076dd0a500015a"
+        }
+      ],
+      "at": "2026-11-26T04:49:55.4687374+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "openApp sets gitToolsOpen=false, gitTab=null and selects the app\u0027s first terminal (or \u0022\u0022) so each app opens calm; resetLayout writes td.sidebarCollapsed=\u00220\u0022.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "9618842c831fa7d65303"
+        }
+      ],
+      "at": "2026-11-26T04:49:55.4848054+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "the palette focus assertion must be wrapped in waitFor; the lazy chunk focus effect can land a tick after findByRole in a loaded suite.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.shortcuts.test.tsx",
+          "hash": "a3495e3e9c101b5d2593"
+        }
+      ],
+      "at": "2026-11-26T04:49:55.5011838+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "layout persistence is only the existing td.sidebarCollapsed key (\u00220\u0022/\u00221\u0022) read/written inside try/catch; palette labels are static literals, no user/terminal data.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "9618842c831fa7d65303"
+        }
+      ],
+      "at": "2026-11-26T04:56:59.6238175+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "action labels and disabled reasons render as React text inside real buttons; the query lives in component state only (never stored or sent); no dangerouslySetInnerHTML.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "22a39e076dd0a500015a"
+        }
+      ],
+      "at": "2026-11-26T04:56:59.6420868+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "cmdk 1.1.1 plus every added @radix-ui/react-* / transitive is MIT, resolved from registry.npmjs.org with integrity hashes, and has no install scripts.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "package-lock.json",
+          "hash": "506a6a507dbd305eb061"
+        }
+      ],
+      "at": "2026-11-26T04:56:59.6624639+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "unchanged; windows [\u0022main\u0022], permissions core:default \u002B dialog:allow-open, no new command or remote surface.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/capabilities/default.json",
+          "hash": "fb46fc757d2d09e4b9e8"
+        }
+      ],
+      "at": "2026-11-26T04:56:59.6790775+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "commit-message draft is \u0060useState\u0060 local (line 13); App unmounts GitDrawer when gitTab is null (App.tsx:604/606), so closing the git drawer loses a typed commit message.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/git/ChangesView.tsx",
+          "hash": "fd8d524ec64e697c9c8a"
+        }
+      ],
+      "at": "2026-11-26T05:01:43.9949256+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "palette adds \u0022Show/Hide git tools\u0022 (~376) and \u0022Close git drawer\u0022 (~382) plus \u0022Open console\u0022 (~385); only \u0022Hide console\u0022 is exercised by tests.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "9618842c831fa7d65303"
+        }
+      ],
+      "at": "2026-11-26T05:01:44.0153181+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "the only persisted layout is \u0060td.sidebarCollapsed\u0060; transient dialogs/banners are React state and are never read at startup, but no restart test asserts they stay closed.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "9618842c831fa7d65303"
+        }
+      ],
+      "at": "2026-11-26T05:01:44.0318545+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "section 15 (K1-K5) records the R10 package/in-house decisions and the jattac overflow-menu fallback; only cmdk is asserted by a test (App.test.tsx:392).",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "docs/ui-tidy-up-plan.md",
+          "hash": "53dae51b68fa01880757"
+        }
+      ],
+      "at": "2026-11-26T05:01:44.0512655+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "window keydown handles only s/n/o/w and returns otherwise, so Ctrl\u002BB reaches the App handler; no test asserts footer/Ctrl\u002BB while the editor is focused.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/editor/EditorView.tsx",
+          "hash": "7c939f62933f153bf167"
+        }
+      ],
+      "at": "2026-11-26T05:01:44.0680583+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "the git drawer stays mounted once opened (gitTabKept) inside a div hidden when gitTab is null, so a typed commit message survives hide/reopen; openApp resets gitTabKept to null.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "b679ead6495bc6d4ca2f"
+        }
+      ],
+      "at": "2026-11-26T05:14:18.0711028+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "commit-message draft stays in \u0060useState\u0060 (line 13), but App keeps GitDrawer mounted via gitTabKept inside \u0060\u003Cdiv hidden={gitTab === null}\u003E\u0060 (App.tsx:613-619) so a draft survives close/reopen; App.layout.test.tsx:140 covers it.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/git/ChangesView.tsx",
+          "hash": "fd8d524ec64e697c9c8a"
+        }
+      ],
+      "at": "2026-11-26T05:22:20.6780137+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "the chip\u0027s accessible name is \u0022Show git tools\u0022/\u0022Hide git tools\u0022 (line 90); clicking those in tests hits the chip, not the palette.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/git/GitBar.tsx",
+          "hash": "ee093cb5b55c79cf8956"
+        }
+      ],
+      "at": "2026-11-26T05:22:20.6965156+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "palette pushes \u0022Show/Hide git tools\u0022 (~386) and \u0022Close git drawer\u0022 (391) plus \u0022Open console\u0022 (394); only \u0022Hide console\u0022/\u0022Open console\u0022 are queried inside the palette in tests.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "b679ead6495bc6d4ca2f"
+        }
+      ],
+      "at": "2026-11-26T05:22:20.7129133+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "the only persisted layout is \u0060td.sidebarCollapsed\u0060; transient dialogs/banners are React state and never read at startup, but no restart test asserts they stay closed.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "b679ead6495bc6d4ca2f"
+        }
+      ],
+      "at": "2026-11-26T05:22:20.7296572+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "section 15 (K1-K5, lines 336-345) records the R10 package/in-house decisions and the jattac overflow-menu fallback; only cmdk 1.1.1 \u002B [cmdk-root] are asserted (App.test.tsx:392).",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "docs/ui-tidy-up-plan.md",
+          "hash": "53dae51b68fa01880757"
+        }
+      ],
+      "at": "2026-11-26T05:22:20.7477544+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "consoles are React state only (session-only), so unmount/remount drops them and no console is restarted; openApp reselects the first terminal.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/useLauncher.ts",
+          "hash": "5f3d9df6c1739be96704"
+        }
+      ],
+      "at": "2026-11-26T05:34:50.9420747+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "the added R10 test reads docs/ui-tidy-up-plan.md section 15 by slicing at \u0027## 15. Package decisions\u0027 and parsing the | K1 |..| K5 | rows (cells: id, block, decision, licence, react, initial-view).",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.test.tsx",
+          "hash": "2ea8c7165bc781d27e81"
+        }
+      ],
+      "at": "2026-11-26T05:40:30.426111+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "openApp(id, list = apps) clears gitTab/gitTabKept/gitToolsOpen and selects the list\u0027s first terminal (or \u0022\u0022) so each app opens calm; handleSave routes a new app through openApp(saved.id, next); resetLayout writes td.sidebarCollapsed=\u00220\u0022.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "5b6610fc00e4bb5fc71b"
+        }
+      ],
+      "at": "2026-11-26T05:51:29.2214727+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "closes on Escape (39-48) and choose() (55-59) by unmounting; it never saves/restores document.activeElement, so focus falls to BODY after Escape (verified with a jsdom probe).",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "22a39e076dd0a500015a"
+        }
+      ],
+      "at": "2026-11-26T06:08:20.0907017+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "Command.List gets aria-label=\u0022Commands\u0022 but cmdk reads its \u0060label\u0060 prop (default \u0022Suggestions\u0022); Command.Item asChild \u002B the child role=\u0022button\u0022 overrides cmdk\u0027s role=\u0022option\u0022, so the listbox contains role=button children with aria-selected.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "22a39e076dd0a500015a"
+        }
+      ],
+      "at": "2026-11-26T06:08:20.1093096+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "handleSave routes a new app through openApp(saved.id, next) (line 289); openApp (238-249) clears gitTab/gitTabKept, resets gitToolsOpen and selects the app\u0027s first terminal, so REV-1 is fixed.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "5b6610fc00e4bb5fc71b"
+        }
+      ],
+      "at": "2026-11-26T06:08:20.1285749+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "controlled mode is \u0060open !== undefined\u0060; the chip calls onOpenChange and the parent owns the state (openApp/ResetLayout set it false).",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/git/GitBar.tsx",
+          "hash": "ee093cb5b55c79cf8956"
+        }
+      ],
+      "at": "2026-11-26T06:08:20.1455514+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "cmdk Command.List ignores \u0060aria-label\u0060 (uses its \u0060label\u0060 prop, default \u0022Suggestions\u0022); Command.Item asChild \u002B the child\u0027s role=\u0022button\u0022 overrides cmdk\u0027s role=\u0022option\u0022, so the DOM is \u003Cdiv role=\u0022listbox\u0022 aria-label=\u0022Suggestions\u0022\u003E with \u003Cbutton role=\u0022button\u0022 aria-selected\u003E children (verified by DOM dum\u2026",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "b2aabaa1a9a88c318c93"
+        }
+      ],
+      "at": "2026-11-26T06:33:57.2673388+00:00",
+      "runs": [
+        "20261125-202512"
+      ]
+    },
+    {
+      "text": "hideConsole selects the app\u0027s first terminal; TerminalHost.tsx focuses the xterm when it becomes visible, so hiding the console hands focus to the terminal rather than leaving it on body.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "7d48b95a1917a16feaf0"
+        }
+      ],
+      "at": "2026-11-26T06:33:57.2871631+00:00",
+      "runs": [
+        "20261125-202512"
       ]
     }
   ]

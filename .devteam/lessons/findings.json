@@ -8,6 +8,15 @@
       ],
       "lastDescription": "The row memoisation that the A1/EFF-002 relaxation relies on is defeated by an unstable callback, so a large folder re-renders up to 1000 file rows on every App update (typing included). That is needless work and a responsiveness bug on the",
       "lastFile": "src/App.tsx"
+    },
+    {
+      "rule": "USR-006",
+      "count": 1,
+      "runs": [
+        "20261126-115005"
+      ],
+      "lastDescription": "Every dialog that moved to the side pane (confirmations, update, help, theme finder) is unreadable in the app\u0027s default dark theme: the package pane stays light while the dialog text keeps the app\u0027s light colours. USR-006 requires readable/",
+      "lastFile": "src/features/apps/SidePane.tsx"
     }
   ],
   "files": [
@@ -75,12 +84,49 @@
       ],
       "lastDescription": "R3 acceptance \u0027Clicking an image or other binary-preview file opens the editor\u0027s existing preview form\u0027 has no test at all. Add a test that lists an image/PDF in the explorer, clicks it, and asserts the editor\u0027s preview form is shown (e.g. ",
       "lastRule": ""
+    },
+    {
+      "path": "src/features/apps/SidePane.tsx",
+      "count": 1,
+      "runs": [
+        "20261126-115005"
+      ],
+      "lastDescription": "Every dialog that moved to the side pane (confirmations, update, help, theme finder) is unreadable in the app\u0027s default dark theme: the package pane stays light while the dialog text keeps the app\u0027s light colours. USR-006 requires readable/",
+      "lastRule": "USR-006"
+    },
+    {
+      "path": "README.md",
+      "count": 1,
+      "runs": [
+        "20261126-115005"
+      ],
+      "lastDescription": "The user-facing shortcut documentation still tells the user that F5 refreshes, contradicting R6 (\u0027No menu, palette entry or help text still tells the user that F5 refreshes\u0027) and its pitfall that any leftover F5-refresh hint must be brought",
+      "lastRule": ""
+    },
+    {
+      "path": "src/App.shortcuts.test.tsx",
+      "count": 1,
+      "runs": [
+        "20261126-115005"
+      ],
+      "lastDescription": "R6\u0027s edge case \u0022Pressing F5 twice quickly does not leave the app half-started or start a terminal twice\u0022 and the reliability acceptance \u0022Pressing F5 rapidly during an in-progress start or stop leaves the app in a single, consistent started ",
+      "lastRule": ""
+    },
+    {
+      "path": "src/features/command-palette/CommandPalette.test.tsx",
+      "count": 1,
+      "runs": [
+        "20261126-115005"
+      ],
+      "lastDescription": "R8\u0027s acceptance \u0022The command palette is not moved into a side pane and still opens as a palette\u0022 has no test: the palette could be wrapped in the SidePane and every existing palette/App test would still pass because role=dialog, focus and a",
+      "lastRule": ""
     }
   ],
   "absorbed": [
     "20261125-153618",
     "20261125-202512",
-    "20261126-075013"
+    "20261126-075013",
+    "20261126-115005"
   ],
   "promotionAsked": {}
 }

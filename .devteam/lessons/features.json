@@ -35,6 +35,18 @@
         "src-tauri",
         "src/api"
       ]
+    },
+    {
+      "runId": "20261126-115005",
+      "feature": "When no app root applies (the home view, the editor view with no tab open, or an\u2026 (and 3 more)",
+      "areas": [
+        "src",
+        "src/features/apps",
+        "src/features/explorer",
+        "src/features/git",
+        "(project root)",
+        "src-tauri/src/features"
+      ]
     }
   ]
 }

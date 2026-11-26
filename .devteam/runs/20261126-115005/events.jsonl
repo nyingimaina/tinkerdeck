@@ -422,3 +422,12 @@
 {"seq":422,"at":"2026-11-26T16:39:33.6266565+00:00","type":"evidence.recorded","stage":"challenge","message":"45 changed file(s) and 8 requirement(s) are written down after Challenge."}
 {"seq":423,"at":"2026-11-26T16:39:33.6882672+00:00","type":"stage.started","stage":"prove","message":"Engine assembles the proof report"}
 {"seq":424,"at":"2026-11-26T16:39:35.105329+00:00","type":"browser.skipped","stage":"prove","message":"Browser journeys not run: this stack has no browser journeys"}
+{"seq":425,"at":"2026-11-26T16:39:37.2788238+00:00","type":"revision.sealed","stage":"prove","message":"Revision 2 is sealed: commit 754ce8b, checkpoint 9531cce, evidence 30137cc61fb5cc6b, proof none."}
+{"seq":426,"at":"2026-11-26T16:39:37.436523+00:00","type":"series.committed","stage":"prove","message":"Revision 2 of 3 is built and committed (754ce8b)"}
+{"seq":427,"at":"2026-11-26T16:39:37.5250677+00:00","type":"series.autocontinued","stage":"prove","message":"Revision 2 passed and auto-continue is on: going on to the next without asking"}
+{"seq":428,"at":"2026-11-26T16:39:44.6731618+00:00","type":"contract.observed","stage":"prove","message":"Revision 2 offers 4 new names; 4 of 20 things the design named were found","data":{"added":"4","missing":"16","unanticipated":"4"}}
+{"seq":429,"at":"2026-11-26T16:39:47.9186568+00:00","type":"facts.written","message":"Metrics and readiness saved: Not fully proven: some parts could not be checked, so they are not counted as passed.","data":{"readiness":"NotProven"}}
+{"seq":430,"at":"2026-11-26T16:39:48.1811417+00:00","type":"workflows.learned","message":"1172 tool use(s) recorded."}
+{"seq":431,"at":"2026-11-26T16:39:48.421305+00:00","type":"lessons.findings","message":"10 finding(s) taken into what this project has learned"}
+{"seq":432,"at":"2026-11-26T16:39:48.535702+00:00","type":"proof.written","stage":"prove","message":"Proof report written","data":{"report":".devteam/runs/20261126-115005/proof-report.md"}}
+{"seq":433,"at":"2026-11-26T16:39:49.7786877+00:00","type":"run.completed","stage":"prove","message":"Feature complete in 289m 39s, $0.74"}

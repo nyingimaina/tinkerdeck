@@ -26,9 +26,9 @@
   {
     "id": "20261126-115005",
     "startedAt": "2026-11-26T11:50:05.5319859+00:00",
-    "status": "Running",
+    "status": "Completed",
     "snippet": "When no app root applies (the home view, the editor view with no tab open, or an\u2026 (and 3 m\u2026",
     "costUsd": 0.737596596,
-    "final": false
+    "final": true
   }
 ]

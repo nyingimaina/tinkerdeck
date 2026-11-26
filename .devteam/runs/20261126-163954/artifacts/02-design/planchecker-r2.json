@@ -1,0 +1,13 @@
+{
+  "summary": "Consistent apart from one compatibility gap: the design changes existing merged behaviour in the old Rust files src-tauri/src/commands.rs and src-tauri/src/model.rs without the characterization tests the compatibility layer requires first.",
+  "conflicts": [
+    {
+      "requirement": "R11",
+      "against": "design",
+      "kind": "scope",
+      "owner": "design",
+      "why": "R11 requires changing existing behaviour in old Rust files: start_all/stop_all must now skip non-executable terminals (src-tauri/src/commands.rs) and TerminalDef's derived Default is replaced by a manual one that defaults the flag to true (src-tauri/src/model.rs). The compatibility layer lets an old file change only after tests freeze its current behaviour first, and the design supplies such a step only for src-tauri/src/editor.rs (A3) and src-tauri/src/engine.rs (A7); no characterization/freeze step is named for commands.rs or model.rs, so these two old-file behaviour changes have nothing pinning what start_all/stop_all and TerminalDef::default do today (USR-004 asks for exactly that before merged behaviour is extended).",
+      "evidence": "Compatibility: 'Old files are changed only when a requirement cannot be met otherwise, in their own style, after tests that freeze their current behaviour (characterization tests).' Design scope/impact.touches include 'src-tauri/src/commands.rs' and 'src-tauri/src/model.rs'; the design meets R11 there with 'start_all/stop_all ... are computed from executable terminals only' and 'Rust gets a serde default of true plus a manual Default (the derive is replaced because it would default to false)'. The only characterization additions are A3 ('Existing editor store tests keep their current expectations and pass before the change', src-tauri/src/editor.rs) and A7 ('Existing engine up and readiness tests keep their current expectations. A new test shows a non-executable terminal is not started and does not hold up readiness', src-tauri/src/engine.rs)."
+    }
+  ]
+}

@@ -1,0 +1,825 @@
+{
+  "summary": "Slice 1 of 5 (backend/core) of revision 3. Extended the existing Files explorer core (src-tauri/src/features/explorer/mod.rs) with the four R9 file operations as plain functions: create_item, rename_item, move_item and delete_item (delete_item_with takes an injectable Recycle Bin step). They share one validation and refusal path: empty/whitespace/over-long/Windows-invalid names are refused, name clashes are refused without overwriting, moving a folder into itself or a descendant is refused, a move between drives is refused before any file-system call, and delete only ever delegates to the Recycle Bin and refuses rather than deleting permanently. Added thin Tauri command shells in the same explorer feature (explorer_create/explorer_rename/explorer_move/explorer_delete) that run on a blocking worker; rename/move return ExplorerOp with repaths, delete returns ExplorerOp with closed tab ids. Added Store::repath_prefix and Store::close_prefix to the existing editor store (src-tauri/src/editor.rs): repath keeps unsaved buffers and re-points every open file at or under the old path (component-wise, case-insensitive matching), close_prefix closes a deleted file\u0027s or folder\u0027s tabs, binning unsaved text. Registered the four commands and made editor/model public in lib.rs for the integration tests. Added the trash 5.4.0 crate to Cargo.toml for Recycle Bin deletes. Added the executable flag to the Rust TerminalDef with serde default true and a manual Default keeping it true (R11 core model). A6 version bump (2.3.0) is deliberately left to the version-bump slices: bumping only Cargo.toml here would break the one-version-everywhere check, so all three version files stay at 2.2.0 in this slice. Tests: 17 in src-tauri/tests/explorer_ops.rs, 7 in src-tauri/tests/editor_repath.rs, and one R11 model unit test. cargo check --tests, both new test binaries, the explorer integration test, and the model/editor/config unit tests pass; cargo clippy --all-targets reports no warnings in the changed files; npm run build succeeds. Note: an accidental crate-wide rustfmt was fully reverted so only in-scope files are modified. Slice 2 of 5: R11 backend filtering and Rust tests, the explorer file-operation API and UI (R9, A1, A2), plus the targeted folder reload it needs. Added AppDef::executable_terminals() (serde default true) and made start_all/stop_all iterate it, with four R11 integration tests. Added explorerApi.create/rename/move/remove and the ExplorerOp/ExplorerRepath types, with API tests asserting the command names and arguments. Added ExplorerDialogs (create/rename/delete prompts on the shared responsive Dialog, with the delete prompt naming the item, saying a folder\u0027s contents go with it and folding in the unsaved-changes warning) and validateExplorerName mirroring the core\u0027s A2 checks. Added useExplorerOps, which runs one operation at a time, shows a busy state, surfaces the core\u0027s refusal message and re-reads the true state on failure, applies the returned repaths/closed tab ids through an injected editor bridge, flushes pending typing before a delete, and refreshes only the affected folder levels. Extended useExplorer with reloadFolder (root or one expanded child, leave others alone) and forgetUnder (drop the cached subtree under a renamed/moved/deleted item). Extended ExplorerPanel with a wrapping New file/New folder/Rename/Move/Delete toolbar, row selection, HTML5 drag-and-drop onto folders with a Move-button alternative, drag self/descendant refusal, and the dialogs; the tree and existing open path behave exactly as before when no editor bridge is supplied. No App/useEditor wiring (slice 4); that slice must pass a memoised editor bridge or the FileRow memo is defeated. Ran npm run lint, npm run build, the full npm test suite (576 pass), cargo clippy --all-targets -D warnings, rustfmt on the new test, and the touched Rust tests. Slice 3 of 5. Wired the explorer\u0027s file operations into the editor and App and finished the R9 tests for the operation hook and dialogs. useEditor now exposes flushPending (awaits pending typing snapshots before a delete, A4), applyRepaths (re-points open tabs after rename/move so the path-derived tab groups recompute, A3), applyClosed (drops tabs the core already closed and binned, then reloads the bin, A4) and dirtyTitlesUnder (titles of unsaved tabs at or under a path, folded into the one delete prompt, R9). App passes a memoised editor bridge to ExplorerPanel so the explorer toolbar and drag-and-drop are enabled without defeating the memoised file rows, and its reset key now follows the resolved root rather than the active path so a rename under the same root does not throw away the tree. App also filters AppHeader\u0027s states and F5 by the new pure isExecutable helper (TerminalDef.executable defaults to on; newTerminal sets it), shows a dismissible brief \u0027No executable terminals\u0027 notice when Start all or F5 has nothing executable (A5/R11), and puts the real F5 hint on the palette Start all / Stop all entries while Refresh everything keeps \u0027No shortcut\u0027 (R12). Added ExplorerDialogs.test.tsx and useExplorerOps.test.tsx, extended useEditor.test.tsx and App.explorer/App.shortcuts with App-level R9/R11/A5/R12 proofs. Existing App tests that matched the now-duplicated Delete/New file labels were scoped to their dialog or to the editor\u0027s own New control. npm run lint, npm run build and the full Vitest suite (619 tests, 53 files) pass. Slice 4/5 of revision 3: finished the remaining R11 window-side pieces and verified the parts already committed. HomeScreen\u0027s card now filters app.terminals through isExecutable before computing rollup, appButton and the running count, so a non-executable terminal never turns the status dot green or flips the card to Stop all, while an app whose terminals are all non-executable still shows its Start all state; running consoles keep counting for Stop all as before. Added R11 coverage to model.test.ts (newTerminal().executable defaults to true; isExecutable treats a missing saved flag as executable and only an explicit false as off) and to HomeScreen.test.tsx (non-executable running does not go green/Stop; executable running does; all-non-executable keeps Start). Verified the already-present slice parts: AppTests, AppExplorerTests (R9 rename/delete tab integration), AppShortcutTests (R11/F5/A5 notice and R12 palette F5 hint) and AppFeatureTests all pass, plus the Rust integration tests: explorer_ops 17, editor_repath 7 and terminal_executable 4 tests pass. npm run lint, npm run build and the full vitest suite (624 tests, 53 files) all pass. No out-of-scope files were touched; the only app files changed in this slice are src/features/home/HomeScreen.tsx, src/features/home/HomeScreen.test.tsx and src/state/model.test.ts. Slice 5 of 5. Wired the R11 executable flag through the remaining UI: the Sidebar app status dot now counts only executable terminals (matching Start all / Stop all and F5), and EditPane has a labelled executable checkbox per terminal whose value draft() always writes (an old config with no flag saves as executable). Added the R10 mobile-first pass to CommandPalette.module.css: the base now fills the width, sits at the top and is bounded by 100dvh so the on-screen keyboard cannot squeeze the list, with a @media (min-width: 640px) block restoring the current 12vh / min(560px,100%) / 60vh centred palette. Bumped the app version to 2.3.0 in package.json, src-tauri/Cargo.toml, src-tauri/tauri.conf.json and src-tauri/Cargo.lock, plus the package-lock.json entry and the two tests that assert the shipped version (App.test.tsx footer and App.version.test.tsx); package-lock.json and App.version.test.tsx are needed to keep the version suite green although the design scope did not list them. Added R11/R10 tests and left the already-built R9 explorer ops untouched. Verified (version files are kept in step; the version assertion test is not a feature requirement): npm run lint, npm run build, full npm test (634 pass), cargo clippy -D warnings, and cargo tests explorer_ops/editor_repath/terminal_executable.",
+  "tests": [
+    {
+      "name": "r9_create_makes_a_new_file_and_a_new_folder",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_create_refuses_a_name_clash_and_leaves_the_existing_file_untouched",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_create_refuses_empty_whitespace_and_windows_invalid_names",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_rename_renames_a_file_and_a_folder",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_rename_refuses_a_clash_and_leaves_both_items_untouched",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_rename_of_a_missing_item_reports_it_is_gone",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_rename_refuses_an_invalid_name_and_changes_nothing",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_move_moves_a_file_and_a_folder_into_another_folder",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_move_onto_the_folder_it_is_already_in_changes_nothing",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_move_refuses_a_name_clash_in_the_destination",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_move_refuses_to_put_a_folder_inside_itself_or_a_descendant",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_move_refuses_a_destination_that_is_not_a_folder",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_a_move_between_drives_is_refused",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_delete_hands_the_item_to_the_recycle_bin_and_never_removes_it_itself",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_delete_is_refused_when_the_recycle_bin_cannot_take_the_item",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_deleting_the_same_item_twice_reports_it_is_already_gone",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_delete_uses_the_real_recycle_bin",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_rename_repoints_an_open_file_to_its_new_path_and_keeps_unsaved_text",
+      "file": "src-tauri/tests/editor_repath.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_moving_a_folder_repoints_every_open_file_under_it",
+      "file": "src-tauri/tests/editor_repath.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_repath_does_not_touch_a_sibling_that_only_shares_a_name_prefix",
+      "file": "src-tauri/tests/editor_repath.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_a_repointed_tab_stays_at_its_new_path_after_a_restart",
+      "file": "src-tauri/tests/editor_repath.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_deleting_an_open_file_closes_its_tab_and_keeps_unsaved_text_in_the_bin",
+      "file": "src-tauri/tests/editor_repath.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_deleting_a_folder_closes_the_tabs_of_every_open_file_inside_it",
+      "file": "src-tauri/tests/editor_repath.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r9_closing_a_clean_deleted_file_forgets_it_without_using_the_bin",
+      "file": "src-tauri/tests/editor_repath.rs",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "r11_executable_defaults_true_and_a_saved_terminal_without_it_loads_true",
+      "file": "src-tauri/src/model.rs",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "r11_a_saved_terminal_without_the_flag_loads_as_executable",
+      "file": "src-tauri/tests/terminal_executable.rs",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "r11_start_all_and_stop_all_skip_non_executable_terminals",
+      "file": "src-tauri/tests/terminal_executable.rs",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "r11_when_every_terminal_is_non_executable_the_bulk_action_has_nothing_to_do",
+      "file": "src-tauri/tests/terminal_executable.rs",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "r11_the_flag_is_saved_so_it_survives_a_restart",
+      "file": "src-tauri/tests/terminal_executable.rs",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "R9 creates a file or folder through explorer_create with the parent, name and kind",
+      "file": "src/api/explorer.test.ts",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 renames through explorer_rename with the item path and new name, returning the re-pointed tabs",
+      "file": "src/api/explorer.test.ts",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 moves through explorer_move with the item path and destination folder",
+      "file": "src/api/explorer.test.ts",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 deletes through explorer_delete, returning the tabs it closed",
+      "file": "src/api/explorer.test.ts",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 creates a new file in the current folder and leaves it unopened in the editor",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 creates a new folder in the current folder",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 renames a file and re-points its open tab to the new path",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 renames a folder through the same one operation path",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 deletes only after confirmation, names the item and sends it to the Recycle Bin",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 a folder delete says everything inside goes with it",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 folds an unsaved-changes warning into the one delete prompt",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 cancelling the delete confirmation changes nothing",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 moves a file to another folder with the explicit Move action and the folder picker",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 drags a file and drops it onto a folder to move it there",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 dropping an item onto the folder it is already in changes nothing",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 refuses to drop a folder into one of its own folders before any file-system call",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 a name clash reported by the core is shown and the folder is reloaded",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "A1 shows a busy state and keeps a second operation from firing while one runs",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "A1 a refused create shows the message and reads the true state again",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "A2 refuses an empty or whitespace-only name before touching any file",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "A2 refuses a Windows-invalid rename name before touching any file",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "A2 refuses moving a folder into itself from the Move action without a file-system call",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 reloadFolder re-reads only the folder an operation touched",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 reloadFolder leaves an unshown folder and the drive list alone",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 forgetUnder drops the cached subtree under a renamed, moved or deleted item",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: flushPending sends the latest typing at once and waits for the snapshot",
+      "file": "src/state/useEditor.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: applyRepaths re-points a tab to its new path and title and keeps its unsaved text",
+      "file": "src/state/useEditor.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: applyRepaths ignores a tab that is not open",
+      "file": "src/state/useEditor.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: applyClosed drops the closed tabs and reloads the bin without closing them again",
+      "file": "src/state/useEditor.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: dirtyTitlesUnder lists only open tabs with unsaved text at or under the folder",
+      "file": "src/state/useEditor.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 accepts a normal Windows file name",
+      "file": "src/features/explorer/ExplorerDialogs.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 refuses an empty, whitespace-only or padded name",
+      "file": "src/features/explorer/ExplorerDialogs.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 refuses a too-long name",
+      "file": "src/features/explorer/ExplorerDialogs.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 refuses Windows-invalid characters and a trailing dot",
+      "file": "src/features/explorer/ExplorerDialogs.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 refuses a Windows device name",
+      "file": "src/features/explorer/ExplorerDialogs.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: the create prompt names the new item and submits the typed name",
+      "file": "src/features/explorer/ExplorerDialogs.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: a folder create prompt is titled New folder",
+      "file": "src/features/explorer/ExplorerDialogs.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: an empty name is refused with a message and nothing is sent",
+      "file": "src/features/explorer/ExplorerDialogs.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: an invalid name is refused and the message clears when the user corrects it",
+      "file": "src/features/explorer/ExplorerDialogs.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: the rename prompt starts with the current name and submits the replacement",
+      "file": "src/features/explorer/ExplorerDialogs.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: the delete prompt names the item and says it goes to the Recycle Bin",
+      "file": "src/features/explorer/ExplorerDialogs.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: a folder delete says everything inside goes with it and folds in the unsaved warning",
+      "file": "src/features/explorer/ExplorerDialogs.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: a long unsaved list is summarised with and N more",
+      "file": "src/features/explorer/ExplorerDialogs.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: cancelling any prompt calls onCancel",
+      "file": "src/features/explorer/ExplorerDialogs.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: while an operation is busy the prompt is disabled and cannot submit twice",
+      "file": "src/features/explorer/ExplorerDialogs.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 creates a file through the one API path and reloads only that folder",
+      "file": "src/features/explorer/useExplorerOps.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 creates a folder through the same API path",
+      "file": "src/features/explorer/useExplorerOps.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 re-points the open tabs, forgets the old subtree and reloads the folder after a rename",
+      "file": "src/features/explorer/useExplorerOps.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 re-points every open file under a renamed folder",
+      "file": "src/features/explorer/useExplorerOps.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 waits for pending typing before deleting, then applies the closed tabs and reloads",
+      "file": "src/features/explorer/useExplorerOps.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 folds the unsaved titles into the one delete prompt",
+      "file": "src/features/explorer/useExplorerOps.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 cancelling a delete changes nothing",
+      "file": "src/features/explorer/useExplorerOps.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 moves a file with the explicit Move action and the folder picker",
+      "file": "src/features/explorer/useExplorerOps.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 moving into another folder re-points the tabs and reloads both levels",
+      "file": "src/features/explorer/useExplorerOps.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 dropping an item onto the folder it is already in changes nothing",
+      "file": "src/features/explorer/useExplorerOps.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 refuses to move a folder into itself or one of its descendants before any call",
+      "file": "src/features/explorer/useExplorerOps.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 refuses a Move picked into the folder itself without a file-system call",
+      "file": "src/features/explorer/useExplorerOps.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 shows a busy state and ignores a second operation while one runs",
+      "file": "src/features/explorer/useExplorerOps.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 a refused operation shows the message and reloads the folder from disk",
+      "file": "src/features/explorer/useExplorerOps.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 dismisses the error message",
+      "file": "src/features/explorer/useExplorerOps.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9 offers no file operations without the editor bridge",
+      "file": "src/features/explorer/useExplorerOps.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: renaming an open file from the explorer re-points its tab to the new path",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R9: deleting an open file from the explorer closes its tab after one confirmation",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R9"
+      ]
+    },
+    {
+      "name": "R11: the Start all button and F5 count only executable terminals",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "R11: a non-executable terminal is still left out when the executable one is running",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "R11: when every terminal is non-executable, F5 starts nothing and says so briefly",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "R11: the Start all button says the same thing as F5 when nothing is executable",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "R12: Start all and Stop all show F5 while Refresh everything shows No shortcut",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R12"
+      ]
+    },
+    {
+      "name": "R11: a newly added terminal is executable by default",
+      "file": "src/state/model.test.ts",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "R11: a missing saved flag reads as executable and only an explicit false turns it off",
+      "file": "src/state/model.test.ts",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "R11: a running non-executable terminal does not turn the card green or offer Stop all",
+      "file": "src/features/home/HomeScreen.test.tsx",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "R11: an executable terminal that is running still turns the card green and offers Stop all",
+      "file": "src/features/home/HomeScreen.test.tsx",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "R11: an app whose terminals are all non-executable keeps its Start all state",
+      "file": "src/features/home/HomeScreen.test.tsx",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "R10: the mobile-first base fills the width, sits at the top and is viewport-bounded",
+      "file": "src/features/command-palette/CommandPalette.styles.test.ts",
+      "requirements": [
+        "R10"
+      ]
+    },
+    {
+      "name": "R10: a desktop media query restores the current centred 560px palette",
+      "file": "src/features/command-palette/CommandPalette.styles.test.ts",
+      "requirements": [
+        "R10"
+      ]
+    },
+    {
+      "name": "R10: a long command label truncates inside the panel instead of overflowing it",
+      "file": "src/features/command-palette/CommandPalette.styles.test.ts",
+      "requirements": [
+        "R10"
+      ]
+    },
+    {
+      "name": "R11: a newly added terminal is executable by default and saves that way",
+      "file": "src/features/apps/EditPane.executable.test.tsx",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "R11: a saved terminal without the flag loads as executable and is saved explicitly",
+      "file": "src/features/apps/EditPane.executable.test.tsx",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "R11: marking one terminal non-executable saves only that terminal\u0027s flag",
+      "file": "src/features/apps/EditPane.executable.test.tsx",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "R11: the flag can be turned off and on again and the saved value follows it",
+      "file": "src/features/apps/EditPane.executable.test.tsx",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "R11: a non-executable terminal keeps its name, command and remove controls",
+      "file": "src/features/apps/EditPane.executable.test.tsx",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "R11: the app status dot counts only executable terminals",
+      "file": "src/features/apps/components.test.tsx",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "R11: a terminal marked non-executable keeps its own start, stop and restart controls",
+      "file": "src/features/apps/components.test.tsx",
+      "requirements": [
+        "R11"
+      ]
+    },
+    {
+      "name": "R4/R6: Ctrl\u002BB keeps working after the header regroup while F5 no longer refreshes",
+      "file": "src/App.features.test.tsx",
+      "requirements": [
+        "R12"
+      ]
+    },
+    {
+      "name": "R6: the help text no longer advertises F5 as refresh",
+      "file": "src/features/command-palette/CommandPalette.test.tsx",
+      "requirements": [
+        "R12"
+      ]
+    },
+    {
+      "name": "R6: the Refresh item no longer tells the user F5 refreshes",
+      "file": "src/features/apps/UtilitiesMenu.test.tsx",
+      "requirements": [
+        "R12"
+      ]
+    },
+    {
+      "name": "R6: the refresh control no longer tells the user F5 refreshes",
+      "file": "src/features/git/git.test.tsx",
+      "requirements": [
+        "R12"
+      ]
+    },
+    {
+      "name": "R6: F5 with Shift, Ctrl or Alt never refreshes in the home view",
+      "file": "src/App.shortcuts.test.tsx",
+      "requirements": [
+        "R12"
+      ]
+    }
+  ],
+  "kickbacks": []
+}

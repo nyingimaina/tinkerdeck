@@ -213,3 +213,94 @@ describe("useEditor", () => {
     Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true });
   });
 });
+
+describe("explorer file operations keep the editor in step (R9)", () => {
+  it("R9: flushPending sends the latest typing at once and waits for the snapshot", async () => {
+    m.list.mockResolvedValue({ open: [entry("a")], bin: [] });
+    m.load.mockResolvedValue(doc("a", "alpha"));
+    await mount();
+    let release: () => void = () => {};
+    m.snapshot.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          release = resolve;
+        }),
+    );
+    act(() => ctl.current.setContent("a", "typed"));
+
+    let done = false;
+    await act(async () => {
+      const pending = ctl.current.flushPending().then(() => {
+        done = true;
+      });
+      await Promise.resolve();
+      expect(m.snapshot).toHaveBeenCalledWith("a", "typed");
+      expect(done).toBe(false);
+      release();
+      await pending;
+    });
+    expect(done).toBe(true);
+    // The timer was cleared, so the quiet moment cannot send the same text a second time.
+    await flush(2000);
+    expect(m.snapshot).toHaveBeenCalledTimes(1);
+  });
+
+  it("R9: applyRepaths re-points a tab to its new path and title and keeps its unsaved text", async () => {
+    m.list.mockResolvedValue({ open: [entry("a")], bin: [] });
+    m.load.mockResolvedValue(doc("a", "alpha"));
+    await mount();
+    act(() => ctl.current.setContent("a", "a draft"));
+
+    act(() => ctl.current.applyRepaths([{ id: "a", path: "C:/x/lib/b.txt", title: "b.txt" }]));
+
+    const tab = ctl.current.tabs[0];
+    expect(tab).toMatchObject({ id: "a", path: "C:/x/lib/b.txt", title: "b.txt", dirty: true });
+    expect(ctl.current.active?.content).toBe("a draft");
+  });
+
+  it("R9: applyRepaths ignores a tab that is not open", async () => {
+    m.list.mockResolvedValue({ open: [entry("a")], bin: [] });
+    m.load.mockResolvedValue(doc("a", "alpha"));
+    await mount();
+    act(() => ctl.current.applyRepaths([{ id: "other", path: "C:/x/z.txt", title: "z.txt" }]));
+    expect(ctl.current.tabs.map((t) => t.title)).toEqual(["a.txt"]);
+  });
+
+  it("R9: applyClosed drops the closed tabs and reloads the bin without closing them again", async () => {
+    m.list.mockResolvedValueOnce({ open: [entry("a"), entry("b")], bin: [] });
+    m.load.mockImplementation(async (id: string) => doc(id, id));
+    await mount();
+    expect(ctl.current.activeId).toBe("a");
+
+    m.list.mockResolvedValue({ open: [entry("b")], bin: [entry("a", { dirty: true, binnedAt: 5 })] });
+    act(() => ctl.current.applyClosed(["a"]));
+    await flush();
+
+    expect(ctl.current.tabs.map((t) => t.id)).toEqual(["b"]);
+    expect(ctl.current.activeId).toBe("b");
+    expect(ctl.current.bin.map((b) => b.id)).toEqual(["a"]);
+    expect(m.close).not.toHaveBeenCalled();
+  });
+
+  it("R9: dirtyTitlesUnder lists only open tabs with unsaved text at or under the folder", async () => {
+    m.list.mockResolvedValue({
+      open: [
+        entry("a", { path: "C:/x/lib/a.ts", title: "a.ts" }),
+        entry("b", { path: "C:/x/lib/b.ts", title: "b.ts" }),
+        entry("c", { path: "C:/x/other/c.ts", title: "c.ts" }),
+        entry("d", { path: "C:/x/lib2/d.ts", title: "d.ts" }),
+        entry("n", { path: null, title: "Untitled" }),
+      ],
+      bin: [],
+    });
+    m.load.mockImplementation(async (id: string) => doc(id, id, { path: "C:/x/lib/a.ts", title: "a.ts" }));
+    await mount();
+    act(() => {
+      ctl.current.setContent("a", "edited");
+      ctl.current.setContent("c", "edited");
+      ctl.current.setContent("d", "edited");
+    });
+
+    expect(ctl.current.dirtyTitlesUnder("C:/x/lib")).toEqual(["a.ts"]);
+  });
+});

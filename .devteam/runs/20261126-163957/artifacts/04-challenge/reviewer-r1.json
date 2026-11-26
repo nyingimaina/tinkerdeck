@@ -1,0 +1,29 @@
+{
+  "findings": [
+    {
+      "cites": "R9",
+      "severity": "blocking",
+      "file": "src-tauri/src/features/explorer/commands.rs",
+      "line": 60,
+      "evidence": "explorer_rename calls rename_item on line 60 (fs::rename) and only then repath_prefix on line 64, whose `?` returns Err when Store::persist fails; explorer_move does the same at lines 84/88 and explorer_delete calls delete_item on line 108 before close_prefix on line 109. The file-system change is committed first and is never rolled back if the editor-store update then fails.",
+      "description": "The disk mutation and the editor-store update are not atomic, so a persist failure leaves a half-applied operation: the item is renamed/moved/deleted on disk (the reloaded tree shows the new state) while the command returns 'could not be renamed/moved/deleted' and the open tab still points at the old path (or a deleted file). That breaks R9's pitfall 'the tab must be re-pointed to the new path as part of the same operation, so a tab never points at a file that no longer exists' and 'a failed operation must not leave a half-created or half-moved item behind'."
+    },
+    {
+      "cites": "USR-003",
+      "severity": "blocking",
+      "file": "src/features/explorer/ExplorerPanel.tsx",
+      "line": 251,
+      "evidence": "`selected` (line 251) is only cleared by the effect on [resetKey, root] (lines 254-258). A rename never changes the explorer root and App.tsx now keys explorerResetKey on explorer.root, so after a rename/move within the same root `selected` keeps the pre-operation ExplorerEntry (old name/path). The toolbar Rename/Move/Delete stay enabled because they are disabled only on `!selected` (lines 332, 340, 348) and act on `selected.path`; `useExplorerOps` never clears the selection.",
+      "description": "The row selection is not invalidated after an operation. Move (which has no confirmation prompt) will then silently move whatever file now sits at the stale old path: e.g. rename a.txt -> b.txt, create a new a.txt, then press Move/Delete on the invisible stale selection and the new a.txt is acted on instead of the item the user sees."
+    },
+    {
+      "cites": "USR-003",
+      "severity": "advisory",
+      "file": "src/features/explorer/useExplorer.ts",
+      "line": 74,
+      "evidence": "The same case-insensitive, whole-component path helpers are copied into three modules: src/features/explorer/useExplorer.ts:74-90 (pathParts/samePath/withinPath), src/features/explorer/useExplorerOps.ts:49-66 (parts/samePath/withinPath) and src/state/useEditor.ts:51-61 (pathParts/withinPath).",
+      "description": "Duplicated path-normalisation logic (USR-003 code duplication / USR-006 'reuse before reinventing') should be centralised, for example next to parentFolder in src/features/explorer/root.ts, so the component comparison cannot drift between the hooks."
+    }
+  ],
+  "verifications": []
+}

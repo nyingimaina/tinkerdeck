@@ -1,0 +1,21 @@
+{
+  "summary": "R11 pulls the already-failing engine.rs tests into the change set, so the cargo-test check cannot pass, and R12's 'no shortcut hint' for the Refresh entry contradicts the earlier requirement that every no-shortcut command show a 'No shortcut' note.",
+  "conflicts": [
+    {
+      "requirement": "R11",
+      "against": "tauri-rust-tests",
+      "kind": "check",
+      "owner": "design",
+      "why": "R11 requires the engine 'up' action to skip non-executable terminals, which forces src-tauri/src/engine.rs into the change set. The arbiter recorded that four engine tests in that file are failing and excused them only because engine.rs was not in the change set. The check runs all of them, so as written the plan cannot pass it, and two of the failing tests (up_with_wait_*) are exactly the up/readiness code R11 changes.",
+      "evidence": "check `tauri-rust-tests`: `cargo test --manifest-path src-tauri/Cargo.toml`. Decision: `every failing test (engine::tests::git_methods_work_through_the_engine at src-tauri/src/engine.rs:1055, up_with_wait_stops_early_and_explains_when_a_terminal_fails at :904, up_with_wait_times_out_and_names_who_is_not_ready at :931, run_brief_turns_a_failing_test_run_into_counts_and_the_failures_only at :860, run_returns_exit_code_and_output_without_a_terminal at :1007 ...) lives in engine.rs/git.rs, which are not in this change set`. Design scope includes `src-tauri/src/engine.rs`; summary: `filters start_all, stop_all and engine up`."
+    },
+    {
+      "requirement": "R12",
+      "against": "20261125-202512:R7",
+      "kind": "regression",
+      "owner": "requirements",
+      "why": "R12 says the Refresh everything palette entry shows no shortcut hint, but the earlier accepted palette requirement says every app-level command must display its real shortcut or a clear 'No shortcut' note. Refresh has no shortcut, so under R7 its entry must show the 'No shortcut' note, which R12's 'no shortcut hint' forbids.",
+      "evidence": "R12: `the palette entry shows no shortcut hint`. 20261125-202512:R7: `The palette lists every app-level command in the plan's command list, each with its real shortcut or a clear 'No shortcut' note.`"
+    }
+  ]
+}

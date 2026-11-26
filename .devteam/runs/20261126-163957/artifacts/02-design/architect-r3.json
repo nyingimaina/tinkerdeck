@@ -1,0 +1,377 @@
+{
+  "summary": "Revision 3 extends the explorer and launcher already shipped in revisions 1 and 2; nothing is re-scaffolded. R9 adds a plain, testable file-operation core beside the existing one-level lister (src-tauri/src/features/explorer/ops.rs) with four thin async commands (create, rename, move, delete). Delete uses the trash crate and never falls back to a permanent delete; a failed Recycle Bin step leaves the item in place. Rename and move call one additive Store::repath_prefix method so every open tab at or under the old path follows the new path (buffers stay keyed by entry id, so unsaved text is untouched); the command returns the repathed tabs and the UI applies them so tab groups recompute at once. Deleting closes the affected tabs through a new useEditor closeMany that first awaits a typing snapshot, so unsaved text lands in the editor bin; the one delete confirmation names the item, says a folder's contents go with it, and folds in the unsaved-changes warning. The sidebar panel keeps its existing tree and open path and gains a wrapping action toolbar, row selection, HTML5 drag-and-drop onto folders, the existing pickFolder for an explicit Move, and create/rename/delete prompts built on the shipped SidePane/Dialog shell. useExplorer gains targeted reloadFolder/forgetUnder so only the affected levels are re-read after an operation. R10 is a CSS-only mobile-first base plus a min-width desktop media query on the palette: full width and top-aligned on a phone, the current 560px centred palette on desktop, no component or package change. R11 adds a serde-default-true executable field to the Rust and TypeScript terminal models and a manual Rust Default that also yields true, filters only the window's start_all/stop_all in commands.rs, filters the existing appButton/rollup call sites in App, AppHeader, HomeScreen and Sidebar, adds a labelled toggle to EditPane, and shows a brief No executable terminals notice when Start all or F5 has nothing executable to start. The engine and tdk up action are deliberately untouched, as required. R12 adds F5 only where a Start all / Stop all hint is shown (the app header and the two app-view palette entries); refresh keeps its buttons and palette entry, keeps the No shortcut note, and no F5-refresh wording is added or left behind. Scale and resources: every operation touches one item and re-reads only the affected folder level or levels under the existing 1,000-row/10,000-scan caps; a repath is one linear pass over the bounded editor index; no new poller, cache, listener or npm package is added; filesystem and trash work runs on spawn_blocking; the palette change is a static CSS media query; the only new dependency is the trash crate. No new Tauri capability permission is needed (these are the app's own commands), and the content security policy does not change. The editor and model modules become pub in lib.rs only so the new integration tests in src-tauri/tests can exercise the additive method and field; no logic moves, and characterization tests freeze their current behaviour first. Versions bump together to 2.3.0 in package.json, src-tauri/Cargo.toml and src-tauri/tauri.conf.json (Cargo.lock follows).",
+  "impact": {
+    "touches": [
+      "Files explorer panel, its browser hook and new operation hook and dialogs (src/features/explorer)",
+      "Explorer Rust feature module, commands and new file-operation core (src-tauri/src/features/explorer)",
+      "Editor Store additive repath and useEditor tab state (src-tauri/src/editor.rs, src/state/useEditor.ts)",
+      "Terminal model and window bulk start/stop (src-tauri/src/model.rs, src-tauri/src/commands.rs, src/state/model.ts)",
+      "App wiring, F5 toggle, no-executable notice and palette key hints (src/App.tsx)",
+      "App header, home cards and sidebar status dots (src/features/apps/AppHeader.tsx, src/features/home/HomeScreen.tsx, src/features/apps/Sidebar.tsx)",
+      "Terminal edit form (src/features/apps/EditPane.tsx)",
+      "Command palette stylesheet (src/features/command-palette/CommandPalette.module.css)",
+      "Rust command registration and test-only module visibility (src-tauri/src/lib.rs)",
+      "Versions in package.json, src-tauri/Cargo.toml, src-tauri/tauri.conf.json and src-tauri/Cargo.lock"
+    ],
+    "reuses": [
+      "The one-level lister, hidden-name rules, caps and root rules from revisions 1 and 2 (src-tauri/src/features/explorer/mod.rs, src/features/explorer/root.ts, useExplorer.ts)",
+      "The editor open path (editorApi.open -> editor_open_any) and tab grouping by path (src/state/editorGroups.ts ownerOf)",
+      "The editor Store's same_path lookup, buffer-by-id storage and dirty-to-bin close behaviour (src-tauri/src/editor.rs)",
+      "pickFolder from src/api/tauri.ts for the explicit Move destination",
+      "The shipped SidePane/Dialog responsive shell for explorer create, rename and delete prompts",
+      "The existing Banner component for operation and no-executable messages",
+      "The existing rollup/appButton pure helpers, called with pre-filtered executable states",
+      "The shipped shortcut registry (F5 already maps to toggleApp and refresh has no key)"
+    ],
+    "adds": [
+      "src-tauri/src/features/explorer/ops.rs: shared validation and create/rename/move/delete file-system functions, with an injected trash step so failure handling is testable",
+      "Four thin explorer commands (explorer_create, explorer_rename, explorer_move, explorer_delete) registered in lib.rs",
+      "Store::repath_prefix and AppDef::executable_terminals additive methods",
+      "The 'trash' Rust crate for Recycle Bin deletes",
+      "Explorer API wrappers and MoveResult/Repathed types in src/api/explorer.ts",
+      "src/features/explorer/ExplorerDialogs.tsx and src/features/explorer/useExplorerOps.ts",
+      "Per-level reloadFolder/forgetUnder in useExplorer and applyRepaths/closeMany in useEditor",
+      "A labelled executable toggle in EditPane and an executable field in both terminal models",
+      "Mobile-first media-query rules in CommandPalette.module.css",
+      "Rust integration tests and React tests for the new operations, executable filtering, palette layout and F5 hinting"
+    ]
+  },
+  "scope": [
+    "src/App.tsx",
+    "src/App.explorer.test.tsx",
+    "src/App.features.test.tsx",
+    "src/App.shortcuts.test.tsx",
+    "src/api/explorer.ts",
+    "src/api/explorer.test.ts",
+    "src/features/explorer/ExplorerPanel.tsx",
+    "src/features/explorer/ExplorerPanel.module.css",
+    "src/features/explorer/ExplorerPanel.test.tsx",
+    "src/features/explorer/ExplorerDialogs.tsx",
+    "src/features/explorer/ExplorerDialogs.test.tsx",
+    "src/features/explorer/useExplorerOps.ts",
+    "src/features/explorer/useExplorerOps.test.tsx",
+    "src/features/explorer/useExplorer.ts",
+    "src/features/explorer/useExplorer.test.tsx",
+    "src/state/useEditor.ts",
+    "src/state/useEditor.test.tsx",
+    "src/state/model.ts",
+    "src/state/model.test.ts",
+    "src/features/apps/AppHeader.tsx",
+    "src/features/apps/AppHeader.module.css",
+    "src/features/apps/Sidebar.tsx",
+    "src/features/apps/EditPane.tsx",
+    "src/features/apps/EditPane.module.css",
+    "src/features/apps/EditPane.*.test.tsx",
+    "src/features/apps/components.test.tsx",
+    "src/features/home/HomeScreen.tsx",
+    "src/features/home/HomeScreen.test.tsx",
+    "src/features/command-palette/CommandPalette.module.css",
+    "src/features/command-palette/CommandPalette.styles.test.ts",
+    "src-tauri/src/features/explorer/mod.rs",
+    "src-tauri/src/features/explorer/commands.rs",
+    "src-tauri/src/features/explorer/ops.rs",
+    "src-tauri/src/editor.rs",
+    "src-tauri/src/model.rs",
+    "src-tauri/src/commands.rs",
+    "src-tauri/src/lib.rs",
+    "src-tauri/tests/explorer_ops.rs",
+    "src-tauri/tests/editor_repath.rs",
+    "src-tauri/tests/terminal_executable.rs",
+    "src-tauri/Cargo.toml",
+    "src-tauri/Cargo.lock",
+    "package.json",
+    "src-tauri/tauri.conf.json"
+  ],
+  "components": [
+    {
+      "name": "ExplorerFsOps",
+      "path": "src-tauri/src/features/explorer/ops.rs",
+      "requirements": ["R9", "A2"]
+    },
+    {
+      "name": "ExplorerCommands",
+      "path": "src-tauri/src/features/explorer/commands.rs",
+      "requirements": ["R9", "A3"]
+    },
+    {
+      "name": "ExplorerModule",
+      "path": "src-tauri/src/features/explorer/mod.rs",
+      "requirements": ["R9"]
+    },
+    {
+      "name": "ExplorerOpsTests",
+      "path": "src-tauri/tests/explorer_ops.rs",
+      "requirements": ["R9", "A2"]
+    },
+    {
+      "name": "EditorRepath",
+      "path": "src-tauri/src/editor.rs",
+      "requirements": ["R9", "A3"]
+    },
+    {
+      "name": "EditorRepathTests",
+      "path": "src-tauri/tests/editor_repath.rs",
+      "requirements": ["R9", "A3"]
+    },
+    {
+      "name": "LibRegistration",
+      "path": "src-tauri/src/lib.rs",
+      "requirements": ["R9"]
+    },
+    {
+      "name": "CargoManifest",
+      "path": "src-tauri/Cargo.toml",
+      "requirements": ["R9", "A6"]
+    },
+    {
+      "name": "ModelExecutable",
+      "path": "src-tauri/src/model.rs",
+      "requirements": ["R11"]
+    },
+    {
+      "name": "RustTerminalExecutableTests",
+      "path": "src-tauri/tests/terminal_executable.rs",
+      "requirements": ["R11"]
+    },
+    {
+      "name": "CommandsStartAll",
+      "path": "src-tauri/src/commands.rs",
+      "requirements": ["R11"]
+    },
+    {
+      "name": "ExplorerApi",
+      "path": "src/api/explorer.ts",
+      "requirements": ["R9"]
+    },
+    {
+      "name": "ExplorerApiTests",
+      "path": "src/api/explorer.test.ts",
+      "requirements": ["R9"]
+    },
+    {
+      "name": "ExplorerPanel",
+      "path": "src/features/explorer/ExplorerPanel.tsx",
+      "requirements": ["R9", "A1"]
+    },
+    {
+      "name": "ExplorerDialogs",
+      "path": "src/features/explorer/ExplorerDialogs.tsx",
+      "requirements": ["R9", "A1"]
+    },
+    {
+      "name": "ExplorerDialogsTests",
+      "path": "src/features/explorer/ExplorerDialogs.test.tsx",
+      "requirements": ["R9", "A1"]
+    },
+    {
+      "name": "ExplorerOpsHook",
+      "path": "src/features/explorer/useExplorerOps.ts",
+      "requirements": ["R9", "A1", "A4"]
+    },
+    {
+      "name": "ExplorerOpsHookTests",
+      "path": "src/features/explorer/useExplorerOps.test.tsx",
+      "requirements": ["R9", "A1", "A4"]
+    },
+    {
+      "name": "ExplorerPanelStyles",
+      "path": "src/features/explorer/ExplorerPanel.module.css",
+      "requirements": ["R9", "A1"]
+    },
+    {
+      "name": "ExplorerPanelTests",
+      "path": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": ["R9", "A1"]
+    },
+    {
+      "name": "UseExplorer",
+      "path": "src/features/explorer/useExplorer.ts",
+      "requirements": ["R9"]
+    },
+    {
+      "name": "UseExplorerTests",
+      "path": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": ["R9"]
+    },
+    {
+      "name": "UseEditor",
+      "path": "src/state/useEditor.ts",
+      "requirements": ["R9", "A3", "A4"]
+    },
+    {
+      "name": "UseEditorTests",
+      "path": "src/state/useEditor.test.tsx",
+      "requirements": ["R9", "A3", "A4"]
+    },
+    {
+      "name": "App",
+      "path": "src/App.tsx",
+      "requirements": ["R9", "R11", "R12", "A5"]
+    },
+    {
+      "name": "AppExplorerTests",
+      "path": "src/App.explorer.test.tsx",
+      "requirements": ["R9"]
+    },
+    {
+      "name": "AppShortcutTests",
+      "path": "src/App.shortcuts.test.tsx",
+      "requirements": ["R11", "R12"]
+    },
+    {
+      "name": "AppFeatureTests",
+      "path": "src/App.features.test.tsx",
+      "requirements": ["R12"]
+    },
+    {
+      "name": "ModelTs",
+      "path": "src/state/model.ts",
+      "requirements": ["R11"]
+    },
+    {
+      "name": "ModelTsTests",
+      "path": "src/state/model.test.ts",
+      "requirements": ["R11"]
+    },
+    {
+      "name": "AppHeader",
+      "path": "src/features/apps/AppHeader.tsx",
+      "requirements": ["R11", "R12"]
+    },
+    {
+      "name": "AppHeaderStyles",
+      "path": "src/features/apps/AppHeader.module.css",
+      "requirements": ["R12"]
+    },
+    {
+      "name": "HomeScreen",
+      "path": "src/features/home/HomeScreen.tsx",
+      "requirements": ["R11"]
+    },
+    {
+      "name": "HomeScreenTests",
+      "path": "src/features/home/HomeScreen.test.tsx",
+      "requirements": ["R11"]
+    },
+    {
+      "name": "Sidebar",
+      "path": "src/features/apps/Sidebar.tsx",
+      "requirements": ["R11"]
+    },
+    {
+      "name": "ComponentTests",
+      "path": "src/features/apps/components.test.tsx",
+      "requirements": ["R11", "R12"]
+    },
+    {
+      "name": "EditPane",
+      "path": "src/features/apps/EditPane.tsx",
+      "requirements": ["R11"]
+    },
+    {
+      "name": "EditPaneStyles",
+      "path": "src/features/apps/EditPane.module.css",
+      "requirements": ["R11"]
+    },
+    {
+      "name": "EditPaneExecutableTests",
+      "path": "src/features/apps/EditPane.executable.test.tsx",
+      "requirements": ["R11"]
+    },
+    {
+      "name": "CommandPaletteStyles",
+      "path": "src/features/command-palette/CommandPalette.module.css",
+      "requirements": ["R10"]
+    },
+    {
+      "name": "CommandPaletteStylesTests",
+      "path": "src/features/command-palette/CommandPalette.styles.test.ts",
+      "requirements": ["R10"]
+    },
+    {
+      "name": "VersionBumpPackage",
+      "path": "package.json",
+      "requirements": ["A6"]
+    },
+    {
+      "name": "VersionBumpTauriConf",
+      "path": "src-tauri/tauri.conf.json",
+      "requirements": ["A6"]
+    }
+  ],
+  "additions": [
+    {
+      "id": "A1",
+      "title": "Show that a file operation is working or failed",
+      "why": "A slow or refused create, rename, move or delete must not look like nothing happened.",
+      "parent": "R9",
+      "kind": "enabling",
+      "touches": ["ui"],
+      "acceptance": [
+        "While an operation runs the explorer shows a busy state and its action controls and drop targets do not fire a second operation.",
+        "When an operation fails or is refused, a clear message says what could not be done and the affected folder level is reloaded from disk."
+      ]
+    },
+    {
+      "id": "A2",
+      "title": "Check a name and a destination before touching any file",
+      "why": "An empty, illegal or clashing name, or a folder moved inside itself, must be refused without changing anything.",
+      "parent": "R9",
+      "kind": "enabling",
+      "touches": ["security", "api"],
+      "acceptance": [
+        "An empty, whitespace-only or Windows-invalid name is refused with a message and nothing is created or renamed.",
+        "A create, rename or move whose destination already exists is refused and the existing item is left byte-for-byte unchanged.",
+        "Moving a folder onto itself or into one of its descendants is refused before any file-system call."
+      ]
+    },
+    {
+      "id": "A3",
+      "title": "Keep the saved editor index pointing at renamed or moved files",
+      "why": "A tab must still open the same file after its path changes, and it must still be there after a restart.",
+      "parent": "R9",
+      "kind": "enabling",
+      "touches": ["data", "api"],
+      "acceptance": [
+        "Renaming or moving an open file updates its saved editor path and title without losing its unsaved buffer.",
+        "Every open file at or under a renamed or moved folder is re-pointed in the saved index.",
+        "The affected tab ids and new paths are returned so the window and the tab groups agree immediately."
+      ]
+    },
+    {
+      "id": "A4",
+      "title": "Snapshot unsaved text before closing a deleted item's tab",
+      "why": "Deleting a file whose tab has unsaved typing must keep that text in the editor bin rather than losing the last keystrokes.",
+      "parent": "R9",
+      "kind": "enabling",
+      "touches": ["data"],
+      "acceptance": [
+        "Closing the tabs of a deleted item first waits for any pending typing snapshot, then closes each tab.",
+        "A tab with unsaved text ends in the editor bin with its latest text; a clean tab is forgotten as before."
+      ]
+    },
+    {
+      "id": "A5",
+      "title": "Say when there is nothing executable to start",
+      "why": "When every terminal is non-executable, pressing Start all or F5 must explain why nothing started instead of looking broken.",
+      "parent": "R11",
+      "kind": "behaviour",
+      "touches": ["ui"],
+      "acceptance": [
+        "Pressing Start all or F5 on an app whose terminals are all non-executable starts nothing and shows a brief No executable terminals message.",
+        "The message is dismissible and leaves every terminal and the current view as they were."
+      ]
+    },
+    {
+      "id": "A6",
+      "title": "Keep the version numbers in step",
+      "why": "The desktop build must report one version everywhere it is installed or packaged.",
+      "parent": "R9",
+      "kind": "enabling",
+      "touches": ["none"],
+      "acceptance": [
+        "package.json, src-tauri/Cargo.toml and src-tauri/tauri.conf.json carry the same bumped version (2.3.0)."
+      ]
+    }
+  ]
+}

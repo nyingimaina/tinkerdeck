@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConfigView, StatePayload } from "./state/model";
@@ -230,9 +230,9 @@ describe("App", () => {
     await openApp();
     await userEvent.click(screen.getByRole("button", { name: "Edit Qonsol" }));
     await userEvent.click(await screen.findByRole("button", { name: "Delete app" }));
-    expect(await screen.findByRole("dialog", { name: "Delete Qonsol?" })).toBeInTheDocument();
+    const dialog = await screen.findByRole("dialog", { name: "Delete Qonsol?" });
     expect(h.api.saveApps).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
     await waitFor(() => expect(h.api.saveApps).toHaveBeenCalledWith([]));
   });
 
@@ -373,7 +373,7 @@ describe("App", () => {
   it("R2: the persistent footer is visible on Home, the app view and the separate editor view", async () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
-    expect(screen.getByRole("contentinfo", { name: "Status" })).toHaveTextContent("v2.2.0");
+    expect(screen.getByRole("contentinfo", { name: "Status" })).toHaveTextContent("v2.3.0");
 
     await openApp();
     expect(screen.getByRole("contentinfo", { name: "Status" })).toBeInTheDocument();

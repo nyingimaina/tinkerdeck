@@ -1,0 +1,77 @@
+{
+  "findings": [
+    {
+      "cites": "R9",
+      "severity": "blocking",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "line": 300,
+      "evidence": "`r9_delete_uses_the_real_recycle_bin` only asserts `!item.exists()`, which a permanent `fs::remove_file` would also satisfy. The injected tests at :249 and :264 call `delete_item_with` directly, so they never exercise the production `delete_item` wrapper (src-tauri/src/features/explorer/mod.rs:409-411).",
+      "description": "R9 acceptance 'the deleted item is in the Recycle Bin and can be restored from there' is unproven: no test distinguishes binning from permanent deletion. Add a test that finds the item in the Recycle Bin (e.g. `trash::os_limited::list()`) or restores it; an assertion that the path is gone is not enough."
+    },
+    {
+      "cites": "R11",
+      "severity": "blocking",
+      "file": "src-tauri/tests/terminal_executable.rs",
+      "line": 26,
+      "evidence": "`r11_start_all_and_stop_all_skip_non_executable_terminals` only calls `config.apps[0].executable_terminals()`; it never calls `commands::start_all` or `commands::stop_all`, whose filters live at src-tauri/src/commands.rs:137 and :161. Reverting either loop to `app.terminals` leaves this test and every other R11 test green.",
+      "description": "R11 acceptance 'Start all leaves non-executable terminals stopped and starts the executable ones' and edge 'Stop all does not stop a non-executable terminal the user started by hand' are unproven at the command. The same start_all is used by the launch-time restore (useLauncher.ts:299), so that acceptance is also unproven. Add a command-level test that proves the filters at commands.rs:137/:161, not only the helper."
+    },
+    {
+      "cites": "R9",
+      "severity": "advisory",
+      "file": "src-tauri/tests/explorer_ops.rs",
+      "line": 230,
+      "evidence": "`r9_a_move_between_drives_is_refused` only asserts the pure `same_volume(...)` helper; it never calls `move_item`, so the `!same_volume` refusal at src-tauri/src/features/explorer/mod.rs:400-402 (clear error, original stays) is not exercised.",
+      "description": "R9 edge 'a move between different drives cannot be a plain rename; it is reported as a clear error and the original stays where it was' is proven only at helper level. A real second volume is needed, so this is advisory, but the guard in move_item itself is unproven."
+    },
+    {
+      "cites": "R9",
+      "severity": "advisory",
+      "file": "src-tauri/tests/editor_repath.rs",
+      "line": 71,
+      "evidence": "Unsaved text survives rename in `r9_rename_repoints_an_open_file_to_its_new_path_and_keeps_unsaved_text` (:41), but the move test `r9_moving_a_folder_repoints_every_open_file_under_it` (:71) snapshots no unsaved text, so move-with-unsaved is not directly proven.",
+      "description": "R9 edge 'renaming or moving a file that has unsaved text keeps the unsaved text in the tab and only changes the path' is only proven for rename. Add the same snapshot assertion for a move."
+    },
+    {
+      "cites": "R11",
+      "severity": "advisory",
+      "file": "src/features/apps/components.test.tsx",
+      "line": 140,
+      "evidence": "The R11 test only asserts the non-executable terminal's Start/Stop/Restart buttons are enabled (`toBeEnabled`/`toBeDisabled`); it never clicks them, and no test saves a running terminal as non-executable to show it is not stopped.",
+      "description": "R11 acceptance 'a non-executable terminal's own Start and Stop controls still start and stop it' and edge 'marking a running terminal non-executable does not by itself stop it' are only thinly proven. Assert the handlers fire for a non-executable terminal, and that saving the flag off on a running terminal does not call stop."
+    },
+    {
+      "cites": "R12",
+      "severity": "advisory",
+      "file": "src/shared/shortcuts.test.ts",
+      "line": 42,
+      "evidence": "`isAppShortcut` is asserted for Ctrl+C/V/B/S/O/W but not Ctrl+R; the exact-registry assertion at :20-28 implies no refresh shortcut, but the R12 edge 'Ctrl+R stays available to the shell' has no direct assertion.",
+      "description": "R12 edge 'Ctrl+R is not assigned to refresh and stays available to the shell' should be asserted directly (`matchShortcut`/`isAppShortcut` for Ctrl+R is null/false)."
+    },
+    {
+      "cites": "R9",
+      "severity": "advisory",
+      "file": "src/App.explorer.test.tsx",
+      "line": 556,
+      "evidence": "The rename integration test checks the tab title/path changes but never asserts the tab's group moves (ownerOf/groupTabs in src/state/editorGroups.ts:33-42); no test asserts a group recompute caused by a rename or move.",
+      "description": "R9 acceptance 'tab groups are recomputed' is only covered indirectly by the path update. Add an assertion that a tab moves between app groups (or into/out of Misc) after rename or move."
+    },
+    {
+      "cites": "R9",
+      "severity": "advisory",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "line": 337,
+      "evidence": "The only 1000-entry test renders a truncated listing; no test creates or renames one item inside a ~1,000-entry folder to show that level, and only that level, is re-read afterwards.",
+      "description": "The R9 non-functional performance check ('in a folder with 1,000 entries, creating or renaming one item refreshes that level and stays usable, and no unrelated folder is re-read') is not exercised as a single scenario, only as separate truncation and reloadFolder tests."
+    },
+    {
+      "cites": "R9",
+      "severity": "advisory",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "line": 378,
+      "evidence": "Every explorer file-operation test drives the toolbar and rows with pointer clicks (`userEvent.click`); none performs create, rename, move or delete with only the keyboard while asserting focus.",
+      "description": "The R9 non-functional accessibility check ('using only the keyboard, a user can create, rename, move and delete an item, seeing the focus at each step') has no test, even though the controls are native buttons and a non-drag Move action exists."
+    }
+  ],
+  "verifications": []
+}

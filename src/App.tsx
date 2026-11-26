@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { api, errorText, pickFolder, type ShellInfo } from "./api/tauri";
 import { explorerApi } from "./api/explorer";
 import { AppFooter } from "./features/apps/AppFooter";
@@ -20,6 +20,7 @@ import { consoleExitAction, consoleId, consoleTitle, isConsoleId } from "./state
 import {
   appButton,
   canStop,
+  isExecutable,
   isUp,
   nameFromPath,
   newApp,
@@ -93,6 +94,9 @@ export function App() {
   const [paneCollapsed, setPaneCollapsed] = useState(readCollapsed);
   const [refreshKey, setRefreshKey] = useState(0);
   const [consoleNotice, setConsoleNotice] = useState<Record<string, string>>({});
+  // Start all / F5 has nothing executable to start: say so briefly instead of looking broken (A5).
+  const [noExecutable, setNoExecutable] = useState(false);
+  const noExecutableTimer = useRef<number | null>(null);
   const autoStarted = useRef<Set<string>>(new Set());
   const prevKinds = useRef<Record<string, string>>({});
   const lastAutoRestart = useRef<Record<string, number>>({});
@@ -120,6 +124,27 @@ export function App() {
 
   // the text editor (BRS 7.14): files sent from Explorer's "Edit with Tinkerdeck" land here
   const editor = useEditor({ onOpened: () => setView("editor") });
+
+  // The explorer's file operations keep the editor's tabs in step (R9). The bridge is memoised on
+  // the editor's own stable callbacks so the explorer's memoised file rows are not re-rendered by
+  // an unrelated App update (A1).
+  const editorBridge = useMemo(
+    () => ({
+      flushPending: editor.flushPending,
+      applyRepaths: editor.applyRepaths,
+      applyClosed: editor.applyClosed,
+      dirtyTitlesUnder: editor.dirtyTitlesUnder,
+    }),
+    [editor.flushPending, editor.applyRepaths, editor.applyClosed, editor.dirtyTitlesUnder],
+  );
+
+  // The brief "No executable terminals" notice goes away by itself, but its timer is released too.
+  useEffect(
+    () => () => {
+      if (noExecutableTimer.current !== null) window.clearTimeout(noExecutableTimer.current);
+    },
+    [],
+  );
 
   const checkForUpdates = async () => {
     setManualCheck(true);
@@ -364,17 +389,36 @@ export function App() {
     if (await git.switchBranch(p.branch)) for (const id of p.running) L.actions.start(app.id, id);
   };
 
+  /** Say briefly that a bulk start had nothing executable to act on (A5). */
+  const showNoExecutable = () => {
+    setNoExecutable(true);
+    if (noExecutableTimer.current !== null) window.clearTimeout(noExecutableTimer.current);
+    noExecutableTimer.current = window.setTimeout(() => setNoExecutable(false), 8000);
+  };
+
+  // Start all honours the executable flag in the core too; when every terminal is marked
+  // non-executable it starts nothing and says why (R11, A5).
   const startAll = (id: string) => {
+    const target = apps?.find((a) => a.id === id) ?? null;
+    if (target && target.terminals.length > 0 && !target.terminals.some(isExecutable)) {
+      showNoExecutable();
+      return;
+    }
     L.actions.startAll(id);
     L.touchApp(id);
   };
 
   // F5 runs exactly what the app's on-screen button would at this moment: the same appButton
-  // decision over the live terminal states, the same startAll / stopAll calls, and nothing at
-  // all outside the app view or for an app with no terminals (R6).
+  // decision over the live executable terminal states, the same startAll / stopAll calls, and
+  // nothing at all outside the app view or for an app with no terminals (R6, R11).
   toggleAppNow.current = () => {
-    if (view !== "app" || !app || app.terminals.length === 0) return;
-    if (appButton(app.terminals.map((t) => L.stateOf(t.id))) === "stop") L.actions.stopAll(app.id);
+    if (view !== "app" || !app) return;
+    const executable = app.terminals.filter(isExecutable);
+    if (executable.length === 0) {
+      if (app.terminals.length > 0) showNoExecutable();
+      return;
+    }
+    if (appButton(executable.map((t) => L.stateOf(t.id))) === "stop") L.actions.stopAll(app.id);
     else startAll(app.id);
   };
 
@@ -404,8 +448,10 @@ export function App() {
   // deepest-root lookup the tab groups use decides the owner.
   const activePath = editor.tabs.find((t) => t.id === editor.activeId)?.path ?? null;
   const explorer = explorerRoot({ view, apps: apps ?? [], selectedAppId: L.selectedAppId, activePath, homeFolder });
-  // A change of view, selected app or active tab discards any temporary Up navigation (R4, R5).
-  const explorerResetKey = `${view}|${L.selectedAppId ?? ""}|${activePath ?? ""}`;
+  // A change of view, selected app or root discards any temporary Up navigation (R4, R5). The
+  // resolved root, not the active path, is the trigger, so re-pointing a renamed tab to a new
+  // path under the same root does not throw away the tree the user was browsing (R9).
+  const explorerResetKey = `${view}|${L.selectedAppId ?? ""}|${explorer.root ?? ""}`;
 
   // The palette lists every app-level command the window offers, each with the shortcut that
   // also runs it or a visible note when it has none (R7). Commands that only exist while an app
@@ -430,8 +476,9 @@ export function App() {
   if (view === "app" && app) {
     paletteActions.push(
       { id: "editApp", label: "Edit app", run: () => openEdit(app) },
-      { id: "startAll", label: "Start all", run: () => startAll(app.id) },
-      { id: "stopAll", label: "Stop all", run: () => L.actions.stopAll(app.id) },
+      // Start all / Stop all is what F5 does, so the palette shows the real key hint (R6, R12).
+      { id: "startAll", label: "Start all", shortcut: shortcutKeys("toggleApp"), run: () => startAll(app.id) },
+      { id: "stopAll", label: "Stop all", shortcut: shortcutKeys("toggleApp"), run: () => L.actions.stopAll(app.id) },
     );
     const activeTid = L.selectedTerminalId;
     if (activeTid) {
@@ -543,6 +590,11 @@ export function App() {
           {L.error}
         </Banner>
       )}
+      {noExecutable && (
+        <Banner kind="info" actions={[{ label: "Dismiss", onClick: () => setNoExecutable(false) }]}>
+          No executable terminals
+        </Banner>
+      )}
 
       <div className={styles.body}>
         {(apps.length > 0 || explorer.root !== null) && (
@@ -567,6 +619,7 @@ export function App() {
                 source={explorer.source}
                 resetKey={explorerResetKey}
                 onOpenFile={editor.openPath}
+                editor={editorBridge}
               />
             }
           />
@@ -598,7 +651,7 @@ export function App() {
             <>
               <AppHeader
                 app={app}
-                states={app.terminals.map((t) => L.stateOf(t.id))}
+                states={app.terminals.filter(isExecutable).map((t) => L.stateOf(t.id))}
                 onStartAll={() => startAll(app.id)}
                 onStopAll={() => L.actions.stopAll(app.id)}
                 onEdit={() => openEdit(app)}

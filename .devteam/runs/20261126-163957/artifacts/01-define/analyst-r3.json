@@ -1,0 +1,399 @@
+{
+  "summary": "This is revision 3 of 3 of the Tinkerdeck tidier editor feature (R9 to R12), built on the explorer browsing, root rules, F5 start/stop, theme-finder fit and side-pane work already committed. It turns the sidebar Files explorer into a real file manager: create file and folder, rename, move, drag-and-drop and delete for files and folders, with delete going to the Recycle Bin after one confirmation, never permanently. It refuses name clashes and moving a folder into itself, re-points the tabs of renamed or moved files so they stay open, closes the tabs of deleted files after warning once about unsaved changes, and refreshes the affected folder level afterwards. It gives every terminal an executable flag, on by default and saved with the terminal, that keeps a terminal out of the window's Start all / Stop all action and F5 while leaving its own start and stop controls working; the engine and tdk 'up' action is deliberately unchanged and out of this revision's scope. It gives the command palette a mobile-first, desktop-aware CSS pass without turning it into a side pane. Finally it confirms that refresh has no keyboard shortcut, that the palette's 'Refresh everything' entry shows a clear 'No shortcut' note instead of a key hint, and that no menu, tooltip or help text still advertises F5 as refresh, while Start all / Stop all shows F5 where it shows a key hint.",
+  "roles": [
+    "Local desktop user: one person on their own Windows machine, working with the operating system's own file permissions. The home, app and editor views are contexts, not user roles, and there are no accounts, sharing or per-record permissions."
+  ],
+  "requirements": [
+    {
+      "id": "R9",
+      "text": "The explorer supports create file, create folder, rename, move, delete and drag-and-drop (dropping an item onto a folder moves it there) for both files and folders. Delete asks for confirmation naming the item (and, for a folder, that everything inside goes with it) and sends the item to the Recycle Bin. If the Recycle Bin cannot take the item, the delete is refused with a message and nothing is permanently deleted. A name clash is refused with a clear message and nothing is overwritten. Moving a folder into itself or one of its descendants is refused. Renaming or moving a file that is open re-points its tab to the new path and recomputes the tab groups; the same applies to every open file under a renamed or moved folder. Deleting an item closes its open tabs, and any unsaved-changes warning is folded into the single delete confirmation. After any operation the affected folder level is refreshed.",
+      "rationale": "The developer wants a real file manager inside the app, not just a browser. Deletes must stay recoverable from the Recycle Bin, and every operation must leave either the complete result or the original files exactly as they were, so a user never loses or misplaces work.",
+      "acceptance": [
+        "A new file and a new folder can both be created in the explorer.",
+        "An existing file and an existing folder can both be renamed.",
+        "A file and a folder can be moved to another folder through an explicit move action that names the destination.",
+        "An item can be dragged in the explorer and dropped onto a folder to move it there.",
+        "Deleting an item asks for confirmation before anything is removed; the prompt names the item and, for a folder, says that everything inside goes with it.",
+        "After the user confirms, the deleted item is in the Recycle Bin and can be restored from there.",
+        "Cancelling the delete confirmation leaves the item, its tab and its content unchanged.",
+        "A create, rename or move that would clash with an existing name is refused with a message, and the existing item is untouched.",
+        "Moving a folder into itself or one of its descendants is refused with a message and nothing changes.",
+        "Renaming or moving an open file keeps its tab open at the new path, and tab groups are recomputed; renaming or moving a folder does the same for every open file under it.",
+        "Deleting an item with open tabs closes those tabs; if any has unsaved changes the single delete confirmation says so, and there is no second prompt.",
+        "After a successful operation the affected folder level shows the new state; after a failed operation a clear message appears and the tree shows the true state on disk."
+      ],
+      "edgeCases": [
+        "If the Recycle Bin cannot take the item, for example on some network or removable drives, the delete is refused with a message and nothing is permanently deleted.",
+        "A move between different drives cannot be a plain rename; it is reported as a clear error and the original stays where it was.",
+        "A create or rename with an empty, whitespace-only or Windows-invalid name is refused with a message and nothing is created or changed.",
+        "Confirming the same delete twice applies it once; the second attempt reports that the item is already gone.",
+        "Deleting a folder closes the tabs of every open file inside it, with the same single unsaved-changes warning.",
+        "Dropping an item onto the folder it is already in changes nothing and raises no error.",
+        "Renaming or moving a file that has unsaved text keeps the unsaved text in the tab and only changes the path it points to.",
+        "Two operations on the same item in quick succession leave one clean result; the later one reports that the item changed or is gone rather than corrupting it."
+      ],
+      "pitfalls": [
+        "Operations must act on the real file system, so the tree and the disk always agree after each one.",
+        "A name clash must never silently overwrite the existing item.",
+        "A delete must never fall back to permanent deletion when the Recycle Bin is unavailable.",
+        "All five operations must share one file-operation path so their error behaviour stays consistent.",
+        "The tab must be re-pointed to the new path as part of the same operation, so a tab never points at a file that no longer exists.",
+        "A failed operation must not leave a half-created or half-moved item behind.",
+        "The unsaved-changes warning must be part of the one delete prompt, not a second prompt after it."
+      ],
+      "rules": [
+        "PERF-001",
+        "TAU-012",
+        "USR-001",
+        "USR-002",
+        "USR-003",
+        "USR-004",
+        "USR-005",
+        "USR-006"
+      ],
+      "facts": [
+        {
+          "subject": "explorer delete",
+          "attribute": "destination",
+          "op": "equals",
+          "value": "Recycle Bin"
+        },
+        {
+          "subject": "explorer delete",
+          "attribute": "permanent delete fallback",
+          "op": "must-not",
+          "value": "happen"
+        },
+        {
+          "subject": "explorer name clash",
+          "attribute": "overwrite existing item",
+          "op": "must-not",
+          "value": "happen"
+        },
+        {
+          "subject": "folder move",
+          "attribute": "destination",
+          "op": "must-not",
+          "value": "the folder itself or one of its descendants"
+        },
+        {
+          "subject": "delete confirmation",
+          "attribute": "count when there are unsaved changes",
+          "op": "equals",
+          "value": "one",
+          "unit": "prompt"
+        }
+      ],
+      "derivedFrom": ""
+    },
+    {
+      "id": "R10",
+      "text": "The command palette stays a palette and receives a mobile-first, desktop-aware layout pass. On a narrow, mobile-width viewport it fills the available width and sits near the top so the on-screen keyboard does not squeeze the list; on a desktop-width viewport it keeps its current look.",
+      "rationale": "The developer explicitly excluded the command palette from the side-pane migration and asked only that it be made mobile-first and desktop-aware, so it must remain a palette while fitting a narrow screen.",
+      "acceptance": [
+        "At a narrow, mobile-width viewport the palette panel spans the available width and sits near the top, and its list stays visible and usable with the on-screen keyboard showing.",
+        "At a desktop-width viewport the palette keeps its current palette layout, width and height.",
+        "The palette remains a modal-style palette and is not converted into a side pane."
+      ],
+      "edgeCases": [
+        "Resizing between mobile and desktop widths keeps the palette usable and never leaves it half-sized.",
+        "A very long command label is truncated inside the panel instead of overflowing it."
+      ],
+      "pitfalls": [
+        "The palette must not be turned into a side pane while the other dialogs move.",
+        "The desktop layout must not regress when the mobile rules are added."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-001",
+        "USR-002",
+        "USR-004",
+        "USR-005",
+        "USR-006"
+      ],
+      "facts": [
+        {
+          "subject": "command palette",
+          "attribute": "presentation",
+          "op": "equals",
+          "value": "palette"
+        },
+        {
+          "subject": "command palette",
+          "attribute": "width on a mobile-width viewport",
+          "op": "equals",
+          "value": "available width"
+        },
+        {
+          "subject": "command palette",
+          "attribute": "position on a mobile-width viewport",
+          "op": "equals",
+          "value": "near the top"
+        }
+      ],
+      "derivedFrom": ""
+    },
+    {
+      "id": "R11",
+      "text": "Every terminal has an executable flag that is on by default, is saved with the terminal, and can be turned off or on where terminals are edited. Non-executable terminals are not started or stopped by the window's Start all / Stop all action or by F5, but can still be started and stopped individually with their own controls. The Start all / Stop all button state and the app status indicator count only executable terminals. A saved terminal that has no flag loads as executable. The engine and tdk 'up' action is not part of this revision and keeps its current behaviour.",
+      "rationale": "The developer wants all terminals executable by default but any terminal markable as non-executable, so bulk start/stop and F5 leave those terminals alone while the user can still run and stop them by hand. Counting only executable terminals keeps the button honest about what pressing it will do. The engine and tdk 'up' action is left unchanged because it lives in engine.rs, which carries pre-existing failing tests that are outside this change, so changing it there would block the work for reasons unrelated to the feature.",
+      "acceptance": [
+        "A newly added terminal is executable by default.",
+        "Where terminals are edited, a labelled control marks a terminal non-executable and marks it executable again.",
+        "Start all leaves non-executable terminals stopped and starts the executable ones.",
+        "F5 leaves non-executable terminals alone, because it runs the same action as the button.",
+        "A non-executable terminal's own Start and Stop controls still start and stop it.",
+        "After saving and reloading the config the flag is preserved, and a config saved before the flag existed loads every terminal as executable.",
+        "The Start all / Stop all button and the app status indicator reflect only executable terminals.",
+        "The launch-time 'start the apps that were running last time' action does not start non-executable terminals."
+      ],
+      "edgeCases": [
+        "Marking a running terminal non-executable does not by itself stop it; it is only left out of later bulk actions.",
+        "Stop all does not stop a non-executable terminal the user started by hand.",
+        "When every terminal is non-executable, Start all and F5 start nothing and show a brief 'No executable terminals' message.",
+        "An app whose terminals are all non-executable shows the same Start state the button would act on, and F5 does the same thing as that button.",
+        "Turning the flag off and on again on the same terminal is remembered without changing any other terminal."
+      ],
+      "pitfalls": [
+        "The Rust model must default the missing flag to true so an upgrade does not change which terminals start.",
+        "Marking a terminal non-executable must not remove its own start and stop controls.",
+        "The button state and the action it performs must agree; the button must not show Stop for a running non-executable terminal that the action will not stop.",
+        "The flag must be written to the saved config so it survives a restart.",
+        "The executable filter belongs to the window's Start all / Stop all action and F5; the engine and tdk 'up' action must not be pulled into this change."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-001",
+        "USR-002",
+        "USR-003",
+        "USR-004",
+        "USR-005",
+        "USR-006"
+      ],
+      "facts": [
+        {
+          "subject": "terminal",
+          "attribute": "executable",
+          "op": "equals",
+          "value": "true",
+          "scope": "default"
+        },
+        {
+          "subject": "saved terminal missing executable flag",
+          "attribute": "loaded as executable",
+          "op": "equals",
+          "value": "true"
+        },
+        {
+          "subject": "non-executable terminal",
+          "attribute": "Start all",
+          "op": "must-not",
+          "value": "include it"
+        },
+        {
+          "subject": "non-executable terminal",
+          "attribute": "Stop all",
+          "op": "must-not",
+          "value": "include it"
+        },
+        {
+          "subject": "Start all / Stop all button state",
+          "attribute": "terminals counted",
+          "op": "equals",
+          "value": "executable terminals only"
+        },
+        {
+          "subject": "app status indicator",
+          "attribute": "terminals counted",
+          "op": "equals",
+          "value": "executable terminals only"
+        },
+        {
+          "subject": "engine and tdk 'up' action",
+          "attribute": "changed by this revision",
+          "op": "must-not",
+          "value": "be changed"
+        }
+      ],
+      "derivedFrom": ""
+    },
+    {
+      "id": "R12",
+      "text": "Refresh is available only from the Utilities menu refresh item, the git bar refresh button and the command palette 'Refresh everything' entry. No keyboard shortcut performs refresh. The command palette 'Refresh everything' entry shows a clear 'No shortcut' note in place of a shortcut key, consistent with the accepted palette rule that every app-level command shows its real shortcut or a clear 'No shortcut' note. No menu, tooltip or help text advertises F5 as refresh. Where a Start all / Stop all control shows a key hint, it shows F5.",
+      "rationale": "The developer chose buttons and the palette only for refresh, freeing F5 for the app's bulk start/stop. Leaving an F5-as-refresh hint anywhere would tell the user the wrong thing about what F5 now does. The refresh palette entry must still say 'No shortcut' rather than showing nothing, because the earlier accepted palette rule requires every app-level command to display its real shortcut or a clear 'No shortcut' note.",
+      "acceptance": [
+        "The Utilities menu refresh item and the git bar refresh button still refresh.",
+        "The command palette 'Refresh everything' entry still refreshes and shows a clear 'No shortcut' note in place of a shortcut key.",
+        "The command palette 'Refresh everything' entry does not show F5 or any other key as its shortcut.",
+        "The palette shows a 'No shortcut' note on every app-level entry that has no keyboard shortcut, so those entries are never blank where a key hint would be.",
+        "Pressing F5 in any view never refreshes.",
+        "No menu, tooltip or help text tells the user that F5 refreshes.",
+        "Where a Start all / Stop all button or palette entry shows a key hint, it shows F5.",
+        "The shared shortcut registry no longer lists refresh and the matcher maps no key to refresh.",
+        "Tests that asserted F5 means refresh are updated, and new tests cover F5 as start/stop and the no-op in the home and editor views."
+      ],
+      "edgeCases": [
+        "A user who relied on F5 for refresh can still refresh from the Utilities menu, the git bar or the command palette.",
+        "Ctrl+R is not assigned to refresh and stays available to the shell.",
+        "F5 with Shift, Ctrl or Alt still never refreshes.",
+        "An app-only command that is hidden while no app is open keeps its 'No shortcut' note when it does appear, rather than a blank shortcut column."
+      ],
+      "pitfalls": [
+        "No F5-as-refresh hint may be left in any menu, tooltip or help text.",
+        "Removing the shortcut must not break the refresh buttons or the palette entry.",
+        "The terminal must keep handing F5 back to the window, or the new shortcut stops working while a terminal has focus.",
+        "The palette's 'Refresh everything' entry must show 'No shortcut', not an F5 hint and not an empty shortcut field.",
+        "The Start all / Stop all palette entry must show F5 only where it is offered, and must not show a stale refresh hint."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-004",
+        "USR-005",
+        "USR-006"
+      ],
+      "facts": [
+        {
+          "subject": "refresh",
+          "attribute": "keyboard shortcut",
+          "op": "equals",
+          "value": "none"
+        },
+        {
+          "subject": "Refresh everything palette entry",
+          "attribute": "shortcut label",
+          "op": "equals",
+          "value": "No shortcut"
+        },
+        {
+          "subject": "Start all / Stop all control",
+          "attribute": "key hint",
+          "op": "equals",
+          "value": "F5"
+        }
+      ],
+      "derivedFrom": ""
+    }
+  ],
+  "outOfScope": [
+    "Permanent deletion: delete always uses the Recycle Bin and refuses rather than deletes for good.",
+    "The engine and tdk 'up' action: it keeps its current behaviour and still starts every terminal; only the window's Start all / Stop all action and F5 skip non-executable terminals. This is because changing engine.rs, which carries pre-existing failing tests, is outside this revision.",
+    "Putting the editor inside the app view as a tab or split pane.",
+    "Adding a keyboard shortcut for refresh or moving refresh off its buttons and palette entry.",
+    "Changing what Start all / Stop all itself does beyond skipping non-executable terminals.",
+    "Moving the command palette into a side pane.",
+    "Changing Ctrl+O or the editor's existing file-picker behaviour.",
+    "Choosing the explorer root by hand or adding an 'Open folder...' palette entry (excluded by earlier revisions).",
+    "Rebuilding the explorer listing, the root rules, the theme-finder fit or the side panes already shipped in revisions 1 and 2."
+  ],
+  "nonFunctional": [
+    {
+      "area": "security",
+      "statement": "Explorer file operations act only on the item and destination the user chose, never overwrite an existing item, and never permanently delete.",
+      "acceptance": "A create, rename or move onto an existing name leaves the existing item byte-for-byte unchanged and shows a message; a delete whose Recycle Bin step fails leaves the file in place."
+    },
+    {
+      "area": "performance",
+      "statement": "The explorer keeps reading one directory level at a time under its existing caps (1,000 returned rows, 10,000 scanned entries); an operation touches only the affected item and refreshes only the affected folder level or levels, with no full-disk walk.",
+      "acceptance": "In a folder with 1,000 entries, creating or renaming one item refreshes that level and stays usable, and no unrelated folder is re-read."
+    },
+    {
+      "area": "accessibility",
+      "statement": "Every explorer action (create, rename, move, delete and drag-and-drop) is usable with the keyboard, has a text label or accessible name, keeps a visible focus, and has a non-drag alternative; the executable control is labelled and announces its on/off state.",
+      "acceptance": "Using only the keyboard, a user can create, rename, move and delete an item and toggle a terminal's executable flag, seeing the focus at each step."
+    },
+    {
+      "area": "reliability",
+      "statement": "A failed or refused operation leaves the file system and the tree in the state before it started, a half-created or half-moved item is never left behind, and an older config without the executable flag still loads every terminal as executable.",
+      "acceptance": "A destination made read-only, or a move onto an unavailable drive, shows a clear message, leaves the original item intact, and the tree reloads the true state; a config saved before the flag existed starts the same terminals as before."
+    },
+    {
+      "area": "privacy",
+      "statement": "No file name, path or content leaves the machine; the explorer reaches only paths the operating system already lets the user reach, and it adds no logging of file names or paths.",
+      "acceptance": "A network capture during browsing, creating, renaming, moving and deleting shows no outbound request; no new log line contains a file name or path."
+    }
+  ],
+  "risks": [
+    "On network or removable drives where the Recycle Bin cannot accept an item, deleting from the explorer is impossible by design; the user is told why instead of losing the file.",
+    "A move between drives cannot be a plain rename; it must be reported as an error rather than done halfway.",
+    "A running terminal marked non-executable can be started by hand, so the app can show the Start state while that terminal runs; the button and status count only executable terminals by design.",
+    "The engine and tdk 'up' action is unchanged and still starts every terminal, so a non-executable terminal can be started through the CLI or IPC even though Start all and F5 skip it; this is deliberate and out of scope in this revision.",
+    "Unsaved text in a tab whose file is deleted is kept in the editor bin when the tab closes; the single delete prompt must warn first or the user may be surprised.",
+    "The executable flag is a new persisted field; config compatibility depends on the missing value defaulting to true.",
+    "R12 overlaps F5 behaviour already shipped in revision 2; stale F5-refresh wording outside the window (README, docs, changelog) is handled separately and is not a UI regression in this revision.",
+    "Windows path-length or illegal-character rules can make some creates or renames fail; each must be reported cleanly with nothing changed.",
+    "Large folders or large folders being renamed or deleted can take a noticeable moment while the operation runs; a busy state must show and the window must stay responsive."
+  ],
+  "tensions": [],
+  "glossary": [
+    "Explorer: the Files tree in the sidebar that loads one folder level at a time.",
+    "App root: the top-level folder configured for an app; the explorer follows the app the user is working in.",
+    "Misc file: a file outside every app root; the explorer roots at its parent folder.",
+    "Tab group: editor tabs grouped by the app that owns their path.",
+    "Recycle Bin: the operating system's recoverable holding area for deleted files and folders.",
+    "Executable terminal: a terminal whose executable flag is on, so the window's Start all / Stop all and F5 include it; a non-executable terminal is left out of those bulk actions but can still be started and stopped by hand.",
+    "Start all / Stop all: the window's bulk action that starts the app's executable terminals when the button shows Start, and stops them when it shows Stop; F5 runs the same action in the app view.",
+    "Engine and tdk 'up' action: the control-channel action that starts an app from the CLI or MCP; it is not changed in this revision and keeps starting every terminal.",
+    "Refresh everything: the action that reloads the app and its data; reachable from the Utilities menu, the git bar and the command palette, with no keyboard shortcut, and its palette entry is labelled 'No shortcut'.",
+    "Command palette: the app-wide searchable command popup; it stays a palette, never a side pane.",
+    "Unsaved changes: editor text that has not been written to its file; closing such a tab keeps the text in the editor bin so it can be restored."
+  ],
+  "questions": [],
+  "coverage": [
+    {
+      "topic": "users",
+      "status": "answered",
+      "note": "One local desktop user on their own Windows machine, with the operating system's own access rights. The home, app and editor views are contexts, not roles; there are no accounts, sharing or per-record permissions. This was established in the approved revision 2 assumptions."
+    },
+    {
+      "topic": "data",
+      "status": "answered",
+      "note": "The only new stored value is the per-terminal executable flag: a boolean saved with the terminal, defaulting to true and loading as true when an older saved terminal has no flag. Explorer operations persist nothing; tabs keep their content and only get a new path after a rename or move."
+    },
+    {
+      "topic": "permissions",
+      "status": "answered",
+      "note": "The explorer may read any path the editor already opens, bounded only by the operating system's permissions. There is no app-level restriction. Deletes require the Recycle Bin to accept the item; otherwise they are refused."
+    },
+    {
+      "topic": "validation",
+      "status": "assumed",
+      "note": "Name clashes, moving a folder into itself or a descendant, and a Recycle Bin that cannot take an item are all refused with a message, as the request states. The exact behaviour for an empty, whitespace-only or Windows-invalid name is not stated, so it is defaulted to a refusal with a message and no change."
+    },
+    {
+      "topic": "states",
+      "status": "assumed",
+      "note": "The explorer keeps its existing loading, locked, empty and drive-list states. For new operations the default is: a busy state while an operation runs, a clear message when it fails, and a refresh of the affected folder level or levels on success. The single delete confirmation is the only prompt, including when a tab has unsaved changes."
+    },
+    {
+      "topic": "duplicates",
+      "status": "answered",
+      "note": "A create, rename or move that would clash with an existing name is refused and nothing is overwritten. Confirming the same delete twice applies it once and the second attempt says the item is gone. There is one local user, so two people editing the same file at once does not apply."
+    },
+    {
+      "topic": "volume",
+      "status": "answered",
+      "note": "The explorer already reads one folder level at a time, returns at most 1,000 rows after scanning at most 10,000 entries, and hides node_modules, .git, target and dist by default. This revision operates on one item at a time and refreshes only the affected level. The command palette's mobile layout uses a narrow mobile-width breakpoint and the existing desktop palette otherwise."
+    },
+    {
+      "topic": "deletion",
+      "status": "answered",
+      "note": "Deleting sends the item to the Recycle Bin after one confirmation naming the item and, for a folder, that its contents go too. It is recoverable from the Recycle Bin. If the Recycle Bin cannot take the item, the delete is refused and nothing is permanently deleted. Deleting closes the open tabs of the item or its contents after folding any unsaved-changes warning into the same prompt."
+    },
+    {
+      "topic": "privacy",
+      "status": "answered",
+      "note": "No data leaves the machine, as agreed in the revision 2 assumptions: the explorer reaches only paths the operating system permits and adds no logging of file names or paths. This revision writes to the file system only where the user chose."
+    },
+    {
+      "topic": "quality",
+      "status": "answered",
+      "note": "House rules PERF-001, TAU-012, USR-002, USR-003, USR-004, USR-005 and USR-006 set performance, accessibility and reliability expectations; the existing explorer caps bound work, every action is keyboard-reachable with a label and visible focus, a failed operation leaves the original intact, and the nonFunctional section states how each is checked. R11's executable filter applies only to the window's Start all / Stop all and F5; the engine and tdk 'up' action is deliberately unchanged so the pre-existing failing engine tests are not pulled in."
+    }
+  ],
+  "assumptions": [
+    "Validation: an empty, whitespace-only or Windows-invalid name is refused with a message and nothing is created or changed.",
+    "States: while a file operation runs the explorer shows a busy state; on failure it shows a clear message and reloads the true state; on success it refreshes the affected folder level or levels.",
+    "States: creating a file or folder leaves it in the tree and does not open it in the editor; dropping an item onto the folder it is already in changes nothing.",
+    "Scope: the engine and tdk 'up' action keeps starting every terminal; only the window's Start all / Stop all action and F5 honour the executable flag in this revision."
+  ]
+}

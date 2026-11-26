@@ -1,0 +1,204 @@
+{
+  "summary": "This is revision 3 of 3 of a larger feature (R9 to R12). Tinkerdeck\u0027s editor stops feeling bolted on. The sidebar gains a VS Code-style Files explorer that loads one folder level at a time, hides the heavy build and VCS folders by default behind a Show hidden control, follows the project the user is working in (the selected app\u0027s root, the root of the app that owns the active editor tab, a loose file\u0027s parent folder, or the home folder with the drive list above it), and lets the user create, rename, move, drag and delete files and folders, with deletes going to the Recycle Bin after one confirmation. A command-palette \u0027Open file\u2026\u0027 entry launches the system picker from any view. F5 becomes the app view\u0027s Start all / Stop all toggle, terminals gain an executable flag that keeps them out of bulk start/stop, refresh loses its keyboard shortcut, the theme finder\u0027s rows stop overflowing, the command palette gets a mobile-first CSS pass without becoming a side pane, and last the shared dialog and branch menu move to the jattac responsive side panes.",
+  "requirements": [
+    {
+      "id": "R9",
+      "text": "The explorer supports create file, create folder, rename, move, delete and drag-and-drop (dropping an item onto a folder moves it there) for both files and folders. Delete asks for confirmation naming the item (and, for a folder, that everything inside goes with it) and sends the item to the Recycle Bin. If the Recycle Bin cannot take the item, the delete is refused with a message and nothing is permanently deleted. A name clash is refused with a clear message and nothing is overwritten. Moving a folder into itself or one of its descendants is refused. Renaming or moving a file that is open re-points its tab to the new path and recomputes the tab groups; the same applies to every open file under a renamed or moved folder. Deleting an item closes its open tabs, and any unsaved-changes warning is folded into the single delete confirmation. After any operation the affected folder level is refreshed.",
+      "acceptance": [
+        "A new file and a new folder can both be created in the explorer.",
+        "An existing file and an existing folder can both be renamed.",
+        "A file and a folder can be moved to another folder through a move action.",
+        "An item can be dragged in the explorer and dropped onto a folder to move it there.",
+        "Deleting an item asks for confirmation before anything is removed; the prompt names the item and, for a folder, says that everything inside goes with it.",
+        "After confirmation the deleted item is in the Recycle Bin and can be restored from there.",
+        "Cancelling the delete confirmation leaves the item and any open tabs unchanged.",
+        "A create, rename or move that would clash with an existing name is refused with a message and the existing item is untouched.",
+        "Moving a folder into itself or one of its descendants is refused.",
+        "Renaming or moving an open file keeps its tab open at the new path; renaming or moving a folder does the same for every open file under it, and tab groups are recomputed.",
+        "Deleting an item with open tabs closes those tabs; if any has unsaved changes the single delete confirmation says so, and there is no second prompt.",
+        "After each operation the affected folder level shows the new state."
+      ],
+      "rationale": "The developer wants a real file manager inside the app. Deletes must stay recoverable, and operations must never silently overwrite or misplace the user\u0027s files.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "If the Recycle Bin is unavailable, for example on some network or removable drives, the delete is refused with a message and nothing is permanently deleted.",
+        "A failed operation such as a permission refusal reports an error and leaves neither a half-created item nor a moved-away original.",
+        "Confirming the same delete twice applies it once; the second attempt reports that the item is gone.",
+        "Deleting a folder closes the tabs of every open file inside it, with the same unsaved-changes warning.",
+        "A create or rename with an empty or invalid name is refused with a message."
+      ],
+      "pitfalls": [
+        "Operations must act on the real file system, so the tree and the disk stay in agreement after each one.",
+        "A name clash must never silently overwrite the existing item.",
+        "A delete must never fall back to permanent deletion when the Recycle Bin is unavailable.",
+        "All five operations must share one file-operation path so their error behaviour is consistent.",
+        "Tabs must be re-pointed to the new path as part of the same operation, so a tab never points at a missing file."
+      ],
+      "rules": [
+        "PERF-001",
+        "TAU-012",
+        "USR-001",
+        "USR-003",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "explorer delete",
+          "attribute": "destination",
+          "op": "equals",
+          "value": "Recycle Bin",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "explorer delete",
+          "attribute": "permanent delete fallback",
+          "op": "must-not",
+          "value": "permitted",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "explorer name clash",
+          "attribute": "overwrite existing item",
+          "op": "must-not",
+          "value": "permitted",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "text": "The command palette stays a palette and receives a mobile-first, desktop-aware layout pass. On a narrow, mobile-width viewport it fills the available width and sits near the top so the on-screen keyboard does not squeeze the list; on a desktop-width viewport it keeps its current look.",
+      "acceptance": [
+        "At a narrow mobile-width viewport the palette panel spans the available width, sits near the top, and keeps its list visible and usable with the on-screen keyboard open.",
+        "At a desktop-width viewport the palette keeps its current palette layout and height.",
+        "The palette remains a modal-style palette and is not converted into a side pane."
+      ],
+      "rationale": "The developer explicitly excluded the command palette from the side-pane migration and asked only that it be made mobile-first and desktop-aware.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Resizing between mobile and desktop widths keeps the palette usable.",
+        "A very long command label is truncated instead of overflowing the panel."
+      ],
+      "pitfalls": [
+        "The palette must not be turned into a side pane while the other dialogs move.",
+        "The desktop layout must not regress when the mobile rules are added."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-001",
+        "USR-002",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "command palette",
+          "attribute": "presentation",
+          "op": "equals",
+          "value": "palette",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R11",
+      "text": "Every terminal has an executable flag that is on by default, is saved with the terminal, and can be turned off or on where terminals are edited. Non-executable terminals are not started or stopped by Start all / Stop all or by F5, but can still be started and stopped individually with their own controls. The Start all / Stop all button state and the app status indicator count only executable terminals. A saved terminal that has no flag loads as executable.",
+      "acceptance": [
+        "A newly added terminal is executable by default.",
+        "Where terminals are edited, a labelled control marks a terminal non-executable and marks it executable again.",
+        "Start all leaves non-executable terminals stopped and starts the executable ones.",
+        "F5 leaves non-executable terminals alone, because it runs the same action.",
+        "A non-executable terminal\u0027s own Start and Stop controls still start and stop it.",
+        "After saving and reloading the config the flag is preserved; a config saved before the flag existed loads every terminal as executable.",
+        "The Start/Stop button and the app status indicator reflect only executable terminals.",
+        "The launch-time \u0027start the apps that were running last time\u0027 action does not start non-executable terminals.",
+        "The tdk and engine \u0027up\u0027 action skips non-executable terminals and does not wait for them."
+      ],
+      "rationale": "The developer wants all terminals executable by default but any terminal markable as non-executable, so bulk start/stop and F5 leave those terminals alone while the user can still run them by hand.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Marking a running terminal non-executable does not by itself stop it; it is only excluded from later bulk actions.",
+        "Stop all does not stop a non-executable terminal the user started by hand.",
+        "When every terminal is non-executable, Start all starts nothing and shows a brief \u0027No executable terminals\u0027 message."
+      ],
+      "pitfalls": [
+        "The Rust model must default the missing flag to true so an upgrade does not change which terminals start.",
+        "Marking a terminal non-executable must not remove its own start and stop controls.",
+        "The button state and the action it performs must agree; the button must not show Stop for a running non-executable terminal it will not stop."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-003",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "terminal",
+          "attribute": "executable",
+          "op": "equals",
+          "value": "true",
+          "unit": "",
+          "scope": "default"
+        },
+        {
+          "subject": "non-executable terminal",
+          "attribute": "bulk start or stop",
+          "op": "must-not",
+          "value": "include it",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R12",
+      "text": "Refresh is available only from the Utilities menu refresh item, the git bar refresh button and the command palette \u0027Refresh everything\u0027 entry. No keyboard shortcut performs refresh and the palette entry shows no shortcut hint. No menu, tooltip or help text advertises F5 as refresh. Where a Start all / Stop all control shows a key hint, it shows F5.",
+      "acceptance": [
+        "The Utilities menu refresh item and the git bar refresh button still refresh.",
+        "The palette \u0027Refresh everything\u0027 entry still refreshes and shows no shortcut hint.",
+        "Pressing F5 in any view never refreshes.",
+        "No menu, tooltip or help text says F5 refreshes.",
+        "Where a Start all / Stop all button or palette entry shows a key hint, it shows F5.",
+        "The shared shortcut registry no longer lists F5 as refresh and the matcher no longer maps F5 to refresh.",
+        "Tests that asserted F5 means refresh are updated, and new tests cover F5 start/stop and the no-op in the home and editor views."
+      ],
+      "rationale": "The developer chose buttons and the palette only for refresh, freeing F5 for the app\u0027s bulk start/stop.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "A user who relied on F5 for refresh can still refresh from the buttons or the palette.",
+        "Ctrl\u002BR is not assigned to refresh and stays available to the shell."
+      ],
+      "pitfalls": [
+        "No F5-as-refresh hint may be left anywhere in the UI.",
+        "Removing the shortcut must not break the refresh buttons or the palette entry.",
+        "The terminal must keep handing F5 back to the window, or the new shortcut stops working while a terminal has focus."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "refresh",
+          "attribute": "keyboard shortcut",
+          "op": "equals",
+          "value": "none",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    }
+  ],
+  "questions": [],
+  "coverage": [],
+  "assumptions": [],
+  "roles": [],
+  "outOfScope": [],
+  "nonFunctional": [],
+  "risks": [],
+  "tensions": [],
+  "glossary": []
+}

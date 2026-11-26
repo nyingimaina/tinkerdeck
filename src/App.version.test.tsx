@@ -10,9 +10,9 @@ const raw = import.meta.glob(
 const file = (suffix: string) => Object.entries(raw).find(([path]) => path.endsWith(suffix))?.[1] ?? "";
 
 describe("the app version", () => {
-  it("A2: package.json, package-lock.json, Cargo.toml, Cargo.lock and tauri.conf.json all say 2.2.0", () => {
+  it("the shipped version is one number: package.json, package-lock.json, Cargo.toml, Cargo.lock and tauri.conf.json all say 2.3.0", () => {
     const version = (JSON.parse(file("package.json")) as { version: string }).version;
-    expect(version).toBe("2.2.0");
+    expect(version).toBe("2.3.0");
 
     const lock = JSON.parse(file("package-lock.json")) as { version: string; packages: Record<string, { version?: string }> };
     expect(lock.version).toBe(version);

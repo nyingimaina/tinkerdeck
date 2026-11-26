@@ -5,6 +5,7 @@ import {
   canStop,
   dotKind,
   duplicateNames,
+  isExecutable,
   isUp,
   newApp,
   newTerminal,
@@ -79,6 +80,19 @@ describe("app button", () => {
     expect(appButton([running, stopped])).toBe("stop");
     expect(appButton([detached])).toBe("stop");
     expect(appButton([S("starting")])).toBe("stop");
+  });
+});
+
+describe("the executable flag (R11)", () => {
+  it("R11: a newly added terminal is executable by default", () => {
+    expect(newTerminal().executable).toBe(true);
+    expect(isExecutable(newTerminal())).toBe(true);
+  });
+
+  it("R11: a missing saved flag reads as executable and only an explicit false turns it off", () => {
+    expect(isExecutable({ id: "a", name: "t", cwd: ".", command: "", env: {} })).toBe(true);
+    expect(isExecutable({ id: "a", name: "t", cwd: ".", command: "", env: {}, executable: true })).toBe(true);
+    expect(isExecutable({ id: "a", name: "t", cwd: ".", command: "", env: {}, executable: false })).toBe(false);
   });
 });
 

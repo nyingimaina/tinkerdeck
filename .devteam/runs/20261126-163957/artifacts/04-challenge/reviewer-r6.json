@@ -1,0 +1,15 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "REV-1",
+      "status": "fixed",
+      "evidence": "The disk change and the editor-store update are now rolled back together. rename_and_repath (src-tauri/src/features/explorer/commands.rs:56-76) and move_and_repath (:80-100) rename/move first, then call store.repath_prefix, and on Err undo the file-system change with std::fs::rename(new -> old); Store::commit (src-tauri/src/editor.rs:185-194) also puts the in-memory entries back on a failed persist, so the tab keeps pointing at the file that still exists. delete_and_close_with (commands.rs:113-130) now snapshots the entries, saves the tab close first (close_prefix returns Err before trash is touched when the save fails), and restores the snapshot with store.restore_entries if the Recycle Bin refuses. Proven by the four new tests r9_a_rename_whose_tab_update_cannot_be_saved_is_undone, r9_a_move_whose_tab_update_cannot_be_saved_is_undone, r9_a_delete_whose_tab_update_cannot_be_saved_deletes_nothing and r9_a_refused_recycle_bin_leaves_the_item_and_its_open_tab_in_place in src-tauri/tests/editor_repath.rs:232-333; `cargo test --test editor_repath` passes 11/11, including these, with the item left at its original path and no half-applied item behind."
+    },
+    {
+      "id": "REV-2",
+      "status": "fixed",
+      "evidence": "useExplorerOps gained an optional onCommitted callback that fires only after a successful rename, move or delete (src/features/explorer/useExplorerOps.ts:77, :125, :138, :154), and ExplorerPanel passes clearSelection so the stale selected entry is dropped after the operation (src/features/explorer/ExplorerPanel.tsx:250-254). A create or a refused/failed operation does not report, so a still-valid selection is kept. The old pre-operation path can no longer be acted on because Rename/Move/Delete are disabled once selected is null. Proven by 'R9 clears the selection after a rename ...' (src/features/explorer/ExplorerPanel.test.tsx:427-451, asserting Move/Rename/Delete become disabled and pickFolder/api.move are never called) and 'R9 clears the selection after a delete ...' (:453-466), plus 'R9 reports a committed change after a rename ...' and 'R9 does not report a committed change after a create or a refused rename' (src/features/explorer/useExplorerOps.test.tsx:92-122); `vitest run` on both files passes 57/57."
+    }
+  ]
+}

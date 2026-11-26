@@ -87,6 +87,23 @@ describe("Sidebar", () => {
     await userEvent.click(screen.getByRole("button", { name: "Collapse Qonsol" }));
     expect(screen.queryByRole("button", { name: /api/ })).toBeNull();
   });
+
+  it("R11: the app status dot counts only executable terminals", () => {
+    const mixed: AppDef = { ...app, terminals: [{ ...T("t1", "db"), executable: false }, T("t2", "api")] };
+    render(
+      <Sidebar
+        apps={[mixed]}
+        selectedAppId="a1"
+        selectedTerminalId="t2"
+        stateOf={(id) => (id === "t1" ? st("running") : st("stopped"))}
+        onSelectApp={vi.fn()}
+        onSelectTerminal={vi.fn()}
+      />,
+    );
+    // Only the non-executable "db" is running, so bulk start/stop sees a stopped app.
+    expect(screen.getByRole("img", { name: "App status: grey" })).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "App status: green" })).toBeNull();
+  });
 });
 
 describe("TabStrip", () => {
@@ -118,6 +135,15 @@ describe("TabStrip", () => {
     expect(screen.getByRole("button", { name: /Start/ }).hasAttribute("disabled")).toBe(!want.start);
     expect(screen.getByRole("button", { name: /Stop/ }).hasAttribute("disabled")).toBe(!want.stop);
     expect(screen.getByRole("button", { name: /Restart/ }).hasAttribute("disabled")).toBe(!want.restart);
+  });
+
+  it("R11: a terminal marked non-executable keeps its own start, stop and restart controls", () => {
+    const mixed: AppDef = { ...app, terminals: [{ ...T("t1", "db"), executable: false }, T("t2", "api")] };
+    render(<TabStrip {...props(st("stopped"))} app={mixed} />);
+    expect(screen.getByRole("tab", { name: /db/ })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("button", { name: /Start/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Stop/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Restart/ })).toBeEnabled();
   });
 });
 

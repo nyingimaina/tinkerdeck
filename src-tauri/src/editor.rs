@@ -180,6 +180,19 @@ impl Store {
         write_atomic(&self.dir.join(INDEX), &json)
     }
 
+    /// Replace the in-memory entries and save them, putting the previous entries back if the save
+    /// fails. A failed persist never leaves the store half-changed (R9).
+    fn commit(&mut self, entries: Vec<Entry>) -> Result<(), String> {
+        let previous = std::mem::replace(&mut self.entries, entries);
+        match self.persist() {
+            Ok(()) => Ok(()),
+            Err(e) => {
+                self.entries = previous;
+                Err(e)
+            }
+        }
+    }
+
     fn index_of(&self, id: &str) -> Result<usize, String> {
         self.entries.iter().position(|e| e.id == id).ok_or_else(|| "That editor is no longer remembered.".to_string())
     }
@@ -465,6 +478,83 @@ impl Store {
             return Err("This file is shown as a preview only and cannot be edited here.".into());
         }
         self.save(id, content, path, now)
+    }
+}
+
+impl Store {
+    /// Re-point every remembered editor whose path is `old` or lies under it to the matching path
+    /// under `new`, keeping any unsaved buffer. Returns the changed entries so the window can
+    /// update its tabs at once (A3).
+    pub fn repath_prefix(&mut self, old: &Path, new: &Path) -> Result<Vec<Entry>, String> {
+        let old_text = old.to_string_lossy().to_string();
+        let new_text = new.to_string_lossy().to_string();
+        let mut entries = self.entries.clone();
+        let mut changed = Vec::new();
+        for entry in entries.iter_mut() {
+            let Some(path) = entry.path.as_deref() else {
+                continue;
+            };
+            let Some(updated) = crate::features::explorer::rebase_path(path, &old_text, &new_text)
+            else {
+                continue;
+            };
+            entry.path = Some(updated.clone());
+            entry.title = file_title(&updated);
+            changed.push(entry.clone());
+        }
+        if !changed.is_empty() {
+            self.commit(entries)?;
+        }
+        Ok(changed)
+    }
+
+    /// Close the tabs of a deleted item and of every open file under it. A clean tab is forgotten;
+    /// one with unsaved text goes to the bin with that text. Returns the closed tab ids (A4). The
+    /// state is saved once, and a failed save leaves every tab exactly as it was.
+    pub fn close_prefix(&mut self, item: &Path, now: i64) -> Result<Vec<String>, String> {
+        let item_text = item.to_string_lossy().to_string();
+        let ids: Vec<String> = self
+            .entries
+            .iter()
+            .filter(|entry| entry.binned_at.is_none())
+            .filter(|entry| {
+                entry
+                    .path
+                    .as_deref()
+                    .is_some_and(|path| crate::features::explorer::within(path, &item_text))
+            })
+            .map(|entry| entry.id.clone())
+            .collect();
+        if ids.is_empty() {
+            return Ok(ids);
+        }
+        let mut entries = self.entries.clone();
+        let mut forgotten: Vec<PathBuf> = Vec::new();
+        for id in &ids {
+            if let Some(i) = entries.iter().position(|e| e.id == *id) {
+                if entries[i].dirty {
+                    entries[i].binned_at = Some(now);
+                } else {
+                    entries.remove(i);
+                    forgotten.push(self.buf_path(id));
+                }
+            }
+        }
+        self.commit(entries)?;
+        for buf in forgotten {
+            let _ = std::fs::remove_file(buf);
+        }
+        Ok(ids)
+    }
+
+    /// The current entries, so a caller can put them back if a later step fails (R9).
+    pub fn snapshot_entries(&self) -> Vec<Entry> {
+        self.entries.clone()
+    }
+
+    /// Put back a snapshot taken by [`Store::snapshot_entries`], saved atomically.
+    pub fn restore_entries(&mut self, entries: Vec<Entry>) -> Result<(), String> {
+        self.commit(entries)
     }
 }
 

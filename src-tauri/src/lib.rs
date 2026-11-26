@@ -2,10 +2,10 @@
 
 mod ansi;
 mod brief;
-mod commands;
-mod config;
+pub mod commands;
+pub mod config;
 mod detect;
-mod editor;
+pub mod editor;
 mod editor_cmds;
 mod engine;
 pub mod features;
@@ -15,11 +15,11 @@ mod ipc;
 mod job;
 mod legacy;
 mod logger;
-mod model;
+pub mod model;
 mod paths;
 mod ready;
 mod ring;
-mod runtime;
+pub mod runtime;
 mod shells;
 mod state;
 mod themes;
@@ -190,6 +190,10 @@ pub fn run() {
             features::explorer::commands::explorer_list,
             features::explorer::commands::explorer_drives,
             features::explorer::commands::explorer_home,
+            features::explorer::commands::explorer_create,
+            features::explorer::commands::explorer_rename,
+            features::explorer::commands::explorer_move,
+            features::explorer::commands::explorer_delete,
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {

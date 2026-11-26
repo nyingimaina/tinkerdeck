@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { rollup, type AppDef, type TermState } from "../../state/model";
+import { isExecutable, rollup, type AppDef, type TermState } from "../../state/model";
 import { StatusDot } from "../terminals/StatusDot";
 import styles from "./Sidebar.module.css";
 
@@ -34,6 +34,8 @@ export function Sidebar({
   explorer,
 }: Props) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  // The app status dot shows only what Start all / Stop all would act on (R11).
+  const appRollup = (app: AppDef) => rollup(app.terminals.filter(isExecutable).map((t) => stateOf(t.id)));
 
   if (paneCollapsed) {
     return (
@@ -55,7 +57,7 @@ export function Sidebar({
             className={a.id === selectedAppId ? styles.railOn : ""}
           >
             <span className={styles.railInitial}>{a.name.trim().charAt(0).toUpperCase() || "?"}</span>
-            <StatusDot rollup={rollup(a.terminals.map((t) => stateOf(t.id)))} className={styles.railDot} />
+            <StatusDot rollup={appRollup(a)} className={styles.railDot} />
           </button>
         ))}
       </nav>
@@ -76,7 +78,7 @@ export function Sidebar({
       )}
       {apps.map((app) => {
         const isCollapsed = collapsed[app.id];
-        const roll = rollup(app.terminals.map((t) => stateOf(t.id)));
+        const roll = appRollup(app);
         return (
           <div key={app.id} className={styles.group}>
             <div className={`${styles.appRow} ${app.id === selectedAppId ? styles.selected : ""}`}>

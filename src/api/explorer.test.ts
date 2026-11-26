@@ -3,9 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { invoke } = vi.hoisted(() => ({ invoke: vi.fn() }));
 vi.mock("@tauri-apps/api/core", () => ({ invoke }));
 
-import { explorerApi, type ExplorerEntry, type ExplorerListing } from "./explorer";
+import { explorerApi, type ExplorerEntry, type ExplorerListing, type ExplorerOp } from "./explorer";
 
 const emptyListing = (path: string): ExplorerListing => ({ path, entries: [], total: 0, truncated: false, locked: false });
+const op = (path: string): ExplorerOp => ({ path, repaths: [], closed: [] });
 
 beforeEach(() => invoke.mockReset());
 
@@ -45,5 +46,51 @@ describe("explorerApi", () => {
 
     await expect(explorerApi.home()).resolves.toBeNull();
     expect(invoke).toHaveBeenCalledWith("explorer_home");
+  });
+
+  it("R9 creates a file or folder through explorer_create with the parent, name and kind", async () => {
+    invoke.mockResolvedValue("C:\\work\\proj\\new.txt");
+
+    await expect(explorerApi.create("C:\\work\\proj", "new.txt", "file")).resolves.toBe("C:\\work\\proj\\new.txt");
+    expect(invoke).toHaveBeenCalledWith("explorer_create", {
+      path: "C:\\work\\proj",
+      name: "new.txt",
+      kind: "file",
+    });
+
+    invoke.mockResolvedValue("C:\\work\\proj\\src");
+    await explorerApi.create("C:\\work\\proj", "src", "folder");
+    expect(invoke).toHaveBeenLastCalledWith("explorer_create", {
+      path: "C:\\work\\proj",
+      name: "src",
+      kind: "folder",
+    });
+  });
+
+  it("R9 renames through explorer_rename with the item path and new name, returning the re-pointed tabs", async () => {
+    const result: ExplorerOp = { path: "C:\\work\\proj\\b.txt", repaths: [{ id: "d1", path: "C:\\work\\proj\\b.txt", title: "b.txt" }], closed: [] };
+    invoke.mockResolvedValue(result);
+
+    await expect(explorerApi.rename("C:\\work\\proj\\a.txt", "b.txt")).resolves.toEqual(result);
+    expect(invoke).toHaveBeenCalledWith("explorer_rename", { path: "C:\\work\\proj\\a.txt", name: "b.txt" });
+  });
+
+  it("R9 moves through explorer_move with the item path and destination folder", async () => {
+    const result = op("C:\\work\\proj\\lib\\a.txt");
+    invoke.mockResolvedValue(result);
+
+    await expect(explorerApi.move("C:\\work\\proj\\a.txt", "C:\\work\\proj\\lib")).resolves.toEqual(result);
+    expect(invoke).toHaveBeenCalledWith("explorer_move", {
+      path: "C:\\work\\proj\\a.txt",
+      into: "C:\\work\\proj\\lib",
+    });
+  });
+
+  it("R9 deletes through explorer_delete, returning the tabs it closed", async () => {
+    const result: ExplorerOp = { path: "C:\\work\\proj\\a.txt", repaths: [], closed: ["d1"] };
+    invoke.mockResolvedValue(result);
+
+    await expect(explorerApi.remove("C:\\work\\proj\\a.txt")).resolves.toEqual(result);
+    expect(invoke).toHaveBeenCalledWith("explorer_delete", { path: "C:\\work\\proj\\a.txt" });
   });
 });

@@ -405,7 +405,8 @@ describe("Consoles", () => {
     });
     await userEvent.click(screen.getByRole("button", { name: "Edit Qonsol" }));
     await userEvent.click(await screen.findByRole("button", { name: "Delete app" }));
-    await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+    const deleteDialog = await screen.findByRole("dialog", { name: "Delete Qonsol?" });
+    await userEvent.click(within(deleteDialog).getByRole("button", { name: "Delete" }));
     await waitFor(() => expect(h.api.stopTerminal).toHaveBeenCalledWith("a1", "console-a1:1"));
     await waitFor(() => expect(h.api.saveApps).toHaveBeenCalledWith([]));
   });

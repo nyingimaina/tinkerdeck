@@ -37,6 +37,28 @@ export interface EditorController {
   restore: (id: string) => Promise<void>;
   discard: (id: string) => Promise<void>;
   dismissError: () => void;
+  /** Snapshot typing still waiting in a timer and wait for it, before a delete closes a tab (A4). */
+  flushPending: () => Promise<void>;
+  /** Re-point the open tabs the core re-pointed after a rename or move (A3). */
+  applyRepaths: (repaths: { id: string; path: string; title: string }[]) => void;
+  /** Forget the tabs the core closed for a deleted item; a dirty one is already in the bin (A4). */
+  applyClosed: (ids: string[]) => void;
+  /** Titles of open tabs with unsaved text at or under a path, for the one delete warning (R9). */
+  dirtyTitlesUnder: (path: string) => string[];
+}
+
+/** A path split into whole components, so `C:\\foo` never matches a sibling `C:\\foobar`. */
+function pathParts(path: string): string[] {
+  return path.split(/[\\/]+/).filter(Boolean);
+}
+
+function withinPath(child: string, parent: string): boolean {
+  const childParts = pathParts(child);
+  const parentParts = pathParts(parent);
+  return (
+    childParts.length >= parentParts.length &&
+    parentParts.every((part, i) => part.toLowerCase() === childParts[i].toLowerCase())
+  );
 }
 
 interface DocState extends EditorTab {
@@ -180,6 +202,80 @@ export function useEditor({ onOpened }: { onOpened?: () => void } = {}): EditorC
     if (text !== undefined) void Promise.resolve(api.snapshot(id, text)).catch(fail);
   }, []);
 
+  // Before a delete closes tabs, the last keystrokes must reach the core so the tab keeps its
+  // latest text in the bin rather than only what the quiet timer had already sent (A4).
+  const flushPending = useCallback(async () => {
+    const jobs: Promise<unknown>[] = [];
+    for (const id of Object.keys(timers.current)) {
+      const t = timers.current[id];
+      if (t === undefined) continue;
+      clearTimeout(t);
+      delete timers.current[id];
+      const text = latest.current[id];
+      if (text !== undefined) jobs.push(Promise.resolve(api.snapshot(id, text)).catch(fail));
+    }
+    await Promise.all(jobs);
+  }, []);
+
+  // A rename or move re-points the core's saved index; the open tabs follow at once so the tab
+  // groups, which are derived from paths, recompute in the same render (A3).
+  const applyRepaths = useCallback((repaths: { id: string; path: string; title: string }[]) => {
+    if (repaths.length === 0) return;
+    setDocs((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const r of repaths) {
+        const d = next[r.id];
+        if (!d) continue;
+        next[r.id] = { ...d, path: r.path, title: r.title };
+        changed = true;
+      }
+      if (!changed) return prev;
+      docsRef.current = next;
+      return next;
+    });
+  }, []);
+
+  // A delete has already closed these tabs (and binned any with unsaved text) in the core, so the
+  // window only drops them from its own lists and reloads the bin (A4).
+  const applyClosed = useCallback(
+    (ids: string[]) => {
+      if (ids.length === 0) return;
+      const gone = new Set(ids);
+      const rest = orderRef.current.filter((id) => !gone.has(id));
+      orderRef.current = rest;
+      setOrder(rest);
+      setDocs((prev) => {
+        let changed = false;
+        const next = { ...prev };
+        for (const id of ids) {
+          if (next[id] !== undefined) {
+            delete next[id];
+            changed = true;
+          }
+        }
+        if (!changed) return prev;
+        docsRef.current = next;
+        return next;
+      });
+      for (const id of ids) delete latest.current[id];
+      setActiveId((cur) => (cur !== null && gone.has(cur) ? (rest[0] ?? null) : cur));
+      void refreshBin();
+    },
+    [refreshBin],
+  );
+
+  // The one delete confirmation needs to say which open tabs would lose unsaved text (R9). The
+  // unsaved mark is set the moment text is typed, so this is accurate before any snapshot.
+  const dirtyTitlesUnder = useCallback((path: string) => {
+    const titles: string[] = [];
+    for (const id of orderRef.current) {
+      const d = docsRef.current[id];
+      if (d && d.dirty && d.path && withinPath(d.path, path)) titles.push(d.title);
+    }
+    return titles;
+  }, []);
+
   // never leave typing waiting in a timer when the window goes away
   useEffect(() => {
     const flushAll = () => Object.keys(timers.current).forEach(flush);
@@ -319,5 +415,9 @@ export function useEditor({ onOpened }: { onOpened?: () => void } = {}): EditorC
     restore,
     discard,
     dismissError: () => setError(null),
+    flushPending,
+    applyRepaths,
+    applyClosed,
+    dirtyTitlesUnder,
   };
 }

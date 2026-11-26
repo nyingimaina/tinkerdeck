@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, HashSet};
 pub const CONFIG_VERSION: u32 = 1;
 pub const MAX_NAME: usize = 40;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct TerminalDef {
     pub id: String,
@@ -28,10 +28,31 @@ pub struct TerminalDef {
     /// Ready when this local (loopback) URL answers with anything below 500.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ready_url: Option<String>,
+    /// Included by Start all / Stop all and F5; on by default, and a saved terminal without the
+    /// field loads as executable (R11).
+    #[serde(default = "yes")]
+    pub executable: bool,
 }
 
 fn dot() -> String {
     ".".to_string()
+}
+
+impl Default for TerminalDef {
+    fn default() -> Self {
+        TerminalDef {
+            id: String::new(),
+            name: String::new(),
+            cwd: String::new(),
+            command: String::new(),
+            stop_command: None,
+            env: BTreeMap::new(),
+            shell: None,
+            ready_pattern: None,
+            ready_url: None,
+            executable: true,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
@@ -49,6 +70,16 @@ pub struct AppDef {
     /// Unix seconds of the last time the app was opened or started.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub last_opened: Option<i64>,
+}
+
+impl AppDef {
+    /// The terminals Start all / Stop all and F5 include, in listed order (R11).
+    ///
+    /// A terminal marked non-executable is still startable and stoppable on its own; it is only left
+    /// out of the bulk actions.
+    pub fn executable_terminals(&self) -> impl Iterator<Item = &TerminalDef> {
+        self.terminals.iter().filter(|t| t.executable)
+    }
 }
 
 /// Update preferences (BRS 7.13). Additive fields: the config version stays 1.
@@ -207,6 +238,7 @@ pub fn console_def_with_id(terminal_id: &str) -> TerminalDef {
         shell: shell.filter(|s| crate::shells::known(s).is_some()).map(String::from),
         ready_pattern: None,
         ready_url: None,
+        executable: true,
     }
 }
 
@@ -273,6 +305,16 @@ mod tests {
         assert_eq!((c.update.auto_check, c.update.skipped_version.as_deref(), c.update.last_checked), (false, Some("1.3.0"), 55));
         let none = serde_json::to_string(&UpdateSettings::default()).unwrap();
         assert!(!none.contains("skippedVersion"));
+    }
+
+    #[test]
+    fn r11_executable_defaults_true_and_a_saved_terminal_without_it_loads_true() {
+        let t: TerminalDef = serde_json::from_str(r#"{"id":"t","name":"x"}"#).unwrap();
+        assert!(t.executable);
+        assert!(TerminalDef::default().executable);
+        let off = TerminalDef { executable: false, ..Default::default() };
+        let saved = serde_json::to_string(&off).unwrap();
+        assert!(saved.contains("\"executable\":false"));
     }
 
     #[test]

@@ -18,6 +18,12 @@ export interface TerminalDef {
   env: Record<string, string>;
   /** Shell id for this terminal only; omitted = the app-wide default. */
   shell?: string;
+  /**
+   * On unless explicitly turned off. A non-executable terminal keeps its own start and stop
+   * controls but is skipped by Start all / Stop all and F5 (R11). Missing means on, so a saved
+   * config from before the setting loads every terminal as executable.
+   */
+  executable?: boolean;
   /** `up --wait` treats the terminal as ready once its output contains this text. */
   readyPattern?: string;
   /** ...or once this local (loopback) URL answers with anything below 500. */
@@ -84,6 +90,9 @@ export const isUp = (s: TermState) => s.kind === "running" || s.kind === "starti
 export const isFailed = (s: TermState) =>
   s.kind === "failedToStart" || (s.kind === "exited" && s.code !== 0);
 
+/** Bulk start/stop skips only a terminal explicitly marked non-executable (R11). */
+export const isExecutable = (t: TerminalDef) => t.executable !== false;
+
 export function dotKind(s: TermState): DotKind {
   switch (s.kind) {
     case "running":
@@ -146,7 +155,7 @@ export function uuid(): string {
   });
 }
 
-export const newTerminal = (): TerminalDef => ({ id: uuid(), name: "", cwd: ".", command: "", env: {} });
+export const newTerminal = (): TerminalDef => ({ id: uuid(), name: "", cwd: ".", command: "", env: {}, executable: true });
 export const newApp = (): AppDef => ({ id: uuid(), name: "", root: "", terminals: [] });
 
 export const MAX_NAME = 40;

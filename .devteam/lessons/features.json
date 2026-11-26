@@ -47,6 +47,18 @@
         "(project root)",
         "src-tauri/src/features"
       ]
+    },
+    {
+      "runId": "20261126-163957",
+      "feature": "1a. Sidebar file explorer: browsing and root rules (and 7 more)",
+      "areas": [
+        "src-tauri/src",
+        "src/features/explorer",
+        "src",
+        "src/features/apps",
+        "src/state",
+        "src-tauri/tests"
+      ]
     }
   ]
 }

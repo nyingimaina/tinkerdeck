@@ -1,390 +1,6 @@
 {
   "facts": [
     {
-      "text": "top bar has sidebar toggle, logo, name, Shell select, Editor, Updates, Refresh, Help, ThemePicker, light/dark toggle, \u002B App (lines 300-363); only paneCollapsed is persisted, in localStorage key td.sidebarCollapsed (45-52, 110-118).",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "381a0d08af877c337493"
-        }
-      ],
-      "at": "2026-11-25T15:42:25.9867555+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "app view stacks AppHeader, GitBar, empty state, TabStrip, terminal area, ConsoleNav and GitDrawer (451-531); GitDrawer shows only when gitTab is set (62, 531).",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "381a0d08af877c337493"
-        }
-      ],
-      "at": "2026-11-25T15:42:26.0026896+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "gitTab, help, updateOpen, finderOpen and manualCheck are plain useState flags, not persisted (62-66).",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "381a0d08af877c337493"
-        }
-      ],
-      "at": "2026-11-25T15:42:26.0156541+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "window keydown handler only handles Ctrl\u002BB and F5 (120-134).",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "381a0d08af877c337493"
-        }
-      ],
-      "at": "2026-11-25T15:42:26.0276958+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "banners are lock, job warning, update, manual-check up-to-date, manual-check error and load error (365-405).",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "381a0d08af877c337493"
-        }
-      ],
-      "at": "2026-11-25T15:42:26.0391892+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "custom key handler passes only F5 and Ctrl\u002BB through to the app; every other Ctrl key goes to the shell, so new app shortcuts must be added there (74-91).",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/terminals/TerminalHost.tsx",
-          "hash": "85382b955bd4a10e14c7"
-        }
-      ],
-      "at": "2026-11-25T15:42:26.0532221+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "window keydown handles Ctrl\u002BS/Shift\u002BS, Ctrl\u002BN, Ctrl\u002BO and Ctrl\u002BW while the editor view is mounted (26-43); Ctrl\u002BO conflicts with the proposed open-editor shortcut.",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/editor/EditorView.tsx",
-          "hash": "7c939f62933f153bf167"
-        }
-      ],
-      "at": "2026-11-25T15:42:26.0647626+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "CodeSurface and PreviewPane already use React.lazy \u002B Suspense (11-14, 52-57).",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/editor/EditorView.tsx",
-          "hash": "7c939f62933f153bf167"
-        }
-      ],
-      "at": "2026-11-25T15:42:26.0769941+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "renders nothing without repo info; otherwise shows branch pill, ahead/behind, refresh, fetch/pull/push/sync and Changes/History/Console (18-101).",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/git/GitBar.tsx",
-          "hash": "cec24573fbb99a1727b9"
-        }
-      ],
-      "at": "2026-11-25T15:42:26.114329+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "Config = version, theme, shell, lastRunning, apps, update; additive fields keep CONFIG_VERSION=1; normalize() fixes unknown theme/shell and stale lastRunning (79-139).",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src-tauri/src/model.rs",
-          "hash": "b7bf600d9a49d61df26d"
-        }
-      ],
-      "at": "2026-11-25T15:42:26.1255948+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "consoles are session-only useState, not persisted; saveApps/setTheme/setShell/setUpdateSettings call src/api and update local config (61-310).",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/state/useLauncher.ts",
-          "hash": "5f3d9df6c1739be96704"
-        }
-      ],
-      "at": "2026-11-25T15:42:26.1376359+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "top bar is lines 300-363; no footer element exists anywhere in src or index.html.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "381a0d08af877c337493"
-        }
-      ],
-      "at": "2026-11-25T16:41:09.5864866+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "returns null without repo info; render full tools by default so git.test.tsx keeps passing; add optional collapsed prop for the app view.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/git/GitBar.tsx",
-          "hash": "cec24573fbb99a1727b9"
-        }
-      ],
-      "at": "2026-11-25T16:41:09.603025+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "named export rendered only when gitTab is set; React.lazy needs .then((m) =\u003E ({ default: m.GitDrawer })).",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/git/GitDrawer.tsx",
-          "hash": "edb96e6770e509f796f1"
-        }
-      ],
-      "at": "2026-11-25T16:41:09.6206591+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "attachCustomKeyEventHandler at 74-91 passes only F5 and Ctrl\u002BB to the app; every new app shortcut must be added there.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/terminals/TerminalHost.tsx",
-          "hash": "85382b955bd4a10e14c7"
-        }
-      ],
-      "at": "2026-11-25T16:41:09.6377133+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "window keydown at 26-43 handles Ctrl\u002BS/Shift\u002BS/N/O/W, ignores Alt, and does not preventDefault unknown keys, so Ctrl\u002BShift\u002BP bubbles to App.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/editor/EditorView.tsx",
-          "hash": "7c939f62933f153bf167"
-        }
-      ],
-      "at": "2026-11-25T16:41:09.6531221+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "named export only rendered while the Console tab is selected; lazy needs .then((m) =\u003E ({ default: m.ConsoleNav })).",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/terminals/ConsoleNav.tsx",
-          "hash": "405649aa92db96fcf435"
-        }
-      ],
-      "at": "2026-11-25T16:41:09.6699176+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "named export rendered over main while editing; lazy needs .then((m) =\u003E ({ default: m.EditPane })).",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/apps/EditPane.tsx",
-          "hash": "bda42348d57aeade840e"
-        }
-      ],
-      "at": "2026-11-25T16:41:09.6841388+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "named export rendered inside Dialog while finderOpen; lazy needs .then((m) =\u003E ({ default: m.ThemeFinder })).",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/themes/ThemeFinder.tsx",
-          "hash": "a08f39d97f3e348abe76"
-        }
-      ],
-      "at": "2026-11-25T16:41:09.6972824+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "45-52 and 110-118 persist sidebar collapsed in localStorage key td.sidebarCollapsed; gitTab/help/updateOpen/finderOpen/manualCheck are plain useState and not persisted.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "381a0d08af877c337493"
-        }
-      ],
-      "at": "2026-11-25T16:41:09.7106175+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "Git tests click Sync/Pull/Changes/Console directly after openApp; expand the chip first, and use findByRole for a lazy ConsoleNav.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.features.test.tsx",
-          "hash": "c985878bf4b8b9f17ec6"
-        }
-      ],
-      "at": "2026-11-25T16:41:09.7250781+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "clicks the Editor button twice without reopening a menu; update both clicks if Editor moves into Utilities.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.editor.test.tsx",
-          "hash": "22ed36711aa8fc50de7e"
-        }
-      ],
-      "at": "2026-11-25T16:41:09.739109+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "clicks Help directly; App.updatecheck.test.tsx clicks Check for updates directly; both move into Utilities in this revision.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.updates.test.tsx",
-          "hash": "0231d1e6fa3005601535"
-        }
-      ],
-      "at": "2026-11-25T16:41:09.7543348+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "no cmdk, Radix, react-hotkeys-hook or jattac overflow-menu/zest-button installed; only jattac.libs.web.zest-tabs and jattac-web-poller are present.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "package.json",
-          "hash": "4e8da0405b6fe73dd932"
-        }
-      ],
-      "at": "2026-11-25T16:41:09.7664822+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
       "text": "The design puts AppShell at src/App.tsx.",
       "role": "planchecker",
       "stage": "Design",
@@ -403,22 +19,6 @@
       ]
     },
     {
-      "text": "The design puts AppShellStyles at src/App.module.css.",
-      "role": "planchecker",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/App.module.css",
-          "hash": "9211bbd8b9f66e5109ea"
-        }
-      ],
-      "at": "2026-11-25T16:45:39.4058453+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
       "text": "The design puts GitBarChip at src/features/git/GitBar.tsx.",
       "role": "planchecker",
       "stage": "Design",
@@ -433,38 +33,6 @@
       "runs": [
         "20261125-153618",
         "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts GitChipStyles at src/features/git/Git.module.css.",
-      "role": "planchecker",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/features/git/Git.module.css",
-          "hash": "f8a185df399fc3e0d11a"
-        }
-      ],
-      "at": "2026-11-25T16:45:39.560184+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "The design puts TerminalPassThrough at src/features/terminals/TerminalHost.tsx.",
-      "role": "planchecker",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/features/terminals/TerminalHost.tsx",
-          "hash": "85382b955bd4a10e14c7"
-        }
-      ],
-      "at": "2026-11-25T16:45:39.5723681+00:00",
-      "runs": [
-        "20261125-153618"
       ]
     },
     {
@@ -567,518 +135,6 @@
       "runs": [
         "20261125-153618",
         "20261125-202512"
-      ]
-    },
-    {
-      "text": "four groups Brand/Appearance/Create/Utilities; Utilities trigger is a button whose aria-label becomes \u0022Utilities, update \u003Cv\u003E available\u0022 when an update waits.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/apps/TopBar.tsx",
-          "hash": "dc2f04686ecff259bc79"
-        }
-      ],
-      "at": "2026-11-25T17:14:40.7865145+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "menu is conditionally rendered (closed =\u003E no menuitem in DOM); items have aria-labels Editor, Check for updates, Refresh everything, Help.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/apps/UtilitiesMenu.tsx",
-          "hash": "2fbe6afa1b76d0cb5db0"
-        }
-      ],
-      "at": "2026-11-25T17:14:40.8027823+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "persistent footer is role contentinfo aria-label \u0022Status\u0022 and shows \u0022v\u003Cversion\u003E\u0022 (or \u0022version unknown\u0022), no controls.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/apps/AppFooter.tsx",
-          "hash": "34675ae4c29d4e390ef2"
-        }
-      ],
-      "at": "2026-11-25T17:14:40.8225409+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "header now renders TopBar and the footer sits after the body; Editor/Updates/Refresh/Help moved into the Utilities menu.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "481eecc7424a935fb299"
-        }
-      ],
-      "at": "2026-11-25T17:14:40.8376073+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "EditPane, GitDrawer, ConsoleNav and the ThemeFinder body are React.lazy under Suspense, so tests opening them must await findBy*.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "481eecc7424a935fb299"
-        }
-      ],
-      "at": "2026-11-25T17:14:40.8504959+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "the R1 plan; App.test.tsx reads it through import.meta.glob(\u0022?raw\u0022) because @types/node is not installed.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "docs/ui-tidy-up-plan.md",
-          "hash": "6892d3b24a67bec4cef7"
-        }
-      ],
-      "at": "2026-11-25T17:14:40.8629577+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "App.test mocks listShells; Utilities must be opened before clicking Editor/Check for updates/Refresh everything/Help.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.test.tsx",
-          "hash": "f4bd0b55ab7259c38fa3"
-        }
-      ],
-      "at": "2026-11-25T17:14:40.8748658+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "Refresh-everything and the lazy Console list now need the Utilities menu and findByRole respectively.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.features.test.tsx",
-          "hash": "e1c6b297835592a99c4a"
-        }
-      ],
-      "at": "2026-11-25T17:14:40.8885426+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "APP_SHORTCUTS \u002B matchShortcut/isAppShortcut; Ctrl\u002BB, F5, Ctrl\u002BShift\u002BP, Ctrl\u002BAlt\u002BT; Ctrl\u002BO/S/N/W deliberately unmatched.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/shared/shortcuts.ts",
-          "hash": "70799bde5b2665706da5"
-        }
-      ],
-      "at": "2026-11-25T17:23:51.2084268+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "props actions[{id,label,shortcut?,run}] \u002B onClose; Escape/backdrop close, choose runs then closes.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/command-palette/CommandPalette.tsx",
-          "hash": "ed0c0d68277b3b11fcee"
-        }
-      ],
-      "at": "2026-11-25T17:23:51.2227091+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "optional collapsible/defaultCollapsed; defaults keep the full tools expanded for existing callers; chip keeps pill/counts/refresh.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/git/GitBar.tsx",
-          "hash": "3771b5d9bf3e6c5f39b6"
-        }
-      ],
-      "at": "2026-11-25T17:23:51.2393769+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "attachCustomKeyEventHandler returns false for isAppShortcut on keydown, then keeps existing Ctrl\u002BC/V handling.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/terminals/TerminalHost.tsx",
-          "hash": "2cd668bee9de53e7c78a"
-        }
-      ],
-      "at": "2026-11-25T17:23:51.2551351+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "window keydown now dispatches matchShortcut -\u003E toggleSidebar/refresh/palette/theme; CommandPalette is lazy and mounted only while paletteOpen.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "a902d42a82b3d2b3d300"
-        }
-      ],
-      "at": "2026-11-25T17:36:08.3358138+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "app view renders GitBar with collapsible defaultCollapsed, so tools start as a chip; tests must click \u0027Show git tools\u0027 before Fetch/Pull/Changes/Console.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "a902d42a82b3d2b3d300"
-        }
-      ],
-      "at": "2026-11-25T17:36:08.3517836+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "mocks api/editor \u002B CodeSurface; a pending file opens the editor immediately so do not wait for the Home heading.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.shortcuts.test.tsx",
-          "hash": "b0c7ba76c54187b666c0"
-        }
-      ],
-      "at": "2026-11-25T17:36:08.3682657+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "the theme test mock returns no shells by default, so a shell-change assertion must seed listShells first.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.themes.test.tsx",
-          "hash": "1d01e13c069d8b01b7f2"
-        }
-      ],
-      "at": "2026-11-25T17:43:55.0382243+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "matchShortcut matches F5 regardless of modifiers and ignores metaKey; the terminal hands any matching key to the window.",
-      "role": "security",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/shared/shortcuts.ts",
-          "hash": "70799bde5b2665706da5"
-        }
-      ],
-      "at": "2026-11-25T17:50:43.8511419+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "the new window keydown handler calls preventDefault for every app shortcut but has no e.repeat guard and does not check whether focus is in an input.",
-      "role": "security",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "a902d42a82b3d2b3d300"
-        }
-      ],
-      "at": "2026-11-25T17:50:43.8689223+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "Escape and click-outside listeners exist only while open and are removed on close; update version is rendered as text via aria-label.",
-      "role": "security",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/apps/UtilitiesMenu.tsx",
-          "hash": "2fbe6afa1b76d0cb5db0"
-        }
-      ],
-      "at": "2026-11-25T17:50:43.886028+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "renders only static action labels/shortcuts as React text (no HTML sink); Escape and backdrop mousedown call onClose.",
-      "role": "security",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/command-palette/CommandPalette.tsx",
-          "hash": "ed0c0d68277b3b11fcee"
-        }
-      ],
-      "at": "2026-11-25T17:50:43.8996702+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "R5 lazy() covers ConsoleNav, EditPane, GitDrawer, ThemeFinder, CommandPalette (41-45); Help and UpdateDialog stay eager (16, 654, 671).",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "a902d42a82b3d2b3d300"
-        }
-      ],
-      "at": "2026-11-25T17:52:30.074205+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "R1 plan tests only use expect(plan).toContain(...) via import.meta.glob raw; they cannot detect a duplicated entry.",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.test.tsx",
-          "hash": "f4bd0b55ab7259c38fa3"
-        }
-      ],
-      "at": "2026-11-25T17:52:30.0891024+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "header is display:flex; flex-wrap:wrap; groups min-width:0, so the wrap edge case lives only in CSS, not in a test.",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/apps/TopBar.module.css",
-          "hash": "763c271a162086b8c21e"
-        }
-      ],
-      "at": "2026-11-25T17:52:30.1052236+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "only ConsoleNav, EditPane, GitDrawer, ThemeFinder and CommandPalette are React.lazy; all eight modal dialogs stay inline in the eagerly loaded App module, so the initial chunk carries them.",
-      "role": "reviewer",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "a902d42a82b3d2b3d300"
-        }
-      ],
-      "at": "2026-11-25T18:01:25.832705+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "\u00A77 claims the initial view carries no dialog bodies (false), \u00A710 defers the running-app sign-off to \u0022the merge gate\u0022, and BranchMenu is listed twice (P9 and D10).",
-      "role": "reviewer",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "docs/ui-tidy-up-plan.md",
-          "hash": "6892d3b24a67bec4cef7"
-        }
-      ],
-      "at": "2026-11-25T18:01:25.8522148+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "only Escape is handled; the list runs on click, with no arrow/Enter selection or focus containment.",
-      "role": "reviewer",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/command-palette/CommandPalette.tsx",
-          "hash": "ed0c0d68277b3b11fcee"
-        }
-      ],
-      "at": "2026-11-25T18:01:25.8695855+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "the collapsible tools state is seeded once per mount and App renders GitBar without a key, so it survives switching apps.",
-      "role": "reviewer",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/git/GitBar.tsx",
-          "hash": "3771b5d9bf3e6c5f39b6"
-        }
-      ],
-      "at": "2026-11-25T18:01:25.8862175+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "UpdateBanner/UpdateDialog (UpdateUI) and HelpDialog (exported by CommandPalette.tsx) are React.lazy; Help shares the palette chunk; tests must await them.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "2985ece12d8065f8acff"
-        }
-      ],
-      "at": "2026-11-25T18:17:48.6790729+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "also exports HelpDialog (version/autoCheck/phase/upToDate/available/error/onAutoCheck/onCheckNow/onClose); .help styles live in CommandPalette.module.css.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/command-palette/CommandPalette.tsx",
-          "hash": "4de72785c7046fe80bf1"
-        }
-      ],
-      "at": "2026-11-25T18:17:48.6975886+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "vi.mock wrappers push {name, atImport} when each on-demand module is first evaluated; asserts none is pulled in at App import (R5), factories return the real module.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.test.tsx",
-          "hash": "91ae03a6e592892e03d2"
-        }
-      ],
-      "at": "2026-11-25T18:17:48.7137148+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "\u00A77/D8/D9 now say the Help and Update dialog bodies and UpdateUI are lazy, loaded on demand.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "docs/ui-tidy-up-plan.md",
-          "hash": "bd9523903201f5854e17"
-        }
-      ],
-      "at": "2026-11-25T18:17:48.7302291+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "R5 lazy() covers ConsoleNav, EditPane, GitDrawer, ThemeFinder, CommandPalette, UpdateBanner, UpdateDialog and HelpDialog (40-49); UpdateUI/Help bodies no longer eager.",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "2985ece12d8065f8acff"
-        }
-      ],
-      "at": "2026-11-25T18:22:54.0191116+00:00",
-      "runs": [
-        "20261125-153618"
       ]
     },
     {
@@ -1617,12 +673,13 @@
       "anchors": [
         {
           "path": "src/features/command-palette/CommandPalette.tsx",
-          "hash": "11dffeedbc82ac75969b"
+          "hash": "7221b343ee9b9a06a875"
         }
       ],
-      "at": "2026-11-25T20:53:03.943903+00:00",
+      "at": "2026-11-26T16:58:34.9909327+00:00",
       "runs": [
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-163957"
       ]
     },
     {
@@ -1633,12 +690,13 @@
       "anchors": [
         {
           "path": "src/features/command-palette/CommandPalette.module.css",
-          "hash": "0e49f473d4bd27a4feb9"
+          "hash": "2a1c4528485dddd2381d"
         }
       ],
-      "at": "2026-11-25T20:46:13.3323096+00:00",
+      "at": "2026-11-26T16:58:34.9744566+00:00",
       "runs": [
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-163957"
       ]
     },
     {
@@ -1649,12 +707,13 @@
       "anchors": [
         {
           "path": "src/features/command-palette/CommandPalette.test.tsx",
-          "hash": "d942386562b3d76ef2c5"
+          "hash": "3aaace26d344c3520daf"
         }
       ],
-      "at": "2026-11-25T22:02:16.2848822+00:00",
+      "at": "2026-11-26T16:58:35.00712+00:00",
       "runs": [
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-163957"
       ]
     },
     {
@@ -1859,13 +918,14 @@
       "anchors": [
         {
           "path": "src/shared/shortcuts.ts",
-          "hash": "39006730b87a0efc7b05"
+          "hash": "29e71422efd1776a31ae"
         }
       ],
-      "at": "2026-11-26T12:13:46.3278398+00:00",
+      "at": "2026-11-26T16:58:35.0229561+00:00",
       "runs": [
         "20261125-202512",
-        "20261126-115005"
+        "20261126-115005",
+        "20261126-163957"
       ]
     },
     {
@@ -1876,12 +936,13 @@
       "anchors": [
         {
           "path": "src/shared/shortcuts.test.ts",
-          "hash": "2ea638221c5219e389ad"
+          "hash": "cbeb8e69ea3cf5f3896a"
         }
       ],
-      "at": "2026-11-25T20:53:03.9257475+00:00",
+      "at": "2026-11-26T16:58:35.039109+00:00",
       "runs": [
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-163957"
       ]
     },
     {
@@ -4196,12 +3257,13 @@
       "anchors": [
         {
           "path": "src/features/explorer/ExplorerPanel.tsx",
-          "hash": "99b2e6f902ab2ef22f5e"
+          "hash": "997f93b8878714fbd1a1"
         }
       ],
-      "at": "2026-11-26T12:13:46.215753+00:00",
+      "at": "2026-11-26T16:58:34.6308661+00:00",
       "runs": [
-        "20261126-115005"
+        "20261126-115005",
+        "20261126-163957"
       ]
     },
     {
@@ -4212,12 +3274,14 @@
       "anchors": [
         {
           "path": "src/api/explorer.ts",
-          "hash": "1f259c2c951b89a3c962"
+          "hash": "050f9380a351a288f24b"
         }
       ],
-      "at": "2026-11-26T12:13:46.2326237+00:00",
+      "at": "2026-11-26T16:58:34.5962056+00:00",
       "runs": [
-        "20261126-115005"
+        "20261126-115005",
+        "20261126-163954",
+        "20261126-163957"
       ]
     },
     {
@@ -4244,12 +3308,14 @@
       "anchors": [
         {
           "path": "src-tauri/src/features/explorer/commands.rs",
-          "hash": "71fdbb939434b0400b33"
+          "hash": "a6ca055bf061c22f7ae1"
         }
       ],
-      "at": "2026-11-26T12:13:46.263312+00:00",
+      "at": "2026-11-26T17:34:12.2908712+00:00",
       "runs": [
-        "20261126-115005"
+        "20261126-115005",
+        "20261126-163954",
+        "20261126-163957"
       ]
     },
     {
@@ -4260,12 +3326,13 @@
       "anchors": [
         {
           "path": "src-tauri/src/lib.rs",
-          "hash": "64277010ad87b9a51af5"
+          "hash": "67a40c456ed26808cae6"
         }
       ],
-      "at": "2026-11-26T12:13:46.2795022+00:00",
+      "at": "2026-11-26T16:57:02.274851+00:00",
       "runs": [
-        "20261126-115005"
+        "20261126-115005",
+        "20261126-163954"
       ]
     },
     {
@@ -5130,6 +4197,2232 @@
       "at": "2026-11-26T16:39:26.1544806+00:00",
       "runs": [
         "20261126-115005"
+      ]
+    },
+    {
+      "text": "explorer_list/explorer_drives/explorer_home are thin async shells over the blocking worker; every new file-operation command must be registered in src-tauri/src/lib.rs generate_handler.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/commands.rs",
+          "hash": "a6ca055bf061c22f7ae1"
+        }
+      ],
+      "at": "2026-11-26T16:50:28.5618077+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "Listing/Entry are camelCase; list_level caps at MAX_RETURNED 1000 rows and MAX_SCANNED 10000; HIDDEN_NAMES = node_modules/.git/target/dist; Entry.locked is always false in a listing.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/mod.rs",
+          "hash": "092929b6d12cde3077be"
+        }
+      ],
+      "at": "2026-11-26T16:50:28.5795998+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "Store.open_path reuses an existing entry by same_path, so explorer clicks already focus an open tab; Store.close sets binned_at for a dirty entry, so an unsaved tab goes to the editor bin instead of being discarded.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/editor.rs",
+          "hash": "f7e6e5f1bab6a39659f4"
+        }
+      ],
+      "at": "2026-11-26T16:50:28.5969814+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "TerminalDef has no executable field today; \u0060yes()\u0060 is the existing serde default-true helper to copy for a missing flag.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/model.rs",
+          "hash": "b7bf600d9a49d61df26d"
+        }
+      ],
+      "at": "2026-11-26T16:50:28.6252395+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "appButton(states) and rollup(states) take TermState[] only and have no TerminalDef, so filtering to executable terminals must happen at the call sites (AppHeader, HomeScreen, App) or these signatures change; AppHeader/HomeScreen are merged code needing characterization tests.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/model.ts",
+          "hash": "176717253e5f01a3a6aa"
+        }
+      ],
+      "at": "2026-11-26T16:50:28.6534039+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "openPath calls editorApi.open (editor_open_any) and then onOpened; close(id) flushes then api.close, so re-pointing a tab on rename/move needs a new path-update command, not close\u002Bopen.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/useEditor.ts",
+          "hash": "a2d4c1c4b25a6b3a1df2"
+        }
+      ],
+      "at": "2026-11-26T16:50:28.6782034+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "revision 2 already maps every F5 variant to toggleApp and APP_SHORTCUTS has no refresh entry; R12 mainly needs the palette/app hints and tests confirmed.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/shared/shortcuts.ts",
+          "hash": "29e71422efd1776a31ae"
+        }
+      ],
+      "at": "2026-11-26T16:50:28.6986804+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "palette Start all/Stop all entries show no shortcut; Refresh everything shows none; toggleAppNow guards view===\u0022app\u0022; explorerResetKey derives from view|selectedAppId|activePath.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "1615042f0f96eaaa71bf"
+        }
+      ],
+      "at": "2026-11-26T16:50:28.7197987+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "the panel currently receives only root/source/resetKey/onOpenFile and has no create/rename/delete/move hooks, so R9 adds callbacks or a controller from App.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "997f93b8878714fbd1a1"
+        }
+      ],
+      "at": "2026-11-26T16:50:28.7401842+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "Dialog renders inside SidePane; first action gets focus, last action is the cancel path, and a dialog with no actions has no close path.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Dialog.tsx",
+          "hash": "8d4c8bf1b29505b596ed"
+        }
+      ],
+      "at": "2026-11-26T16:50:28.7600172+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "explorer commands run under core:default \u002B dialog:allow-open; new app-registered fs commands need no new capability, and windows stay [\u0022main\u0022].",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/capabilities/default.json",
+          "hash": "fb46fc757d2d09e4b9e8"
+        }
+      ],
+      "at": "2026-11-26T16:50:28.7819148+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "pickFolder exists for choosing a destination folder (used by EditPane) and can back an explicit Move action.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/api/tauri.ts",
+          "hash": "4d08f18437846ee67572"
+        }
+      ],
+      "at": "2026-11-26T16:50:28.8015344+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "thin async commands over list_level/drives/home; new file ops belong here with spawn_blocking; EditorState is a separate managed Arc\u003CEditorState\u003E.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/commands.rs",
+          "hash": "a6ca055bf061c22f7ae1"
+        }
+      ],
+      "at": "2026-11-26T16:53:13.7408316+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "Store persists an index.json and *.buf snapshots; open_path/close/save are the existing tab bookkeeping; repoint and close_under must be added additively.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/editor.rs",
+          "hash": "f7e6e5f1bab6a39659f4"
+        }
+      ],
+      "at": "2026-11-26T16:53:13.7582112+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "TerminalDef derives Default, so a new executable bool needs #[serde(default = \u0022yes\u0022)] and a manual Default that keeps every old field identical but executable true.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/model.rs",
+          "hash": "b7bf600d9a49d61df26d"
+        }
+      ],
+      "at": "2026-11-26T16:53:13.7832482+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "appButton/rollup are pure helpers used by AppHeader, HomeScreen, Sidebar and App F5; add executable-aware wrappers instead of changing their bodies.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/model.ts",
+          "hash": "176717253e5f01a3a6aa"
+        }
+      ],
+      "at": "2026-11-26T16:53:13.7994995+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "F5 already calls toggleAppNow and the palette refresh entry already has no shortcut; only the F5 key hint on Start/Stop is missing for R12.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "1615042f0f96eaaa71bf"
+        }
+      ],
+      "at": "2026-11-26T16:53:13.8127319+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "no media queries today, so a mobile-first base plus a min-width desktop block is the whole R10 change.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.module.css",
+          "hash": "2a1c4528485dddd2381d"
+        }
+      ],
+      "at": "2026-11-26T16:53:13.8287474+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "rows are \u003Cbutton\u003E elements, so per-row action buttons cannot be nested; use selection plus a header actions menu, inline name form, and drag/drop handlers.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "997f93b8878714fbd1a1"
+        }
+      ],
+      "at": "2026-11-26T16:53:13.8489038+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "reloadShown() rebuilds the root and every expanded level from the bounded cache; forgetUnder plus a per-folder reload is enough after a mutation.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/useExplorer.ts",
+          "hash": "9749b4c906794b239137"
+        }
+      ],
+      "at": "2026-11-26T16:53:13.8641947+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "typed wrappers only; add create/rename/move/delete functions here and mirror the new commands in the same file.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/api/explorer.ts",
+          "hash": "050f9380a351a288f24b"
+        }
+      ],
+      "at": "2026-11-26T16:53:13.8799698+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "core:default plus dialog:allow-open; custom explorer commands need no new capability or permission.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/capabilities/default.json",
+          "hash": "fb46fc757d2d09e4b9e8"
+        }
+      ],
+      "at": "2026-11-26T16:53:13.8977213+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "tabs live in local state and quiet timers are keyed by doc id; resync must merge editor_list preserving loaded content and clear timers/latest for removed ids.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/useEditor.ts",
+          "hash": "a2d4c1c4b25a6b3a1df2"
+        }
+      ],
+      "at": "2026-11-26T16:53:13.9159606+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "each terminal is a fieldset; the executable switch belongs beside Shell/Advanced and draft() must save the flag explicitly.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/EditPane.tsx",
+          "hash": "bda42348d57aeade840e"
+        }
+      ],
+      "at": "2026-11-26T16:53:13.9345708+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "the last action is always the cancel action, and Escape/the pane close both run it.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Dialog.tsx",
+          "hash": "8d4c8bf1b29505b596ed"
+        }
+      ],
+      "at": "2026-11-26T16:53:13.9560352+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "Dialog already renders through the jattac side pane, so the delete confirmation can use Dialog directly from the explorer.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidePane.tsx",
+          "hash": "3f7aae8bb7d6d9865889"
+        }
+      ],
+      "at": "2026-11-26T16:53:13.9749378+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "list_level/list_level_with, HIDDEN_NAMES, MAX_RETURNED and MAX_SCANNED are the browsing core; a new ops module can sit beside commands.rs.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/mod.rs",
+          "hash": "092929b6d12cde3077be"
+        }
+      ],
+      "at": "2026-11-26T16:56:45.7916723+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "Store has no repath method; same_path lowercases and unifies slashes, and buffers are keyed by entry id, so changing entry.path keeps unsaved text.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/editor.rs",
+          "hash": "f7e6e5f1bab6a39659f4"
+        }
+      ],
+      "at": "2026-11-26T16:56:45.8094236+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "Store::close bins dirty entries and removes clean ones, but it does not flush a pending typing snapshot, so deleting a file must snapshot first.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/editor.rs",
+          "hash": "f7e6e5f1bab6a39659f4"
+        }
+      ],
+      "at": "2026-11-26T16:56:45.8263046+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "Store::open_path reuses an entry by same_path and clears binned_at, so re-pointing must change entry.path/title, not create a new entry.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/editor.rs",
+          "hash": "f7e6e5f1bab6a39659f4"
+        }
+      ],
+      "at": "2026-11-26T16:56:45.8421747+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "receives states only (App.tsx passes app.terminals.map), so App decides which states are executable.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/AppHeader.tsx",
+          "hash": "c34bd4c9c395002075cd"
+        }
+      ],
+      "at": "2026-11-26T16:56:45.9263436+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "props are root/source/resetKey/onOpenFile only; rows are buttons with no action or drag hooks.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "997f93b8878714fbd1a1"
+        }
+      ],
+      "at": "2026-11-26T16:56:46.0108231+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "the editor Store lives in its own managed EditorState (Arc\u003CEditorState\u003E), not AppState, so explorer file-op commands that re-point or close tabs must take State\u003CArc\u003CEditorState\u003E\u003E.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/editor_cmds.rs",
+          "hash": "9bb4a4a4b88429ee4848"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.0236076+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "Store keeps only entry metadata in memory; text is in .buf files written by snapshot(), and Store::close sets binned_at (dirty tabs go to the bin, not discarded).",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/editor.rs",
+          "hash": "f7e6e5f1bab6a39659f4"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.0381199+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "TerminalDef derives Default today, so adding executable=true needs the derive replaced by a manual Default impl (serde default alone only covers missing JSON).",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/model.rs",
+          "hash": "b7bf600d9a49d61df26d"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.0527573+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "start_all spawns a thread over app.terminals in order; stop_all builds ids from app.terminals, so executable filtering belongs in both loops.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/commands.rs",
+          "hash": "83f80adf2ef7a7b7bd31"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.069312+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "up() starts every app terminal then wait_until_ready()/report() iterate app.terminals again; both the start loop and the readiness loops need the executable filter.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/engine.rs",
+          "hash": "61aa9958f37545a41f60"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.0908822+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "Dialog is already a thin wrapper over SidePane (jattac) with first-action focus and last-action cancel; reuse it for the delete confirmation.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Dialog.tsx",
+          "hash": "8d4c8bf1b29505b596ed"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.1108542+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "F5 is driven by matchShortcut -\u003E toggleAppNow.current (a ref), which calls appButton over live states then L.actions.startAll/stopAll; F5 is preventDefault in every view.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "1615042f0f96eaaa71bf"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.1293279+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "palette refresh entry has no shortcut and is labeled \u0022Refresh everything\u0022; built-in palette Start all/Stop all entries currently have no key hint (R12 wants F5 where a hint is shown).",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "1615042f0f96eaaa71bf"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.1491036+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "levels are cached per folder with MAX_CACHED_LEVELS=100 and refresh() reloads expanded folders plus the root, so post-op refresh can call it.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/useExplorer.ts",
+          "hash": "9749b4c906794b239137"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.167747+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "onOpenFile receives entry.path and App passes editor.openPath; Store::open_path reuses the existing entry by same_path, so no duplicate tab.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "997f93b8878714fbd1a1"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.1887326+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts EditorTabBook at src-tauri/src/editor.rs.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src-tauri/src/editor.rs",
+          "hash": "f7e6e5f1bab6a39659f4"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.2478939+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts RustTerminalModel at src-tauri/src/model.rs.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src-tauri/src/model.rs",
+          "hash": "b7bf600d9a49d61df26d"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.2810194+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts BulkStartStop at src-tauri/src/commands.rs.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src-tauri/src/commands.rs",
+          "hash": "83f80adf2ef7a7b7bd31"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.2977506+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts EngineBulkUp at src-tauri/src/engine.rs.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src-tauri/src/engine.rs",
+          "hash": "61aa9958f37545a41f60"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.3172567+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts ExplorerState at src/features/explorer/useExplorer.ts.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/explorer/useExplorer.ts",
+          "hash": "9749b4c906794b239137"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.3520107+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts ExplorerPathHelpers at src/features/explorer/root.ts.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/explorer/root.ts",
+          "hash": "653864421dd4206e9550"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.374191+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts ExplorerPanelUi at src/features/explorer/ExplorerPanel.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "997f93b8878714fbd1a1"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.3916732+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts ExplorerStyles at src/features/explorer/ExplorerPanel.module.css.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.module.css",
+          "hash": "24e93e8035d0cb3ce46d"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.4090758+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts EditorResync at src/state/useEditor.ts.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/state/useEditor.ts",
+          "hash": "a2d4c1c4b25a6b3a1df2"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.4264235+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts WindowTerminalModel at src/state/model.ts.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/state/model.ts",
+          "hash": "176717253e5f01a3a6aa"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.4454313+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts EditTerminalControl at src/features/apps/EditPane.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/EditPane.tsx",
+          "hash": "bda42348d57aeade840e"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.4654528+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts EditTerminalStyles at src/features/apps/EditPane.module.css.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/EditPane.module.css",
+          "hash": "6da8289635747b30dd3b"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.4971145+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts StartStopButton at src/features/apps/AppHeader.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/AppHeader.tsx",
+          "hash": "c34bd4c9c395002075cd"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.5146982+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts HomeStatus at src/features/home/HomeScreen.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/home/HomeScreen.tsx",
+          "hash": "cd27669751ae96355412"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.530406+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts SidebarStatus at src/features/apps/Sidebar.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "25b2860a1598195a75bc"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.5470148+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts AppWiring at src/App.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "1615042f0f96eaaa71bf"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.5638534+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts PaletteResponsiveCss at src/features/command-palette/CommandPalette.module.css.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.module.css",
+          "hash": "2a1c4528485dddd2381d"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.5793366+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts VersionSync at package.json.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "package.json",
+          "hash": "976550686f41a2dd8dd3"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.5986791+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts ExplorerRustTests at src-tauri/tests/explorer.rs.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src-tauri/tests/explorer.rs",
+          "hash": "47349aee67d6e322f6c6"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.6174223+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts ExplorerApiTests at src/api/explorer.test.ts.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/api/explorer.test.ts",
+          "hash": "685426a631b81c5432c7"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.6124667+00:00",
+      "runs": [
+        "20261126-163954",
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts ExplorerStateTests at src/features/explorer/useExplorer.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/explorer/useExplorer.test.tsx",
+          "hash": "dbd2077f68a1af5c2ecd"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.6543881+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts ExplorerPanelTests at src/features/explorer/ExplorerPanel.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.test.tsx",
+          "hash": "90dec242c43ad746042d"
+        }
+      ],
+      "at": "2026-11-26T17:34:12.3434802+00:00",
+      "runs": [
+        "20261126-163954",
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts ExplorerAppTests at src/App.explorer.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.explorer.test.tsx",
+          "hash": "138e6b7e7ce3ded87d1a"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.6893009+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts EditorResyncTests at src/state/useEditor.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/state/useEditor.test.tsx",
+          "hash": "4b414047d5553560e19e"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.7068542+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts TerminalFlagTests at src/state/model.test.ts.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/state/model.test.ts",
+          "hash": "8d92fedec336491c5708"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.7254263+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts EditPaneFlagTests at src/features/apps/EditPane.novice.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/EditPane.novice.test.tsx",
+          "hash": "d051dbd8ce3d6ff0cb29"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.7440019+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts BulkShortcutTests at src/App.shortcuts.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.shortcuts.test.tsx",
+          "hash": "9cfa19faa572166b60b3"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.7615232+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts PaletteTests at src/features/command-palette/CommandPalette.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.test.tsx",
+          "hash": "3aaace26d344c3520daf"
+        }
+      ],
+      "at": "2026-11-26T16:57:02.7827168+00:00",
+      "runs": [
+        "20261126-163954"
+      ]
+    },
+    {
+      "text": "The design puts ExplorerModule at src-tauri/src/features/explorer/mod.rs.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/mod.rs",
+          "hash": "092929b6d12cde3077be"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.4263708+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts EditorRepath at src-tauri/src/editor.rs.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src-tauri/src/editor.rs",
+          "hash": "f7e6e5f1bab6a39659f4"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.4587049+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts LibRegistration at src-tauri/src/lib.rs.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src-tauri/src/lib.rs",
+          "hash": "67a40c456ed26808cae6"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.4916211+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts CargoManifest at src-tauri/Cargo.toml.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src-tauri/Cargo.toml",
+          "hash": "7973a1d68631c42758d4"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.5064299+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts ModelExecutable at src-tauri/src/model.rs.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src-tauri/src/model.rs",
+          "hash": "b7bf600d9a49d61df26d"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.5221097+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts CommandsStartAll at src-tauri/src/commands.rs.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src-tauri/src/commands.rs",
+          "hash": "83f80adf2ef7a7b7bd31"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.5532927+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts EngineUp at src-tauri/src/engine.rs.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src-tauri/src/engine.rs",
+          "hash": "61aa9958f37545a41f60"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.5693195+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts ExplorerPanelStyles at src/features/explorer/ExplorerPanel.module.css.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.module.css",
+          "hash": "24e93e8035d0cb3ce46d"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.6611339+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts UseExplorer at src/features/explorer/useExplorer.ts.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/explorer/useExplorer.ts",
+          "hash": "9749b4c906794b239137"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.6928757+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts UseEditor at src/state/useEditor.ts.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/state/useEditor.ts",
+          "hash": "a2d4c1c4b25a6b3a1df2"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.7082601+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts UseEditorTests at src/state/useEditor.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/state/useEditor.test.tsx",
+          "hash": "4b414047d5553560e19e"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.72376+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts App at src/App.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "1615042f0f96eaaa71bf"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.7403508+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts AppExplorerTests at src/App.explorer.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.explorer.test.tsx",
+          "hash": "138e6b7e7ce3ded87d1a"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.7585668+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts AppShortcutTests at src/App.shortcuts.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.shortcuts.test.tsx",
+          "hash": "9cfa19faa572166b60b3"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.7784538+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts AppFeatureTests at src/App.features.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.features.test.tsx",
+          "hash": "46ccbd410e279a823143"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.7959326+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts ModelTs at src/state/model.ts.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/state/model.ts",
+          "hash": "176717253e5f01a3a6aa"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.816173+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts ModelTsTests at src/state/model.test.ts.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/state/model.test.ts",
+          "hash": "8d92fedec336491c5708"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.8348412+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts AppHeader at src/features/apps/AppHeader.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/AppHeader.tsx",
+          "hash": "c34bd4c9c395002075cd"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.8542686+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts HomeScreen at src/features/home/HomeScreen.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/home/HomeScreen.tsx",
+          "hash": "cd27669751ae96355412"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.8726603+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts HomeScreenTests at src/features/home/HomeScreen.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/home/HomeScreen.test.tsx",
+          "hash": "b53ab7654ca981fe9376"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.890614+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts Sidebar at src/features/apps/Sidebar.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "25b2860a1598195a75bc"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.9059226+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts ComponentTests at src/features/apps/components.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/components.test.tsx",
+          "hash": "dfb72f20a93f8c245c11"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.9244507+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts EditPane at src/features/apps/EditPane.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/EditPane.tsx",
+          "hash": "bda42348d57aeade840e"
+        }
+      ],
+      "at": "2026-11-26T16:58:34.9396198+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "list_level/list_level_with, HIDDEN_NAMES, MAX_RETURNED and MAX_SCANNED are the browsing core; the settled decision puts R9 create/rename/move/delete functions here, not in a new module, with shells in commands.rs.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/mod.rs",
+          "hash": "092929b6d12cde3077be"
+        }
+      ],
+      "at": "2026-11-26T17:34:12.2450646+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts UseExplorerTests at src/features/explorer/useExplorer.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/explorer/useExplorer.test.tsx",
+          "hash": "dbd2077f68a1af5c2ecd"
+        }
+      ],
+      "at": "2026-11-26T17:34:12.3536764+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts AppHeaderStyles at src/features/apps/AppHeader.module.css.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/AppHeader.module.css",
+          "hash": "e1587401b5921fec1140"
+        }
+      ],
+      "at": "2026-11-26T17:34:12.3757382+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "The design puts EditPaneStyles at src/features/apps/EditPane.module.css.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/EditPane.module.css",
+          "hash": "6da8289635747b30dd3b"
+        }
+      ],
+      "at": "2026-11-26T17:34:12.3955923+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "R9 ops create_item/rename_item/move_item/delete_item(\u002Bdelete_item_with) live here; helpers same_volume, within, rebase_path.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/mod.rs",
+          "hash": "8f2974530f48c01a174f"
+        }
+      ],
+      "at": "2026-11-26T17:57:11.4408186+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "explorer_create(path,name,kind)-\u003EString; explorer_rename(path,name)/explorer_move(path,into)/explorer_delete(path)-\u003EExplorerOp{path,repaths:[{id,path,title}],closed:[id]}.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/commands.rs",
+          "hash": "e56b2a846f0bc45f7862"
+        }
+      ],
+      "at": "2026-11-26T17:57:11.4757367+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "Store::repath_prefix(old,new)-\u003EVec\u003CEntry\u003E and close_prefix(item,now)-\u003EVec\u003CString\u003E added; unsaved buffers follow the tab.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/editor.rs",
+          "hash": "2cac8f68fbf4ce3ad91c"
+        }
+      ],
+      "at": "2026-11-26T17:57:11.4981876+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "TerminalDef.executable is serde default true and manual Default true; always serialized.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/model.rs",
+          "hash": "da45d6b71bda8b278bff"
+        }
+      ],
+      "at": "2026-11-26T17:57:11.5151247+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "editor and model are pub now; four explorer_* commands registered in generate_handler.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/lib.rs",
+          "hash": "c91111ba0191b95e9156"
+        }
+      ],
+      "at": "2026-11-26T17:57:11.536778+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "trash 5.4.0 added for Recycle Bin deletes (offline-verified, compiled).",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/Cargo.toml",
+          "hash": "fec0f1fbedfa563db0a6"
+        }
+      ],
+      "at": "2026-11-26T17:57:11.5559024+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "17 R9 tests; slice 1 backend tests.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/tests/explorer_ops.rs",
+          "hash": "4152a0c462e4d91651bf"
+        }
+      ],
+      "at": "2026-11-26T17:57:11.5889034+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "7 R9 repath/close tests.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/tests/editor_repath.rs",
+          "hash": "7d8f5616cb845395f449"
+        }
+      ],
+      "at": "2026-11-26T17:57:11.6096922+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "explorerApi.create/rename/move/remove wrap explorer_create/explorer_rename/explorer_move/explorer_delete; ExplorerOp={path,repaths,closed}.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/api/explorer.ts",
+          "hash": "a850b6d2a8d6869e3682"
+        }
+      ],
+      "at": "2026-11-26T18:16:05.7703312+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "create/rename/delete prompts on the shared Dialog; validateExplorerName mirrors the core\u0027s name checks.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerDialogs.tsx",
+          "hash": "2082652d7c7530b172c1"
+        }
+      ],
+      "at": "2026-11-26T18:16:05.7871954+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "useExplorerOps({explorer,editor}) owns prompt/busy/error, calls explorerApi then reloadFolder/forgetUnder; App must pass a memoised editor bridge to enable it without breaking FileRow memo.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/useExplorerOps.ts",
+          "hash": "9cfce8bba1c988dd4927"
+        }
+      ],
+      "at": "2026-11-26T18:16:05.8033788+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "reloadFolder(path) re-reads root via reloadToken or one expanded/loaded child; forgetUnder(path) drops cached levels and expansion under a path.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/useExplorer.ts",
+          "hash": "599763d80bbb04e69927"
+        }
+      ],
+      "at": "2026-11-26T18:16:05.8202675+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "AppDef::executable_terminals() is the single R11 bulk filter (serde default true).",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/model.rs",
+          "hash": "aa5aa78caa1d95e97270"
+        }
+      ],
+      "at": "2026-11-26T18:16:05.8409887+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "start_all and stop_all iterate app.executable_terminals(), not app.terminals.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/commands.rs",
+          "hash": "d197ddef63455aa8f7e7"
+        }
+      ],
+      "at": "2026-11-26T18:16:05.8566159+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "EditorController exposes flushPending/applyRepaths/applyClosed/dirtyTitlesUnder; applyClosed assumes the core already closed\u002Bbinned and only drops local tabs then refreshes the bin.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/useEditor.ts",
+          "hash": "ed8fc936e2cef58b392a"
+        }
+      ],
+      "at": "2026-11-26T18:34:38.2083989+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "editorBridge is a useMemo of those four callbacks and is passed to ExplorerPanel as \u0060editor\u0060; F5 and AppHeader states filter with isExecutable; palette Start/Stop carry shortcutKeys(\u0022toggleApp\u0022).",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "68056cdc3c79d8728703"
+        }
+      ],
+      "at": "2026-11-26T18:34:38.2273983+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "TerminalDef.executable? plus isExecutable (false only when explicitly false); newTerminal sets executable true.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/model.ts",
+          "hash": "f9714f4b47f74d2640fe"
+        }
+      ],
+      "at": "2026-11-26T18:34:38.2438648+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "the card dot and the Start all / Stop all state follow only executable terminals (isExecutable); running consoles still offer Stop all.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/home/HomeScreen.tsx",
+          "hash": "fcb8f19eae7d744e84f4"
+        }
+      ],
+      "at": "2026-11-26T18:46:37.6763602+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "R11 checks newTerminal().executable === true and isExecutable treats a missing flag as on.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/model.test.ts",
+          "hash": "5d01204ee7e4d2528ace"
+        }
+      ],
+      "at": "2026-11-26T18:46:37.7177402+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "appRollup filters terminals with isExecutable so the app status dot matches Start all / Stop all (R11).",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "0c420ac0fffb3ad5683f"
+        }
+      ],
+      "at": "2026-11-26T19:07:16.8459639+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "each terminal fieldset has a labelled executable checkbox; draft() writes executable: t.executable !== false.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/EditPane.tsx",
+          "hash": "d5d38fb7eda357737db3"
+        }
+      ],
+      "at": "2026-11-26T19:07:16.863484+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "mobile-first base (width 100%, max-height 100dvh, place-items start stretch) and @media (min-width:640px) restores the desktop palette.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.module.css",
+          "hash": "f554c5c43a1b8425ec7c"
+        }
+      ],
+      "at": "2026-11-26T19:07:16.8793964+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "reads the CSS raw with node:fs \u002B process.cwd(); Vitest css:false makes ?raw return the CSS-module proxy, not a string.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.styles.test.ts",
+          "hash": "ed15064a720974aa2eb1"
+        }
+      ],
+      "at": "2026-11-26T19:07:16.8946462+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "asserts 2.3.0; a version bump must also update package-lock.json and App.test.tsx (v2.3.0 in the footer).",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.version.test.tsx",
+          "hash": "9b53a36a0319bdc4c63c"
+        }
+      ],
+      "at": "2026-11-26T19:07:16.9122135+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "start_all/stop_all filter via AppDef::executable_terminals() at :137 and :161; no test calls either command, terminal_executable.rs only exercises the helper.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/commands.rs",
+          "hash": "d197ddef63455aa8f7e7"
+        }
+      ],
+      "at": "2026-11-26T19:18:56.9180033+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "r9_delete_uses_the_real_recycle_bin (:294) only asserts !exists(), so a permanent delete would also pass it.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/tests/explorer_ops.rs",
+          "hash": "4152a0c462e4d91651bf"
+        }
+      ],
+      "at": "2026-11-26T19:18:56.9343194+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "delete_item (:409) delegates to delete_item_with(trash::delete); the injected tests bypass that production wrapper.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/mod.rs",
+          "hash": "8f2974530f48c01a174f"
+        }
+      ],
+      "at": "2026-11-26T19:18:56.9509459+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "r9_a_move_between_drives_is_refused (:230) only calls same_volume(), not move_item.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/tests/explorer_ops.rs",
+          "hash": "4152a0c462e4d91651bf"
+        }
+      ],
+      "at": "2026-11-26T19:18:56.9685372+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "rename/move apply repaths then reload the affected levels; delete flushes pending then applies closed tabs.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/useExplorerOps.ts",
+          "hash": "9cfce8bba1c988dd4927"
+        }
+      ],
+      "at": "2026-11-26T19:18:56.9853368+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "mobile base width 100%/100dvh, @media(min-width:640px) restores 12vh \u002B min(560px,100%) \u002B 60vh.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.module.css",
+          "hash": "f554c5c43a1b8425ec7c"
+        }
+      ],
+      "at": "2026-11-26T19:18:57.0052238+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "explorer_rename/move/delete mutate the fs first, then Store::repath_prefix/close_prefix; a persist failure after the fs change is unhandled.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/commands.rs",
+          "hash": "e56b2a846f0bc45f7862"
+        }
+      ],
+      "at": "2026-11-26T19:22:45.9749847+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "\u0060selected\u0060 is cleared only on [resetKey, root], so it stays stale after a rename/move within the same root (Move has no confirm).",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "d424685a58c23c343d4b"
+        }
+      ],
+      "at": "2026-11-26T19:22:45.9893672+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "pathParts/samePath/withinPath are duplicated verbatim in useExplorerOps.ts and (pathParts/withinPath) in src/state/useEditor.ts.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/useExplorer.ts",
+          "hash": "599763d80bbb04e69927"
+        }
+      ],
+      "at": "2026-11-26T19:22:46.0040634+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "explorerResetKey is now \u0060${view}|${selectedAppId}|${explorer.root}\u0060 (activePath removed) so a renamed tab under the same root keeps the tree.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "68056cdc3c79d8728703"
+        }
+      ],
+      "at": "2026-11-26T19:22:46.0225253+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "r9_delete_uses_the_real_recycle_bin (now :302) lists and restores the item via trash::os_limited, so QA-1 is fixed; cargo test --test explorer_ops 17/17 pass.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/tests/explorer_ops.rs",
+          "hash": "e68750737bf0b0339e6b"
+        }
+      ],
+      "at": "2026-11-26T19:33:22.0264252+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "still only exercises AppDef::executable_terminals(); no test calls commands::start_all/stop_all, so QA-2 stays open.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/tests/terminal_executable.rs",
+          "hash": "4b556fb6a626861e6b06"
+        }
+      ],
+      "at": "2026-11-26T19:33:22.0451537+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "Tauri State cannot be built outside the app runtime, so R11 command-level tests drive commands::start_all_in/stop_all_in (the exact loops start_all/stop_all delegate to); commands/config/runtime are pub and the *_in fns are pub for this.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/tests/terminal_executable.rs",
+          "hash": "8d3a416081f9fdb6c490"
+        }
+      ],
+      "at": "2026-11-26T19:58:09.0377685+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "rename_and_repath/move_and_repath now undo the fs rename when Store::repath_prefix fails; delete_and_close_with snapshots entries, closes tabs first, and restores them if the Recycle Bin refuses (REV-1 fixed).",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/commands.rs",
+          "hash": "85191164b9fe10803bb6"
+        }
+      ],
+      "at": "2026-11-26T20:22:34.8672543+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "Store::commit replaces entries then restores them if persist fails; repath_prefix/close_prefix both go through it, so a failed save never leaves the store half-changed.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/editor.rs",
+          "hash": "8f32299e77523a5360dd"
+        }
+      ],
+      "at": "2026-11-26T20:22:34.8926239+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "useExplorerOps takes an optional onCommitted fired only after a successful rename/move/delete (not create/refused); ExplorerPanel passes clearSelection (REV-2 fixed).",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/useExplorerOps.ts",
+          "hash": "9fab84056d50ed06871e"
+        }
+      ],
+      "at": "2026-11-26T20:22:34.9092502+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "\u0060selected\u0060 is cleared by onCommitted after rename/move/delete, so the toolbar\u0027s Rename/Move/Delete fall back to disabled instead of acting on a stale path.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "036553a2d0af555eddd5"
+        }
+      ],
+      "at": "2026-11-26T20:22:34.9268897+00:00",
+      "runs": [
+        "20261126-163957"
+      ]
+    },
+    {
+      "text": "explorerResetKey is \u0060${view}|${selectedAppId}|${explorer.root}\u0060 (activePath removed) so a renamed tab under the same root keeps the tree.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "68056cdc3c79d8728703"
+        }
+      ],
+      "at": "2026-11-26T20:22:34.9464521+00:00",
+      "runs": [
+        "20261126-163957"
       ]
     }
   ]

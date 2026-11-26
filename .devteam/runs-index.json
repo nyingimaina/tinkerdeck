@@ -30,5 +30,21 @@
     "snippet": "When no app root applies (the home view, the editor view with no tab open, or an\u2026 (and 3 m\u2026",
     "costUsd": 0.737596596,
     "final": true
+  },
+  {
+    "id": "20261126-163954",
+    "startedAt": "2026-11-26T16:39:54.1386847+00:00",
+    "status": "AwaitingDecision",
+    "snippet": "The explorer supports create file, create folder, rename, move, delete and\u2026 (and 3 more)",
+    "costUsd": 0.099403674,
+    "final": false
+  },
+  {
+    "id": "20261126-163957",
+    "startedAt": "2026-11-26T16:39:57.5121668+00:00",
+    "status": "Completed",
+    "snippet": "1a. Sidebar file explorer: browsing and root rules (and 7 more)",
+    "costUsd": 1.0565024579999998,
+    "final": true
   }
 ]

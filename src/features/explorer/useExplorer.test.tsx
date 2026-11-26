@@ -259,4 +259,65 @@ describe("useExplorer", () => {
     expect(api.list).not.toHaveBeenCalled();
     expect(api.drives).not.toHaveBeenCalled();
   });
+
+  it("R9 reloadFolder re-reads only the folder an operation touched", async () => {
+    api.list.mockImplementation(async (path: string) =>
+      listing(path, path === "C:\\proj" ? [folder("C:\\proj\\a"), folder("C:\\proj\\b")] : []),
+    );
+    const { result } = await mount({ root: "C:\\proj", source: "app" });
+    act(() => result.current.toggleFolder("C:\\proj\\a"));
+    act(() => result.current.ensure("C:\\proj\\a"));
+    act(() => result.current.toggleFolder("C:\\proj\\b"));
+    act(() => result.current.ensure("C:\\proj\\b"));
+    await flush();
+
+    api.list.mockClear();
+    act(() => result.current.reloadFolder("C:\\proj\\a"));
+    await flush();
+    expect(callsTo("C:\\proj\\a")).toHaveLength(1);
+    expect(callsTo("C:\\proj\\b")).toHaveLength(0);
+    expect(callsTo("C:\\proj")).toHaveLength(0);
+
+    api.list.mockClear();
+    act(() => result.current.reloadFolder("C:\\proj"));
+    await flush();
+    expect(callsTo("C:\\proj")).toHaveLength(1);
+    expect(callsTo("C:\\proj\\a")).toHaveLength(0);
+  });
+
+  it("R9 reloadFolder leaves an unshown folder and the drive list alone", async () => {
+    const { result } = await mount({ root: "D:\\", source: "misc" });
+    api.list.mockClear();
+
+    act(() => result.current.reloadFolder("D:\\never"));
+    await flush();
+    expect(callsTo("D:\\never")).toHaveLength(0);
+
+    act(() => result.current.up());
+    await flush();
+    expect(result.current.atDrives).toBe(true);
+    api.list.mockClear();
+    act(() => result.current.reloadFolder("D:\\"));
+    await flush();
+    expect(api.list).not.toHaveBeenCalled();
+  });
+
+  it("R9 forgetUnder drops the cached subtree under a renamed, moved or deleted item", async () => {
+    api.list.mockImplementation(async (path: string) =>
+      listing(path, path === "C:\\proj" ? [folder("C:\\proj\\lib"), folder("C:\\proj\\other")] : []),
+    );
+    const { result } = await mount({ root: "C:\\proj", source: "app" });
+    act(() => result.current.toggleFolder("C:\\proj\\lib"));
+    act(() => result.current.ensure("C:\\proj\\lib"));
+    act(() => result.current.toggleFolder("C:\\proj\\other"));
+    act(() => result.current.ensure("C:\\proj\\other"));
+    await flush();
+    expect(result.current.levelOf("C:\\proj\\lib").listing).not.toBeNull();
+
+    act(() => result.current.forgetUnder("C:\\proj\\lib"));
+    expect(result.current.levelOf("C:\\proj\\lib").listing).toBeNull();
+    expect(result.current.isExpanded("C:\\proj\\lib")).toBe(false);
+    expect(result.current.levelOf("C:\\proj\\other").listing).not.toBeNull();
+    expect(result.current.isExpanded("C:\\proj\\other")).toBe(true);
+  });
 });

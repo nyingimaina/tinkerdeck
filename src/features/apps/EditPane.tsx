@@ -142,6 +142,7 @@ export function EditPane({ initial, isNew, runningTerminalIds, onSave, onCancel,
       ...t,
       name: t.name.trim(),
       cwd: normalizeSlashes(t.cwd) || ".",
+      executable: t.executable !== false,
       stopCommand: t.stopCommand?.trim() ? t.stopCommand : undefined,
       shell: t.shell || undefined,
       readyPattern: t.readyPattern?.trim() ? t.readyPattern.trim() : undefined,
@@ -391,6 +392,17 @@ export function EditPane({ initial, isNew, runningTerminalIds, onSave, onCancel,
                   </select>
                 </label>
               )}
+
+              <label className={styles.mini} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  aria-label={`Terminal ${i + 1} executable`}
+                  checked={t.executable !== false}
+                  onChange={(e) => update(i, { executable: e.target.checked })}
+                  style={{ flex: "none", width: "auto", padding: 0 }}
+                />
+                <span>Include in Start all / Stop all (and F5)</span>
+              </label>
 
               <details className={styles.advanced}>
                 <summary>Advanced: readiness and environment variables</summary>

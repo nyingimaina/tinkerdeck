@@ -110,4 +110,37 @@ describe("HomeScreen", () => {
     setup([app("a")], { up: ["console-a"] });
     expect(within(section("Running now")).getByText("App a")).toBeInTheDocument();
   });
+
+  describe("the executable flag (R11)", () => {
+    const withTerms = (terms: { id: string; executable: boolean }[]): AppDef => ({
+      id: "a",
+      name: "App a",
+      root: "C:\\code\\a",
+      favourite: true,
+      terminals: terms.map((t) => ({ id: t.id, name: t.id, cwd: ".", command: "", env: {}, executable: t.executable })),
+    });
+
+    it("R11: a running non-executable terminal does not turn the card green or offer Stop all", () => {
+      setup([withTerms([{ id: "a-exe", executable: true }, { id: "a-no", executable: false }])], { up: ["a-no"] });
+      const card = within(section("Favourites"));
+      expect(card.getByRole("button", { name: "Start all in App a" })).toBeEnabled();
+      expect(card.queryByRole("button", { name: "Stop all in App a" })).toBeNull();
+      expect(card.getByRole("img", { name: "App status: grey" })).toBeInTheDocument();
+    });
+
+    it("R11: an executable terminal that is running still turns the card green and offers Stop all", () => {
+      setup([withTerms([{ id: "a-exe", executable: true }, { id: "a-no", executable: false }])], { up: ["a-exe"] });
+      const card = within(section("Favourites"));
+      expect(card.getByRole("button", { name: "Stop all in App a" })).toBeInTheDocument();
+      expect(card.getByRole("img", { name: "App status: green" })).toBeInTheDocument();
+    });
+
+    it("R11: an app whose terminals are all non-executable keeps its Start all state", () => {
+      setup([withTerms([{ id: "a1", executable: false }, { id: "a2", executable: false }])], { up: ["a1", "a2"] });
+      const card = within(section("Favourites"));
+      expect(card.getByRole("button", { name: "Start all in App a" })).toBeEnabled();
+      expect(card.queryByRole("button", { name: "Stop all in App a" })).toBeNull();
+      expect(card.getByRole("img", { name: "App status: grey" })).toBeInTheDocument();
+    });
+  });
 });

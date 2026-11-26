@@ -2,12 +2,13 @@
   "rules": [
     {
       "rule": "USR-003",
-      "count": 1,
+      "count": 2,
       "runs": [
-        "20261126-075013"
+        "20261126-075013",
+        "20261126-163957"
       ],
-      "lastDescription": "The row memoisation that the A1/EFF-002 relaxation relies on is defeated by an unstable callback, so a large folder re-renders up to 1000 file rows on every App update (typing included). That is needless work and a responsiveness bug on the",
-      "lastFile": "src/App.tsx"
+      "lastDescription": "The row selection is not invalidated after an operation. Move (which has no confirmation prompt) will then silently move whatever file now sits at the stale old path: e.g. rename a.txt -\u003E b.txt, create a new a.txt, then press Move/Delete on",
+      "lastFile": "src/features/explorer/ExplorerPanel.tsx"
     },
     {
       "rule": "USR-006",
@@ -120,13 +121,50 @@
       ],
       "lastDescription": "R8\u0027s acceptance \u0022The command palette is not moved into a side pane and still opens as a palette\u0022 has no test: the palette could be wrapped in the SidePane and every existing palette/App test would still pass because role=dialog, focus and a",
       "lastRule": ""
+    },
+    {
+      "path": "src-tauri/src/features/explorer/commands.rs",
+      "count": 1,
+      "runs": [
+        "20261126-163957"
+      ],
+      "lastDescription": "The disk mutation and the editor-store update are not atomic, so a persist failure leaves a half-applied operation: the item is renamed/moved/deleted on disk (the reloaded tree shows the new state) while the command returns \u0027could not be re",
+      "lastRule": ""
+    },
+    {
+      "path": "src/features/explorer/ExplorerPanel.tsx",
+      "count": 1,
+      "runs": [
+        "20261126-163957"
+      ],
+      "lastDescription": "The row selection is not invalidated after an operation. Move (which has no confirmation prompt) will then silently move whatever file now sits at the stale old path: e.g. rename a.txt -\u003E b.txt, create a new a.txt, then press Move/Delete on",
+      "lastRule": "USR-003"
+    },
+    {
+      "path": "src-tauri/tests/explorer_ops.rs",
+      "count": 1,
+      "runs": [
+        "20261126-163957"
+      ],
+      "lastDescription": "R9 acceptance \u0027the deleted item is in the Recycle Bin and can be restored from there\u0027 is unproven: no test distinguishes binning from permanent deletion. Add a test that finds the item in the Recycle Bin (e.g. \u0060trash::os_limited::list()\u0060) o",
+      "lastRule": ""
+    },
+    {
+      "path": "src-tauri/tests/terminal_executable.rs",
+      "count": 1,
+      "runs": [
+        "20261126-163957"
+      ],
+      "lastDescription": "R11 acceptance \u0027Start all leaves non-executable terminals stopped and starts the executable ones\u0027 and edge \u0027Stop all does not stop a non-executable terminal the user started by hand\u0027 are unproven at the command. The same start_all is used b",
+      "lastRule": ""
     }
   ],
   "absorbed": [
     "20261125-153618",
     "20261125-202512",
     "20261126-075013",
-    "20261126-115005"
+    "20261126-115005",
+    "20261126-163957"
   ],
   "promotionAsked": {}
 }

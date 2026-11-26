@@ -1,0 +1,10 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "QA-2",
+      "status": "fixed",
+      "evidence": "The bulk filters are now proven at the command level, not just on AppDef::executable_terminals. commands::start_all (src-tauri/src/commands.rs:131) delegates to start_all_in, whose loop iterates app.executable_terminals() (src-tauri/src/commands.rs:143); commands::stop_all (src-tauri/src/commands.rs:162) delegates to stop_all_in, which builds its stop id list from app.executable_terminals() (src-tauri/src/commands.rs:172). src-tauri/tests/terminal_executable.rs:148-173 (r11_start_all_command_starts_executable_terminals_and_skips_non_executable_ones) builds a real AppState+Runtime, calls commands::start_all_in, waits for the executable terminal 'run' to start and asserts the non-executable 'skipped' is never created over 750ms. src-tauri/tests/terminal_executable.rs:175-219 (r11_stop_all_command_stops_executable_terminals_and_leaves_a_hand_started_non_executable_one_running) hand-starts both terminals, calls commands::stop_all_in, and asserts the executable one stops while the hand-started non-executable one stays up. Reverting either loop to app.terminals would make both tests fail. Ran `cargo test --manifest-path src-tauri/Cargo.toml --test terminal_executable` -> 6 passed, 0 failed; `--test explorer_ops --test editor_repath` -> 17 + 7 passed, 0 failed. The lib compiled cleanly as part of the test run."
+    }
+  ]
+}

@@ -1,22 +1,35 @@
+/* Mobile first: the palette fills the width and sits at the top so the on-screen
+   keyboard cannot squeeze the list. The desktop presentation is restored below. */
 .backdrop {
   position: fixed;
   inset: 0;
   z-index: 60;
   display: grid;
-  place-items: start center;
-  padding: 12vh 16px 16px;
+  place-items: start stretch;
+  padding: 0;
   background: rgba(3, 6, 16, 0.45);
 }
 .panel {
-  width: min(560px, 100%);
+  width: 100%;
+  max-height: 100dvh;
   display: flex;
   flex-direction: column;
-  max-height: 60vh;
   padding: 10px;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 0 0 14px 14px;
   background: var(--panel);
   box-shadow: var(--shadow);
+}
+@media (min-width: 640px) {
+  .backdrop {
+    place-items: start center;
+    padding: 12vh 16px 16px;
+  }
+  .panel {
+    width: min(560px, 100%);
+    max-height: 60vh;
+    border-radius: 14px;
+  }
 }
 .search {
   flex: 0 0 auto;

@@ -1,12 +1,17 @@
-// The Files explorer panel (R2, R3, R4, R5, R13). One directory level at a time: a folder is only
-// expanded (and only then read) when clicked, and a file is handed to the editor's existing open
-// path so preview, duplicate and error handling stay exactly as the picker already does it.
-import { memo, useEffect } from "react";
+// The Files explorer panel (R2, R3, R4, R5, R9, R13). One directory level at a time: a folder is
+// only expanded (and only then read) when clicked, and a file is handed to the editor's existing
+// open path so preview, duplicate and error handling stay exactly as the picker already does it.
+//
+// When the window supplies its editor bridge the panel also becomes a file manager: a wrapping
+// action toolbar, row selection, drag-and-drop onto folders, and the create/rename/delete prompts.
+import { memo, useCallback, useEffect, useRef, useState, type DragEvent } from "react";
 import type { ExplorerEntry } from "../../api/explorer";
 import { detectKind } from "../../state/fileKinds";
 import { nameFromPath } from "../../state/model";
 import { useExplorer, type ExplorerLevelState } from "./useExplorer";
-import type { ExplorerRootSource } from "./root";
+import { useExplorerOps, type ExplorerEditorBridge } from "./useExplorerOps";
+import { ExplorerDialogs } from "./ExplorerDialogs";
+import { parentFolder, type ExplorerRootSource } from "./root";
 import styles from "./ExplorerPanel.module.css";
 
 export interface ExplorerPanelProps {
@@ -18,25 +23,69 @@ export interface ExplorerPanelProps {
   resetKey?: string;
   /** Open a file through the editor's existing open path (R3). */
   onOpenFile: (path: string) => void;
+  /**
+   * The window's editor hooks for the file operations (R9). Without it the panel keeps showing the
+   * read-only tree it had before, so it can still be used on its own.
+   */
+  editor?: ExplorerEditorBridge;
 }
 
-interface LevelProps {
-  level: ExplorerLevelState;
+/** The tree's read helpers, shared down the levels. */
+interface Nav {
   isExpanded: (path: string) => boolean;
   levelOf: (path: string) => ExplorerLevelState;
   ensure: (path: string) => void;
   toggleFolder: (path: string) => void;
-  onOpenFile: (path: string) => void;
 }
 
-type TreeCallbacks = Omit<LevelProps, "level">;
+/** Selection and drag-and-drop, only meaningful when the file operations are available (R9). */
+interface RowActions {
+  interactive: boolean;
+  selectedPath: string | null;
+  onSelect: (entry: ExplorerEntry) => void;
+  onDragStart: (entry: ExplorerEntry) => void;
+  onDrop: (into: string) => void;
+}
+
+function dragStarted(e: DragEvent, entry: ExplorerEntry, onDragStart: (entry: ExplorerEntry) => void) {
+  e.dataTransfer?.setData("text/plain", entry.path);
+  if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+  onDragStart(entry);
+}
 
 /** A file row. Memoised because a large folder is mostly files (A1). */
-const FileRow = memo(function FileRow({ entry, onOpenFile }: { entry: ExplorerEntry; onOpenFile: (path: string) => void }) {
+const FileRow = memo(function FileRow({
+  entry,
+  onOpenFile,
+  selectedPath,
+  interactive,
+  onSelect,
+  onDragStart,
+}: {
+  entry: ExplorerEntry;
+  onOpenFile: (path: string) => void;
+  selectedPath: string | null;
+  interactive: boolean;
+  onSelect: (entry: ExplorerEntry) => void;
+  onDragStart: (entry: ExplorerEntry) => void;
+}) {
   const kind = detectKind(entry.name);
+  const selected = selectedPath === entry.path;
   return (
     <li>
-      <button type="button" className={styles.fileRow} title={entry.path} onClick={() => onOpenFile(entry.path)}>
+      <button
+        type="button"
+        className={styles.fileRow}
+        title={entry.path}
+        data-selected={selected ? "true" : undefined}
+        aria-current={selected ? "true" : undefined}
+        draggable={interactive}
+        onDragStart={(e) => dragStarted(e, entry, onDragStart)}
+        onClick={() => {
+          onSelect(entry);
+          onOpenFile(entry.path);
+        }}
+      >
         <span className={styles.icon} role="img" aria-label={kind.label}>
           {kind.icon}
         </span>
@@ -46,7 +95,17 @@ const FileRow = memo(function FileRow({ entry, onOpenFile }: { entry: ExplorerEn
   );
 });
 
-function EntryList({ level, isExpanded, levelOf, ensure, toggleFolder, onOpenFile }: LevelProps) {
+function EntryList({
+  level,
+  nav,
+  actions,
+  onOpenFile,
+}: {
+  level: ExplorerLevelState;
+  nav: Nav;
+  actions: RowActions;
+  onOpenFile: (path: string) => void;
+}) {
   if (level.loading && !level.listing) {
     return (
       <p className={styles.status} role="status">
@@ -75,15 +134,21 @@ function EntryList({ level, isExpanded, levelOf, ensure, toggleFolder, onOpenFil
             <FolderRow
               key={entry.path}
               entry={entry}
-              open={isExpanded(entry.path)}
-              isExpanded={isExpanded}
-              levelOf={levelOf}
-              ensure={ensure}
-              toggleFolder={toggleFolder}
+              open={nav.isExpanded(entry.path)}
+              nav={nav}
+              actions={actions}
               onOpenFile={onOpenFile}
             />
           ) : (
-            <FileRow key={entry.path} entry={entry} onOpenFile={onOpenFile} />
+            <FileRow
+              key={entry.path}
+              entry={entry}
+              onOpenFile={onOpenFile}
+              selectedPath={actions.selectedPath}
+              interactive={actions.interactive}
+              onSelect={actions.onSelect}
+              onDragStart={actions.onDragStart}
+            />
           ),
         )}
       </ul>
@@ -100,12 +165,18 @@ function EntryList({ level, isExpanded, levelOf, ensure, toggleFolder, onOpenFil
 function FolderRow({
   entry,
   open,
-  isExpanded,
-  levelOf,
-  ensure,
-  toggleFolder,
+  nav,
+  actions,
   onOpenFile,
-}: TreeCallbacks & { entry: ExplorerEntry; open: boolean }) {
+}: {
+  entry: ExplorerEntry;
+  open: boolean;
+  nav: Nav;
+  actions: RowActions;
+  onOpenFile: (path: string) => void;
+}) {
+  const [over, setOver] = useState(false);
+  const selected = actions.selectedPath === entry.path;
   return (
     <li>
       <button
@@ -113,7 +184,27 @@ function FolderRow({
         className={styles.folderRow}
         aria-expanded={open}
         title={entry.path}
-        onClick={() => toggleFolder(entry.path)}
+        data-selected={selected ? "true" : undefined}
+        data-drop={over && actions.interactive ? "true" : undefined}
+        aria-current={selected ? "true" : undefined}
+        draggable={actions.interactive}
+        onDragStart={(e) => dragStarted(e, entry, actions.onDragStart)}
+        onDragOver={(e) => {
+          if (!actions.interactive) return;
+          e.preventDefault();
+          if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+          if (!over) setOver(true);
+        }}
+        onDragLeave={() => setOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setOver(false);
+          if (actions.interactive) actions.onDrop(entry.path);
+        }}
+        onClick={() => {
+          actions.onSelect(entry);
+          nav.toggleFolder(entry.path);
+        }}
       >
         <span className={styles.chevron} aria-hidden="true">
           {open ? "▾" : "▸"}
@@ -127,15 +218,7 @@ function FolderRow({
       </button>
       {open && (
         <div className={styles.children}>
-          <FolderBody
-            path={entry.path}
-            level={levelOf(entry.path)}
-            isExpanded={isExpanded}
-            levelOf={levelOf}
-            ensure={ensure}
-            toggleFolder={toggleFolder}
-            onOpenFile={onOpenFile}
-          />
+          <FolderBody path={entry.path} level={nav.levelOf(entry.path)} nav={nav} actions={actions} onOpenFile={onOpenFile} />
         </div>
       )}
     </li>
@@ -146,16 +229,65 @@ function FolderRow({
 function FolderBody({
   path,
   level,
-  ...rest
-}: LevelProps & { path: string }) {
+  nav,
+  actions,
+  onOpenFile,
+}: {
+  path: string;
+  level: ExplorerLevelState;
+  nav: Nav;
+  actions: RowActions;
+  onOpenFile: (path: string) => void;
+}) {
   useEffect(() => {
-    rest.ensure(path);
-  }, [path, rest.ensure]);
-  return <EntryList level={level} {...rest} />;
+    nav.ensure(path);
+  }, [path, nav.ensure]);
+  return <EntryList level={level} nav={nav} actions={actions} onOpenFile={onOpenFile} />;
 }
 
-export function ExplorerPanel({ root, source = "none", resetKey, onOpenFile }: ExplorerPanelProps) {
+export function ExplorerPanel({ root, source = "none", resetKey, onOpenFile, editor }: ExplorerPanelProps) {
   const X = useExplorer({ root, source, resetKey });
+  const [selected, setSelected] = useState<ExplorerEntry | null>(null);
+  // A rename, move or delete makes the selected path point at nothing or at a different item, so
+  // the selection is dropped rather than left to act on a stale path (REV-2).
+  const clearSelection = useCallback(() => setSelected(null), []);
+  const ops = useExplorerOps({ explorer: X, editor, onCommitted: clearSelection });
+  const dragging = useRef<ExplorerEntry | null>(null);
+
+  // A new view, app or active tab starts a fresh tree, so a selection from the old one is dropped.
+  useEffect(() => {
+    setSelected(null);
+    dragging.current = null;
+  }, [resetKey, root]);
+
+  const select = useCallback((entry: ExplorerEntry) => setSelected(entry), []);
+  const beginDrag = useCallback((entry: ExplorerEntry) => {
+    dragging.current = entry;
+  }, []);
+  const dropInto = useCallback(
+    (into: string) => {
+      const entry = dragging.current;
+      dragging.current = null;
+      if (entry) ops.drop(entry, into);
+    },
+    [ops.drop],
+  );
+
+  const interactive = !!editor;
+  const targetFolder = selected ? (selected.isDir ? selected.path : parentFolder(selected.path)) : X.currentRoot;
+  const actions: RowActions = {
+    interactive,
+    selectedPath: selected?.path ?? null,
+    onSelect: select,
+    onDragStart: beginDrag,
+    onDrop: dropInto,
+  };
+  const nav: Nav = {
+    isExpanded: X.isExpanded,
+    levelOf: X.levelOf,
+    ensure: X.ensure,
+    toggleFolder: X.toggleFolder,
+  };
 
   return (
     <section className={styles.panel} aria-label="Files">
@@ -178,6 +310,65 @@ export function ExplorerPanel({ root, source = "none", resetKey, onOpenFile }: E
           {X.showHidden ? "Hide hidden" : "Show hidden"}
         </button>
       </header>
+
+      {interactive && (
+        <div className={styles.toolbar} role="toolbar" aria-label="File actions">
+          <button
+            type="button"
+            className={styles.action}
+            disabled={ops.busy || !targetFolder}
+            onClick={() => targetFolder && ops.createFile(targetFolder)}
+          >
+            New file
+          </button>
+          <button
+            type="button"
+            className={styles.action}
+            disabled={ops.busy || !targetFolder}
+            onClick={() => targetFolder && ops.createFolder(targetFolder)}
+          >
+            New folder
+          </button>
+          <button
+            type="button"
+            className={styles.action}
+            disabled={ops.busy || !selected}
+            onClick={() => selected && ops.rename(selected)}
+          >
+            Rename
+          </button>
+          <button
+            type="button"
+            className={styles.action}
+            disabled={ops.busy || !selected}
+            onClick={() => selected && ops.move(selected)}
+          >
+            Move
+          </button>
+          <button
+            type="button"
+            className={styles.action}
+            disabled={ops.busy || !selected}
+            onClick={() => selected && ops.remove(selected)}
+          >
+            Delete
+          </button>
+        </div>
+      )}
+
+      {ops.busy && (
+        <p className={styles.status} role="status">
+          Working…
+        </p>
+      )}
+      {ops.error && (
+        <p className={styles.error} role="alert">
+          <span>{ops.error}</span>
+          <button type="button" className={styles.action} onClick={ops.dismissError}>
+            Dismiss
+          </button>
+        </p>
+      )}
 
       {X.atDrives ? (
         <div className={styles.body}>
@@ -203,15 +394,12 @@ export function ExplorerPanel({ root, source = "none", resetKey, onOpenFile }: E
         <p className={styles.hint}>Open an app or a file to browse its folder.</p>
       ) : (
         <div className={styles.body}>
-          <EntryList
-            level={X.rootLevel}
-            isExpanded={X.isExpanded}
-            levelOf={X.levelOf}
-            ensure={X.ensure}
-            toggleFolder={X.toggleFolder}
-            onOpenFile={onOpenFile}
-          />
+          <EntryList level={X.rootLevel} nav={nav} actions={actions} onOpenFile={onOpenFile} />
         </div>
+      )}
+
+      {interactive && (
+        <ExplorerDialogs prompt={ops.prompt} busy={ops.busy} onSubmit={ops.submit} onCancel={ops.cancel} />
       )}
     </section>
   );

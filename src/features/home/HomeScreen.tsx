@@ -1,4 +1,4 @@
-import { appButton, rollup, type AppDef, type TermState } from "../../state/model";
+import { appButton, isExecutable, rollup, type AppDef, type TermState } from "../../state/model";
 import { homeSections, relativeTime } from "../../state/home";
 import { consoleId } from "../../state/console";
 import { StatusDot } from "../terminals/StatusDot";
@@ -26,8 +26,12 @@ type CardProps = Pick<Props, "stateOf" | "folderExists" | "onOpen" | "onStartAll
 
 // Module-level components: defining them inside HomeScreen would remount every card on each render.
 function Card({ app, showTime, stateOf, folderExists, onOpen, onStartAll, onStopAll, onToggleFavourite, consoleIdsOf }: CardProps) {
-  const states = app.terminals.map((t) => stateOf(t.id));
-  const upCount = [...app.terminals.map((t) => t.id), consoleId(app.id), ...(consoleIdsOf?.(app.id) ?? [])].filter((id) => {
+  // The dot and the Start all / Stop all state follow only executable terminals (R11); a
+  // terminal marked non-executable never turns the card green or flips it to Stop. Consoles are
+  // not configured terminals and keep counting as before.
+  const executable = app.terminals.filter(isExecutable);
+  const states = executable.map((t) => stateOf(t.id));
+  const upCount = [...executable.map((t) => t.id), consoleId(app.id), ...(consoleIdsOf?.(app.id) ?? [])].filter((id) => {
     const s = stateOf(id);
     return s.kind === "running" || s.kind === "detached" || s.kind === "starting";
   }).length;

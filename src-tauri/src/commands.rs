@@ -129,11 +129,18 @@ pub fn restart_terminal(state: S, app_id: String, terminal_id: String) -> Result
 
 #[tauri::command]
 pub fn start_all(state: S, app_id: String) -> Result<(), String> {
-    let (app, shell) = find_app(&state, &app_id)?;
+    start_all_in(state.inner(), &app_id)
+}
+
+/// The bulk start the command runs. Kept separate from the `State` wrapper so the behaviour can be
+/// exercised without Tauri's state (the executable filter is the point of R11).
+pub fn start_all_in(state: &Arc<AppState>, app_id: &str) -> Result<(), String> {
+    let (app, shell) = find_app(state, app_id)?;
     let rt = state.rt.clone();
-    // In listed order, back to back, no waiting for output (BRS 15.1).
+    // In listed order, back to back, no waiting for output (BRS 15.1). Terminals marked
+    // non-executable are skipped; they can still be started on their own (R11).
     std::thread::spawn(move || {
-        for t in &app.terminals {
+        for t in app.executable_terminals() {
             rt.start(&app.id, &app.root, t, &shell);
         }
     });
@@ -153,9 +160,16 @@ fn stop_many(rt: &Arc<Runtime>, ids: Vec<String>) -> Vec<std::thread::JoinHandle
 
 #[tauri::command]
 pub fn stop_all(state: S, app_id: String) -> Result<(), String> {
-    let (app, _) = find_app(&state, &app_id)?;
+    stop_all_in(state.inner(), &app_id)
+}
+
+/// The bulk stop the command runs; only executable terminals are stopped (R11).
+pub fn stop_all_in(state: &Arc<AppState>, app_id: &str) -> Result<(), String> {
+    let (app, _) = find_app(state, app_id)?;
     let rt = state.rt.clone();
-    let ids: Vec<String> = app.terminals.iter().map(|t| t.id.clone()).collect();
+    // Only executable terminals are stopped; one marked non-executable stays running even if the
+    // user started it by hand (R11).
+    let ids: Vec<String> = app.executable_terminals().map(|t| t.id.clone()).collect();
     std::thread::spawn(move || {
         for h in stop_many(&rt, ids) {
             let _ = h.join();
@@ -479,3 +493,4 @@ pub fn apply_update(app: AppHandle, state: S) -> Result<(), String> {
     std::thread::spawn(move || apply_and_exit(&st, &app, &path));
     Ok(())
 }
+

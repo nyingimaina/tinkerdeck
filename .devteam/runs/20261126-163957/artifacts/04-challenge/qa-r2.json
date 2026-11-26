@@ -1,0 +1,15 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "QA-1",
+      "status": "fixed",
+      "evidence": "src-tauri/tests/explorer_ops.rs:302-332 now exercises the production wrapper: r9_delete_uses_the_real_recycle_bin calls delete_item(&item) (which delegates to trash::delete via src-tauri/src/features/explorer/mod.rs:409-411), asserts the path is gone, then finds the entry with trash::os_limited::list() (name + original_parent) and restores it with trash::os_limited::restore_all, proving the item is binned and restorable rather than permanently removed. Ran `cargo test --manifest-path src-tauri/Cargo.toml --test explorer_ops` -> 17 passed, 0 failed."
+    },
+    {
+      "id": "QA-2",
+      "status": "open",
+      "evidence": "src-tauri/tests/terminal_executable.rs:26-39 still only calls config.apps[0].executable_terminals(); no test anywhere calls commands::start_all or commands::stop_all (search of src-tauri finds them only at their definitions, src-tauri/src/commands.rs:131 and :156, with no #[cfg(test)] module in commands.rs). Reverting the filters at commands.rs:137/:161 to `app.terminals` would leave every R11 test green, so R11's 'Start all does not start terminals marked non-executable', the stop_all equivalent, and the launch-time restore path (useLauncher.ts startAll) remain unproven at the command."
+    }
+  ]
+}

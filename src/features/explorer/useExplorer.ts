@@ -61,6 +61,33 @@ export interface ExplorerController {
   ensure: (path: string) => void;
   /** Re-read the levels on screen without changing the root. */
   refresh: () => void;
+  /**
+   * Re-read one folder level after a file operation; only the affected folder is asked for again,
+   * never every folder on screen (R9).
+   */
+  reloadFolder: (path: string) => void;
+  /** Drop cached levels at or under an item that was renamed, moved or deleted (R9). */
+  forgetUnder: (path: string) => void;
+}
+
+/** A path split into whole components, so a prefix never matches a sibling (`C:\foo` vs `C:\foobar`). */
+function pathParts(path: string): string[] {
+  return path.split(/[\\/]+/).filter(Boolean);
+}
+
+function samePath(a: string, b: string): boolean {
+  const left = pathParts(a);
+  const right = pathParts(b);
+  return left.length === right.length && left.every((part, i) => part.toLowerCase() === right[i].toLowerCase());
+}
+
+function withinPath(child: string, parent: string): boolean {
+  const childParts = pathParts(child);
+  const parentParts = pathParts(parent);
+  return (
+    childParts.length >= parentParts.length &&
+    parentParts.every((part, i) => part.toLowerCase() === childParts[i].toLowerCase())
+  );
 }
 
 export function useExplorer({ root, source = "none", resetKey }: ExploreOptions): ExplorerController {
@@ -232,6 +259,51 @@ export function useExplorer({ root, source = "none", resetKey }: ExploreOptions)
 
   const refresh = useCallback(() => reloadShown(showHiddenRef.current), [reloadShown]);
 
+  // After an operation only the folder it touched is read again (R9): the root gets a fresh read,
+  // an expanded child is reloaded in place, and any level that was not shown is left alone.
+  const reloadFolder = useCallback(
+    (path: string) => {
+      if (atDrives) return;
+      if (currentRoot && samePath(path, currentRoot)) {
+        setReloadToken((t) => t + 1);
+        return;
+      }
+      const known = levelsRef.current[path];
+      if (known?.listing || expandedRef.current[path]) loadChildren(path, showHiddenRef.current);
+    },
+    [atDrives, currentRoot, loadChildren],
+  );
+
+  // A renamed, moved or deleted item's own cached level is no longer the truth; forget it and
+  // anything cached below it so the tree cannot keep showing the old subtree (R9).
+  const forgetUnder = useCallback((path: string) => {
+    setLevels((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const key of Object.keys(next)) {
+        if (withinPath(key, path)) {
+          delete next[key];
+          childReq.current.delete(key);
+          lastUsed.current.delete(key);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+    setExpanded((prev) => {
+      let changed = false;
+      const next: Record<string, boolean> = {};
+      for (const [key, value] of Object.entries(prev)) {
+        if (withinPath(key, path)) {
+          changed = true;
+          continue;
+        }
+        next[key] = value;
+      }
+      return changed ? next : prev;
+    });
+  }, []);
+
   const canGoUp = (source === "misc" || source === "home") && !atDrives;
   const up = useCallback(() => {
     if ((source !== "misc" && source !== "home") || atDrives) return;
@@ -270,5 +342,7 @@ export function useExplorer({ root, source = "none", resetKey }: ExploreOptions)
     levelOf,
     ensure,
     refresh,
+    reloadFolder,
+    forgetUnder,
   };
 }

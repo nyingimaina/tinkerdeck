@@ -489,7 +489,9 @@ describe("App app-level shortcuts", () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
     await openEditor();
-    expect(await screen.findByRole("button", { name: "New file" })).toBeInTheDocument();
+    // The editor's own New toolbar control identifies the view; the explorer toolbar adds a
+    // second "New file", so that name is no longer unique (R9).
+    expect(await screen.findByRole("button", { name: "New" })).toBeInTheDocument();
     const states = h.api.terminalStates.mock.calls.length;
 
     const e = press("F5");
@@ -499,7 +501,7 @@ describe("App app-level shortcuts", () => {
     expect(h.api.startAll).not.toHaveBeenCalled();
     expect(h.api.stopAll).not.toHaveBeenCalled();
     expect(h.api.terminalStates.mock.calls.length).toBe(states);
-    expect(screen.getByRole("button", { name: "New file" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "New" })).toBeInTheDocument();
   });
 
   it("R6: F5 with Shift, Ctrl or Alt never refreshes in the home view", async () => {
@@ -547,5 +549,102 @@ describe("App app-level shortcuts", () => {
     expect(screen.getByRole("button", { name: "Show git tools" })).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByRole("complementary", { name: "Git" })).toBeNull();
     expect(screen.queryByRole("complementary", { name: "Consoles" })).toBeNull();
+  });
+});
+
+const execView = (t1: boolean, t2: boolean): ConfigView => {
+  const base = view();
+  return {
+    ...base,
+    config: {
+      ...base.config,
+      apps: [
+        {
+          ...base.config.apps[0],
+          terminals: [
+            { ...T("t1", "api"), executable: t1 },
+            { ...T("t2", "web"), executable: t2 },
+          ],
+        },
+      ],
+    },
+  };
+};
+
+describe("the executable flag and F5 (R11)", () => {
+  it("R11: the Start all button and F5 count only executable terminals", async () => {
+    h.view = execView(true, false);
+    // The non-executable terminal is running by hand; it must not turn the bulk action into Stop.
+    h.api.terminalStates.mockResolvedValue([{ terminalId: "t2", state: { kind: "running" } }]);
+    render(<App />);
+    await openApp();
+
+    expect(screen.getByRole("button", { name: /Start all/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Stop all/ })).toBeNull();
+
+    press("F5");
+    await waitFor(() => expect(h.api.startAll).toHaveBeenCalledWith("a1"));
+    expect(h.api.stopAll).not.toHaveBeenCalled();
+  });
+
+  it("R11: a non-executable terminal is still left out when the executable one is running", async () => {
+    h.view = execView(true, false);
+    h.api.terminalStates.mockResolvedValue([
+      { terminalId: "t1", state: { kind: "running" } },
+      { terminalId: "t2", state: { kind: "running" } },
+    ]);
+    render(<App />);
+    await openApp();
+
+    expect(screen.getByRole("button", { name: /Stop all/ })).toBeInTheDocument();
+    press("F5");
+    await waitFor(() => expect(h.api.stopAll).toHaveBeenCalledWith("a1"));
+    expect(h.api.startAll).not.toHaveBeenCalled();
+  });
+
+  it("R11: when every terminal is non-executable, F5 starts nothing and says so briefly", async () => {
+    h.view = execView(false, false);
+    render(<App />);
+    await openApp();
+    expect(screen.getByRole("button", { name: /Start all/ })).toBeInTheDocument();
+
+    press("F5");
+
+    expect(await screen.findByText("No executable terminals")).toBeInTheDocument();
+    expect(h.api.startAll).not.toHaveBeenCalled();
+    expect(h.api.stopAll).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    expect(screen.queryByText("No executable terminals")).toBeNull();
+    // Dismissing leaves the view and the app exactly as they were.
+    expect(screen.getByRole("heading", { name: "Qonsol", level: 2 })).toBeInTheDocument();
+  });
+
+  it("R11: the Start all button says the same thing as F5 when nothing is executable", async () => {
+    h.view = execView(false, false);
+    render(<App />);
+    await openApp();
+
+    await userEvent.click(screen.getByRole("button", { name: /Start all/ }));
+
+    expect(await screen.findByText("No executable terminals")).toBeInTheDocument();
+    expect(h.api.startAll).not.toHaveBeenCalled();
+  });
+});
+
+describe("the palette shows the real F5 hint (R12)", () => {
+  it("R12: Start all and Stop all show F5 while Refresh everything shows No shortcut", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    await openApp();
+
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
+
+    expect(within(dialog).getByRole("button", { name: /Start all/ })).toHaveTextContent("F5");
+    expect(within(dialog).getByRole("button", { name: /Stop all/ })).toHaveTextContent("F5");
+    const refresh = within(dialog).getByRole("button", { name: /Refresh everything/ });
+    expect(refresh).toHaveTextContent("No shortcut");
+    expect(refresh).not.toHaveTextContent("F5");
   });
 });

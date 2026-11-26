@@ -8,7 +8,15 @@ const h = vi.hoisted(() => ({
   view: null as unknown,
   api: {} as Record<string, ReturnType<typeof vi.fn>>,
   ed: {} as Record<string, ReturnType<typeof vi.fn>>,
-  ex: { list: vi.fn(), drives: vi.fn(), home: vi.fn() },
+  ex: {
+    list: vi.fn(),
+    drives: vi.fn(),
+    home: vi.fn(),
+    create: vi.fn(),
+    rename: vi.fn(),
+    move: vi.fn(),
+    remove: vi.fn(),
+  },
 }));
 
 vi.mock("./api/tauri", () => {
@@ -129,9 +137,7 @@ beforeEach(() => {
   h.ed.touch.mockResolvedValue(undefined);
   h.ed.load.mockImplementation(async (id: string) => doc(id, "loaded"));
   h.ed.pickOpenPaths.mockResolvedValue([]);
-  h.ex.list.mockReset();
-  h.ex.drives.mockReset();
-  h.ex.home.mockReset();
+  for (const fn of Object.values(h.ex)) fn.mockReset();
   h.ex.list.mockImplementation(async (path: string) => listing(path));
   h.ex.drives.mockResolvedValue([{ name: "C:", path: "C:\\", isDir: true, locked: false }]);
   h.ex.home.mockResolvedValue(null);
@@ -434,7 +440,7 @@ describe("a Misc (app-less) tab", () => {
 });
 
 describe("the Files section with no apps", () => {
-  it("A4: a loose file still gets the sidebar and its Files section", async () => {
+  it("R9: a loose file still gets the sidebar and its Files section", async () => {
     h.view = view({ apps: [] });
     h.ed.takePending.mockResolvedValue(["C:/loose/notes.txt"]);
     h.ed.open.mockResolvedValue(doc("C:/loose/notes.txt"));
@@ -514,5 +520,66 @@ describe("the home folder root (R13)", () => {
     await waitFor(() => expect(within(files).getByText(/can.t be read/)).toBeInTheDocument());
     expect(screen.getByRole("heading", { name: "Home", level: 2 })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Apps" })).toBeInTheDocument();
+  });
+});
+
+describe("the explorer's file operations keep the editor tabs in step (R9)", () => {
+  const files = () => screen.findByRole("region", { name: "Files" });
+
+  it("R9: renaming an open file from the explorer re-points its tab to the new path", async () => {
+    h.ex.list.mockImplementation(async (path: string) =>
+      path === "E:\\q" ? listing(path, [file("E:\\q\\a.txt"), folder("E:\\q\\lib")]) : listing(path),
+    );
+    h.ed.open.mockResolvedValue(doc("E:\\q\\a.txt"));
+    h.ex.rename.mockResolvedValue({
+      path: "E:\\q\\b.txt",
+      repaths: [{ id: "E:\\q\\a.txt", path: "E:\\q\\b.txt", title: "b.txt" }],
+      closed: [],
+    });
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    await openApp();
+
+    // Opening the file moves to the editor view, where the explorer's toolbar is available.
+    await userEvent.click(within(await files()).getByTitle("E:\\q\\a.txt"));
+    expect(await screen.findByRole("tab", { name: /a\.txt/ })).toBeInTheDocument();
+
+    // Select the row (the file is already open, so this only focuses its tab), then rename it.
+    await userEvent.click(within(await files()).getByTitle("E:\\q\\a.txt"));
+    await userEvent.click(screen.getByRole("button", { name: "Rename" }));
+    const dialog = await screen.findByRole("dialog", { name: "Rename" });
+    const input = within(dialog).getByLabelText("Name");
+    await userEvent.clear(input);
+    await userEvent.type(input, "b.txt");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Rename" }));
+
+    await waitFor(() => expect(h.ex.rename).toHaveBeenCalledWith("E:\\q\\a.txt", "b.txt"));
+    expect(await screen.findByRole("tab", { name: /b\.txt/ })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: /a\.txt/ })).toBeNull();
+  });
+
+  it("R9: deleting an open file from the explorer closes its tab after one confirmation", async () => {
+    h.ex.list.mockImplementation(async (path: string) =>
+      path === "E:\\q" ? listing(path, [file("E:\\q\\a.txt")]) : listing(path),
+    );
+    h.ed.open.mockResolvedValue(doc("E:\\q\\a.txt"));
+    h.ex.remove.mockResolvedValue({ path: "E:\\q\\a.txt", repaths: [], closed: ["E:\\q\\a.txt"] });
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    await openApp();
+
+    await userEvent.click(within(await files()).getByTitle("E:\\q\\a.txt"));
+    expect(await screen.findByRole("tab", { name: /a\.txt/ })).toBeInTheDocument();
+
+    await userEvent.click(within(await files()).getByTitle("E:\\q\\a.txt"));
+    await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+    const dialog = await screen.findByRole("dialog", { name: "Delete a.txt?" });
+    expect(within(dialog).getByText(/Recycle Bin/)).toBeInTheDocument();
+    expect(h.ex.remove).not.toHaveBeenCalled();
+
+    await userEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => expect(h.ex.remove).toHaveBeenCalledWith("E:\\q\\a.txt"));
+    await waitFor(() => expect(screen.queryByRole("tab", { name: /a\.txt/ })).toBeNull());
   });
 });

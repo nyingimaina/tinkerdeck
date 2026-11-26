@@ -126,6 +126,20 @@ function Invoke-Native([string]$what, [scriptblock]$block) {
   if ($LASTEXITCODE -ne 0) { throw "$what failed (exit code $LASTEXITCODE)." }
 }
 
+# Push the current branch: to its upstream (whatever that branch is called there), or create it.
+# (Not named $args: that is a reserved variable and would silently be empty.)
+function Invoke-Push {
+  $branch = (& git rev-parse --abbrev-ref HEAD).Trim()
+  # git says "no upstream configured" on stderr, which Windows PowerShell 5.1 turns into an error under Stop
+  $keep = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  $upstream = & git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>$null
+  if ($LASTEXITCODE -ne 0) { $upstream = "" }
+  $ErrorActionPreference = $keep
+  $pushArgs = @((Get-PushTarget "$upstream".Trim() $branch) -split ' ')
+  Invoke-Native "git push" { & git push @pushArgs }
+}
+
 # ------------------------------------------------------------------ the run
 
 function Invoke-Ship {
@@ -260,11 +274,7 @@ function Invoke-Ship {
 
   if ($doPush) {
     Say "`n[push]" "Cyan"
-    $branch = (& git rev-parse --abbrev-ref HEAD).Trim()
-    $upstream = (& git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>$null)
-    if ($LASTEXITCODE -ne 0) { $upstream = "" }
-    $args = (Get-PushTarget "$upstream".Trim() $branch) -split ' '
-    Invoke-Native "git push" { & git push @args }
+    Invoke-Push
     $done += "pushed"
   }
 

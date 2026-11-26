@@ -69,6 +69,35 @@ Write-Host "Get-PushTarget"
 Check "an upstream with another branch name" ((Get-PushTarget "origin/main" "master") -eq "origin HEAD:main")
 Check "no upstream: same name, set tracking" ((Get-PushTarget "" "feature") -eq "-u origin feature")
 
+Write-Host "Invoke-Push (real git, a throwaway remote)"
+$g = Join-Path ([IO.Path]::GetTempPath()) ("ship-git-" + [guid]::NewGuid().ToString("N"))
+New-Item -ItemType Directory $g | Out-Null
+$bare = Join-Path $g "remote.git"; $work = Join-Path $g "work"
+& git init -q --bare -b main $bare
+& git init -q -b master $work
+Push-Location $work
+function Commit-File($name) { Set-Content $name $name; & git add -A; & git -c user.name=t -c user.email=t@t commit -q -m $name }
+Commit-File "a.txt"
+& git remote add origin $bare
+& git push -q origin master:main 2>&1 | Out-Null
+& git fetch -q origin
+& git branch -q --set-upstream-to=origin/main
+Commit-File "b.txt"
+$here = (& git rev-parse HEAD).Trim()
+Invoke-Push
+$there = (& git --git-dir=$bare rev-parse main).Trim()
+Check "a local branch named differently from its upstream pushes to the upstream" ($there -eq $here)
+
+& git checkout -q -b feature
+Commit-File "c.txt"
+$here = (& git rev-parse HEAD).Trim()
+Invoke-Push
+$there = (& git --git-dir=$bare rev-parse feature).Trim()
+Check "a branch with no upstream is created on the remote" ($there -eq $here)
+Check "and set up to track it" ((& git rev-parse --abbrev-ref '@{u}').Trim() -eq "origin/feature")
+Pop-Location
+Remove-Item $g -Recurse -Force -ErrorAction SilentlyContinue
+
 Remove-Item $root -Recurse -Force
 if ($script:failed -gt 0) { Write-Host "`n$($script:failed) failed" -ForegroundColor Red; exit 1 }
 Write-Host "`nall passed"

@@ -1,0 +1,43 @@
+{
+  "findings": [
+    {
+      "cites": "R3",
+      "severity": "advisory",
+      "file": "src/App.explorer.test.tsx",
+      "line": 212,
+      "evidence": "The four R3 explorer click tests (lines 212, 229, 251, 272) assert h.ed.open, the opened tab and (for the image) the preview; none assert editorApi.save/write is never called. A change that wrote the file on click would leave every test green.",
+      "description": "Edge case 'Clicking a file does not modify its contents on disk' has no test that would notice a write. Advisory: the click goes through the existing read-only openPath, so the risk is low."
+    },
+    {
+      "cites": "R2",
+      "severity": "advisory",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "line": 84,
+      "evidence": "The collapse test asserts the child row (a.ts) disappears and aria-expanded goes false, but no tab exists in scope and there is no assertion that an open file tab survives a collapse.",
+      "description": "Edge case 'Collapsing a folder hides its children but closes no open file tab' only proves the hide half. Advisory: collapsing only toggles expanded state, so tabs are not touched."
+    },
+    {
+      "cites": "R3",
+      "severity": "advisory",
+      "file": "src/App.explorer.test.tsx",
+      "line": 251,
+      "evidence": "The already-open R3 test starts with a single open tab (README.md) and clicks that same file; no explorer test opens a NEW file while an unrelated tab is open and checks the other tab is unchanged.",
+      "description": "Edge case 'Opening a file does not close or change other open tabs' is only covered indirectly by the R1 palette unsaved-text test (line 176), which uses the same editor.openPath. Advisory."
+    },
+    {
+      "cites": "R1",
+      "severity": "advisory",
+      "file": "src/App.explorer.test.tsx",
+      "line": 163,
+      "evidence": "The multi-pick test opens two distinct files (a.ts, b.ts) and asserts open was called twice; the 'already open is focused instead of duplicated' half is not exercised through the palette. It is proven separately through the shared openPath (ExplorerPanel.test.tsx:186 and useEditor.test.tsx:172).",
+      "description": "R1 edge case's duplicate-focus half is not tested at the palette level. Advisory: both paths share editor.openPath, which is tested to reuse an existing tab."
+    }
+  ],
+  "verifications": [
+    {
+      "id": "QA-1",
+      "status": "fixed",
+      "evidence": "src/App.explorer.test.tsx:229 'R3: clicking an image opens it in the editor's existing preview form, not a text editor' lists photo.png in the Files explorer, clicks it, stubs URL.createObjectURL, and asserts findByAltText('Preview of photo.png'), that no CodeSurface is rendered, and that readBytes was called with the path. It fails if the image were opened as text, so the R3 preview acceptance line is now proven. Suite: 18/18 App.explorer tests pass."
+    }
+  ]
+}

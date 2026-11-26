@@ -1,0 +1,700 @@
+{
+  "summary": "Tinkerdeck\u0027s editor stops feeling bolted on. The sidebar gains a VS Code-style Files explorer that loads one folder level at a time, hides the heavy build and VCS folders by default behind a Show hidden control, follows the project the user is working in (the selected app\u0027s root, the root of the app that owns the active editor tab, a loose file\u0027s parent folder, or the home folder with the drive list above it), and lets the user create, rename, move, drag and delete files and folders, with deletes going to the Recycle Bin after one confirmation. A command-palette \u0027Open file\u2026\u0027 entry launches the system picker from any view. F5 becomes the app view\u0027s Start all / Stop all toggle, terminals gain an executable flag that keeps them out of bulk start/stop, refresh loses its keyboard shortcut, the theme finder\u0027s rows stop overflowing, the command palette gets a mobile-first CSS pass without becoming a side pane, and last the shared dialog and branch menu move to the jattac responsive side panes.",
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "The command palette offers an \u0027Open file\u2026\u0027 entry in every view. Choosing it launches the operating system file picker; the chosen files open in the editor and the main area switches to the editor view. The editor\u0027s existing Open\u2026 toolbar button, Ctrl\u002BO shortcut and empty-state \u0027Open a file\u2026\u0027 button keep launching the same picker.",
+      "acceptance": [
+        "With the palette open in the home view, an \u0027Open file\u2026\u0027 entry is listed and choosing it launches the system file picker.",
+        "With the palette open in the app view, the \u0027Open file\u2026\u0027 entry is present and choosing it launches the same picker.",
+        "Picking a file opens it in an editor tab and the main area shows the editor view.",
+        "The editor\u0027s Open\u2026 button, Ctrl\u002BO and the empty-state \u0027Open a file\u2026\u0027 button still launch the same picker."
+      ],
+      "rationale": "Today the file picker can only be reached once the editor view is already showing, so the user cannot open a file from Home or from an app. The entry must reuse the existing open path so preview, error and duplicate handling stay exactly as they are.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Cancelling the picker leaves the current view, tabs and editor content unchanged.",
+        "Picking several files opens each one; a file that is already open is focused instead of duplicated.",
+        "Opening a file while another tab has unsaved text keeps that unsaved text."
+      ],
+      "pitfalls": [
+        "The palette entry must call the same editor open path as the picker, not a second path with different preview or error behaviour.",
+        "The entry must not disappear when the editor view is not the current view."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-004"
+      ],
+      "facts": []
+    },
+    {
+      "id": "R2",
+      "text": "The sidebar contains a Files explorer section beside the apps list (a second section or a tab; the layout is the builder\u0027s choice). It shows a tree that loads one directory level at a time: clicking a folder expands or collapses it, and its children are fetched only when it is first expanded. By default the tree hides the folders named node_modules, .git, target and dist; a Show hidden control reveals them and hides them again. A folder that cannot be read appears as locked and does not raise an error.",
+      "acceptance": [
+        "The sidebar contains a Files explorer area.",
+        "The explorer lists the folders and files directly inside its root and distinguishes folders from files.",
+        "Clicking a folder expands it and shows its children; clicking it again collapses it.",
+        "A folder\u0027s children are not requested until that folder is first expanded.",
+        "node_modules, .git, target and dist are absent from the listing by default at any depth.",
+        "Turning Show hidden on makes those four names visible, and turning it off hides them again.",
+        "A folder that cannot be read is shown as locked while the rest of the tree keeps working."
+      ],
+      "rationale": "The developer wants fast, VS Code-like navigation inside the app. Loading only one level and hiding the noisy build and VCS folders keeps large projects usable, and a Show hidden control keeps those folders reachable.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "An empty folder expands without error and shows no children.",
+        "Collapsing a folder hides its children but closes no open file tab.",
+        "A folder with thousands of entries shows a loading indication and keeps the window responsive while it loads.",
+        "Other dot-named files and folders are listed normally unless they are one of the four hidden names."
+      ],
+      "pitfalls": [
+        "The explorer must not scan the whole disk or all descendants; it requests one level per expand.",
+        "An unreadable folder must not surface as a thrown error that blocks the tree.",
+        "Hiding the four names must not make them permanently unreachable; Show hidden must reveal them."
+      ],
+      "rules": [
+        "PERF-001",
+        "TAU-012",
+        "USR-001",
+        "USR-002",
+        "USR-003"
+      ],
+      "facts": [
+        {
+          "subject": "explorer",
+          "attribute": "hidden folders",
+          "op": "one-of",
+          "value": "node_modules, .git, target, dist",
+          "unit": "",
+          "scope": "default"
+        },
+        {
+          "subject": "explorer",
+          "attribute": "directory levels loaded per expand",
+          "op": "equals",
+          "value": "1",
+          "unit": "level",
+          "scope": ""
+        },
+        {
+          "subject": "explorer",
+          "attribute": "show hidden control",
+          "op": "equals",
+          "value": "off",
+          "unit": "",
+          "scope": "default"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "text": "Clicking a file in the explorer opens it through the editor\u0027s existing open path and switches the main area to the editor view. If the file is already open, its existing tab is focused instead of opening a second tab. Images and other preview-kind files follow the editor\u0027s existing preview handling.",
+      "acceptance": [
+        "Clicking a file opens an editor tab, makes it the active document and shows the editor view.",
+        "Clicking a file that is already open focuses its existing tab and no duplicate tab appears.",
+        "Clicking an image or other binary-preview file opens the editor\u0027s existing preview form.",
+        "Clicking a folder only expands or collapses it and never opens it as a file."
+      ],
+      "rationale": "The explorer is the natural way to open a file, and it must behave exactly like the existing picker so users do not get two different kinds of tab or preview.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Clicking a file does not modify its contents on disk.",
+        "A file that fails to open shows the editor\u0027s existing per-tab error instead of crashing or blanking the window.",
+        "Opening a file does not close or change other open tabs."
+      ],
+      "pitfalls": [
+        "The explorer must use the same editor open path as the picker so preview and error behaviour stay consistent.",
+        "The already-open check must use the same path normalisation as the tab grouping, so a path written with different slashes or case is still recognised."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-004"
+      ],
+      "facts": []
+    },
+    {
+      "id": "R4",
+      "text": "The explorer root follows where the user is. In the app view the root is the selected app\u0027s root. In the editor view it is the root of the app that owns the active editor tab, found with the same path-to-owning-app lookup the tab groups use (the deepest app root that contains the path). The user never chooses a root by hand when an app root applies. Changing the root never closes or changes any open tab.",
+      "acceptance": [
+        "In the app view, the explorer\u0027s top folder is the selected app\u0027s root folder.",
+        "Switching to another app in the app view moves the explorer root to the newly selected app\u0027s root.",
+        "In the editor view, the explorer\u0027s top folder is the root of the app that owns the active editor tab.",
+        "Switching the active tab between files owned by different apps moves the root to the newly active tab\u0027s owning app.",
+        "Changing the root does not close or alter any open tab."
+      ],
+      "rationale": "The explorer should show the project the user is actually working on, and the user should not have to point it at the project each time.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "When app roots are nested, the deepest root containing the file owns it.",
+        "Opening a file that lies under the current root from the explorer keeps the same owning app, so the root does not jump.",
+        "If an app\u0027s root folder no longer exists, the explorer shows it as unavailable or locked instead of raising an error."
+      ],
+      "pitfalls": [
+        "A root left over from the previously active tab must not persist.",
+        "A file outside every app root must not be guessed into the nearest app; it belongs to no app (see R5)."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "explorer root",
+          "attribute": "app view",
+          "op": "equals",
+          "value": "selected app root",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "explorer root",
+          "attribute": "editor view with app-owned active tab",
+          "op": "equals",
+          "value": "owning app root",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "text": "When the active editor tab belongs to no app (the Misc group), for example a loose file opened through \u0027Edit with Tinkerdeck\u0027 from outside every app root, the explorer is rooted at that file\u0027s parent folder, and Up climbs the folder hierarchy all the way to the drive list.",
+      "acceptance": [
+        "While the active editor tab is in the Misc group, the explorer\u0027s top folder is that file\u0027s parent folder.",
+        "Moving up from that parent folder climbs one level at a time and eventually reaches the drive list.",
+        "Switching the active tab between two Misc files moves the root to the newly active file\u0027s parent folder.",
+        "Changing the root when a tab becomes a Misc file closes no tabs."
+      ],
+      "rationale": "The developer chose that a file outside every app root should root the explorer at the file\u0027s own parent folder rather than at the home folder, so the file sits beside its neighbours.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "A Misc file that sits at the root of a drive roots the explorer at that drive, and Up reaches the drive list.",
+        "A Misc file in a deep path roots the explorer at its parent folder, not at the home folder.",
+        "Switching from an app-owned tab to a Misc tab moves the root from the app root to the Misc file\u0027s parent folder."
+      ],
+      "pitfalls": [
+        "A Misc file with a known path must not be rooted at the home folder.",
+        "The owner lookup must not force a file outside every app root into an app, or the explorer roots at the wrong folder."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "explorer root",
+          "attribute": "editor view with misc active tab",
+          "op": "equals",
+          "value": "file parent folder",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R13",
+      "text": "When no app root applies (the home view, the editor view with no tab open, or an active tab with no path such as a new unsaved file), the explorer roots at the user\u0027s home folder. On Windows the level above any folder root is a list of the available drives; Up from a root folder climbs one level at a time and from a drive reaches the drive list. Changing the root never closes or changes any open tab.",
+      "acceptance": [
+        "In the home view, the explorer\u0027s top folder is the user\u0027s home folder.",
+        "In the editor view with no tab open, the explorer roots at the home folder.",
+        "With a new unsaved file as the active tab, the explorer roots at the home folder.",
+        "Up from the home folder climbs one level at a time and eventually reaches the drive list.",
+        "The drive list shows the available drives, and opening a drive lists its top-level folders and files.",
+        "Changing the root does not close or alter any open tab."
+      ],
+      "rationale": "Windows has no single filesystem root, and the explorer must always open somewhere sensible even when the user is not in an app or has no saved file.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "A drive that cannot be read shows as locked when opened instead of raising an error.",
+        "An unreadable home folder shows a locked or message state and the rest of the app stays usable.",
+        "A drive that has been removed between listing and opening is reported without breaking the tree."
+      ],
+      "pitfalls": [
+        "The explorer must not assume a single filesystem root on Windows.",
+        "The drive list must be obtained without scanning the contents of every drive.",
+        "The home folder must not be hard-coded as the root when an app root or a Misc file path applies."
+      ],
+      "rules": [
+        "PERF-001",
+        "TAU-012",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "explorer root",
+          "attribute": "no app root applies",
+          "op": "equals",
+          "value": "user home folder",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "explorer top level",
+          "attribute": "list",
+          "op": "equals",
+          "value": "drives",
+          "unit": "",
+          "scope": "Windows"
+        }
+      ]
+    },
+    {
+      "id": "R6",
+      "text": "In the app view, F5 runs the same Start all / Stop all action as the app\u0027s on-screen button, choosing Start or Stop exactly as the button would at the moment F5 is pressed. Non-executable terminals are skipped (see R11). In the home and editor views F5 does nothing: it does not refresh, start or stop anything, or change the view. F5 never refreshes on any modifier combination.",
+      "acceptance": [
+        "In the app view with the app fully stopped and the button showing Start all, pressing F5 starts the executable terminals.",
+        "In the app view with executable terminals running, pressing F5 stops them.",
+        "Pressing F5 produces the same result as pressing the on-screen Start all / Stop all button at that moment.",
+        "Pressing F5 in the home view neither starts nor stops anything, does not refresh and does not change the view.",
+        "Pressing F5 in the editor view neither starts nor stops anything, does not refresh and does not change the view.",
+        "F5 skips non-executable terminals exactly as the button does.",
+        "F5 works while a terminal has focus, is handed back to the window, and never reaches the shell.",
+        "F5 with Shift, Ctrl or Alt still does not refresh."
+      ],
+      "rationale": "The developer chose F5 for the app\u0027s bulk start/stop instead of refresh. F5 must read the live state at press time, because a handler that closed over its first render\u0027s state would act on the wrong view or app.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Pressing F5 twice quickly does not leave the app half-started or start a terminal twice.",
+        "Pressing F5 while a start or stop is already in progress does not start a second copy of the app.",
+        "With every terminal executable, F5 behaves exactly like the old Start all / Stop all button."
+      ],
+      "pitfalls": [
+        "The key handler must read the current view, selected app and button state at press time rather than a value captured when the handler was first registered.",
+        "F5 must not keep its old refresh action alongside the new toggle.",
+        "The default must be prevented so the webview does not reload the page when F5 does nothing."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "F5",
+          "attribute": "view where it acts",
+          "op": "equals",
+          "value": "app view",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "F5",
+          "attribute": "action in home and editor views",
+          "op": "equals",
+          "value": "none",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "text": "In the theme picker\u0027s find dialog, the theme rows fit inside the dialog\u0027s left and right edges with no horizontal overflow on desktop or mobile widths.",
+      "acceptance": [
+        "Opening the theme finder shows every theme row fully inside the dialog\u0027s horizontal bounds, with no row clipped at the right edge.",
+        "At a narrow, mobile-width window the rows still fit with no horizontal overflow.",
+        "A very long theme name stays inside its row instead of pushing the row past the edge."
+      ],
+      "rationale": "The finder asks for content wider than the dialog that contains it, so rows run past the right edge and the dialog looks broken. Fixing the layout directly keeps this small fix independent of the later side-pane work.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "A search that matches no themes shows its empty message inside the dialog bounds.",
+        "When the finder later moves into a side pane, its rows still fit that container."
+      ],
+      "pitfalls": [
+        "The finder must respect its container\u0027s actual width instead of demanding a content width wider than the container.",
+        "The fix must not change theme behaviour beyond layout."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-002",
+        "USR-004",
+        "USR-006"
+      ],
+      "facts": [
+        {
+          "subject": "theme finder",
+          "attribute": "horizontal overflow",
+          "op": "must-not",
+          "value": "exceed its container",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "text": "The shared Dialog and every dialog built on it (including the theme finder and the confirmation dialogs) plus the git BranchMenu are presented as responsive side panes from the project\u0027s approved jattac responsive-layout package, instead of centred modals. The command palette stays a palette and is not moved to a side pane. Before building this part, verify that the package\u0027s published build installs cleanly and ships its CSS; if it cannot be used, stop this part and report, and the other requirements still ship.",
+      "acceptance": [
+        "The shared dialog, including the theme finder, opens as a side pane rather than a centred modal.",
+        "An existing confirmation dialog opened from the app (for example deleting an app or closing a running console) appears as a side pane.",
+        "The git BranchMenu opens as a side pane rather than a centred modal.",
+        "The command palette is not moved into a side pane.",
+        "Each side pane opens, closes and shows its content without clipping at a narrow mobile-width viewport.",
+        "Dismissing a side pane leaves the user\u0027s current work unchanged.",
+        "The package\u0027s styles actually apply in the built window."
+      ],
+      "rationale": "The developer asked to replace modals with the jattac responsive-layout side panes because they fit mobile devices better. An earlier jattac package was rejected for shipping without its CSS, so the package must be verified before the build depends on it.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "The theme finder inside the side pane still shows every row without horizontal overflow (R7).",
+        "A side pane can be dismissed with the keyboard, and its close control has an accessible name.",
+        "If the package fails to install or its CSS is missing, the attempt is reported and R1-R7 and R9-R13 remain deliverable without it."
+      ],
+      "pitfalls": [
+        "The package must be checked to install and ship CSS before any screen depends on it.",
+        "Only the command palette is excluded; every Dialog user and the branch menu must move, or some screens keep modals while others do not.",
+        "The instability of the package must not take down the rest of the feature: the earlier parts must not depend on this part."
+      ],
+      "rules": [
+        "PERF-001",
+        "TAU-012",
+        "USR-001",
+        "USR-002",
+        "USR-003",
+        "USR-004",
+        "USR-006"
+      ],
+      "facts": []
+    },
+    {
+      "id": "R9",
+      "text": "The explorer supports create file, create folder, rename, move, delete and drag-and-drop (dropping an item onto a folder moves it there) for both files and folders. Delete asks for confirmation naming the item (and, for a folder, that everything inside goes with it) and sends the item to the Recycle Bin. If the Recycle Bin cannot take the item, the delete is refused with a message and nothing is permanently deleted. A name clash is refused with a clear message and nothing is overwritten. Moving a folder into itself or one of its descendants is refused. Renaming or moving a file that is open re-points its tab to the new path and recomputes the tab groups; the same applies to every open file under a renamed or moved folder. Deleting an item closes its open tabs, and any unsaved-changes warning is folded into the single delete confirmation. After any operation the affected folder level is refreshed.",
+      "acceptance": [
+        "A new file and a new folder can both be created in the explorer.",
+        "An existing file and an existing folder can both be renamed.",
+        "A file and a folder can be moved to another folder through a move action.",
+        "An item can be dragged in the explorer and dropped onto a folder to move it there.",
+        "Deleting an item asks for confirmation before anything is removed; the prompt names the item and, for a folder, says that everything inside goes with it.",
+        "After confirmation the deleted item is in the Recycle Bin and can be restored from there.",
+        "Cancelling the delete confirmation leaves the item and any open tabs unchanged.",
+        "A create, rename or move that would clash with an existing name is refused with a message and the existing item is untouched.",
+        "Moving a folder into itself or one of its descendants is refused.",
+        "Renaming or moving an open file keeps its tab open at the new path; renaming or moving a folder does the same for every open file under it, and tab groups are recomputed.",
+        "Deleting an item with open tabs closes those tabs; if any has unsaved changes the single delete confirmation says so, and there is no second prompt.",
+        "After each operation the affected folder level shows the new state."
+      ],
+      "rationale": "The developer wants a real file manager inside the app. Deletes must stay recoverable, and operations must never silently overwrite or misplace the user\u0027s files.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "If the Recycle Bin is unavailable, for example on some network or removable drives, the delete is refused with a message and nothing is permanently deleted.",
+        "A failed operation such as a permission refusal reports an error and leaves neither a half-created item nor a moved-away original.",
+        "Confirming the same delete twice applies it once; the second attempt reports that the item is gone.",
+        "Deleting a folder closes the tabs of every open file inside it, with the same unsaved-changes warning.",
+        "A create or rename with an empty or invalid name is refused with a message."
+      ],
+      "pitfalls": [
+        "Operations must act on the real file system, so the tree and the disk stay in agreement after each one.",
+        "A name clash must never silently overwrite the existing item.",
+        "A delete must never fall back to permanent deletion when the Recycle Bin is unavailable.",
+        "All five operations must share one file-operation path so their error behaviour is consistent.",
+        "Tabs must be re-pointed to the new path as part of the same operation, so a tab never points at a missing file."
+      ],
+      "rules": [
+        "PERF-001",
+        "TAU-012",
+        "USR-001",
+        "USR-003",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "explorer delete",
+          "attribute": "destination",
+          "op": "equals",
+          "value": "Recycle Bin",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "explorer delete",
+          "attribute": "permanent delete fallback",
+          "op": "must-not",
+          "value": "permitted",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "explorer name clash",
+          "attribute": "overwrite existing item",
+          "op": "must-not",
+          "value": "permitted",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "text": "The command palette stays a palette and receives a mobile-first, desktop-aware layout pass. On a narrow, mobile-width viewport it fills the available width and sits near the top so the on-screen keyboard does not squeeze the list; on a desktop-width viewport it keeps its current look.",
+      "acceptance": [
+        "At a narrow mobile-width viewport the palette panel spans the available width, sits near the top, and keeps its list visible and usable with the on-screen keyboard open.",
+        "At a desktop-width viewport the palette keeps its current palette layout and height.",
+        "The palette remains a modal-style palette and is not converted into a side pane."
+      ],
+      "rationale": "The developer explicitly excluded the command palette from the side-pane migration and asked only that it be made mobile-first and desktop-aware.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Resizing between mobile and desktop widths keeps the palette usable.",
+        "A very long command label is truncated instead of overflowing the panel."
+      ],
+      "pitfalls": [
+        "The palette must not be turned into a side pane while the other dialogs move.",
+        "The desktop layout must not regress when the mobile rules are added."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-001",
+        "USR-002",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "command palette",
+          "attribute": "presentation",
+          "op": "equals",
+          "value": "palette",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R11",
+      "text": "Every terminal has an executable flag that is on by default, is saved with the terminal, and can be turned off or on where terminals are edited. Non-executable terminals are not started or stopped by Start all / Stop all or by F5, but can still be started and stopped individually with their own controls. The Start all / Stop all button state and the app status indicator count only executable terminals. A saved terminal that has no flag loads as executable.",
+      "acceptance": [
+        "A newly added terminal is executable by default.",
+        "Where terminals are edited, a labelled control marks a terminal non-executable and marks it executable again.",
+        "Start all leaves non-executable terminals stopped and starts the executable ones.",
+        "F5 leaves non-executable terminals alone, because it runs the same action.",
+        "A non-executable terminal\u0027s own Start and Stop controls still start and stop it.",
+        "After saving and reloading the config the flag is preserved; a config saved before the flag existed loads every terminal as executable.",
+        "The Start/Stop button and the app status indicator reflect only executable terminals.",
+        "The launch-time \u0027start the apps that were running last time\u0027 action does not start non-executable terminals.",
+        "The tdk and engine \u0027up\u0027 action skips non-executable terminals and does not wait for them."
+      ],
+      "rationale": "The developer wants all terminals executable by default but any terminal markable as non-executable, so bulk start/stop and F5 leave those terminals alone while the user can still run them by hand.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Marking a running terminal non-executable does not by itself stop it; it is only excluded from later bulk actions.",
+        "Stop all does not stop a non-executable terminal the user started by hand.",
+        "When every terminal is non-executable, Start all starts nothing and shows a brief \u0027No executable terminals\u0027 message."
+      ],
+      "pitfalls": [
+        "The Rust model must default the missing flag to true so an upgrade does not change which terminals start.",
+        "Marking a terminal non-executable must not remove its own start and stop controls.",
+        "The button state and the action it performs must agree; the button must not show Stop for a running non-executable terminal it will not stop."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-003",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "terminal",
+          "attribute": "executable",
+          "op": "equals",
+          "value": "true",
+          "unit": "",
+          "scope": "default"
+        },
+        {
+          "subject": "non-executable terminal",
+          "attribute": "bulk start or stop",
+          "op": "must-not",
+          "value": "include it",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R12",
+      "text": "Refresh is available only from the Utilities menu refresh item, the git bar refresh button and the command palette \u0027Refresh everything\u0027 entry. No keyboard shortcut performs refresh and the palette entry shows no shortcut hint. No menu, tooltip or help text advertises F5 as refresh. Where a Start all / Stop all control shows a key hint, it shows F5.",
+      "acceptance": [
+        "The Utilities menu refresh item and the git bar refresh button still refresh.",
+        "The palette \u0027Refresh everything\u0027 entry still refreshes and shows no shortcut hint.",
+        "Pressing F5 in any view never refreshes.",
+        "No menu, tooltip or help text says F5 refreshes.",
+        "Where a Start all / Stop all button or palette entry shows a key hint, it shows F5.",
+        "The shared shortcut registry no longer lists F5 as refresh and the matcher no longer maps F5 to refresh.",
+        "Tests that asserted F5 means refresh are updated, and new tests cover F5 start/stop and the no-op in the home and editor views."
+      ],
+      "rationale": "The developer chose buttons and the palette only for refresh, freeing F5 for the app\u0027s bulk start/stop.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "A user who relied on F5 for refresh can still refresh from the buttons or the palette.",
+        "Ctrl\u002BR is not assigned to refresh and stays available to the shell."
+      ],
+      "pitfalls": [
+        "No F5-as-refresh hint may be left anywhere in the UI.",
+        "Removing the shortcut must not break the refresh buttons or the palette entry.",
+        "The terminal must keep handing F5 back to the window, or the new shortcut stops working while a terminal has focus."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "refresh",
+          "attribute": "keyboard shortcut",
+          "op": "equals",
+          "value": "none",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    }
+  ],
+  "questions": [],
+  "coverage": [
+    {
+      "topic": "users",
+      "status": "not-applicable",
+      "note": "Single-user Windows desktop app; there are no accounts, roles or sharing. The home, app and editor views are contexts, not user roles."
+    },
+    {
+      "topic": "data",
+      "status": "assumed",
+      "note": "The explorer keeps nothing across a restart: the root is re-derived from the current view and active tab, expanded folders start collapsed, and Show hidden starts off. The terminal executable flag is saved with each terminal and defaults to true when absent."
+    },
+    {
+      "topic": "permissions",
+      "status": "answered",
+      "note": "Browsing goes as high as the operating system allows. Root is the selected app\u0027s root in the app view, the active tab\u0027s owning app root in the editor, a Misc file\u0027s parent folder with Up to the drive list, or the home folder when no app root applies."
+    },
+    {
+      "topic": "validation",
+      "status": "answered",
+      "note": "Name clashes and moving a folder into itself are refused with a message; an empty or invalid name is refused; an unreadable folder shows locked without an error; a Recycle Bin that cannot take an item refuses the delete with no permanent fallback; the delete confirmation names the item, warns about a folder\u0027s contents and folds in any unsaved-changes warning. Exact wording is the builder\u0027s."
+    },
+    {
+      "topic": "states",
+      "status": "assumed",
+      "note": "When every terminal is non-executable, Start all / F5 starts nothing and shows a brief \u0027No executable terminals\u0027 message. Start or stop failures keep the existing per-terminal state (red dot plus reason) and the existing error banner. The explorer shows a loading indication while a level loads, no children for an empty folder, and a locked marker for an unreadable folder."
+    },
+    {
+      "topic": "duplicates",
+      "status": "answered",
+      "note": "Clicking an already-open file focuses its existing tab instead of opening a duplicate (the backend already reuses the entry when the path matches). Single-user app, so no two people edit at once."
+    },
+    {
+      "topic": "volume",
+      "status": "answered",
+      "note": "Hide node_modules, .git, target and dist by default, with a Show hidden control to reveal them. Load one directory level at a time; a folder with 5,000 entries must list in about a second and stay responsive."
+    },
+    {
+      "topic": "deletion",
+      "status": "answered",
+      "note": "Delete asks for one confirmation and sends the item to the Recycle Bin, where it can be restored; it never permanently deletes, and refuses the delete when the Recycle Bin cannot take the item."
+    },
+    {
+      "topic": "privacy",
+      "status": "not-applicable",
+      "note": "The app is single-user and shows the user their own local files; it collects, stores and transmits no personal data, and no file path or content leaves the machine."
+    },
+    {
+      "topic": "quality",
+      "status": "answered",
+      "note": "The house rules PERF-001, TAU-012 and USR-002/USR-003 set the performance, accessibility, responsive and resource expectations; the request requires one-level loading, locked unreadable folders, keyboard-operable labelled controls and mobile-first side panes. Each is checked in the nonFunctional list."
+    }
+  ],
+  "assumptions": [
+    "Data: the explorer remembers nothing across a restart; the root is re-derived whenever the view or active tab changes, expanded folders start collapsed, and Show hidden starts off. The terminal executable flag is stored with each terminal (default true when absent).",
+    "States: when every terminal is non-executable, Start all / F5 shows a brief \u0027No executable terminals\u0027 message and starts nothing; start/stop failures use the existing per-terminal state and error banner; the explorer shows a loading indication while a level loads, no children for an empty folder, and a locked marker for an unreadable folder.",
+    "Package: the approved jattac responsive-layout package for the side panes is jattac.libs.web.zest-responsive-layout (named by USR-001); it must be confirmed to install cleanly and ship its CSS before it is used, otherwise R8 is dropped and reported.",
+    "Bulk-action counting: the Start all / Stop all button, the app status indicator, the launch-time restore prompt and the engine \u0027up\u0027 action all treat non-executable terminals as excluded, as proposed and not objected to."
+  ],
+  "roles": [
+    "Desktop app user: a single person on their own Windows machine who browses and edits files and runs app terminals; there are no accounts, roles or sharing."
+  ],
+  "outOfScope": [
+    "Putting the editor inside the app view as a tab or a split pane next to the terminals; a separate issue for later.",
+    "Keeping terminal hosts alive (and their scrollback) while the editor view shows; a separate issue.",
+    "Adding an \u0027Open folder\u2026\u0027 command-palette entry or letting the user choose the explorer root by hand; excluded by the agreed requirements.",
+    "Changing Ctrl\u002BO or the editor\u0027s existing picker behaviour.",
+    "Any keyboard shortcut for refresh.",
+    "Permanent deletion from the explorer; deletes always go through the Recycle Bin.",
+    "Remembering the explorer\u0027s root, expanded folders or Show hidden setting across a restart.",
+    "Restricting explorer browsing beyond what the operating system permissions allow."
+  ],
+  "nonFunctional": [
+    {
+      "area": "performance",
+      "statement": "The explorer loads one directory level per expand and does not scan the whole disk or poll folder contents; a folder with 5,000 entries lists in about one second and leaves the window responsive.",
+      "acceptance": "Expand a folder containing 5,000 files; the list appears in about a second, scrolling stays smooth, and no repeated directory requests appear while the folder is left open."
+    },
+    {
+      "area": "performance",
+      "statement": "F5 and the Start all / Stop all button use the existing terminal-state events, with no new polling and no repeated identical work.",
+      "acceptance": "Press F5 ten times in a row in the app view; the app issues start/stop commands only for terminals whose state requires a change, and no new timer or polling loop is added."
+    },
+    {
+      "area": "reliability",
+      "statement": "A failed file operation leaves no half-created, half-renamed or half-deleted item, and the explorer tree and the disk agree after every operation.",
+      "acceptance": "Attempt a create, rename and delete in a read-only folder; each reports an error, the original items are unchanged, and refreshing the folder shows the same tree as the disk."
+    },
+    {
+      "area": "security",
+      "statement": "The explorer may list any path the app process can read, matching the existing editor, and adds no new network or remote surface; deletes go only to the Recycle Bin, and file operations refuse to move a folder into itself.",
+      "acceptance": "Inspect the new commands; confirm no network access is added, a delete never permanently removes a file, and a move of a folder into its own descendant is refused."
+    },
+    {
+      "area": "accessibility",
+      "statement": "The explorer, the executable control and each side pane are keyboard operable with a visible focus, every control has a text label or accessible name, and locked or non-executable state is never shown by colour alone.",
+      "acceptance": "Using only the keyboard, open a folder, open a file, toggle Show hidden, change a terminal\u0027s executable flag and close a side pane; a screen reader announces each control\u0027s name and the expanded/collapsed and locked states."
+    },
+    {
+      "area": "privacy",
+      "statement": "No file path or file content leaves the user\u0027s machine; the feature adds no telemetry and only the local single user sees their own files.",
+      "acceptance": "Watch the app\u0027s network activity while browsing folders and editing files; no request carries a file path or file content."
+    },
+    {
+      "area": "responsiveness",
+      "statement": "The replaced side panes and the command palette remain usable at mobile and desktop widths, and at tablet widths each control keeps a usable hit area and font size.",
+      "acceptance": "At a phone-width window and a desktop-width window, open each side pane and the palette, and use their controls without clipping or a squeezed list."
+    },
+    {
+      "area": "startup",
+      "statement": "The explorer, the file-operation UI and the side-pane components are loaded only when first used, so the initial window does not carry them.",
+      "acceptance": "Start the app on the home view and inspect the loaded scripts; the explorer and side-pane chunks are not fetched until the user opens them."
+    }
+  ],
+  "risks": [
+    "The exact jattac responsive-layout package is not named in the request; USR-001 names jattac.libs.web.zest-responsive-layout. It must install cleanly and ship its CSS; an earlier jattac package was rejected for missing CSS. If it is unusable, R8 is dropped and R1-R7 and R9-R13 still ship.",
+    "USR-001 prefers jattac components for new UI, while the request fixes the command palette as a palette and asks for a bespoke explorer tree; the architect may need to record an exception or reuse an installed jattac component.",
+    "The explorer root follows the active tab, so clicking a file under a nested app root or a Misc file\u0027s parent can move the tree away from the folder the user was browsing.",
+    "Create, rename, move and delete write directly to the user\u0027s disk; a bug can lose or misplace files, so collisions, permission errors and Recycle Bin failures must be handled and must never silently overwrite or permanently delete.",
+    "Several merged files change (App.tsx, src/shared/shortcuts.ts, Dialog, BranchMenu, ThemeFinder CSS, editor_cmds.rs, commands.rs, model.rs, engine.rs), so USR-004 characterization tests must freeze their current behaviour first.",
+    "The numbered request item 3 mentions an \u0027Open folder\u2026\u0027 palette entry, but the agreed requirements and out-of-scope list exclude it; this document follows the agreed list.",
+    "Whether the webview reloads the page on F5 when the default is not prevented is unverified (the request marks it a guess); F5 must prevent its default in every view."
+  ],
+  "tensions": [
+    {
+      "requirements": [
+        "R6",
+        "R11"
+      ],
+      "scenario": "R6 says F5 and the Start all / Stop all button always perform the same action and toggle the whole app, while R11 says a non-executable terminal is never started or stopped by that action. If the user hand-starts a non-executable terminal in an app whose executable terminals are running, the button and F5 show Stop but leave that terminal running, so Stop all does not stop everything that is running."
+    },
+    {
+      "requirements": [
+        "R3",
+        "R4"
+      ],
+      "scenario": "R3 lets the user open a file by clicking it, and R4 moves the explorer root to the app that owns the newly active tab. When app roots are nested, clicking a file owned by an inner app moves the tree away from the folder the user was browsing, so the next click lands somewhere else."
+    }
+  ],
+  "glossary": [
+    "File explorer: the sidebar tree of folders and files used to browse, open and manage files.",
+    "Root: the top-level folder the explorer starts from.",
+    "App root: the top-level folder configured for an app, which defines the files belonging to that app.",
+    "Misc group: the tab group for files whose path lies outside every app root.",
+    "Command palette: the app-wide searchable command popup; it stays a palette and is not a side pane.",
+    "Side pane: a panel that slides in from the side of the window and adapts to narrow, mobile-width screens.",
+    "Recycle Bin: the operating system\u0027s recoverable holding area for deleted files and folders.",
+    "Executable terminal: a terminal whose executable flag is on, so Start all / Stop all and F5 include it.",
+    "F5: in the app view it runs the same Start all / Stop all action as the button; in the home and editor views it does nothing."
+  ]
+}

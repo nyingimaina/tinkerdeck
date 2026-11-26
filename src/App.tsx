@@ -11,6 +11,8 @@ import { GitBar } from "./features/git/GitBar";
 import type { GitTab } from "./features/git/GitDrawer";
 import { HomeScreen } from "./features/home/HomeScreen";
 import { EditorView } from "./features/editor/EditorView";
+import { ExplorerPanel } from "./features/explorer/ExplorerPanel";
+import { explorerRoot } from "./features/explorer/root";
 import { TabStrip } from "./features/terminals/TabStrip";
 import { TerminalHost } from "./features/terminals/TerminalHost";
 import { consoleExitAction, consoleId, consoleTitle, isConsoleId } from "./state/console";
@@ -366,6 +368,14 @@ export function App() {
     if (onConsole) hideConsole();
   };
 
+  // The Files explorer follows where the user is (R4, R5): the selected app's root in the app
+  // view, the root of the app that owns the active editor tab, or the parent folder of a Misc
+  // (app-less) file. The same deepest-root lookup the tab groups use decides the owner.
+  const activePath = editor.tabs.find((t) => t.id === editor.activeId)?.path ?? null;
+  const explorer = explorerRoot({ view, apps: apps ?? [], selectedAppId: L.selectedAppId, activePath });
+  // A change of view, selected app or active tab discards any temporary Up navigation (R4, R5).
+  const explorerResetKey = `${view}|${L.selectedAppId ?? ""}|${activePath ?? ""}`;
+
   // The palette lists every app-level command the window offers, each with the shortcut that
   // also runs it or a visible note when it has none (R7). Commands that only exist while an app
   // is open are added then, and ones that cannot run now (no repository, no console) stay out
@@ -376,6 +386,8 @@ export function App() {
     { id: "toggleTheme", label: "Switch light/dark theme", shortcut: shortcutKeys("toggleTheme"), run: () => void T.toggleKind() },
     { id: "commandPalette", label: "Open command palette", shortcut: shortcutKeys("commandPalette"), run: () => setPaletteOpen(true) },
     { id: "editor", label: view === "editor" ? "Close editor" : "Open editor", run: () => setView((v) => (v === "editor" ? "home" : "editor")) },
+    // Open file… is offered in every view and runs the editor's one existing picker path (R1).
+    { id: "openFile", label: "Open file…", run: () => void editor.openDialog() },
     { id: "updates", label: "Check for updates", run: () => void checkForUpdates() },
     { id: "help", label: "Help", run: () => setHelp(true) },
     { id: "home", label: "Go to Home", run: () => setView("home") },
@@ -501,7 +513,7 @@ export function App() {
       )}
 
       <div className={styles.body}>
-        {apps.length > 0 && (
+        {(apps.length > 0 || explorer.root !== null) && (
           <Sidebar
             apps={apps}
             selectedAppId={view === "app" ? L.selectedAppId : null}
@@ -509,7 +521,7 @@ export function App() {
             stateOf={L.stateOf}
             paneCollapsed={paneCollapsed}
             onTogglePane={toggleSidebar}
-            onHome={() => setView("home")}
+            onHome={apps.length > 0 ? () => setView("home") : undefined}
             homeActive={showHome}
             onSelectApp={openApp}
             onSelectTerminal={(a, t) => {
@@ -517,6 +529,14 @@ export function App() {
               L.touchApp(a);
               setView("app");
             }}
+            explorer={
+              <ExplorerPanel
+                root={explorer.root}
+                source={explorer.source}
+                resetKey={explorerResetKey}
+                onOpenFile={editor.openPath}
+              />
+            }
           />
         )}
 

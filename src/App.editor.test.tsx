@@ -45,6 +45,14 @@ vi.mock("./features/editor/CodeSurface", () => {
   return { default: (p: { value: string }) => <div data-testid="surface">{p.value}</div> };
 });
 
+// The Files explorer reads one level per root; a quiet empty listing keeps these suites as they were (A3).
+vi.mock("./api/explorer", () => ({
+  explorerApi: {
+    list: vi.fn(async (path: string) => ({ path, entries: [], total: 0, truncated: false, locked: false })),
+    drives: vi.fn(async () => []),
+  },
+}));
+
 import { App } from "./App";
 
 /** The Editor command now lives in the Utilities menu. */

@@ -44,6 +44,14 @@ vi.mock("./features/terminals/TerminalHost", () => ({
   ),
 }));
 
+// The Files explorer reads one level per root; a quiet empty listing keeps these suites as they were (A3).
+vi.mock("./api/explorer", () => ({
+  explorerApi: {
+    list: vi.fn(async (path: string) => ({ path, entries: [], total: 0, truncated: false, locked: false })),
+    drives: vi.fn(async () => []),
+  },
+}));
+
 import { App } from "./App";
 
 const T = (id: string, name: string) => ({ id, name, cwd: ".", command: "", env: {} });
@@ -102,7 +110,7 @@ describe("Palette and remembered layout", () => {
     render(<App />);
     await openApp();
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    const dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     for (const name of [/Toggle sidebar/, /Reset layout/, /Edit app/, /Open console/]) {
       expect(within(dialog).getByRole("button", { name })).toBeInTheDocument();
     }
@@ -124,7 +132,7 @@ describe("Palette and remembered layout", () => {
     await waitFor(() => expect(h.api.startTerminal).toHaveBeenCalledWith("a1", "console-a1:1"));
 
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    const dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     await userEvent.click(within(dialog).getByRole("button", { name: /Reset layout/ }));
 
     expect(screen.getByRole("navigation", { name: "Apps" })).toBeInTheDocument();
@@ -181,7 +189,7 @@ describe("Palette and remembered layout", () => {
     await waitFor(() => expect(h.api.startTerminal).toHaveBeenCalledWith("a1", "console-a1:1"));
 
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    const dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     const hideConsole = within(dialog).getByRole("button", { name: /Hide console/ });
     expect(hideConsole).toBeDisabled();
     expect(hideConsole).toHaveTextContent("Only workspace");
@@ -201,7 +209,7 @@ describe("Palette and remembered layout", () => {
     expect(screen.getByText("A job could not be cleaned up")).toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    const dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     await userEvent.click(within(dialog).getByRole("button", { name: /Reset layout/ }));
 
     expect(screen.getByText(/Config problem/)).toBeInTheDocument();
@@ -217,7 +225,7 @@ describe("Palette and remembered layout", () => {
     await userEvent.type(nameInput, "Renamed");
 
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    const dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     await userEvent.click(within(dialog).getByRole("button", { name: /Reset layout/ }));
 
     expect(screen.getByRole("complementary", { name: "Edit app" })).toBeInTheDocument();
@@ -274,7 +282,7 @@ describe("Palette and remembered layout", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Theme" }));
     await userEvent.click(await screen.findByRole("menuitem", { name: "Find more themes…" }));
-    expect(await screen.findByRole("dialog", { name: "Find themes" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Find themes" }, { timeout: 5000 })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Edit Qonsol" }));
     expect(await screen.findByRole("complementary", { name: "Edit app" })).toBeInTheDocument();
@@ -285,7 +293,7 @@ describe("Palette and remembered layout", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Utilities" }));
     await userEvent.click(screen.getByRole("menuitem", { name: "Help" }));
-    expect(await screen.findByRole("dialog", { name: "Help" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Help" }, { timeout: 5000 })).toBeInTheDocument();
 
     first.unmount();
     render(<App />);

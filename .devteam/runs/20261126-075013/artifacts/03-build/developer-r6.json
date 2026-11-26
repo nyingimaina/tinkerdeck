@@ -1,0 +1,25 @@
+{
+  "summary": "Fixed REV-4: App now passes the stable editor.openPath useCallback to ExplorerPanel instead of a fresh inline arrow, so FileRow's React.memo bails and a large folder no longer re-renders up to 1000 file rows on every unrelated App update. Added an R2 test that proves the memo holds across an App state change.",
+  "tests": [
+    { "name": "R1: the home view offers it and choosing it opens the picked file in the editor view", "file": "src/App.explorer.test.tsx", "requirements": ["R1"] },
+    { "name": "R1: the entry is present in the app view too, and cancelling leaves the view and tabs unchanged", "file": "src/App.explorer.test.tsx", "requirements": ["R1"] },
+    { "name": "R1: picking several files opens each one", "file": "src/App.explorer.test.tsx", "requirements": ["R1"] },
+    { "name": "R1: opening a file while another tab has unsaved text keeps that text", "file": "src/App.explorer.test.tsx", "requirements": ["R1"] },
+    { "name": "R1: the editor's Open. button, Ctrl+O and the empty-state button still run the same picker", "file": "src/App.explorer.test.tsx", "requirements": ["R1"] },
+    { "name": "R3: clicking a file opens it through the editor's open path and shows the editor view", "file": "src/App.explorer.test.tsx", "requirements": ["R3"] },
+    { "name": "R3: clicking an image opens it in the editor's existing preview form, not a text editor", "file": "src/App.explorer.test.tsx", "requirements": ["R3"] },
+    { "name": "R3: clicking a file that is already open focuses its tab instead of opening a second", "file": "src/App.explorer.test.tsx", "requirements": ["R3"] },
+    { "name": "R3: a file that fails to open shows the editor's existing error instead of crashing", "file": "src/App.explorer.test.tsx", "requirements": ["R3"] },
+    { "name": "R3: clicking a folder expands it and never opens it as a file", "file": "src/App.explorer.test.tsx", "requirements": ["R3"] },
+    { "name": "R2: a file row stays memoised, so an unrelated App update does not re-render every file", "file": "src/App.explorer.test.tsx", "requirements": ["R2"] },
+    { "name": "R4: in the app view it is the selected app's root and follows a newly selected app", "file": "src/App.explorer.test.tsx", "requirements": ["R4"] },
+    { "name": "R4: in the editor view it is the deepest owning app's root", "file": "src/App.explorer.test.tsx", "requirements": ["R4"] },
+    { "name": "R4: opening a file under the current root keeps the same owning app, so the root does not jump", "file": "src/App.explorer.test.tsx", "requirements": ["R4"] },
+    { "name": "R4: an app root that no longer exists shows as unreadable instead of raising", "file": "src/App.explorer.test.tsx", "requirements": ["R4"] },
+    { "name": "R5: an app-owned active tab roots at the app root, and switching to a Misc tab roots at that file's parent", "file": "src/App.explorer.test.tsx", "requirements": ["R5"] },
+    { "name": "R5: a Misc file in a deep path roots at its parent folder, not the home folder", "file": "src/App.explorer.test.tsx", "requirements": ["R5"] },
+    { "name": "R5: a Misc file at a drive root roots at the drive and Up reaches the drive list", "file": "src/App.explorer.test.tsx", "requirements": ["R5"] },
+    { "name": "A4: a loose file still gets the sidebar and its Files section", "file": "src/App.explorer.test.tsx", "requirements": ["R5"] }
+  ],
+  "kickbacks": []
+}

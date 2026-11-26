@@ -1,0 +1,84 @@
+{
+  "summary": "",
+  "requirements": [],
+  "questions": [],
+  "ask": {
+    "text": "The request suggests hiding the big noise folders in the new file explorer by default, but that was never confirmed. When you open a project folder like this one (it has node_modules), what should the explorer show?",
+    "why": "It decides what the first-built piece shows and hides, how it performs on large projects, and whether you can still reach those folders. The request marked this default as not settled.",
+    "topic": "volume",
+    "options": [
+      {
+        "label": "Hide node_modules, .git, target and dist, with a 'show hidden' way to reach them",
+        "consequence": "The tree stays fast and tidy on big projects, and you can still reveal those folders when you actually need them.",
+        "recommended": true
+      },
+      {
+        "label": "Hide node_modules, target and dist but keep .git visible",
+        "consequence": "A little more clutter, but the git folder stays one click away without any reveal step.",
+        "recommended": false
+      },
+      {
+        "label": "Show every file and folder, hide nothing",
+        "consequence": "Nothing is ever out of reach, but projects with node_modules become slow and noisy to browse.",
+        "recommended": false
+      }
+    ]
+  },
+  "coverage": [
+    {
+      "topic": "users",
+      "status": "not-applicable",
+      "note": "Single-user Windows desktop app; there are no roles, accounts or sharing to model."
+    },
+    {
+      "topic": "data",
+      "status": "assumed",
+      "note": "Nothing is remembered across a restart: the root is re-derived from the current view/active tab and expanded folders start collapsed; a folder chosen via 'Open folder...' stays the root only until the view or active tab changes."
+    },
+    {
+      "topic": "permissions",
+      "status": "answered",
+      "note": "Browse up to OS permissions; root = selected app's root in the app view, the active tab's owning app root in the editor, a misc file's parent folder with up climbing to the drive list, or the home folder when no app/tab path applies."
+    },
+    {
+      "topic": "validation",
+      "status": "open",
+      "note": "Exact refusal behaviour and wording for name clashes, moving a folder into itself, unreadable folders, and a Recycle Bin that cannot take the item are proposed but unconfirmed."
+    },
+    {
+      "topic": "states",
+      "status": "open",
+      "note": "Empty, loading and error states for the explorer, and the in-progress, failed and no-op states of F5, are not decided."
+    },
+    {
+      "topic": "duplicates",
+      "status": "answered",
+      "note": "Clicking an already-open file focuses its existing tab instead of opening a duplicate (request item 1); single-user app, so no two people edit at once."
+    },
+    {
+      "topic": "volume",
+      "status": "open",
+      "note": "Which heavy/noisy folders are hidden by default; asking this now."
+    },
+    {
+      "topic": "deletion",
+      "status": "answered",
+      "note": "Delete asks for confirmation and sends the item to the Recycle Bin (recoverable), never a permanent delete."
+    },
+    {
+      "topic": "privacy",
+      "status": "assumed",
+      "note": "No path restriction beyond OS permissions; dot/hidden files are shown unless the chosen hide list excludes them, so the developer's own files stay reachable."
+    },
+    {
+      "topic": "quality",
+      "status": "assumed",
+      "note": "One directory level loads at a time (no full-disk scan); every visible control has a text label and works by keyboard; a folder that cannot be read shows a locked/message state instead of blocking the app."
+    }
+  ],
+  "assumptions": [
+    "Data: nothing is remembered across a restart; the root is re-derived from the current view/active tab and expanded folders start collapsed; a folder chosen from 'Open folder...' stays the root only until the view or active tab changes.",
+    "Privacy: dot/hidden files are shown unless the chosen hide list excludes them; no extra path restrictions beyond OS permissions.",
+    "Quality: one directory level loads at a time (no full scan); visible controls are labelled and keyboard-operable; an unreadable folder shows a message instead of blocking the app."
+  ]
+}

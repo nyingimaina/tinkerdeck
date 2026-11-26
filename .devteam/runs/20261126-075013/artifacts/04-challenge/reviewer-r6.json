@@ -1,0 +1,10 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "REV-4",
+      "status": "fixed",
+      "evidence": "src/App.tsx:537 now passes the stable `editor.openPath` callback directly (`onOpenFile={editor.openPath}`) instead of an inline arrow. openPath is a useCallback whose only dependency is addDoc (src/state/useEditor.ts:94), and addDoc is a useCallback with no dependencies (src/state/useEditor.ts:78), so the reference is stable across App renders. FileRow's React.memo (src/features/explorer/ExplorerPanel.tsx:35) therefore sees unchanged props and bails; a level of up to MAX_RETURNED = 1000 files (src-tauri/src/features/explorer/mod.rs:17) is no longer re-rendered on every editor keystroke/terminal/git/theme update. The new test 'R2: a file row stays memoised...' (src/App.explorer.test.tsx:312) proves it: it records detectKind calls for README.md, opens the command palette (an App state change that leaves the explorer untouched), and asserts the count is unchanged. Ran it: 1 passed, 0 failed."
+    }
+  ]
+}

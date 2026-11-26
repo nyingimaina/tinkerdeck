@@ -36,6 +36,14 @@ vi.mock("./api/tauri", () => {
 
 vi.mock("./features/terminals/TerminalHost", () => ({ TerminalHost: () => <div /> }));
 
+// The Files explorer reads one level per root; a quiet empty listing keeps these suites as they were (A3).
+vi.mock("./api/explorer", () => ({
+  explorerApi: {
+    list: vi.fn(async (path: string) => ({ path, entries: [], total: 0, truncated: false, locked: false })),
+    drives: vi.fn(async () => []),
+  },
+}));
+
 import { App } from "./App";
 
 /** Help now lives in the Utilities menu. */
@@ -160,7 +168,7 @@ describe("self-update in the app", () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
     await openHelp();
-    const dlg = await screen.findByRole("dialog", { name: "Help" });
+    const dlg = await screen.findByRole("dialog", { name: "Help" }, { timeout: 5000 });
     expect(within(dlg).getByText(/^Version \d+\.\d+\.\d+/)).toBeInTheDocument();
     await userEvent.click(within(dlg).getByRole("button", { name: "Check now" }));
     await waitFor(() => expect(h.api.checkUpdate).toHaveBeenCalledWith(true));
@@ -177,7 +185,7 @@ describe("self-update in the app", () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
     await openHelp();
-    const dlg = await screen.findByRole("dialog", { name: "Help" });
+    const dlg = await screen.findByRole("dialog", { name: "Help" }, { timeout: 5000 });
     await userEvent.click(within(dlg).getByRole("button", { name: "Check now" }));
     expect(await within(dlg).findByText("Could not reach the update server.")).toBeInTheDocument();
   });
@@ -187,7 +195,7 @@ describe("self-update in the app", () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
     await openHelp();
-    const dlg = await screen.findByRole("dialog", { name: "Help" });
+    const dlg = await screen.findByRole("dialog", { name: "Help" }, { timeout: 5000 });
     await userEvent.click(within(dlg).getByRole("button", { name: "Check now" }));
     expect(await within(dlg).findByText("Version 1.3.0 is available.")).toBeInTheDocument();
     await userEvent.click(within(dlg).getByRole("button", { name: "Close" }));

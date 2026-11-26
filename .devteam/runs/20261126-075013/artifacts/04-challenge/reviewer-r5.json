@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "cites": "USR-003",
+      "severity": "blocking",
+      "file": "src/App.tsx",
+      "line": 537,
+      "evidence": "ExplorerPanel's FileRow is wrapped in memo precisely so a large level stays cheap (src/features/explorer/ExplorerPanel.tsx:35, comment \"Memoised because a large folder is mostly files (A1)\"), but App passes a new inline arrow `onOpenFile={(path) => void editor.openPath(path)}` on every render (src/App.tsx:537). React.memo's shallow comparison therefore always sees a new onOpenFile and never bails. App re-renders on every editor keystroke (useEditor state is in App, src/App.tsx:116) and on terminal/git/theme updates, so with a level of up to MAX_RETURNED = 1000 files (src-tauri/src/features/explorer/mod.rs:17) every FileRow re-renders on each of those updates.",
+      "description": "The row memoisation that the A1/EFF-002 relaxation relies on is defeated by an unstable callback, so a large folder re-renders up to 1000 file rows on every App update (typing included). That is needless work and a responsiveness bug on the lowest-spec machine the app must run on, contrary to USR-003. editor.openPath is already a stable useCallback (src/state/useEditor.ts:94), so passing/wrapping it stably fixes this."
+    }
+  ],
+  "verifications": [
+    {
+      "id": "REV-1",
+      "status": "fixed",
+      "evidence": "src-tauri/src/features/explorer/mod.rs now calls std::fs::read_dir only for the folder whose level is requested (line 78); the entry map at lines 121-132 sets locked: false and never opens a child folder, and the Entry.locked doc (lines 29-33) says a level's own Listing.locked is authoritative. The new test r2_listing_a_level_never_opens_its_child_folders denies read access with icacls and proves listing the parent returns the child unlocked while the child's own level reports locked; cargo test --test explorer: 13 passed, 0 failed."
+    }
+  ]
+}

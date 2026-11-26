@@ -1,0 +1,29 @@
+{
+  "findings": [
+    {
+      "cites": "R2",
+      "severity": "blocking",
+      "file": "src-tauri/src/features/explorer/mod.rs",
+      "line": 123,
+      "evidence": "In list_level_with, after sorting, the map over the returned rows does `let locked = row.is_dir && std::fs::read_dir(&row.path).is_err();` for every directory in the level (up to MAX_RETURNED = 1000). std::fs::read_dir opens the directory (and on Windows starts FindFirstFile enumeration), so listing one level opens every child folder of that level before the user has expanded any of them; the existing r2_children_are_fetched_only_when_their_level_is_requested test only inspects returned names, so it does not catch this. This contradicts R2 acceptance 'A folder's children are not requested until that folder is first expanded' and the R2 pitfall 'it requests one level per expand'.",
+      "description": "Listing a directory touches every child directory just to fill the per-row `locked` flag. The same locked status is already reported when a folder's own level is requested (Listing.locked), so the eager check is extra descendant I/O on every level (worst on slow/network folders and needless work under PERF-001/USR-003). Determine readability lazily when a folder is expanded, or drop the per-entry `locked` flag and rely on the level's own locked reply."
+    },
+    {
+      "cites": "PERF-001",
+      "severity": "advisory",
+      "file": "src/features/explorer/ExplorerPanel.tsx",
+      "line": 35,
+      "evidence": "FileRow is wrapped in memo (ExplorerPanel.tsx:35), but App passes a brand-new inline callback on every render: `onOpenFile={(path) => void editor.openPath(path)}` (src/App.tsx:537). Since onOpenFile changes identity each App render, FileRow's memo can never bail, so a 1000-row level re-renders every file row (detectKind + DOM diff) on every App re-render (terminal-state updates, banners), not only when the listing changes.",
+      "description": "A1's bound relies on 'only row rendering memoised'; that memoisation is defeated by the unstable callback. The cost is bounded by the 1000-row cap but is repeated needless work on low-spec machines. Pass the already-stable editor.openPath directly or a useCallback-wrapped handler from App so unchanged rows are skipped."
+    },
+    {
+      "cites": "USR-006",
+      "severity": "advisory",
+      "file": "src/features/explorer/useExplorer.ts",
+      "line": 127,
+      "evidence": "App builds explorerResetKey from `${view}|${L.selectedAppId}|${activePath}` (src/App.tsx:377), and useExplorer's reset effect clears `expanded` (along with the cached levels) whenever that signature changes (src/features/explorer/useExplorer.ts:127-135). Opening any file from the tree sets a new activeId/activePath, so every expanded folder collapses even when the automatic root is unchanged (e.g. two files in the same app folder).",
+      "description": "The reset is meant to discard temporary Up navigation and follow the automatic root; clearing expansion is not required when the root is unchanged. As written, the R3 browse-and-open flow forces the user to re-expand the same folders after every file they open (extra effort the R2 explorer is meant to remove). Only reset expansion when the automatic root actually changes, or preserve the expanded set across active-tab changes within one root."
+    }
+  ],
+  "verifications": []
+}

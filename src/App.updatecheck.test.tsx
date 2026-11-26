@@ -38,6 +38,14 @@ vi.mock("./api/tauri", () => {
 vi.mock("./api/editor", () => ({ editorApi: { list: vi.fn(async () => ({ open: [], bin: [] })), takePending: vi.fn(async () => []), onOpen: vi.fn(async () => () => {}) } }));
 vi.mock("./features/terminals/TerminalHost", () => ({ TerminalHost: () => <div /> }));
 
+// The Files explorer reads one level per root; a quiet empty listing keeps these suites as they were (A3).
+vi.mock("./api/explorer", () => ({
+  explorerApi: {
+    list: vi.fn(async (path: string) => ({ path, entries: [], total: 0, truncated: false, locked: false })),
+    drives: vi.fn(async () => []),
+  },
+}));
+
 import { App } from "./App";
 
 /** The Updates command now lives in the Utilities menu. */

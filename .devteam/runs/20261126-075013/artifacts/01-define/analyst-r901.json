@@ -1,0 +1,204 @@
+{
+  "summary": "This is revision 1 of 3 of a larger feature (R1 to R5). Tinkerdeck\u0027s editor stops feeling bolted on. The sidebar gains a VS Code-style Files explorer that loads one folder level at a time, hides the heavy build and VCS folders by default behind a Show hidden control, follows the project the user is working in (the selected app\u0027s root, the root of the app that owns the active editor tab, a loose file\u0027s parent folder, or the home folder with the drive list above it), and lets the user create, rename, move, drag and delete files and folders, with deletes going to the Recycle Bin after one confirmation. A command-palette \u0027Open file\u2026\u0027 entry launches the system picker from any view. F5 becomes the app view\u0027s Start all / Stop all toggle, terminals gain an executable flag that keeps them out of bulk start/stop, refresh loses its keyboard shortcut, the theme finder\u0027s rows stop overflowing, the command palette gets a mobile-first CSS pass without becoming a side pane, and last the shared dialog and branch menu move to the jattac responsive side panes.",
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "The command palette offers an \u0027Open file\u2026\u0027 entry in every view. Choosing it launches the operating system file picker; the chosen files open in the editor and the main area switches to the editor view. The editor\u0027s existing Open\u2026 toolbar button, Ctrl\u002BO shortcut and empty-state \u0027Open a file\u2026\u0027 button keep launching the same picker.",
+      "acceptance": [
+        "With the palette open in the home view, an \u0027Open file\u2026\u0027 entry is listed and choosing it launches the system file picker.",
+        "With the palette open in the app view, the \u0027Open file\u2026\u0027 entry is present and choosing it launches the same picker.",
+        "Picking a file opens it in an editor tab and the main area shows the editor view.",
+        "The editor\u0027s Open\u2026 button, Ctrl\u002BO and the empty-state \u0027Open a file\u2026\u0027 button still launch the same picker."
+      ],
+      "rationale": "Today the file picker can only be reached once the editor view is already showing, so the user cannot open a file from Home or from an app. The entry must reuse the existing open path so preview, error and duplicate handling stay exactly as they are.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Cancelling the picker leaves the current view, tabs and editor content unchanged.",
+        "Picking several files opens each one; a file that is already open is focused instead of duplicated.",
+        "Opening a file while another tab has unsaved text keeps that unsaved text."
+      ],
+      "pitfalls": [
+        "The palette entry must call the same editor open path as the picker, not a second path with different preview or error behaviour.",
+        "The entry must not disappear when the editor view is not the current view."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-004"
+      ],
+      "facts": []
+    },
+    {
+      "id": "R2",
+      "text": "The sidebar contains a Files explorer section beside the apps list (a second section or a tab; the layout is the builder\u0027s choice). It shows a tree that loads one directory level at a time: clicking a folder expands or collapses it, and its children are fetched only when it is first expanded. By default the tree hides the folders named node_modules, .git, target and dist; a Show hidden control reveals them and hides them again. A folder that cannot be read appears as locked and does not raise an error.",
+      "acceptance": [
+        "The sidebar contains a Files explorer area.",
+        "The explorer lists the folders and files directly inside its root and distinguishes folders from files.",
+        "Clicking a folder expands it and shows its children; clicking it again collapses it.",
+        "A folder\u0027s children are not requested until that folder is first expanded.",
+        "node_modules, .git, target and dist are absent from the listing by default at any depth.",
+        "Turning Show hidden on makes those four names visible, and turning it off hides them again.",
+        "A folder that cannot be read is shown as locked while the rest of the tree keeps working."
+      ],
+      "rationale": "The developer wants fast, VS Code-like navigation inside the app. Loading only one level and hiding the noisy build and VCS folders keeps large projects usable, and a Show hidden control keeps those folders reachable.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "An empty folder expands without error and shows no children.",
+        "Collapsing a folder hides its children but closes no open file tab.",
+        "A folder with thousands of entries shows a loading indication and keeps the window responsive while it loads.",
+        "Other dot-named files and folders are listed normally unless they are one of the four hidden names."
+      ],
+      "pitfalls": [
+        "The explorer must not scan the whole disk or all descendants; it requests one level per expand.",
+        "An unreadable folder must not surface as a thrown error that blocks the tree.",
+        "Hiding the four names must not make them permanently unreachable; Show hidden must reveal them."
+      ],
+      "rules": [
+        "PERF-001",
+        "TAU-012",
+        "USR-001",
+        "USR-002",
+        "USR-003"
+      ],
+      "facts": [
+        {
+          "subject": "explorer",
+          "attribute": "hidden folders",
+          "op": "one-of",
+          "value": "node_modules, .git, target, dist",
+          "unit": "",
+          "scope": "default"
+        },
+        {
+          "subject": "explorer",
+          "attribute": "directory levels loaded per expand",
+          "op": "equals",
+          "value": "1",
+          "unit": "level",
+          "scope": ""
+        },
+        {
+          "subject": "explorer",
+          "attribute": "show hidden control",
+          "op": "equals",
+          "value": "off",
+          "unit": "",
+          "scope": "default"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "text": "Clicking a file in the explorer opens it through the editor\u0027s existing open path and switches the main area to the editor view. If the file is already open, its existing tab is focused instead of opening a second tab. Images and other preview-kind files follow the editor\u0027s existing preview handling.",
+      "acceptance": [
+        "Clicking a file opens an editor tab, makes it the active document and shows the editor view.",
+        "Clicking a file that is already open focuses its existing tab and no duplicate tab appears.",
+        "Clicking an image or other binary-preview file opens the editor\u0027s existing preview form.",
+        "Clicking a folder only expands or collapses it and never opens it as a file."
+      ],
+      "rationale": "The explorer is the natural way to open a file, and it must behave exactly like the existing picker so users do not get two different kinds of tab or preview.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Clicking a file does not modify its contents on disk.",
+        "A file that fails to open shows the editor\u0027s existing per-tab error instead of crashing or blanking the window.",
+        "Opening a file does not close or change other open tabs."
+      ],
+      "pitfalls": [
+        "The explorer must use the same editor open path as the picker so preview and error behaviour stay consistent.",
+        "The already-open check must use the same path normalisation as the tab grouping, so a path written with different slashes or case is still recognised."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-004"
+      ],
+      "facts": []
+    },
+    {
+      "id": "R4",
+      "text": "The explorer root follows where the user is. In the app view the root is the selected app\u0027s root. In the editor view it is the root of the app that owns the active editor tab, found with the same path-to-owning-app lookup the tab groups use (the deepest app root that contains the path). The user never chooses a root by hand when an app root applies. Changing the root never closes or changes any open tab.",
+      "acceptance": [
+        "In the app view, the explorer\u0027s top folder is the selected app\u0027s root folder.",
+        "Switching to another app in the app view moves the explorer root to the newly selected app\u0027s root.",
+        "In the editor view, the explorer\u0027s top folder is the root of the app that owns the active editor tab.",
+        "Switching the active tab between files owned by different apps moves the root to the newly active tab\u0027s owning app.",
+        "Changing the root does not close or alter any open tab."
+      ],
+      "rationale": "The explorer should show the project the user is actually working on, and the user should not have to point it at the project each time.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "When app roots are nested, the deepest root containing the file owns it.",
+        "Opening a file that lies under the current root from the explorer keeps the same owning app, so the root does not jump.",
+        "If an app\u0027s root folder no longer exists, the explorer shows it as unavailable or locked instead of raising an error."
+      ],
+      "pitfalls": [
+        "A root left over from the previously active tab must not persist.",
+        "A file outside every app root must not be guessed into the nearest app; it belongs to no app (see R5)."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "explorer root",
+          "attribute": "app view",
+          "op": "equals",
+          "value": "selected app root",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "explorer root",
+          "attribute": "editor view with app-owned active tab",
+          "op": "equals",
+          "value": "owning app root",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "text": "When the active editor tab belongs to no app (the Misc group), for example a loose file opened through \u0027Edit with Tinkerdeck\u0027 from outside every app root, the explorer is rooted at that file\u0027s parent folder, and Up climbs the folder hierarchy all the way to the drive list.",
+      "acceptance": [
+        "While the active editor tab is in the Misc group, the explorer\u0027s top folder is that file\u0027s parent folder.",
+        "Moving up from that parent folder climbs one level at a time and eventually reaches the drive list.",
+        "Switching the active tab between two Misc files moves the root to the newly active file\u0027s parent folder.",
+        "Changing the root when a tab becomes a Misc file closes no tabs."
+      ],
+      "rationale": "The developer chose that a file outside every app root should root the explorer at the file\u0027s own parent folder rather than at the home folder, so the file sits beside its neighbours.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "A Misc file that sits at the root of a drive roots the explorer at that drive, and Up reaches the drive list.",
+        "A Misc file in a deep path roots the explorer at its parent folder, not at the home folder.",
+        "Switching from an app-owned tab to a Misc tab moves the root from the app root to the Misc file\u0027s parent folder."
+      ],
+      "pitfalls": [
+        "A Misc file with a known path must not be rooted at the home folder.",
+        "The owner lookup must not force a file outside every app root into an app, or the explorer roots at the wrong folder."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "explorer root",
+          "attribute": "editor view with misc active tab",
+          "op": "equals",
+          "value": "file parent folder",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    }
+  ],
+  "questions": [],
+  "coverage": [],
+  "assumptions": [],
+  "roles": [],
+  "outOfScope": [],
+  "nonFunctional": [],
+  "risks": [],
+  "tensions": [],
+  "glossary": []
+}

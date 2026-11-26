@@ -1,0 +1,10 @@
+{
+  "ruling": "resolved",
+  "reason": "The developer is right: every failing test (engine::tests::git_methods_work_through_the_engine at src-tauri/src/engine.rs:1055, up_with_wait_stops_early_and_explains_when_a_terminal_fails at :904, up_with_wait_times_out_and_names_who_is_not_ready at :931, run_brief_turns_a_failing_test_run_into_counts_and_the_failures_only at :860, run_returns_exit_code_and_output_without_a_terminal at :1007, and git::tests::a_plain_folder_is_not_a_repository at src-tauri/src/git.rs:598) lives in engine.rs/git.rs, which are not in this change set, and each spawns real processes bounded by hard wall-clock limits (git TIMEOUT 15s at src-tauri/src/git.rs:16). The run's own pre-change baseline (state.json baseline tauri-rust-tests, flaky: true) already recorded the identical engine/git timing failures on untouched code. The change adds no lib unit tests and no process-spawning test, so it cannot cause them; making them deterministic would mean editing out-of-scope files. This is a pre-existing environmental flake, not a defect in this revision, so TAU-011 is not regressed by the work.",
+  "question": "",
+  "options": [],
+  "recommended": "",
+  "route": "challenge",
+  "findingIds": ["CHK-tauri-rust-tests"],
+  "amendments": []
+}

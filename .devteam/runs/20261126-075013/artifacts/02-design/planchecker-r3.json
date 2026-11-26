@@ -1,0 +1,13 @@
+{
+  "summary": "Otherwise consistent; one conflict: the capped 1000-row directory level is rendered without paging or virtualisation, which the blocking EFF-002 rule forbids.",
+  "conflicts": [
+    {
+      "requirement": "R2",
+      "against": "EFF-002",
+      "kind": "rule",
+      "owner": "design",
+      "why": "A1 caps each directory level at 1000 returned rows and the panel renders that level, with only row rendering memoised; there is no paging or virtualisation, so a directory that grows a hundred times renders a 1000-row list at once, which EFF-002 forbids.",
+      "evidence": "EFF-002: \"Build for data that grows a hundred times: ... long lists are paged or virtualized ...\". A1: \"A listing returns at most 1000 visible entries ... With a fixture of 1200 visible entries the first 1000 (folders first, then files, each sorted by name) are returned with total 1200 and truncated true, and the panel shows 'Showing first 1000 of 1200'.\" Design summary: \"each level is capped at 1000 returned rows with a total/truncated marker ... row rendering is memoised.\""
+    }
+  ]
+}

@@ -1,0 +1,575 @@
+{
+  "summary": "No production or test code needed changing for this revision round. The only open finding is the automated 'Core: tests' check, which failed on a transiently overloaded machine, not on this feature's code: the same three tests it reported (engine::tests::git_methods_work_through_the_engine, engine::tests::up_with_wait_stops_early_and_explains_when_a_terminal_fails, engine::tests::up_with_wait_times_out_and_names_who_is_not_ready) also failed in the run's own pre-change baseline as a flaky check (state.json baseline.tauri-rust-tests), and they are real-process timing tests with hard 15s/60s limits at src-tauri/src/engine.rs:904,931,1055 and src-tauri/src/git.rs:16,123,598 -- files this feature never touched. Re-running the exact check command 'cargo test --manifest-path src-tauri/Cargo.toml' on the current tree passes: lib 270 passed/0 failed/1 ignored, tdk 54 passed, src-tauri/tests/explorer.rs 12 passed, main and doc-tests 0. All revision-1 tests are unchanged and still pass. Disputing CHK-tauri-rust-tests on this evidence; fixing the underlying flakiness would require src-tauri/src/engine.rs and src-tauri/src/git.rs, which are outside this design's scope.",
+  "tests": [
+    {
+      "name": "r5_drives_are_listed_as_drive_roots",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "r2_lists_one_level_and_tells_folders_from_files",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "r2_children_are_fetched_only_when_their_level_is_requested",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "r2_hides_the_four_noisy_names_by_default_at_any_depth",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "r2_show_hidden_reveals_the_four_names_and_can_hide_them_again",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "r2_other_dot_named_entries_are_listed_normally",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "r2_an_empty_folder_lists_no_children_without_error",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "r2_an_unreadable_folder_is_locked_and_does_not_raise",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "r4_a_missing_app_root_is_locked_instead_of_raising",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "a1_a_large_level_is_capped_with_total_and_truncated",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "a1_folders_come_first_then_files_sorted_by_name",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "a1_scanning_stops_at_the_scan_limit",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R4 in the app view the root is the selected app's root",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 switching to another app moves the root",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 in the editor view the root is the app that owns the active tab",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 with nested roots the deepest root containing the file owns it",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 opening a file under the current root keeps the same owning app",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 a file outside every app root is not guessed into the nearest app",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 a path written with other slashes or case still finds its owner",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 an app with no root has nothing to show",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R5 a Misc file roots at its parent folder, not the home folder",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5 a Misc file at the root of a drive roots at that drive and Up reaches the drive list",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5 Up climbs one folder at a time up to the drive list",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5 switching between two Misc files moves the root",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5 switching from an app-owned tab to a Misc tab moves the root to the Misc parent",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "A5 the home view has no root, so the panel shows a hint",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "A5 an editor view with no tab, or an unsaved tab, has no root",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R2 lists one level through explorer_list, passing the folder and camelCase showHidden",
+      "file": "src/api/explorer.test.ts",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 asks for the same folder with showHidden off when hidden names are hidden",
+      "file": "src/api/explorer.test.ts",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R5 lists the drive roots through explorer_drives",
+      "file": "src/api/explorer.test.ts",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R2 reads exactly one level: only the root folder, never its descendants",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 a folder's children are requested only when it is first expanded, and not again",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 toggling Show hidden re-reads the shown levels with the hidden names on, and off again",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 a folder that cannot be read becomes a locked level instead of a thrown error",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "A1 keeps the visible total and truncated flag and does not re-read a level on re-render",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "A1 caches at most 100 levels and evicts the least recently used",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R5 Up climbs a Misc folder one level at a time until the drive list",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5 a Misc file at the root of a drive reaches the drive list in one Up",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R4 an app root offers no Up, so its top folder stays the app root",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4/R5 a change of view, app or active tab discards Up navigation and returns to the automatic root",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R4",
+        "R5"
+      ]
+    },
+    {
+      "name": "A5 with no root nothing applies, so no folder is read",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R2 lists one level and distinguishes folders from files",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 clicking a folder expands it, fetching its children only then, and clicking again collapses it",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 an empty folder expands without error and shows no children",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 a large folder shows a loading indication while it reads",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 a folder that cannot be read shows as locked instead of throwing",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 other dot-named files and folders are listed normally",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 Show hidden turns the hidden names on and off again",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R3 clicking a file hands it to the editor's existing open path and never reads it as a folder",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3 a file that is already open still goes through the same single open path",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3 clicking a folder only expands it and never opens it as a file",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3 a click reaches the editor controller's openPath, the same editor_open_any the picker uses",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R5 a Misc root offers Up that climbs to the drive list",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R4 an app root offers no Up, so the top folder stays the app root",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 switching the selected app or tab changes the root without touching any tab",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 if an app's root no longer exists it shows as locked instead of raising an error",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "A5 with no root it shows a hint and asks the core for nothing",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "A1 says when a level is truncated: Showing first 1000 of 1200",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R1: the home view offers it and choosing it opens the picked file in the editor view",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: the entry is present in the app view too, and cancelling leaves the view and tabs unchanged",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: picking several files opens each one",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: opening a file while another tab has unsaved text keeps that text",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: the editor's Open… button, Ctrl+O and the empty-state button still run the same picker",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R3: clicking a file opens it through the editor's open path and shows the editor view",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: clicking a file that is already open focuses its tab instead of opening a second",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: a file that fails to open shows the editor's existing error instead of crashing",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: clicking a folder expands it and never opens it as a file",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R4: in the app view it is the selected app's root and follows a newly selected app",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: in the editor view it is the deepest owning app's root",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: opening a file under the current root keeps the same owning app, so the root does not jump",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: an app root that no longer exists shows as unreadable instead of raising",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R5: an app-owned active tab roots at the app root, and switching to a Misc tab roots at that file's parent",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5: a Misc file in a deep path roots at its parent folder, not the home folder",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5: a Misc file at a drive root roots at the drive and Up reaches the drive list",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "A4: a loose file still gets the sidebar and its Files section",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R2: it sits beside the apps list in the expanded pane",
+      "file": "src/features/apps/Sidebar.explorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "A3: with no explorer prop the app rows and Home row are exactly as before",
+      "file": "src/features/apps/Sidebar.explorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "A3: the collapsed rail never shows the Files section",
+      "file": "src/features/apps/Sidebar.explorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "A4: with no apps saved the sidebar still shows the Files section",
+      "file": "src/features/apps/Sidebar.explorer.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "A2: package.json, package-lock.json, Cargo.toml, Cargo.lock and tauri.conf.json all say 2.2.0",
+      "file": "src/App.version.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    }
+  ],
+  "kickbacks": [
+    {
+      "type": "dispute",
+      "cites": [
+        "CHK-tauri-rust-tests"
+      ],
+      "reason": "The finding's reported failures are not caused by this change and do not reproduce: the exact check command 'cargo test --manifest-path src-tauri/Cargo.toml' now passes (lib 270 passed/0 failed/1 ignored, tdk 54 passed, src-tauri/tests/explorer.rs 12 passed), and the run's own pre-change baseline in .devteam/runs/20261126-075013/state.json (baseline[].id = tauri-rust-tests) already shows the identical engine::tests::git_methods_work_through_the_engine / up_with_wait_stops_early_and_explains_when_a_terminal_fails / up_with_wait_times_out_and_names_who_is_not_ready failures as a flaky check on the untouched baseline. Those are real-process timing tests with hard limits at src-tauri/src/engine.rs:904, src-tauri/src/engine.rs:931, src-tauri/src/engine.rs:1055 and src-tauri/src/git.rs:598 (git TIMEOUT 15s at src-tauri/src/git.rs:16, enforced at src-tauri/src/git.rs:123), none of which this feature's change set touches; they flake under machine load, not because of missing code. Making them reliable would mean changing src-tauri/src/engine.rs and src-tauri/src/git.rs, outside this design's scope."
+    }
+  ]
+}

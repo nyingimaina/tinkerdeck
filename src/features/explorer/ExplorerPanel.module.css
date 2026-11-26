@@ -1,0 +1,110 @@
+/* The Files explorer: a calm tree that reuses the sidebar's 28px rows and colour tokens (R2). */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 2px 4px;
+}
+.title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.action {
+  flex: none;
+  height: 26px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+}
+.action:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.action[aria-pressed="true"] {
+  background: var(--panel-2);
+  color: var(--text);
+}
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.folderRow,
+.fileRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+.folderRow:hover,
+.fileRow:hover {
+  background: var(--hover);
+}
+.chevron {
+  flex: none;
+  width: 12px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.icon {
+  flex: none;
+  width: 16px;
+  text-align: center;
+  font-size: 12px;
+}
+.lock {
+  flex: none;
+  margin-left: auto;
+  font-size: 11px;
+}
+.name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.children {
+  padding-left: 14px;
+}
+.status,
+.locked,
+.empty,
+.hint,
+.more {
+  margin: 4px 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.more {
+  font-size: 11px;
+}

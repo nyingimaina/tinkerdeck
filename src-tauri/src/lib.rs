@@ -8,6 +8,7 @@ mod detect;
 mod editor;
 mod editor_cmds;
 mod engine;
+pub mod features;
 mod gallery;
 mod git;
 mod ipc;
@@ -186,6 +187,8 @@ pub fn run() {
             themes_cmds::themes_fetch_online,
             themes_cmds::themes_scan_local,
             themes_cmds::themes_read_local,
+            features::explorer::commands::explorer_list,
+            features::explorer::commands::explorer_drives,
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {

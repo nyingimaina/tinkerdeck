@@ -1,0 +1,13 @@
+{
+  "findings": [
+    {
+      "cites": "USR-003",
+      "severity": "advisory",
+      "file": "src/features/explorer/useExplorer.ts",
+      "line": 217,
+      "evidence": "reloadShown() loops over every key of the unbounded expandedRef.current and calls loadChildren(path, show) for each in the same tick; each call issues explorerApi.list -> explorer_list, which scans up to MAX_SCANNED (10000) entries on the blocking pool (src-tauri/src/features/explorer/mod.rs:20, src-tauri/src/features/explorer/commands.rs:9). There is no cap on how many scans run at once and no timeout on a scan.",
+      "description": "'Show hidden' and refresh fire one full directory scan per currently expanded folder simultaneously. Each request is bounded (1000 returned / 10000 scanned) and lazy, and the trigger is user-initiated, so this is not a remote or unbounded-input DoS; but a burst of blocking-pool scans over a slow disk or network folder can stall the window on low-spec hardware. Worth a concurrency cap or sequential refresh in a later pass."
+    }
+  ],
+  "verifications": []
+}

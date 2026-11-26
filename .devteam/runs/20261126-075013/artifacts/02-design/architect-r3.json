@@ -1,0 +1,215 @@
+{
+  "summary": "Revision 1 of 3: the change adds a Files explorer beside the existing apps list. It is split into a small Rust core half and a small React window half, joined only by a typed boundary. The core half is a new standard-shaped module, src-tauri/src/features/explorer (with src-tauri/src/features/mod.rs), holding a plain, testable one-level directory lister and a Windows drive lister; two thin async #[tauri::command] shells run the filesystem work through tauri::async_runtime::spawn_blocking so the window thread never waits. The window half is a new feature in src/features/explorer (root.ts, useExplorer.ts, ExplorerPanel.tsx, ExplorerPanel.module.css) plus the typed boundary src/api/explorer.ts, which mirrors the two commands and is the only place the explorer calls invoke. The existing Sidebar gains one optional explorer slot (a Files section inside its expanded nav, never in the collapsed rail), so the app rows, Home row, rail and their tests stay as they are. App.tsx computes the root with a pure helper: app view uses the selected app's root; editor view uses ownerOf from src/state/editorGroups.ts, the same deepest-app-root lookup the tab groups use, and a Misc tab uses its file's parent folder. Up is temporary navigation that walks parents to the Windows drive list and is replaced by the automatic root whenever the view, selected app or active tab path changes; an app-rooted explorer offers no Up, so R4's top folder stays the app root. When no app root and no file path apply (home view, no tab, unsaved tab) the section shows a short hint and asks the core for nothing. Clicking a file calls useEditor.openPath, the existing editor_open_any path: it reuses/focuses an already-open entry by same_path, keeps images/PDFs on the existing preview-only handling and runs onOpened, which switches the main area to the editor view. Clicking a folder only expands or collapses it. The palette gains one unconditional 'Open file…' action that calls the same editor.openDialog the toolbar, Ctrl+O and empty-state button already use, so there is no second open path and those controls are untouched. Hidden names (node_modules, .git, target, dist) are filtered in the core and a Show hidden control turns them back on; an unreadable folder expands to a locked row with no thrown error. Design for scale: exactly one directory level is read per expand, nothing is recursive, cached, watched or polled, filtering/sorting/capping run once in the core, each level is capped at 1000 returned rows with a total/truncated marker, the per-root cache is capped at 100 levels with least-recently-used eviction, and row rendering is memoised. Low cost: no new npm package or crate, only an already-present windows-sys feature is switched on for GetLogicalDrives; one directory read per expand and one bounded readability probe per returned folder row; memory is the visible rows only; startup and CSP are unchanged. No new capability permission is needed (app-defined commands are not plugin commands); the dialog plugin already grants dialog:allow-open. The Windows desktop window has a 900x560 minimum, so the Files rows reuse the sidebar's existing 28-32px hit areas rather than adding mobile breakpoints (USR-001/002 are honoured by reuse, no new component library). Existing App suites gain a vi.mock for the new api module (the same pattern already used for api/tauri and api/editor). The version moves to 2.2.0 in package.json, package-lock.json, src-tauri/Cargo.toml, src-tauri/Cargo.lock and src-tauri/tauri.conf.json.",
+  "impact": {
+    "touches": [
+      "src/App.tsx",
+      "src/features/apps/Sidebar.tsx",
+      "src/features/apps/Sidebar.module.css",
+      "src/features/apps/Sidebar.collapse.test.tsx",
+      "the existing App test suites beside src/App.tsx",
+      "src-tauri/src/lib.rs",
+      "src-tauri/Cargo.toml",
+      "src-tauri/Cargo.lock",
+      "src-tauri/tauri.conf.json",
+      "package.json",
+      "package-lock.json"
+    ],
+    "reuses": [
+      "src/state/editorGroups.ts ownerOf (deepest app root containing a path, null for Misc), the exact lookup the tab groups use",
+      "src/state/useEditor.ts openPath/openDialog (editor_open_any same_path reuse, binary preview handling, onOpened switches to the editor view)",
+      "src/api/editor.ts pickOpenPaths and the existing editor picker controls (toolbar Open., Ctrl+O, empty-state Open a file.) left untouched",
+      "src/state/fileKinds.ts detectKind for per-file icons in the tree",
+      "src/state/model.ts nameFromPath and normalizeSlashes for root labels and separator handling",
+      "src/features/apps/Sidebar shell, Home row, collapsed rail and CSS tokens var(--panel), var(--border), var(--hover), var(--radius)",
+      "src/api/tauri.ts errorText-style readable error text and the existing dialog:allow-open permission",
+      "src/features/apps/Sidebar.collapse.test.tsx as the behaviour to freeze"
+    ],
+    "adds": [
+      "a new React explorer feature with its sources, styles and tests inside src/features/explorer/",
+      "a typed explorer boundary in src/api/explorer.ts wrapping the two new commands (list, drives)",
+      "new standard-shaped Rust code under src-tauri/src/features/ (the features module plus the explorer core and its command shells)",
+      "core integration tests in src-tauri/tests/explorer.rs",
+      "the windows-sys Win32_Storage_FileSystem feature switched on in src-tauri/Cargo.toml for GetLogicalDrives (no new crate)",
+      "one unconditional command-palette action 'Open file…' added in src/App.tsx",
+      "a bounded directory reply carrying the visible total and a truncated marker",
+      "the version raised to 2.2.0 in package.json, package-lock.json, src-tauri/Cargo.toml, src-tauri/Cargo.lock and src-tauri/tauri.conf.json"
+    ]
+  },
+  "scope": [
+    "src-tauri/src/features/**",
+    "src-tauri/src/lib*.rs",
+    "src-tauri/Cargo.*",
+    "src-tauri/tauri*.json",
+    "src-tauri/tests/**",
+    "src/api/explorer*",
+    "src/features/explorer/**",
+    "src/features/apps/Sidebar*",
+    "src/App*.tsx",
+    "package*.json"
+  ],
+  "components": [
+    {
+      "name": "ExplorerCore",
+      "path": "src-tauri/src/features/explorer/mod.rs",
+      "requirements": ["R2", "R5", "A1"]
+    },
+    {
+      "name": "ExplorerCommands",
+      "path": "src-tauri/src/features/explorer/commands.rs",
+      "requirements": ["R2", "R5"]
+    },
+    {
+      "name": "FeaturesModule",
+      "path": "src-tauri/src/features/mod.rs",
+      "requirements": ["R2"]
+    },
+    {
+      "name": "ExplorerCoreTests",
+      "path": "src-tauri/tests/explorer.rs",
+      "requirements": ["R2", "R5", "A1"]
+    },
+    {
+      "name": "TauriRegistration",
+      "path": "src-tauri/src/lib.rs",
+      "requirements": ["R2", "R5"]
+    },
+    {
+      "name": "ExplorerApi",
+      "path": "src/api/explorer.ts",
+      "requirements": ["R2", "R3", "R5"]
+    },
+    {
+      "name": "ExplorerRoot",
+      "path": "src/features/explorer/root.ts",
+      "requirements": ["R4", "R5", "A5"]
+    },
+    {
+      "name": "ExplorerRootTests",
+      "path": "src/features/explorer/root.test.ts",
+      "requirements": ["R4", "R5", "A5"]
+    },
+    {
+      "name": "UseExplorer",
+      "path": "src/features/explorer/useExplorer.ts",
+      "requirements": ["R2", "R3", "R5", "A1"]
+    },
+    {
+      "name": "UseExplorerTests",
+      "path": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": ["R2", "R5", "A1"]
+    },
+    {
+      "name": "ExplorerPanel",
+      "path": "src/features/explorer/ExplorerPanel.tsx",
+      "requirements": ["R2", "R3", "R5", "A5"]
+    },
+    {
+      "name": "ExplorerPanelStyles",
+      "path": "src/features/explorer/ExplorerPanel.module.css",
+      "requirements": ["R2", "R3"]
+    },
+    {
+      "name": "ExplorerPanelTests",
+      "path": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": ["R2", "R3", "R5", "A5"]
+    },
+    {
+      "name": "SidebarExplorerSection",
+      "path": "src/features/apps/Sidebar.tsx",
+      "requirements": ["R2", "A4"]
+    },
+    {
+      "name": "SidebarExplorerStyles",
+      "path": "src/features/apps/Sidebar.module.css",
+      "requirements": ["R2"]
+    },
+    {
+      "name": "SidebarCharacterizationTests",
+      "path": "src/features/apps/Sidebar.collapse.test.tsx",
+      "requirements": ["R2", "A3"]
+    },
+    {
+      "name": "SidebarExplorerTests",
+      "path": "src/features/apps/Sidebar.explorer.test.tsx",
+      "requirements": ["R2", "A3"]
+    },
+    {
+      "name": "AppShell",
+      "path": "src/App.tsx",
+      "requirements": ["R1", "R3", "R4", "R5", "A4"]
+    },
+    {
+      "name": "AppExplorerTests",
+      "path": "src/App.explorer.test.tsx",
+      "requirements": ["R1", "R3", "R4", "R5"]
+    },
+    {
+      "name": "VersionBump",
+      "path": "package.json",
+      "requirements": ["R2", "A2"]
+    }
+  ],
+  "additions": [
+    {
+      "id": "A1",
+      "title": "Bound each directory listing and say when it is truncated",
+      "why": "A folder with tens of thousands of entries must not freeze the window, use unbounded memory or render thousands of rows.",
+      "parent": "R2",
+      "kind": "enabling",
+      "touches": ["api", "ui", "tests"],
+      "acceptance": [
+        "A listing returns at most 1000 visible entries, the number of visible entries found and a truncated flag; at most 10000 entries are scanned.",
+        "With a fixture of 1200 visible entries the first 1000 (folders first, then files, each sorted by name) are returned with total 1200 and truncated true, and the panel shows 'Showing first 1000 of 1200'.",
+        "Filtering by the four hidden names and sorting happen once in the core, and a level is not re-read on every render."
+      ]
+    },
+    {
+      "id": "A2",
+      "title": "Keep the app version in one number",
+      "why": "The version files must stay identical after any change that ships.",
+      "parent": "R2",
+      "kind": "enabling",
+      "touches": ["none"],
+      "acceptance": [
+        "package.json, package-lock.json, src-tauri/Cargo.toml, src-tauri/Cargo.lock and src-tauri/tauri.conf.json all show 2.2.0 for Tinkerdeck."
+      ]
+    },
+    {
+      "id": "A3",
+      "title": "Characterization tests for the merged sidebar and app shell",
+      "why": "The sidebar and the App suites already shipped; adding the Files section and the palette entry must not change their current behaviour.",
+      "parent": "R2",
+      "kind": "enabling",
+      "touches": ["tests"],
+      "acceptance": [
+        "The existing Sidebar, App editor and App layout suites pass before the explorer slot and palette entry are added.",
+        "New tests pin the app rows, Home row and collapsed rail with no explorer prop, and show the Files section beside them when one is given.",
+        "The existing App suites gain a vi.mock for the new api module returning an empty listing, so their current assertions stay unchanged."
+      ]
+    },
+    {
+      "id": "A4",
+      "title": "Show the sidebar and explorer in the editor view even with no apps",
+      "why": "A loose file opened with 'Edit with Tinkerdeck' needs its parent folder browsable even when no app is configured, as R5 requires.",
+      "parent": "R5",
+      "kind": "enabling",
+      "touches": ["ui"],
+      "acceptance": [
+        "With zero apps saved and an editor tab open for a loose file, the sidebar renders with the Files section listing that file's parent folder.",
+        "In every other view and app count the app rows, Home row and collapsed rail look and behave exactly as before."
+      ]
+    },
+    {
+      "id": "A5",
+      "title": "Show a hint instead of guessing a root when nothing applies",
+      "why": "The home view and an editor view with no file path have no agreed root in this revision, so the explorer must not read or guess a folder.",
+      "parent": "R4",
+      "kind": "enabling",
+      "touches": ["ui", "tests"],
+      "acceptance": [
+        "In the home view, or with no active tab or an unsaved tab, the Files section shows a short hint and makes no directory request.",
+        "The hint is replaced by the tree as soon as an app root or a tab path applies."
+      ]
+    }
+  ]
+}

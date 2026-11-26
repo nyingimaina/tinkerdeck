@@ -1,0 +1,926 @@
+{
+  "stamps": {
+    ".gitignore": [
+      72,
+      639310242999635338
+    ],
+    ".mcp.json": [
+      98,
+      639311195200999808
+    ],
+    "BRS-app-launcher.md": [
+      56646,
+      639311213832960170
+    ],
+    "CHANGELOG.md": [
+      10708,
+      639312738498047358
+    ],
+    "index.html": [
+      359,
+      639311195201075146
+    ],
+    "llms.txt": [
+      3501,
+      639311195201125164
+    ],
+    "package.json": [
+      1601,
+      639312738794233728
+    ],
+    "README.md": [
+      9989,
+      639312738795040094
+    ],
+    "tsconfig.json": [
+      530,
+      639310242998226135
+    ],
+    "vite.config.ts": [
+      635,
+      639310870062328750
+    ],
+    "docs/ui-tidy-up-plan.md": [
+      36169,
+      639312730477828628
+    ],
+    "installer/icon-preview.png": [
+      136336,
+      639312739010605934
+    ],
+    "installer/icon-small.svg": [
+      1603,
+      639311201471383607
+    ],
+    "installer/icon.svg": [
+      3562,
+      639311201471363601
+    ],
+    "installer/llm-readme.md": [
+      10188,
+      639311195201115154
+    ],
+    "installer/tinkerdeck.ico": [
+      112447,
+      639312738993263384
+    ],
+    "installer/tinkerdeck.iss": [
+      7173,
+      639312738794870010
+    ],
+    "mcp/server.json": [
+      1078,
+      639312738794839968
+    ],
+    "public/icon.svg": [
+      1603,
+      639312739010605934
+    ],
+    "scripts/build-installer.ps1": [
+      1674,
+      639311195201175165
+    ],
+    "scripts/fix-ship-bump.ps1": [
+      1670,
+      639312745026733472
+    ],
+    "scripts/fix_ship_bump.py": [
+      3671,
+      639312744867898764
+    ],
+    "scripts/make-icons.mjs": [
+      3316,
+      639311199949079148
+    ],
+    "scripts/new-update-key.mjs": [
+      1202,
+      639311195201185190
+    ],
+    "scripts/publish-release.ps1": [
+      2168,
+      639311195201200309
+    ],
+    "scripts/ship.ps1": [
+      14308,
+      639312749713363199
+    ],
+    "scripts/ship.tests.ps1": [
+      6209,
+      639312749608414315
+    ],
+    "scripts/sign-release.mjs": [
+      2914,
+      639311195201230442
+    ],
+    "src/App.editor.test.tsx": [
+      4599,
+      639312730477893911
+    ],
+    "src/App.features.test.tsx": [
+      27451,
+      639312730477903901
+    ],
+    "src/App.layout.test.tsx": [
+      17778,
+      639312730477924007
+    ],
+    "src/App.module.css": [
+      715,
+      639312730477934004
+    ],
+    "src/App.shortcuts.test.tsx": [
+      21098,
+      639312730477944022
+    ],
+    "src/App.test.tsx": [
+      23585,
+      639312730477964035
+    ],
+    "src/App.themes.test.tsx": [
+      7896,
+      639312730477974025
+    ],
+    "src/App.tsx": [
+      34262,
+      639312730478003998
+    ],
+    "src/App.updatecheck.test.tsx": [
+      4615,
+      639312730478013981
+    ],
+    "src/App.updates.test.tsx": [
+      9399,
+      639312730478034018
+    ],
+    "src/main.tsx": [
+      361,
+      639310248830538347
+    ],
+    "src/vite-env.d.ts": [
+      249,
+      639310870062338894
+    ],
+    "src-tauri/build.rs": [
+      39,
+      639310243649777628
+    ],
+    "src-tauri/Cargo.toml": [
+      1266,
+      639312738794619590
+    ],
+    "src-tauri/tauri.conf.json": [
+      902,
+      639312738794589605
+    ],
+    "src/api/editor.ts": [
+      1833,
+      639311195201847057
+    ],
+    "src/api/tauri.ts": [
+      5184,
+      639310869181299141
+    ],
+    "src/api/themes.ts": [
+      882,
+      639311210698826667
+    ],
+    "src/shared/shortcuts.test.ts": [
+      2189,
+      639312730478279882
+    ],
+    "src/shared/shortcuts.ts": [
+      2053,
+      639312730478299868
+    ],
+    "src/state/console.test.ts": [
+      2841,
+      639310814110767817
+    ],
+    "src/state/console.ts": [
+      2413,
+      639310814107990685
+    ],
+    "src/state/editor.test.ts": [
+      1093,
+      639311149307752912
+    ],
+    "src/state/editor.ts": [
+      1348,
+      639311149825165925
+    ],
+    "src/state/editorGroups.test.ts": [
+      2465,
+      639311159628632150
+    ],
+    "src/state/editorGroups.ts": [
+      1515,
+      639311160241595397
+    ],
+    "src/state/fileKinds.test.ts": [
+      3202,
+      639311159626533313
+    ],
+    "src/state/fileKinds.ts": [
+      5622,
+      639311178298230176
+    ],
+    "src/state/git.ts": [
+      4288,
+      639310313765534009
+    ],
+    "src/state/home.ts": [
+      1423,
+      639310816917468396
+    ],
+    "src/state/homeGit.test.ts": [
+      6990,
+      639310313760557828
+    ],
+    "src/state/model.test.ts": [
+      7712,
+      639310252040451515
+    ],
+    "src/state/model.ts": [
+      9686,
+      639311113050853805
+    ],
+    "src/state/previews.test.ts": [
+      1262,
+      639311177187452592
+    ],
+    "src/state/previews.ts": [
+      1325,
+      639311178257659783
+    ],
+    "src/state/useEditor.test.tsx": [
+      8171,
+      639311149309962089
+    ],
+    "src/state/useEditor.ts": [
+      9463,
+      639311195203248830
+    ],
+    "src/state/useGit.ts": [
+      6650,
+      639310815020613413
+    ],
+    "src/state/useLauncher.ts": [
+      11829,
+      639310869181319141
+    ],
+    "src/state/usePoller.test.tsx": [
+      5189,
+      639310814113999732
+    ],
+    "src/state/usePoller.ts": [
+      2806,
+      639310814112388975
+    ],
+    "src/state/useUpdates.ts": [
+      2845,
+      639311142513074845
+    ],
+    "src/styles/global.css": [
+      1506,
+      639311212191709290
+    ],
+    "src/test/setup.ts": [
+      909,
+      639310815790679019
+    ],
+    "src/themes/apply.test.ts": [
+      2341,
+      639311208491358342
+    ],
+    "src/themes/apply.ts": [
+      1034,
+      639311210693491234
+    ],
+    "src/themes/builtin.test.ts": [
+      3663,
+      639311204130909739
+    ],
+    "src/themes/builtin.ts": [
+      5478,
+      639311210039999471
+    ],
+    "src/themes/colors.test.ts": [
+      1908,
+      639311204129186658
+    ],
+    "src/themes/colors.ts": [
+      2633,
+      639311210038137159
+    ],
+    "src/themes/package.test.ts": [
+      2875,
+      639311208747221878
+    ],
+    "src/themes/terminal.ts": [
+      766,
+      639311210695844513
+    ],
+    "src/themes/types.ts": [
+      1721,
+      639311210035898112
+    ],
+    "src/themes/useThemeFinder.test.tsx": [
+      5105,
+      639311208749062207
+    ],
+    "src/themes/useThemeFinder.ts": [
+      3157,
+      639311211139601967
+    ],
+    "src/themes/useThemes.test.tsx": [
+      6280,
+      639311211324100601
+    ],
+    "src/themes/useThemes.ts": [
+      4917,
+      639311211137464313
+    ],
+    "src/themes/vscode.test.ts": [
+      6751,
+      639311204132167369
+    ],
+    "src/themes/vscode.ts": [
+      10536,
+      639311210879964919
+    ],
+    "src-tauri/capabilities/default.json": [
+      269,
+      639310246294487993
+    ],
+    "src-tauri/icons/128x128.png": [
+      18619,
+      639312738998242760
+    ],
+    "src-tauri/icons/128x128@2x.png": [
+      50790,
+      639312739001143308
+    ],
+    "src-tauri/icons/32x32.png": [
+      2046,
+      639312738995580472
+    ],
+    "src-tauri/icons/icon.ico": [
+      112447,
+      639312738993253381
+    ],
+    "src-tauri/icons/icon.png": [
+      136336,
+      639312739005806357
+    ],
+    "src-tauri/src/ansi.rs": [
+      5750,
+      639311195201265633
+    ],
+    "src-tauri/src/brief.rs": [
+      23505,
+      639311108638907295
+    ],
+    "src-tauri/src/commands.rs": [
+      17094,
+      639311142513832884
+    ],
+    "src-tauri/src/config.rs": [
+      17408,
+      639311195201440961
+    ],
+    "src-tauri/src/detect.rs": [
+      15603,
+      639311109146799989
+    ],
+    "src-tauri/src/editor.rs": [
+      29692,
+      639311195201480911
+    ],
+    "src-tauri/src/editor_cmds.rs": [
+      3040,
+      639311195201490908
+    ],
+    "src-tauri/src/engine.rs": [
+      59255,
+      639311195201551385
+    ],
+    "src-tauri/src/gallery.rs": [
+      25154,
+      639311207992834527
+    ],
+    "src-tauri/src/git.rs": [
+      42737,
+      639310312134977855
+    ],
+    "src-tauri/src/ipc.rs": [
+      8431,
+      639311195201604096
+    ],
+    "src-tauri/src/job.rs": [
+      9966,
+      639310262481028080
+    ],
+    "src-tauri/src/legacy.rs": [
+      6214,
+      639311197318128240
+    ],
+    "src-tauri/src/lib.rs": [
+      7571,
+      639311207493246602
+    ],
+    "src-tauri/src/logger.rs": [
+      1040,
+      639311195201638173
+    ],
+    "src-tauri/src/main.rs": [
+      166,
+      639311195201643640
+    ],
+    "src-tauri/src/model.rs": [
+      13802,
+      639311195201658789
+    ],
+    "src-tauri/src/paths.rs": [
+      2385,
+      639310244145338215
+    ],
+    "src-tauri/src/ready.rs": [
+      3784,
+      639311109142519807
+    ],
+    "src-tauri/src/ring.rs": [
+      7640,
+      639310824581999109
+    ],
+    "src-tauri/src/runtime.rs": [
+      31115,
+      639310819954456722
+    ],
+    "src-tauri/src/shells.rs": [
+      8489,
+      639310386227829777
+    ],
+    "src-tauri/src/state.rs": [
+      6039,
+      639310254823721873
+    ],
+    "src-tauri/src/themes.rs": [
+      5137,
+      639311206861675014
+    ],
+    "src-tauri/src/themes_cmds.rs": [
+      1457,
+      639311207227386061
+    ],
+    "src-tauri/src/update.rs": [
+      30384,
+      639311197318138224
+    ],
+    "src/features/apps/AppFooter.module.css": [
+      935,
+      639312730478044016
+    ],
+    "src/features/apps/AppFooter.test.tsx": [
+      2337,
+      639312730478059154
+    ],
+    "src/features/apps/AppFooter.tsx": [
+      1485,
+      639312730478069280
+    ],
+    "src/features/apps/AppHeader.module.css": [
+      814,
+      639310248027105765
+    ],
+    "src/features/apps/AppHeader.tsx": [
+      1028,
+      639310248025041212
+    ],
+    "src/features/apps/Banner.module.css": [
+      577,
+      639310869181329125
+    ],
+    "src/features/apps/Banner.tsx": [
+      583,
+      639310869181329125
+    ],
+    "src/features/apps/components.test.tsx": [
+      11105,
+      639310253358790839
+    ],
+    "src/features/apps/Dialog.module.css": [
+      915,
+      639311212191779786
+    ],
+    "src/features/apps/Dialog.tsx": [
+      1156,
+      639310248278346919
+    ],
+    "src/features/apps/EditPane.module.css": [
+      3205,
+      639311212191789740
+    ],
+    "src/features/apps/EditPane.novice.test.tsx": [
+      7485,
+      639310253029135625
+    ],
+    "src/features/apps/EditPane.ready.test.tsx": [
+      3698,
+      639311195201902272
+    ],
+    "src/features/apps/EditPane.tsx": [
+      18144,
+      639311113050873795
+    ],
+    "src/features/apps/EmptyState.module.css": [
+      413,
+      639311212191789740
+    ],
+    "src/features/apps/EmptyState.tsx": [
+      400,
+      639310248282232411
+    ],
+    "src/features/apps/Sidebar.collapse.test.tsx": [
+      2273,
+      639310816567608223
+    ],
+    "src/features/apps/Sidebar.module.css": [
+      2196,
+      639310816564955707
+    ],
+    "src/features/apps/Sidebar.tsx": [
+      3921,
+      639310816560513908
+    ],
+    "src/features/apps/TopBar.module.css": [
+      1284,
+      639312730478069280
+    ],
+    "src/features/apps/TopBar.test.tsx": [
+      3794,
+      639312730478079276
+    ],
+    "src/features/apps/TopBar.tsx": [
+      3871,
+      639312730478089287
+    ],
+    "src/features/apps/UtilitiesMenu.module.css": [
+      999,
+      639312730478099264
+    ],
+    "src/features/apps/UtilitiesMenu.test.tsx": [
+      2516,
+      639312730478109300
+    ],
+    "src/features/apps/UtilitiesMenu.tsx": [
+      3022,
+      639312730478119302
+    ],
+    "src/features/command-palette/CommandPalette.module.css": [
+      2066,
+      639312730478139279
+    ],
+    "src/features/command-palette/CommandPalette.test.tsx": [
+      5029,
+      639312730478144375
+    ],
+    "src/features/command-palette/CommandPalette.tsx": [
+      11295,
+      639312730478159767
+    ],
+    "src/features/editor/cmTheme.ts": [
+      3174,
+      639311212127854941
+    ],
+    "src/features/editor/CodeSurface.tsx": [
+      5586,
+      639311212191674050
+    ],
+    "src/features/editor/EditorView.module.css": [
+      3746,
+      639311212191809760
+    ],
+    "src/features/editor/EditorView.test.tsx": [
+      10899,
+      639311177313542554
+    ],
+    "src/features/editor/EditorView.tsx": [
+      9822,
+      639311212191689125
+    ],
+    "src/features/editor/PreviewPane.module.css": [
+      1619,
+      639311178259483177
+    ],
+    "src/features/editor/PreviewPane.test.tsx": [
+      3312,
+      639311177189240273
+    ],
+    "src/features/editor/PreviewPane.tsx": [
+      4198,
+      639311178585042335
+    ],
+    "src/features/git/BranchMenu.tsx": [
+      1697,
+      639310314613917418
+    ],
+    "src/features/git/ChangesView.tsx": [
+      2802,
+      639310314617477514
+    ],
+    "src/features/git/Git.module.css": [
+      5296,
+      639312730478169862
+    ],
+    "src/features/git/git.test.tsx": [
+      14277,
+      639310815205090777
+    ],
+    "src/features/git/GitBar.collapse.test.tsx": [
+      5760,
+      639312730478189894
+    ],
+    "src/features/git/GitBar.tsx": [
+      5209,
+      639312730478199881
+    ],
+    "src/features/git/GitDrawer.tsx": [
+      1479,
+      639310314620867563
+    ],
+    "src/features/git/HistoryView.tsx": [
+      3823,
+      639310314619032923
+    ],
+    "src/features/home/HomeScreen.module.css": [
+      2279,
+      639310315496565209
+    ],
+    "src/features/home/HomeScreen.test.tsx": [
+      4967,
+      639310315691923721
+    ],
+    "src/features/home/HomeScreen.tsx": [
+      5154,
+      639310817105425145
+    ],
+    "src/features/terminals/ConsoleNav.module.css": [
+      2765,
+      639312730478219876
+    ],
+    "src/features/terminals/ConsoleNav.test.tsx": [
+      4816,
+      639312730478229853
+    ],
+    "src/features/terminals/ConsoleNav.tsx": [
+      4228,
+      639312730478239879
+    ],
+    "src/features/terminals/StatusDot.module.css": [
+      580,
+      639310247584302525
+    ],
+    "src/features/terminals/StatusDot.tsx": [
+      742,
+      639310247582810734
+    ],
+    "src/features/terminals/TabStrip.module.css": [
+      1218,
+      639310815527149640
+    ],
+    "src/features/terminals/TabStrip.tsx": [
+      2611,
+      639310815523008051
+    ],
+    "src/features/terminals/TerminalHost.module.css": [
+      640,
+      639310248835446855
+    ],
+    "src/features/terminals/TerminalHost.shortcuts.test.tsx": [
+      3393,
+      639312730478249863
+    ],
+    "src/features/terminals/TerminalHost.tsx": [
+      5288,
+      639312730478269895
+    ],
+    "src/features/themes/ThemeFinder.test.tsx": [
+      3949,
+      639311208936603343
+    ],
+    "src/features/themes/ThemeFinder.tsx": [
+      3105,
+      639311211573501534
+    ],
+    "src/features/themes/ThemePicker.test.tsx": [
+      3794,
+      639311211765019467
+    ],
+    "src/features/themes/ThemePicker.tsx": [
+      4629,
+      639311211571601919
+    ],
+    "src/features/themes/Themes.module.css": [
+      3057,
+      639311211574971608
+    ],
+    "src/features/updates/updates.test.tsx": [
+      10819,
+      639310870062328750
+    ],
+    "src/features/updates/UpdateUI.module.css": [
+      1226,
+      639310869572683273
+    ],
+    "src/features/updates/UpdateUI.tsx": [
+      3809,
+      639311195203122602
+    ]
+  },
+  "hashes": {
+    ".gitignore": "F4D3384C5E1BBCAEF1DDE20C9B130D60BB1437F211F40842C10F91EBBB6E1E45",
+    ".mcp.json": "DC8FD8160D13AD3CDBE9D471EBAE36389F017FCB333F97D8350596A243903A1B",
+    "BRS-app-launcher.md": "2D59ADD01B7BF5C9F44D5811B6C71CF9EF71B2EDB522853E0E57CEB3B2056A16",
+    "CHANGELOG.md": "7114715A3A1297E761B8DA8857D3CCD092E873086ED3FF6ED31112A1BDB4D012",
+    "index.html": "078B7FFC2179CB27527A2756AD703442B481D25EE9973EC5C511F0EA4195361F",
+    "llms.txt": "C0066BD5D0492CC1060A3ADDBBA99FE5E5B954718CB77CC19F17D0FA34F4E546",
+    "package.json": "15B810A6B9BBCB3B71090F147140DF5320EE99B43978796E6BE1E67EF195995A",
+    "README.md": "6786D8F98B72D993144BE2DA26FD87261A92DCE5A7E1EA711D0A677BDC353EB9",
+    "tsconfig.json": "AADCAA95702350FB0F43BF2EEED675B00908D6DF3257BE42DFB144CA5C2D5218",
+    "vite.config.ts": "EA6F48CCC0BAE60301C7B8FCD50244431A211F9155D1086F47DA94738A3FCB56",
+    "docs/ui-tidy-up-plan.md": "67A81E71BFCC164C440C7B86E5BE5EDA21BE1B19537AFE1F966AE0A62C84FED0",
+    "installer/icon-preview.png": "758C5CCFBF883A2B93F97DF06454FB9E9DAA4B4BAA44A7E921141D4A79313E36",
+    "installer/icon-small.svg": "D4D5A3BB98F1D10CECCAAA7BEC4A6E5951D617CFC948A1D7CDB0685954E1F4D5",
+    "installer/icon.svg": "0CC17032834CD40FD8D6A1531502273EDC6C2B9C745740D6725F096F0EEA08CF",
+    "installer/llm-readme.md": "F8E79445E48B7E84A0D7805CF0EC33F3A918BEE21B6FE389B12AF93B7290CD03",
+    "installer/tinkerdeck.ico": "BE9528C6B00FCE21D43CADA0946E33E54AC89BA0AF80DF059D9D40DCA57918EA",
+    "installer/tinkerdeck.iss": "288ACD7C2D1B20F2872584ADC851E88B054184476A735F54AC55CDF0B7159B9E",
+    "mcp/server.json": "86CC576B18C1C49403725EC0F435C1408B3D73028C3E73C8F3DEE267334605EE",
+    "public/icon.svg": "D4D5A3BB98F1D10CECCAAA7BEC4A6E5951D617CFC948A1D7CDB0685954E1F4D5",
+    "scripts/build-installer.ps1": "BD39C0058A962FD99BB83AEB56F2F4220D009857C11B9A6D4FA7B981C564513A",
+    "scripts/fix-ship-bump.ps1": "AC41E9EC01172F336A849AE40F03DBBF64C2F9F8C5A6D23EAB9E09A54E641648",
+    "scripts/fix_ship_bump.py": "A75D281BFD8833FDE3EE5009F0707A6A46DA84943748348972AF455E3111E788",
+    "scripts/make-icons.mjs": "65B5C314F1EBA14530916C9F35469900797C6422F0264F3ACB5AEDB3AE006158",
+    "scripts/new-update-key.mjs": "90E9E99AD422A657B037EA6E94B0C0C9638F457413E0EAA37581B5A06AB2F115",
+    "scripts/publish-release.ps1": "03C0563669C2937EA75C4E4D4827F97B5C5A714ABADD3FA666B692BDED27C1D0",
+    "scripts/ship.ps1": "1477FBE29B6F0FC2D77C883857E332F27E779C74F20915D4A4D8AB0D65347E73",
+    "scripts/ship.tests.ps1": "385E24C823A6273DED34F1DAF16256F19B5EB5CB7E1A0DAF1E4BEE78A268C70E",
+    "scripts/sign-release.mjs": "02C5F55B2D75F5893D39C103C603A5CCC7FFA4B4C6D9FA4466505A4A67E28721",
+    "src/App.editor.test.tsx": "4052B795404A0EFA9822A99923B22B7FF9C03AE2AFEBCD8372C813F088151A40",
+    "src/App.features.test.tsx": "A05A3BA2FA219B8F47FEEC1A0C4B77201708FE7A7022C6EF373F7638ECB6B950",
+    "src/App.layout.test.tsx": "64FBFD9BE10B4F999A4DF5CE276E7D115EF46BC11AF86C03DF30FDE3C447C121",
+    "src/App.module.css": "2CA902960DC91A6835A525BAAD6B296F7AA5C26ED42DA59122EA58EBF253019D",
+    "src/App.shortcuts.test.tsx": "5B6B7530B415D9CF973EBBDF34B7F1F75B5603DAB9172DDD0989137CC1E8854D",
+    "src/App.test.tsx": "4D2EA6E82158795D1F9AC37DC117C200CB0001E11F9964E03B28882D01045B15",
+    "src/App.themes.test.tsx": "1F73519B3AB666FA263256C54745AEABA424340DEC6D4686A0B73F97EE2CD51A",
+    "src/App.tsx": "6139A0820E78A767CEBC2A3BB396FCB107DA855ECDBCF30138E6E654D3208427",
+    "src/App.updatecheck.test.tsx": "373AE90DD77BB6FC133E26E4E691B7CF0B159398B2C231F290BDE7E6C94390C3",
+    "src/App.updates.test.tsx": "F5AFBE24044BDD71EB7613BBF2EC8ECC25A196D1F67D1BDB57020D7D2A59126D",
+    "src/main.tsx": "E1982EA35D7B426B37CAA868DE7615116603419CD7F3EADE020BF8D44B7855F1",
+    "src/vite-env.d.ts": "F0790570787C87F753EA54006456702B52D78DC3E7FBE6517E5CD1AEF43DF905",
+    "src-tauri/build.rs": "487059EAF8A947B80F20A9AACAC038A5047B2AD69D2401B827376C67D6FE847F",
+    "src-tauri/Cargo.toml": "AACEE3532871B85CCA46510729F24550C64197441BDC6A22B83A08A6A9156926",
+    "src-tauri/tauri.conf.json": "384F643648E378C147EE9BFE9E67AF12C37636E1BC9EB4ED2B14B1B53A8206C4",
+    "src/api/editor.ts": "20E6498DBA87C88AD9288CBEF8AEB33A0CC9D9A6D2E032FEC862E9561D6743BE",
+    "src/api/tauri.ts": "4D08F18437846EE67572DB8C5E455AD608E083C538FB92695B2F535915D28090",
+    "src/api/themes.ts": "E73F24ED66931A8914F89DCA1EDEEA10D29557FED066CA27B58D9EED95485CBD",
+    "src/shared/shortcuts.test.ts": "E248882B519F2D6743EC75AEB7FE6B722348C672E0AF130D1F1E0756AB97A1E5",
+    "src/shared/shortcuts.ts": "39006730B87A0EFC7B0529026B7CFC1CD3399FA8B517D672F49A8290D7F26882",
+    "src/state/console.test.ts": "50A74903CE3BCADA3FD309E2121BDA2BD8148019435353A4B7239F904435BD29",
+    "src/state/console.ts": "AC6917B57F16AF1E2FA67724493A0E2E3E5B69C9AE54C9492335BDAC260ACB61",
+    "src/state/editor.test.ts": "A06410E7735F3F5F4B6011A0CA7D22D5F68ECB911B5B9C9D0FF9A2D3B7D386B5",
+    "src/state/editor.ts": "FB633771ECBF715E6996392B05E26762B78D43420CEE3199239C9B1089C03CD7",
+    "src/state/editorGroups.test.ts": "50705EBFF47677C46D06BAF488DCA0FC80520EA58949DAC91420266A1164F715",
+    "src/state/editorGroups.ts": "D0DFFE47B76F150F11856DEF1005DC6205058373BE49EED4D04B986FF62B5734",
+    "src/state/fileKinds.test.ts": "F5AB515BAAC6D75F9ED71BA4B966FDBBF3C315C7CBB6418CED7667D5ECA29CDA",
+    "src/state/fileKinds.ts": "E890D90459844CD8E25F3B3478B9F9F75F815CD6129E20E84A151B56A576B94B",
+    "src/state/git.ts": "8E318D4911F2223822F31A3F05ED41A525164A3909ECD70F8BE124C28D0493CA",
+    "src/state/home.ts": "26EF342F153AA9B430EE5B85BF0BAEBC6C44068CF74A9170D32D855EEA2BA1F6",
+    "src/state/homeGit.test.ts": "3A0C2D958BF668D4C232EF35FF84F1963CA1A074243D3CCC1F0714282C15BBD2",
+    "src/state/model.test.ts": "8D92FEDEC336491C570815860CED28929E793B981A0B66E0979E2BF09D0DB0F6",
+    "src/state/model.ts": "176717253E5F01A3A6AA8CFB650C3A8742B07378698966B1059C13C545F29760",
+    "src/state/previews.test.ts": "7800348EA48E64CB113EFB7245EB63372CA70B52807EB06C6089819E4ABDD7E1",
+    "src/state/previews.ts": "3C0DC6534C7095494298F6D3FF5D6B016226D08807C6F61313215D53F61DE4A5",
+    "src/state/useEditor.test.tsx": "4B414047D5553560E19EDE0409A2CDDA986511A59BD8C52CB42FAB1686775DD6",
+    "src/state/useEditor.ts": "A2D4C1C4B25A6B3A1DF22056F6C667DEF33D76FFE0886DC0FF13848B4701AA9D",
+    "src/state/useGit.ts": "C5415B04F0CBF94333CB85795484ACA7C4361B197F2E459AF5839403B3AAA075",
+    "src/state/useLauncher.ts": "5F3D9DF6C1739BE96704C81814BD3524C2CC0F849B621E765969557C62F59E02",
+    "src/state/usePoller.test.tsx": "FA8DFC37899D0E1372A03658BBF5C23FD913426AF0D7329FAF9D8164C5D89A01",
+    "src/state/usePoller.ts": "9B520ACD0E00D969316E1A25778F86B83148E42CBE84FC88C91BACA607588370",
+    "src/state/useUpdates.ts": "312CEDD166FE6787CFE312B6372801134E949B0A3CC5833DFB6733D2A5C1DA9F",
+    "src/styles/global.css": "270EA2D6326729E8F971BB5F02E3D19986C1A2117C3E07B5BBB99BFD699E811C",
+    "src/test/setup.ts": "057185A9CC4DA0F7990723A22FCDB005244EBB6D7E070E37882428C1AF4E66AC",
+    "src/themes/apply.test.ts": "04E07D9F68471BE412B9FE06994F93F29FC7088CE7086F3553A02FB0536369BF",
+    "src/themes/apply.ts": "C1B142441784704C7330C21C05E5F4963120CE1FF7240D39B432CD8811FF4FC2",
+    "src/themes/builtin.test.ts": "66288D9E0E1BE56B0F373077E1E1BE6C80EDCD40457EB04A4A1301DA66CE0F7A",
+    "src/themes/builtin.ts": "3C1FB61C9AACB233597AE606A15794839CB8FE1FC90105D9B5A057867C2D24AA",
+    "src/themes/colors.test.ts": "8FB67EF673C0C0FA7570FB40250E14BDB5806BEFA96B8525972114E9DF33B0EC",
+    "src/themes/colors.ts": "4C75F50F4E8E2BD4AF2113AAC4217BA96565D97959E5388BF69345F766419EBD",
+    "src/themes/package.test.ts": "F3AF272B8C08EA962AFBFFAB969A891327E4DD510C1CE6103C56AC9A2A11CD23",
+    "src/themes/terminal.ts": "8558A8F1A6B9446380D5FEEB322C49208CACF358C3E10ED4B92CA753C534FC0B",
+    "src/themes/types.ts": "FB73280B2519A7C3B76FD12CFB6CF951F6BAE1867501907CB3668FDC22B3028E",
+    "src/themes/useThemeFinder.test.tsx": "38769AE4C811CDA1DA74E63662044A642C65C0CE815596AAAE34A4E85B4B0A5B",
+    "src/themes/useThemeFinder.ts": "CD4AF46657147D125CFCC24A07BDAED53F5E7242C2CAA14D1F2713047A8B1AC0",
+    "src/themes/useThemes.test.tsx": "96B41A24ACF72786CE36ADD94E7664444178B9E850C89DFA0FC5EDA9E410DBCF",
+    "src/themes/useThemes.ts": "500CC532E70A04A691731C47A84FD6D046AA3DB64551E463DB35531F7980A102",
+    "src/themes/vscode.test.ts": "04370E103C4E5794358C843B39556230225A7DE66149942795069923D7137076",
+    "src/themes/vscode.ts": "A02B315524F916C650DB8309CFFAC29A92E2ACAC5B34178CC2A6E083A8EA1D96",
+    "src-tauri/capabilities/default.json": "FB46FC757D2D09E4B9E8CC7D06278AEAA897DA15DBAF2906B5FCE54C32DD01B8",
+    "src-tauri/icons/128x128.png": "21DCDE1FCC6A0BF126CB7D90978CC2859C9A35A62E98C8E5219ECA895BEBCC57",
+    "src-tauri/icons/128x128@2x.png": "17BCD9E5241130355F0E26604705B291001E5CFED300D02EFE9A9BF6DE409EED",
+    "src-tauri/icons/32x32.png": "19BF4DAC6E9812FEBED700FA5A5DE29B46F6AF4F814019E7D2CCF8B7BA729B71",
+    "src-tauri/icons/icon.ico": "BE9528C6B00FCE21D43CADA0946E33E54AC89BA0AF80DF059D9D40DCA57918EA",
+    "src-tauri/icons/icon.png": "758C5CCFBF883A2B93F97DF06454FB9E9DAA4B4BAA44A7E921141D4A79313E36",
+    "src-tauri/src/ansi.rs": "1AFEF2653FAFE16E2D742F72A1E79A15B9A4A8F2DE0D873EBECA8A17AEE72BA9",
+    "src-tauri/src/brief.rs": "A1D96A8CA86D5ED3F4CD06BA5FC7E7F05F9F69DC992D7316AA68BD5F55279528",
+    "src-tauri/src/commands.rs": "83F80ADF2EF7A7B7BD31E6D286F90287417BBFA9992E991596E7A2EE47D6A337",
+    "src-tauri/src/config.rs": "556F3BD5518009ADF2FBB2F91F06FD26C4C5270FBC411880318392165A48833E",
+    "src-tauri/src/detect.rs": "522082B298D71119AE56BD8FD6608C2AB2BB7569BD50992C5781E3A1B06AA7FE",
+    "src-tauri/src/editor.rs": "F7E6E5F1BAB6A39659F4A64014FEF156D2D1D515BA2FB962E29FE0576B46F193",
+    "src-tauri/src/editor_cmds.rs": "9BB4A4A4B88429EE48480431B02E30A951E20B2888940FC160A974026917F7E0",
+    "src-tauri/src/engine.rs": "61AA9958F37545A41F607BD0F115EB6037C7E03E56324674121132321F516975",
+    "src-tauri/src/gallery.rs": "112C812C5C0F877B6AC73A611B84E73876B1FCDBB780B8FD8A8CEE07E1259595",
+    "src-tauri/src/git.rs": "72CD96410E6527E3BBC3EA3EDF8499E82D324A26CF1FB46AFFE1766426478AEC",
+    "src-tauri/src/ipc.rs": "C3517C4DEE11692072957B05B56EF566841038F22F05ED61F1396639413B606F",
+    "src-tauri/src/job.rs": "64B13D4999D9B684E44317DC55E7565563C6C1E293A8F76DC6E6C2B9C926F075",
+    "src-tauri/src/legacy.rs": "28AB830DF0601A5DD195B060FFC6C8557D7A388A549DD5ADB652E7E731D6ADCE",
+    "src-tauri/src/lib.rs": "2F50934A9C8302BF77A1858F70FF25FB86466B7518C783B3F771F17094B788B9",
+    "src-tauri/src/logger.rs": "9D543708F0A9461A5AE2EFEA4C8CCD8C2A51B56B1E4D775E83856E4D130DD3EC",
+    "src-tauri/src/main.rs": "E61B180A5A31B2A639949B49C4E47D9396E2839CA210AA08FBC947345062EA62",
+    "src-tauri/src/model.rs": "B7BF600D9A49D61DF26D3EA90E1AF35CE3F9D23E238E801C5A79FD7E019CE97F",
+    "src-tauri/src/paths.rs": "91C6010305192153258E0A6FE93C2BA92791E231DB5DCB9B358E8C0F69BAAAB9",
+    "src-tauri/src/ready.rs": "2C2A8007B5A93582B6167FB687FD678559E4EE048CC21D469711A1F3646E7FFF",
+    "src-tauri/src/ring.rs": "C4A7AE70E9E23BE4DE647129AEB2003B8EAB07A668A2C981191689CB64426E90",
+    "src-tauri/src/runtime.rs": "49AEEECF0D8AC3C5B13DBBA7016F53D1796E78CA7E861802369E330DE54DCF5D",
+    "src-tauri/src/shells.rs": "613655386CC11CFF37D72978134E42EC3C8DCA0441B92EEAB1DFE2EED0C33BD7",
+    "src-tauri/src/state.rs": "CBCF9D8126087487BEDD8A0E1BF65FCE18099E9BC0608651FEAA699309E93F6E",
+    "src-tauri/src/themes.rs": "C264A2F54D133AD9286C37D6041743ED55E1D97655F6C04FAE2D9665EA61A506",
+    "src-tauri/src/themes_cmds.rs": "761CEC393A0FCEF5372116B32438C5EC3974ABF5A1377F2CAD067444DA71778A",
+    "src-tauri/src/update.rs": "27A1180DA7044DF0E2A8A80139E6B0FE0024AA570C84A74C69FF6BBBA52DF45B",
+    "src/features/apps/AppFooter.module.css": "930F045AE2E3AFC561B25A2F8303523A87E131A3FE268C98241519374D41FDF3",
+    "src/features/apps/AppFooter.test.tsx": "055B9B2D24BBB637C9789E82DBD3D6C47E71C9D7E96A1832FCDD2FA872A98AC7",
+    "src/features/apps/AppFooter.tsx": "E6F2FC64DA95635B4E686BE83506943532A202014EE98B86A1F3E3623EDDCA67",
+    "src/features/apps/AppHeader.module.css": "E1587401B5921FEC11408E530857C1F203DF8B39062044F607D9ECCFC10850A5",
+    "src/features/apps/AppHeader.tsx": "C34BD4C9C395002075CD0C8A610A40A05691F3FB1313781F027883139FB43B16",
+    "src/features/apps/Banner.module.css": "B06067F8961E868E8E8033F9AE357B0B3F191F09EE48044E141087DE6A29126F",
+    "src/features/apps/Banner.tsx": "A4FFCFBB44D388BDBEA9616572F28DF752E94EBA59ED346162007069C1F34648",
+    "src/features/apps/components.test.tsx": "5C492A9FA2A64391E810025FA2DADD2F86DB5316FEB925F9E03440231D478642",
+    "src/features/apps/Dialog.module.css": "2546C464E3A6C23D931720843DEA184DD263FA355E78E97D244BD1341425D0D2",
+    "src/features/apps/Dialog.tsx": "ABCBC6BC19B5AB9C070D75F60C6DDCAE42AD746C0C544536A47B5F8CB11ABEED",
+    "src/features/apps/EditPane.module.css": "6DA8289635747B30DD3B173570CCE252B2CE1EAC71CBBD6311C14ADA87DE0D8F",
+    "src/features/apps/EditPane.novice.test.tsx": "D051DBD8CE3D6FF0CB29116CD80EA38D7ED40CD0507662942A935AF3D68C7CD4",
+    "src/features/apps/EditPane.ready.test.tsx": "B25EB0825007C863588F1CF525440A93704C94A10A09696FAAA029FB7F8D751B",
+    "src/features/apps/EditPane.tsx": "BDA42348D57AEADE840E5C608509E04AB3E0DA937120233D770703D07E12B2B9",
+    "src/features/apps/EmptyState.module.css": "3EDA7799E1527E002A4C718DCD70CCFB1BFB71FF92AE445404CF0E7A2386FA24",
+    "src/features/apps/EmptyState.tsx": "2CD0587C24B6AA49FA896B02C50718F852196997711E9C6D063BC414ED71A463",
+    "src/features/apps/Sidebar.collapse.test.tsx": "3525BC462A2D5806F85EDE5B84F64B6EB94FD7905EC49D6252032CF9FB39543E",
+    "src/features/apps/Sidebar.module.css": "4F6A6E21619EFBC3BCBA4824F3FEAB4DB4E811A90F1F4771011E158BEB0B5FC5",
+    "src/features/apps/Sidebar.tsx": "2E080F79CF3E274F92E903DB59C0D654BD34645F67E673833CBAD4879DCBC31F",
+    "src/features/apps/TopBar.module.css": "1005B77A2DE2C8BE3ABE161EE6867AA107E782020DAB049A1BAF29B79805881A",
+    "src/features/apps/TopBar.test.tsx": "318F2E18AA05C84CA91B45DC9059F2C566611AE6AE3882E540B6826BE65AB537",
+    "src/features/apps/TopBar.tsx": "F81839F2C48A3A84749BA6C630B2A49655BB7DAFC7FA0183A12FCE730C96837E",
+    "src/features/apps/UtilitiesMenu.module.css": "66DA075BE0D9EF306EC75DC0CA8D5105D374A56AD95923330F3F1F18F4F3C0C0",
+    "src/features/apps/UtilitiesMenu.test.tsx": "A0BDFB05A6EFA91CEE407CEBB42EA7C46AAA7337338879B689ACA0A3984A1D9F",
+    "src/features/apps/UtilitiesMenu.tsx": "64B42E8FD6D1CB94AFDBEF50D65DB227FD604A912676CD1035005F044CA86318",
+    "src/features/command-palette/CommandPalette.module.css": "2A1C4528485DDDD2381D480ADBC4CC6A6452E252072A6284298AF7420A38AC74",
+    "src/features/command-palette/CommandPalette.test.tsx": "5639EE13DE3B7724E45766A23D505AD4AA7D4300DD27A90AE06F126853D016D5",
+    "src/features/command-palette/CommandPalette.tsx": "93BFFD25CA6AEA5D2CCB45E8B69E543D47117A332BCA19EFF8CE8B55AFD9926A",
+    "src/features/editor/cmTheme.ts": "170FFF55F06C84ADCAC37CA8E69BD8B6BF6FD3371BFFF8E12EABFDA852EB9F87",
+    "src/features/editor/CodeSurface.tsx": "5ECD31047F0955B38067553102E70923AAEA7208671999CCF14D213B453491F2",
+    "src/features/editor/EditorView.module.css": "D4D9F9FF5A57E6FA47220F966C14DB22AD1FA78E2A808E119AA5CA8D7661AB01",
+    "src/features/editor/EditorView.test.tsx": "767E453C3ABB0D39B09B2A23578EE507B6A86755377D13DBA60BEE7D8BF54E19",
+    "src/features/editor/EditorView.tsx": "7C939F62933F153BF167CB984E653001D243E25C29F3F318E36E46F9A0EA7CFE",
+    "src/features/editor/PreviewPane.module.css": "A6154499A5924F378C557DC45F08D3E6E3D22FE1A117B11E3133AAFACE4E7452",
+    "src/features/editor/PreviewPane.test.tsx": "F6D6192750371D87E0CBBF81FA67049C5DBB9322BFF07115A74F63480FEA80E5",
+    "src/features/editor/PreviewPane.tsx": "6967D460F014579C40936637027104AAC8A43265A46E689EC7C1E3BEFC64931C",
+    "src/features/git/BranchMenu.tsx": "2A5C8863EAAE8EAE925948532F4AEBB106CD00BBCEA2B41B29506FA67CDDA4F1",
+    "src/features/git/ChangesView.tsx": "FD8D524EC64E697C9C8A73F4376451BB3BEEBEC8967D1EF2E8D6EE6FE4079FAA",
+    "src/features/git/Git.module.css": "B65B05C57099163435388CCA42E474C8241CDC77FC016A0A6A8F4163508DAE5A",
+    "src/features/git/git.test.tsx": "D16B090D5C570C1DAAF70E4574CA52B1993ECDC5449118D151800DCD6E2C744B",
+    "src/features/git/GitBar.collapse.test.tsx": "B0BF9FEBF06F7CAF36FB6FCF9015CA5D0E75AD2400564B1EF820E0665D1D5E4B",
+    "src/features/git/GitBar.tsx": "385BE2DFEB0D72FF6170909FF6E5CDEE9E23CC22F3E92CA686A5EE58BB25B719",
+    "src/features/git/GitDrawer.tsx": "EDB96E6770E509F796F12A54CB2A9F64A0273EFC05AE86BEB3DA1FE57797855E",
+    "src/features/git/HistoryView.tsx": "187EFEEA5B1097D84F32816CE0407681769B6A3BA4A33D8EAD21E9883128C9AE",
+    "src/features/home/HomeScreen.module.css": "BFF7A47C66684727C5CE7CF31E9A996A336181AA4926DEB40B55CCF1D56555BA",
+    "src/features/home/HomeScreen.test.tsx": "B53AB7654CA981FE9376D26EE4F5E05CDBB88DD3CE51081BF16D7D483655CB31",
+    "src/features/home/HomeScreen.tsx": "CD27669751AE963554121C38C35CE18D51DB4E0E3525CBB529D52BA119BC222E",
+    "src/features/terminals/ConsoleNav.module.css": "B29DF361572B2DCCAA2F07947AAEECA9A828B98E862AE558BBEB48B4E9FADC6E",
+    "src/features/terminals/ConsoleNav.test.tsx": "191410C533A4B654CAC58037EB1BC91E6CD9E60C475DE15F2A248988A1AA0886",
+    "src/features/terminals/ConsoleNav.tsx": "E5FFA24C3E10211B6F542CA7407871D2DBC621F3A0DFDAA9A6588754125F93B7",
+    "src/features/terminals/StatusDot.module.css": "541FEB22682C473404B74B6C55BCED49176EB756B94E70F6281608BD27CF3A6F",
+    "src/features/terminals/StatusDot.tsx": "580335F255B3B7A63D284F9FB1DB566193E70FE5D72EAB5592EB3BCE08C0F449",
+    "src/features/terminals/TabStrip.module.css": "F4B73CCFC79C58DF71431B3199A07B8DB4A9447F709F8F6D098052AF8A305453",
+    "src/features/terminals/TabStrip.tsx": "B99D8502329735BA7C925E2D5E0CEC3535B0CBF38CFD1C490032F3F28C96AD01",
+    "src/features/terminals/TerminalHost.module.css": "F0D3EC75961E507ABD4424EDACC53CC581879FB75D34514EE63C1C692D5A407F",
+    "src/features/terminals/TerminalHost.shortcuts.test.tsx": "EBC3A58122A257901DB81911F52F83119585FCBF1B47E882FD143BAF173FB48F",
+    "src/features/terminals/TerminalHost.tsx": "47D6EB8B00A9FBCA78F2269D18B2854D5773502F93026C32E0E65851A663896D",
+    "src/features/themes/ThemeFinder.test.tsx": "949D12BE2FC911C070F90C57C088C84E14CD78E3BF9EF42A60BCE6317978B16E",
+    "src/features/themes/ThemeFinder.tsx": "A08F39D97F3E348ABE765692122FD81595F70062500416C68A476E1F4AF46B25",
+    "src/features/themes/ThemePicker.test.tsx": "5E78FCD948357FB44C440726D85EE2A5CB12EE3F7BED2BF17452737BA5271025",
+    "src/features/themes/ThemePicker.tsx": "6FCC7119D3B99724E844859BA9D0CF351530A763A114C77349DD89D7B0F74033",
+    "src/features/themes/Themes.module.css": "616FAF2F2FB3E451CF446EBB15B6745BC0973A5637D7C796712D11860121A108",
+    "src/features/updates/updates.test.tsx": "2CEA49A0611D37F35ED73F004A4B57198DC5754FC7DBB2C7F10BB6120AEB4234",
+    "src/features/updates/UpdateUI.module.css": "127E6AC822AFDA7342FF61827CC357586F31DBBB98C28A0FAA56B4955741CBF0",
+    "src/features/updates/UpdateUI.tsx": "2D4BEFFB0DAF71EA2460E050D3422907ABC95438792F45CB38ECD7C81979A777"
+  }
+}

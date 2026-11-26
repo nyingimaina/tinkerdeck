@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { rollup, type AppDef, type TermState } from "../../state/model";
 import { StatusDot } from "../terminals/StatusDot";
 import styles from "./Sidebar.module.css";
@@ -16,6 +16,8 @@ interface Props {
   /** VS Code-style: the whole pane collapses to a narrow rail. */
   paneCollapsed?: boolean;
   onTogglePane?: () => void;
+  /** The Files explorer section, shown below the apps in the expanded pane and never in the rail. */
+  explorer?: ReactNode;
 }
 
 export function Sidebar({
@@ -29,6 +31,7 @@ export function Sidebar({
   homeActive,
   paneCollapsed,
   onTogglePane,
+  explorer,
 }: Props) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
@@ -106,6 +109,7 @@ export function Sidebar({
           </div>
         );
       })}
+      {explorer && <div className={styles.explorerSlot}>{explorer}</div>}
     </nav>
   );
 }

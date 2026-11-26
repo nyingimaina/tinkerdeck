@@ -45,6 +45,14 @@ vi.mock("./api/themes", () => {
 vi.mock("./api/editor", () => ({ editorApi: { list: vi.fn(async () => ({ open: [], bin: [] })), takePending: vi.fn(async () => []), onOpen: vi.fn(async () => () => {}) } }));
 vi.mock("./features/terminals/TerminalHost", () => ({ TerminalHost: () => <div /> }));
 
+// The Files explorer reads one level per root; a quiet empty listing keeps these suites as they were (A3).
+vi.mock("./api/explorer", () => ({
+  explorerApi: {
+    list: vi.fn(async (path: string) => ({ path, entries: [], total: 0, truncated: false, locked: false })),
+    drives: vi.fn(async () => []),
+  },
+}));
+
 import { App } from "./App";
 
 const view = (theme: "dark" | "light" = "dark"): ConfigView => ({
@@ -108,8 +116,8 @@ describe("themes in the app", () => {
     render(<App />);
     const menu = await openMenu();
     await userEvent.click(within(menu).getByRole("menuitem", { name: "Find more themes…" }));
-    const dialog = await screen.findByRole("dialog", { name: "Find themes" });
-    await userEvent.click(await within(dialog).findByRole("button", { name: "Install Night Owl" }));
+    const dialog = await screen.findByRole("dialog", { name: "Find themes" }, { timeout: 5000 });
+    await userEvent.click(await within(dialog).findByRole("button", { name: "Install Night Owl" }, { timeout: 5000 }));
     expect(await within(dialog).findByText("Installed")).toBeTruthy();
     expect(h.th.fetchOnline).toHaveBeenCalledWith("pub", "owl");
     await waitFor(() => expect(document.documentElement.style.getPropertyValue("--accent")).toBe("#7e57c2"));

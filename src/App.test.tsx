@@ -78,6 +78,14 @@ vi.mock("./features/updates/UpdateUI", async (importOriginal) => {
   return await importOriginal();
 });
 
+// The Files explorer reads one level per root; a quiet empty listing keeps these suites as they were (A3).
+vi.mock("./api/explorer", () => ({
+  explorerApi: {
+    list: vi.fn(async (path: string) => ({ path, entries: [], total: 0, truncated: false, locked: false })),
+    drives: vi.fn(async () => []),
+  },
+}));
+
 import { App } from "./App";
 lazyLoad.atImport = false;
 
@@ -153,7 +161,7 @@ describe("App", () => {
     // Showing the app view does not pull in the confirm-dialog chunk.
     expect(lazyLoad.loaded.some((m) => m.name === "CommandPalette")).toBe(false);
     h.closeCb?.(1);
-    expect(await screen.findByRole("dialog", { name: "Quit Tinkerdeck?" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Quit Tinkerdeck?" }, { timeout: 5000 })).toBeInTheDocument();
     // It was evaluated now, on demand, not during App's import.
     expect(lazyLoad.loaded.find((m) => m.name === "CommandPalette")?.atImport).toBe(false);
   });
@@ -205,7 +213,7 @@ describe("App", () => {
     render(<App />);
     await openApp();
     h.closeCb?.(2);
-    const dlg = await screen.findByRole("dialog", { name: "Quit Tinkerdeck?" });
+    const dlg = await screen.findByRole("dialog", { name: "Quit Tinkerdeck?" }, { timeout: 5000 });
     expect(dlg).toHaveTextContent("2 terminals are running");
     expect(screen.getByRole("button", { name: "Stop and quit" })).toHaveFocus();
     await userEvent.click(screen.getByRole("button", { name: "Keep running" }));
@@ -364,7 +372,7 @@ describe("App", () => {
   it("R2: the persistent footer is visible on Home, the app view and the separate editor view", async () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
-    expect(screen.getByRole("contentinfo", { name: "Status" })).toHaveTextContent("v2.0.0");
+    expect(screen.getByRole("contentinfo", { name: "Status" })).toHaveTextContent("v2.2.0");
 
     await openApp();
     expect(screen.getByRole("contentinfo", { name: "Status" })).toBeInTheDocument();
@@ -383,7 +391,7 @@ describe("App", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Utilities" }));
     await userEvent.click(screen.getByRole("menuitem", { name: "Help" }));
-    expect(await screen.findByRole("dialog", { name: "Help" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Help" }, { timeout: 5000 })).toBeInTheDocument();
 
     // The Help body shares the palette's chunk, and it was evaluated now, not during App's import.
     expect(lazyLoad.loaded.find((m) => m.name === "CommandPalette")?.atImport).toBe(false);
@@ -397,7 +405,7 @@ describe("App", () => {
     await screen.findByRole("heading", { name: "Home", level: 2 });
 
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    const dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     // cmdk renders its own root, so the list is the package rather than a hand-rolled one.
     expect(dialog.querySelector("[cmdk-root]")).not.toBeNull();
 

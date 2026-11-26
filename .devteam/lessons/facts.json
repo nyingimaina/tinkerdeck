@@ -392,13 +392,14 @@
       "anchors": [
         {
           "path": "src/App.tsx",
-          "hash": "8d605b2c78015f5dba73"
+          "hash": "6139a0820e78a767cebc"
         }
       ],
-      "at": "2026-11-25T22:02:16.2108745+00:00",
+      "at": "2026-11-26T08:34:59.2703641+00:00",
       "runs": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ]
     },
     {
@@ -2646,6 +2647,1286 @@
       "at": "2026-11-26T06:33:57.2871631+00:00",
       "runs": [
         "20261125-202512"
+      ]
+    },
+    {
+      "text": "ownerOf() returns the deepest app whose normalized root (lowercased, forward slashes) contains the path, else null; unowned tabs group under \u0022Misc\u0022 (lines 9-42).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/editorGroups.ts",
+          "hash": "d0dffe47b76f150f1185"
+        }
+      ],
+      "at": "2026-11-26T08:01:29.2929442+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "APP_SHORTCUTS maps \u0022refresh\u0022 to F5 (line 13); matchShortcut returns \u0022refresh\u0022 for any F5 regardless of modifiers (line 39); isAppShortcut makes terminals hand F5 to the window.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/shared/shortcuts.ts",
+          "hash": "39006730b87a0efc7b05"
+        }
+      ],
+      "at": "2026-11-26T08:01:29.3123472+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "shared .dialog width is min(460px, 92vw) (line 10); backdrop is a fixed full-screen grid.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Dialog.module.css",
+          "hash": "2546c464e3a6c23d9317"
+        }
+      ],
+      "at": "2026-11-26T08:01:29.326963+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "theme finder .finder requests width min(640px, 80vw), max-height 62vh, min-height 320px (lines 97-104), wider than the 460px shared dialog, so rows overflow.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/themes/Themes.module.css",
+          "hash": "616faf2f2fb3e451cf44"
+        }
+      ],
+      "at": "2026-11-26T08:01:29.3438417+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "TerminalDef (lines 12-25) has no executable flag today; AppDef.root exists (lines 27-31).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/model.ts",
+          "hash": "176717253e5f01a3a6aa"
+        }
+      ],
+      "at": "2026-11-26T08:01:29.360287+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "start_all (131-141) starts every terminal; stop_all (154-165) stops every terminal; no executable filter or skip.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/commands.rs",
+          "hash": "83f80adf2ef7a7b7bd31"
+        }
+      ],
+      "at": "2026-11-26T08:11:49.0065139+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "the \u0027up\u0027 action (233-246) starts every terminal and wait_until_ready counts all of them; no executable filter.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/engine.rs",
+          "hash": "61aa9958f37545a41f60"
+        }
+      ],
+      "at": "2026-11-26T08:11:49.0238133+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "TerminalDef (11-31) has no executable field; structs are serde camelCase with field-level #[serde(default)].",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/model.rs",
+          "hash": "b7bf600d9a49d61df26d"
+        }
+      ],
+      "at": "2026-11-26T08:11:49.0396511+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "appButton (135-137) uses isUp over all states and rollup (126-133) counts all states; canStart/canStop at 81-82.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/model.ts",
+          "hash": "176717253e5f01a3a6aa"
+        }
+      ],
+      "at": "2026-11-26T08:11:49.0526977+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "ownerOf (9-23) returns the deepest app root containing the path; groupTabs puts unowned paths under MISC.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/editorGroups.ts",
+          "hash": "d0dffe47b76f150f1185"
+        }
+      ],
+      "at": "2026-11-26T08:11:49.0683357+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "view is home|app|editor (70); global key handler (143-156) has empty deps, calls preventDefault for every matched key, and F5 runs refreshAll today.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "6139a0820e78a767cebc"
+        }
+      ],
+      "at": "2026-11-26T08:11:49.0847076+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "APP_SHORTCUTS lists refresh as F5 (13); matchShortcut treats any F5 as refresh (39); isAppShortcut (49-51) hands it back from a terminal.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/shared/shortcuts.ts",
+          "hash": "39006730b87a0efc7b05"
+        }
+      ],
+      "at": "2026-11-26T08:11:49.100005+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "editorApi.pickOpenPaths wraps dialog open({multiple:true}); editorApi.open uses editor_open_any.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/api/editor.ts",
+          "hash": "20e6498dba87c88ad928"
+        }
+      ],
+      "at": "2026-11-26T08:11:49.1170237+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "pickFolder (77-80) wraps dialog open({directory:true,multiple:false}).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/api/tauri.ts",
+          "hash": "4d08f18437846ee67572"
+        }
+      ],
+      "at": "2026-11-26T08:11:49.1391143+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "open_any (422-448) and open_path (199-220) already reuse the existing entry when same_path matches, so opening an already-open file returns its old id.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/editor.rs",
+          "hash": "f7e6e5f1bab6a39659f4"
+        }
+      ],
+      "at": "2026-11-26T08:11:49.1644387+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": ".dialog width is min(460px, 92vw) (line 10).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Dialog.module.css",
+          "hash": "2546c464e3a6c23d9317"
+        }
+      ],
+      "at": "2026-11-26T08:11:49.1946504+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": ".finder width is min(640px, 80vw) and max-height 62vh (97-104).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/themes/Themes.module.css",
+          "hash": "616faf2f2fb3e451cf44"
+        }
+      ],
+      "at": "2026-11-26T08:11:49.2261627+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "no @media; backdrop padding 12vh, panel min(560px,100%) and max-height 60vh.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.module.css",
+          "hash": "2a1c4528485dddd2381d"
+        }
+      ],
+      "at": "2026-11-26T08:11:49.2559396+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "BranchMenu is a role=\u0022dialog\u0022 menu (20) with a filter input; Escape closes.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/git/BranchMenu.tsx",
+          "hash": "2a5c8863eaae8eae9259"
+        }
+      ],
+      "at": "2026-11-26T08:11:49.2857832+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "window keydown handles Ctrl\u002BS/Shift\u002BS, Ctrl\u002BN, Ctrl\u002BO, Ctrl\u002BW (26-43); Ctrl\u002BO calls editor.openDialog.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/editor/EditorView.tsx",
+          "hash": "7c939f62933f153bf167"
+        }
+      ],
+      "at": "2026-11-26T08:11:49.3121239+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "openPath calls editorApi.open (editor_open_any) then onOpened after every successful open, and openDialog loops pickOpenPaths then openPath, so reusing openDialog/openPath gives palette Open file and the view switch for free.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/useEditor.ts",
+          "hash": "a2d4c1c4b25a6b3a1df2"
+        }
+      ],
+      "at": "2026-11-26T08:24:10.3767358+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "open_path/open_any reuse an existing entry by same_path (199-220, 422-448) and binary previews open as preview-only docs, so the explorer needs no new open path.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/editor.rs",
+          "hash": "f7e6e5f1bab6a39659f4"
+        }
+      ],
+      "at": "2026-11-26T08:24:10.4002918+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "the sidebar is a nav with app groups plus a collapsed rail and has no explorer slot; App renders it only when apps.length \u003E 0 (App.tsx:504).",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "2e080f79cf3e274f92e9"
+        }
+      ],
+      "at": "2026-11-26T08:24:10.4214872+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "paletteActions is built at 373-430 so an unconditional entry shows in every view; the global key handler at 143-156 has empty deps; view state is home|app|editor (70).",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "6139a0820e78a767cebc"
+        }
+      ],
+      "at": "2026-11-26T08:24:10.4408658+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "renders PaletteAction[] as buttons with optional shortcut text; adding an action needs no palette change.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "93bffd25ca6aea5d2ccb"
+        }
+      ],
+      "at": "2026-11-26T08:24:10.4576796+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "ownerOf returns the deepest app root containing the normalised path (case/slashes) or null for Misc; reuse it to pick the explorer root.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/editorGroups.ts",
+          "hash": "d0dffe47b76f150f1185"
+        }
+      ],
+      "at": "2026-11-26T08:24:10.4783217+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "newApp().root is \u0022\u0022 and validateApp does not validate root, so an app root can be empty and the explorer must handle it.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/model.ts",
+          "hash": "176717253e5f01a3a6aa"
+        }
+      ],
+      "at": "2026-11-26T08:24:10.4993344+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "pickFolder wraps dialog open({directory:true,multiple:false}) at 77-80; src-tauri/capabilities/default.json already grants dialog:allow-open.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/api/tauri.ts",
+          "hash": "4d08f18437846ee67572"
+        }
+      ],
+      "at": "2026-11-26T08:24:10.5217174+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "modules are declared private at 3-26 and commands registered in generate_handler! 127-189; integration tests need a pub module path from the lib.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/lib.rs",
+          "hash": "2f50934a9c8302bf77a1"
+        }
+      ],
+      "at": "2026-11-26T08:24:10.5411657+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "windows-sys 0.59 enables Win32_Foundation/Security/JobObjects/Console/Threading only; GetLogicalDrives needs the Win32_Storage_FileSystem feature added.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/Cargo.toml",
+          "hash": "aacee3532871b85cca46"
+        }
+      ],
+      "at": "2026-11-26T08:24:10.561812+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "version 2.1.0 (line 4) matches package.json and Cargo.toml; CSP at line 26 needs no change.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/tauri.conf.json",
+          "hash": "384f643648e378c147ee"
+        }
+      ],
+      "at": "2026-11-26T08:24:10.5833022+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "only core:default and dialog:allow-open; app-defined commands need no extra capability entry.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/capabilities/default.json",
+          "hash": "fb46fc757d2d09e4b9e8"
+        }
+      ],
+      "at": "2026-11-26T08:24:10.6044119+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": ".sidebar is 240px and .rail 48px wide; rows are 28-32px tall; tokens var(--panel), var(--border), var(--hover), var(--radius).",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.module.css",
+          "hash": "4f6a6e21619efbc3bcba"
+        }
+      ],
+      "at": "2026-11-26T08:24:10.6242541+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "detectKind(name) returns label/icon per name/extension and is reusable for explorer file icons.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/fileKinds.ts",
+          "hash": "e890d90459844cd8e25f"
+        }
+      ],
+      "at": "2026-11-26T08:24:10.6446351+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "editorApi is the only editor invoke boundary; pickOpenPaths wraps dialog open({multiple:true,directory:false}).",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/api/editor.ts",
+          "hash": "20e6498dba87c88ad928"
+        }
+      ],
+      "at": "2026-11-26T08:24:10.6890707+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "The design puts TauriRegistration at src-tauri/src/lib.rs.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src-tauri/src/lib.rs",
+          "hash": "2f50934a9c8302bf77a1"
+        }
+      ],
+      "at": "2026-11-26T08:34:58.946531+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "The design puts SidebarExplorerSection at src/features/apps/Sidebar.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "2e080f79cf3e274f92e9"
+        }
+      ],
+      "at": "2026-11-26T08:34:59.1843626+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "The design puts SidebarExplorerStyles at src/features/apps/Sidebar.module.css.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.module.css",
+          "hash": "4f6a6e21619efbc3bcba"
+        }
+      ],
+      "at": "2026-11-26T08:34:59.2069559+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "The design puts SidebarCharacterizationTests at src/features/apps/Sidebar.collapse.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.collapse.test.tsx",
+          "hash": "3525bc462a2d5806f85e"
+        }
+      ],
+      "at": "2026-11-26T08:34:59.2258696+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "The design puts AppEditorTests at src/App.editor.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.editor.test.tsx",
+          "hash": "4052b795404a0efa9822"
+        }
+      ],
+      "at": "2026-11-26T08:34:59.3135335+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "The design puts VersionBump at package.json.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "package.json",
+          "hash": "15b810a6b9bbcb3b7109"
+        }
+      ],
+      "at": "2026-11-26T08:34:59.3365258+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "added \u0060pub mod features;\u0060 (integration tests need a public module path) and registered features::explorer::commands::{explorer_list,explorer_drives} in generate_handler!.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/lib.rs",
+          "hash": "64277010ad87b9a51af5"
+        }
+      ],
+      "at": "2026-11-26T09:34:08.5922719+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "windows-sys now enables Win32_Storage_FileSystem (GetLogicalDrives); Cargo.lock is unchanged by a feature-only edit.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/Cargo.toml",
+          "hash": "8b3bf6e75f0641b429a5"
+        }
+      ],
+      "at": "2026-11-26T09:34:08.6176805+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "list_level(dir, show_hidden) -\u003E Listing; list_level_with(dir, show_hidden, max_returned, max_scanned) for bounded tests; folders-first then files; caps 1000 returned / 10000 scanned; read_dir failure -\u003E locked Listing (never Err).",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/mod.rs",
+          "hash": "8a09fa4f8fb8e40166f4"
+        }
+      ],
+      "at": "2026-11-26T09:34:08.6409398+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "explorer_list(path, show_hidden) and explorer_drives() run the blocking work on tauri::async_runtime::spawn_blocking.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/commands.rs",
+          "hash": "71fdbb939434b0400b33"
+        }
+      ],
+      "at": "2026-11-26T09:34:08.6632983+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "explorerApi.list(path, showHidden) -\u003E explorer_list {path, showHidden}; explorerApi.drives() -\u003E explorer_drives; Entry {name,path,isDir,locked}, Listing {path,entries,total,truncated,locked}.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/api/explorer.ts",
+          "hash": "1f259c2c951b89a3c962"
+        }
+      ],
+      "at": "2026-11-26T09:34:08.6875912+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "explorerRoot({view,apps,selectedAppId,activePath}) plus parentFolder/isDriveRoot; reuses ownerOf from state/editorGroups and normalizeSlashes from state/model; drive root written \u0022C:\\\\\u0022.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/root.ts",
+          "hash": "a3131a62a92cc92a98cb"
+        }
+      ],
+      "at": "2026-11-26T09:34:08.7121708+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "useExplorer({root, source, resetKey}) -\u003E controller; source \u0022misc\u0022 enables Up to the drive list, \u0022app\u0022/\u0022none\u0022 never; resetKey OR root change discards Up and returns to the automatic root; caches \u003C=100 levels (LRU); a rejected list becomes a locked level, not a throw.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/useExplorer.ts",
+          "hash": "0e72b51c5c7266ebfa38"
+        }
+      ],
+      "at": "2026-11-26T09:56:06.5611538+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "\u003CExplorerPanel root source resetKey onOpenFile\u003E renders section aria-label \u0022Files\u0022 with Up, Show hidden/Hide hidden and lazy folder expand; files call onOpenFile(path) only, folders only toggle. It never imports the editor API.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "99b2e6f902ab2ef22f5e"
+        }
+      ],
+      "at": "2026-11-26T09:56:06.5897101+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "new optional explorer?: ReactNode prop, rendered inside the expanded nav below the app rows and never in the collapsed rail.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "25b2860a1598195a75bc"
+        }
+      ],
+      "at": "2026-11-26T09:56:06.6140503+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "explorerRoot({view, apps, selectedAppId, activePath}) drives \u003CExplorerPanel root source resetKey onOpenFile=editor.openPath\u003E; sidebar renders when apps.length\u003E0 || explorer.root!==null.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "d945bd9ed8e22a86338b"
+        }
+      ],
+      "at": "2026-11-26T10:34:20.0349626+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "palette action {id:\u0022openFile\u0022, label:\u0022Open file\u2026\u0022, run: editor.openDialog} is unconditional; EditorView toolbar button text is \u0022Open\u2026\u0022 (U\u002B2026), empty state \u0022Open a file\u2026\u0022.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "d945bd9ed8e22a86338b"
+        }
+      ],
+      "at": "2026-11-26T10:34:20.063377+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "explorer root comes from explorerRoot({view,apps,selectedAppId,activePath}) and ExplorerPanel onOpenFile calls editor.openPath; resetKey = view|selectedAppId|activePath.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "d945bd9ed8e22a86338b"
+        }
+      ],
+      "at": "2026-11-26T10:49:42.7722618+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "openPath calls api.open then onOpened; openDialog loops api.pickOpenPaths() through the same openPath, so picker and explorer share one open path.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/useEditor.ts",
+          "hash": "a2d4c1c4b25a6b3a1df2"
+        }
+      ],
+      "at": "2026-11-26T10:49:42.8003739+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "folderOf normalizes via model.normalizeSlashes (trims), drive root written \u0022C:\\\\\u0022; parentFolder returns null at drive root so Up = drive list.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/root.ts",
+          "hash": "a3131a62a92cc92a98cb"
+        }
+      ],
+      "at": "2026-11-26T10:49:42.8266084+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "canGoUp only when source === \u0022misc\u0022 \u0026\u0026 !atDrives; changing resetKey/root clears expanded levels and returns to automatic root.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/useExplorer.ts",
+          "hash": "0e72b51c5c7266ebfa38"
+        }
+      ],
+      "at": "2026-11-26T10:49:42.8522929+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "folder rows are buttons with aria-expanded; FolderBody ensures the level on first expanded mount; locked folders render a lock icon and \u0022This folder can\u0027t be read.\u0022",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "99b2e6f902ab2ef22f5e"
+        }
+      ],
+      "at": "2026-11-26T10:49:42.8772616+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "list_level hides HIDDEN_NAMES regardless of file/dir, caps 1000 returned/10000 scanned, locks unreadable folders instead of erroring.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/mod.rs",
+          "hash": "8a09fa4f8fb8e40166f4"
+        }
+      ],
+      "at": "2026-11-26T10:49:42.9026396+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "explorer_list/explorer_drives run through tauri::async_runtime::spawn_blocking.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/commands.rs",
+          "hash": "71fdbb939434b0400b33"
+        }
+      ],
+      "at": "2026-11-26T10:49:42.9303454+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "R3 tests cover text files only; no image/PDF preview-through-explorer test exists.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.explorer.test.tsx",
+          "hash": "3c1f86fefdc06dcaea29"
+        }
+      ],
+      "at": "2026-11-26T10:49:42.9560913+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "Rust \u0060file_type().is_dir()\u0060 is false for directory junctions and directory symlinks on Windows (verified with a scratch probe), so the per-entry \u0060locked\u0060 probe at line 123 and the tree treat them as files, never following them as folders.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/mod.rs",
+          "hash": "8a09fa4f8fb8e40166f4"
+        }
+      ],
+      "at": "2026-11-26T10:49:47.8855173+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "explorer_list(path, show_hidden) and explorer_drives() accept any absolute/UNC path from the window with no scope check; whole-disk browsing is required by R5, so no allow-list is possible here.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/commands.rs",
+          "hash": "71fdbb939434b0400b33"
+        }
+      ],
+      "at": "2026-11-26T10:49:47.9130074+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "reloadShown (Show hidden / refresh) fires one explorerApi.list per currently expanded folder concurrently, uncapped and with no timeout; each scan is capped at 1000 returned / 10000 scanned.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/useExplorer.ts",
+          "hash": "0e72b51c5c7266ebfa38"
+        }
+      ],
+      "at": "2026-11-26T10:49:47.9364502+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "names/paths are rendered only as React text and title attributes (no dangerouslySetInnerHTML), and detectKind is called without content, so listing never reads file contents.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "99b2e6f902ab2ef22f5e"
+        }
+      ],
+      "at": "2026-11-26T10:49:47.9632515+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "CSP is unchanged (default-src \u0027self\u0027, no unsafe-eval, no remote scripts) and capabilities stay windows [\u0022main\u0022] \u002B core:default \u002B dialog:allow-open.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/tauri.conf.json",
+          "hash": "9c8f69d31bd568585fc3"
+        }
+      ],
+      "at": "2026-11-26T10:49:47.9871906+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "list_level_with opens std::fs::read_dir on every returned folder (line 123) to set Entry.locked, so listing one level touches each child directory.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/mod.rs",
+          "hash": "8a09fa4f8fb8e40166f4"
+        }
+      ],
+      "at": "2026-11-26T10:54:39.071076+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "FileRow is memo() but App passes a fresh inline onOpenFile (App.tsx:537), so the memo never bails and every row re-renders on App updates.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "99b2e6f902ab2ef22f5e"
+        }
+      ],
+      "at": "2026-11-26T10:54:39.0961933+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "App\u0027s resetKey = view|selectedAppId|activePath (App.tsx:377); the reset effect (line 127) clears expanded folders on any active-tab change, not only a root change.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/useExplorer.ts",
+          "hash": "0e72b51c5c7266ebfa38"
+        }
+      ],
+      "at": "2026-11-26T10:54:39.1248072+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "its git and app.up wait tests spawn real processes with 15s/60s limits (engine.rs:904,931,1055) and flake when the machine is loaded.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/engine.rs",
+          "hash": "61aa9958f37545a41f60"
+        }
+      ],
+      "at": "2026-11-26T11:13:05.9415279+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "git calls are capped at 15s (TIMEOUT, git.rs:16) so a loaded machine can fail git_methods_work_through_the_engine and git::tests::a_plain_folder_is_not_a_repository (git.rs:598).",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/git.rs",
+          "hash": "72cd96410e6527e3bbc3"
+        }
+      ],
+      "at": "2026-11-26T11:13:05.9659442+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "R3 click tests open a new/already-open file but never assert other tabs survive or that no save/write happens.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.explorer.test.tsx",
+          "hash": "f6a070e1c1f68951c1e0"
+        }
+      ],
+      "at": "2026-11-26T11:26:19.8276582+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "list_level_with never probes child folders; Entry.locked is always false for listed rows and Listing.locked is learned/set only when that folder\u0027s own level is requested.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/mod.rs",
+          "hash": "2b6a97861febde8bc85a"
+        }
+      ],
+      "at": "2026-11-26T11:31:39.6850647+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "unchanged; explorer_list/explorer_drives are app commands under core:default \u002B dialog:allow-open, no new capability, windows still [\u0022main\u0022].",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/capabilities/default.json",
+          "hash": "fb46fc757d2d09e4b9e8"
+        }
+      ],
+      "at": "2026-11-26T11:36:27.5349108+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "the only unsafe is the GetLogicalDrives Win32 FFI at line 147; no shell, no child process, no file contents read.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/mod.rs",
+          "hash": "2b6a97861febde8bc85a"
+        }
+      ],
+      "at": "2026-11-26T11:36:27.5570582+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "list_level caps at MAX_RETURNED 1000 rows / MAX_SCANNED 10000 entries and never recurses, so one call\u0027s work is bounded.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/mod.rs",
+          "hash": "2b6a97861febde8bc85a"
+        }
+      ],
+      "at": "2026-11-26T11:36:27.5772674+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "both commands run on tauri::async_runtime::spawn_blocking and have no timeout; a stalled network path holds a blocking thread.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/commands.rs",
+          "hash": "71fdbb939434b0400b33"
+        }
+      ],
+      "at": "2026-11-26T11:36:27.597372+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "ExplorerPanel opens files only through editor.openPath -\u003E editor_open_any (existing path), not a new read command.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/api/explorer.ts",
+          "hash": "1f259c2c951b89a3c962"
+        }
+      ],
+      "at": "2026-11-26T11:36:27.6189178+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "the new test runs \u0060icacls\u0060 with fixed literal args (no outside input) to deny then remove a temp-folder ACL.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/tests/explorer.rs",
+          "hash": "642be4f1b6a3f4feeba6"
+        }
+      ],
+      "at": "2026-11-26T11:36:27.638545+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "list_level_with now calls std::fs::read_dir only on the requested folder (line 78); Entry.locked is always false and readability is reported via Listing.locked when that folder\u0027s own level is read (rev round 5 removed the child probe).",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src-tauri/src/features/explorer/mod.rs",
+          "hash": "2b6a97861febde8bc85a"
+        }
+      ],
+      "at": "2026-11-26T11:40:36.4930017+00:00",
+      "runs": [
+        "20261126-075013"
+      ]
+    },
+    {
+      "text": "passes editor.openPath (stable useCallback, src/state/useEditor.ts:94) straight to ExplorerPanel onOpenFile, so FileRow React.memo bails; App.explorer.test.tsx:312 asserts detectKind is not re-called across a palette open.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "8efd1e701adf766498ab"
+        }
+      ],
+      "at": "2026-11-26T11:49:25.0213537+00:00",
+      "runs": [
+        "20261126-075013"
       ]
     }
   ]

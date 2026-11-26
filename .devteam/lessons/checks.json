@@ -7,7 +7,8 @@
       "secondsLost": 0,
       "runsRun": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ],
       "runsFailed": [],
       "lastTail": "",
@@ -22,7 +23,8 @@
       "secondsLost": 0,
       "runsRun": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ],
       "runsFailed": [],
       "lastTail": "",
@@ -37,7 +39,8 @@
       "secondsLost": 0,
       "runsRun": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ],
       "runsFailed": [],
       "lastTail": "",
@@ -52,7 +55,8 @@
       "secondsLost": 0,
       "runsRun": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ],
       "runsFailed": [],
       "lastTail": "",
@@ -67,7 +71,8 @@
       "secondsLost": 0,
       "runsRun": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ],
       "runsFailed": [],
       "lastTail": "",
@@ -82,7 +87,8 @@
       "secondsLost": 0,
       "runsRun": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ],
       "runsFailed": [],
       "lastTail": "",
@@ -97,7 +103,8 @@
       "secondsLost": 0,
       "runsRun": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ],
       "runsFailed": [],
       "lastTail": "",
@@ -112,7 +119,8 @@
       "secondsLost": 0,
       "runsRun": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ],
       "runsFailed": [],
       "lastTail": "",
@@ -127,7 +135,8 @@
       "secondsLost": 0,
       "runsRun": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ],
       "runsFailed": [],
       "lastTail": "",
@@ -142,7 +151,8 @@
       "secondsLost": 0,
       "runsRun": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ],
       "runsFailed": [],
       "lastTail": "",
@@ -153,17 +163,33 @@
     {
       "checkId": "tauri-web-tests",
       "name": "Window: tests, with coverage",
-      "failures": 0,
-      "secondsLost": 0,
+      "failures": 2,
+      "secondsLost": 87.5232975,
       "runsRun": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ],
-      "runsFailed": [],
-      "lastTail": "",
-      "lastAt": "0001-01-01T00:00:00+00:00",
-      "fixed": 0,
-      "fixFiles": {}
+      "runsFailed": [
+        "20261126-075013"
+      ],
+      "lastTail": "|                                                                 ^ | 368| | 369|     await openApp(); | \u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF[1/1]\u23AF",
+      "lastAt": "2026-11-26T07:55:43.7311944+00:00",
+      "fixed": 1,
+      "fixFiles": {
+        "package.json": 1,
+        "src-tauri/Cargo.toml": 1,
+        "src-tauri/src/features/explorer/commands.rs": 1,
+        "src-tauri/src/features/explorer/mod.rs": 1,
+        "src-tauri/src/features/mod.rs": 1,
+        "src-tauri/src/lib.rs": 1,
+        "src-tauri/tauri.conf.json": 1,
+        "src-tauri/tests/explorer.rs": 1,
+        "src/api/explorer.test.ts": 1,
+        "src/api/explorer.ts": 1,
+        "src/App.editor.test.tsx": 1,
+        "src/App.explorer.test.tsx": 1
+      }
     },
     {
       "checkId": "tauri-web-build",
@@ -172,7 +198,8 @@
       "secondsLost": 0,
       "runsRun": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ],
       "runsFailed": [],
       "lastTail": "",
@@ -187,7 +214,8 @@
       "secondsLost": 0,
       "runsRun": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ],
       "runsFailed": [],
       "lastTail": "",
@@ -198,20 +226,26 @@
     {
       "checkId": "tauri-rust-tests",
       "name": "Core: tests",
-      "failures": 7,
-      "secondsLost": 560.4958422,
+      "failures": 10,
+      "secondsLost": 1004.9756596,
       "runsRun": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ],
       "runsFailed": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ],
-      "lastTail": "test result: FAILED. 266 passed; 4 failed; 1 ignored; 0 measured; 0 filtered out; finished in 142.85s | Finished \u0060test\u0060 profile [unoptimized \u002B debuginfo] target(s) in 13.97s | Running unittests src\\lib.rs (src-tauri\\target\\debug\\build\\tinkerdeck/44560fda5c08c730\\out\\tinkerdeck_lib-44560fda5c08c730.exe) | error: test failed, to rerun pass \u0060--lib\u0060",
-      "lastAt": "2026-11-26T06:42:38.2500381+00:00",
-      "fixed": 4,
-      "fixFiles": {}
+      "lastTail": "test result: FAILED. 264 passed; 6 failed; 1 ignored; 0 measured; 0 filtered out; finished in 201.62s | Finished \u0060test\u0060 profile [unoptimized \u002B debuginfo] target(s) in 6.43s | Running unittests src\\lib.rs (src-tauri\\target\\debug\\build\\tinkerdeck/a66a286f72f24cec\\out\\tinkerdeck_lib-a66a286f72f24cec.exe) | error: test failed, to rerun pass \u0060--lib\u0060",
+      "lastAt": "2026-11-26T10:43:33.8258869+00:00",
+      "fixed": 6,
+      "fixFiles": {
+        "src-tauri/src/features/explorer/mod.rs": 1,
+        "src-tauri/tests/explorer.rs": 1,
+        "src/App.explorer.test.tsx": 1
+      }
     },
     {
       "checkId": "tauri-rust-build",
@@ -220,7 +254,8 @@
       "secondsLost": 0,
       "runsRun": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ],
       "runsFailed": [],
       "lastTail": "",

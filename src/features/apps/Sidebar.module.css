@@ -128,3 +128,9 @@
   width: 9px !important;
   height: 9px !important;
 }
+/* The Files explorer sits below the apps list, separated but calm (R2). It is never in the rail. */
+.explorerSlot {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}

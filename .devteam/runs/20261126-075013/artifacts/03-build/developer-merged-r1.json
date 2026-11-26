@@ -1,0 +1,595 @@
+{
+  "summary": "Build slice 1 of 3: the Rust Files-explorer core, its command shells and registration, the typed window boundary, and the pure explorer-root helper, each with tests. Added src-tauri/src/features/mod.rs and src-tauri/src/features/explorer/{mod.rs,commands.rs}: list_level reads exactly one directory level, hides node_modules/.git/target/dist unless show_hidden, sorts folders first then files, caps at 1000 returned / 10000 scanned with total\u002Btruncated, and reports an unreadable folder as locked rather than an error; drives() lists Windows drive roots via GetLogicalDrives. Both run on tauri::async_runtime::spawn_blocking behind explorer_list/explorer_drives, registered in lib.rs (pub mod features so integration tests can reach it). Enabled windows-sys Win32_Storage_FileSystem in Cargo.toml (Cargo.lock unchanged). Added src/api/explorer.ts (explorerApi.list/drives, typed Entry/Listing) with a test pinning command names and camelCase args, and src/features/explorer/root.ts (explorerRoot, parentFolder, isDriveRoot) reusing ownerOf for the deepest owning app, Misc parent-folder roots, drive-list climbing and the no-root hint, with tests. Verified: rustfmt on new files, cargo clippy --all-targets -D warnings, cargo test --test explorer (12 pass), npm run lint, targeted vitest (18 pass), npm run build. Note: the full \u0060npm test\u0060 has one deterministic pre-existing failure unrelated to this slice (src/App.test.tsx:367 expects footer text v2.0.0 while the app is 2.1.0 on HEAD 396aed6) plus two Ctrl\u002BShift\u002BP palette tests that only time out under full-suite load and pass when run alone. No tracked frontend source changed, so those are not from this slice. R1/R3 UI work (palette entry, useExplorer/ExplorerPanel/Sidebar wiring, version bump) belongs to later slices. Build slice 2 of 3: the Files explorer window half. Added useExplorer (one directory level per request, lazy per-folder expansion cached with a 100-level LRU cap, Show hidden refetch, locked-on-failure, and Misc Up navigation to the drive list that is discarded whenever the view/app/active tab root changes) and the ExplorerPanel (Files section with Up, Show hidden toggle, lazy folder tree, truncation text, and file clicks delegated to the editor\u0027s existing open path). The sidebar gained an optional explorer slot rendered below the apps in the expanded pane and never in the collapsed rail, with characterization tests pinning the existing rows and rail. The core, commands, lib registration, api/explorer and root helper were already present from the earlier slice and are reused unchanged. typecheck, the three affected test files (32 tests), and npm run build pass; the full suite is 477 passed with 2 known pre-existing failures (App.test.tsx footer version v2.0.0, and App.shortcuts palette timeout under full-suite load). Revision 1 complete. The window now wires the accepted design end to end: App.tsx computes the Files explorer root with explorerRoot (selected app root in the app view, the deepest owning app root of the active editor tab in the editor view, a Misc file\u0027s parent folder otherwise), passes it to the new ExplorerPanel in the Sidebar explorer slot with a reset key that discards temporary Up navigation, and opens explorer files through editor.openPath (the same editor_open_any path the picker uses). The sidebar renders with the Files section even with zero apps when a loose file applies, and the Home row only when apps exist. A new unconditional \u0027Open file\u2026\u0027 command-palette action calls editor.openDialog, the same picker the toolbar Open\u2026 button, Ctrl\u002BO and the empty-state \u0027Open a file\u2026\u0027 button already use. The version moves to 2.2.0 in package.json, package-lock.json, src-tauri/Cargo.toml, src-tauri/Cargo.lock and src-tauri/tauri.conf.json. Existing App suites gained an api/explorer mock (empty listing) and longer waits on lazy dialogs so their behaviour is pinned unchanged. Added App-level tests for R1/R3/R4/R5/A4, a Sidebar explorer test file for R2/A3/A4, and a version test for A2. Checks run and green: npm run lint, npm test (full), cargo test --test explorer, npm run build, rustfmt --check on new Rust files, cargo clippy --all-targets (0 warnings).",
+  "tests": [
+    {
+      "name": "r5_drives_are_listed_as_drive_roots",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "r2_lists_one_level_and_tells_folders_from_files",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "r2_children_are_fetched_only_when_their_level_is_requested",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "r2_hides_the_four_noisy_names_by_default_at_any_depth",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "r2_show_hidden_reveals_the_four_names_and_can_hide_them_again",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "r2_other_dot_named_entries_are_listed_normally",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "r2_an_empty_folder_lists_no_children_without_error",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "r2_an_unreadable_folder_is_locked_and_does_not_raise",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "r4_a_missing_app_root_is_locked_instead_of_raising",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "a1_a_large_level_is_capped_with_total_and_truncated",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "a1_folders_come_first_then_files_sorted_by_name",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "a1_scanning_stops_at_the_scan_limit",
+      "file": "src-tauri/tests/explorer.rs",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R4 in the app view the root is the selected app\u0027s root",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 switching to another app moves the root",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 in the editor view the root is the app that owns the active tab",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 with nested roots the deepest root containing the file owns it",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 opening a file under the current root keeps the same owning app",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 a file outside every app root is not guessed into the nearest app",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 a path written with other slashes or case still finds its owner",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 an app with no root has nothing to show",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R5 a Misc file roots at its parent folder, not the home folder",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5 a Misc file at the root of a drive roots at that drive and Up reaches the drive list",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5 Up climbs one folder at a time up to the drive list",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5 switching between two Misc files moves the root",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5 switching from an app-owned tab to a Misc tab moves the root to the Misc parent",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "A5 the home view has no root, so the panel shows a hint",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "A5 an editor view with no tab, or an unsaved tab, has no root",
+      "file": "src/features/explorer/root.test.ts",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R2 lists one level through explorer_list, passing the folder and camelCase showHidden",
+      "file": "src/api/explorer.test.ts",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 asks for the same folder with showHidden off when hidden names are hidden",
+      "file": "src/api/explorer.test.ts",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R5 lists the drive roots through explorer_drives",
+      "file": "src/api/explorer.test.ts",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R2 reads exactly one level: only the root folder, never its descendants",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 a folder\u0027s children are requested only when it is first expanded, and not again",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 toggling Show hidden re-reads the shown levels with the hidden names on, and off again",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 a folder that cannot be read becomes a locked level instead of a thrown error",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "A1 keeps the visible total and truncated flag and does not re-read a level on re-render",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "A1 caches at most 100 levels and evicts the least recently used",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R5 Up climbs a Misc folder one level at a time until the drive list",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5 a Misc file at the root of a drive reaches the drive list in one Up",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R4 an app root offers no Up, so its top folder stays the app root",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4/R5 a change of view, app or active tab discards Up navigation and returns to the automatic root",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R4",
+        "R5"
+      ]
+    },
+    {
+      "name": "A5 with no root nothing applies, so no folder is read",
+      "file": "src/features/explorer/useExplorer.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R2 lists one level and distinguishes folders from files",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 clicking a folder expands it, fetching its children only then, and clicking again collapses it",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 an empty folder expands without error and shows no children",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 a large folder shows a loading indication while it reads",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 a folder that cannot be read shows as locked instead of throwing",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 other dot-named files and folders are listed normally",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 Show hidden turns the hidden names on and off again",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R3 clicking a file hands it to the editor\u0027s existing open path and never reads it as a folder",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3 a file that is already open still goes through the same single open path",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3 clicking a folder only expands it and never opens it as a file",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3 a click reaches the editor controller\u0027s openPath, the same editor_open_any the picker uses",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R5 a Misc root offers Up that climbs to the drive list",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R4 an app root offers no Up, so the top folder stays the app root",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 switching the selected app or tab changes the root without touching any tab",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4 if an app\u0027s root no longer exists it shows as locked instead of raising an error",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "A5 with no root it shows a hint and asks the core for nothing",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "A1 says when a level is truncated: Showing first 1000 of 1200",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "A3 with no explorer prop the apps, Home row and rail are exactly as before",
+      "file": "src/features/apps/Sidebar.collapse.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2 the Files section sits beside the apps list when one is given",
+      "file": "src/features/apps/Sidebar.collapse.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "A3 the collapsed rail never shows the Files section",
+      "file": "src/features/apps/Sidebar.collapse.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "A4 with no apps saved the sidebar still shows the Files section",
+      "file": "src/features/apps/Sidebar.collapse.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R1: the home view offers it and choosing it opens the picked file in the editor view",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: the entry is present in the app view too, and cancelling leaves the view and tabs unchanged",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: picking several files opens each one",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: opening a file while another tab has unsaved text keeps that text",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: the editor\u0027s Open\u2026 button, Ctrl\u002BO and the empty-state button still run the same picker",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R3: clicking a file opens it through the editor\u0027s open path and shows the editor view",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: clicking a file that is already open focuses its tab instead of opening a second",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: a file that fails to open shows the editor\u0027s existing error instead of crashing",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: clicking a folder expands it and never opens it as a file",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R4: in the app view it is the selected app\u0027s root and follows a newly selected app",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: in the editor view it is the deepest owning app\u0027s root",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: opening a file under the current root keeps the same owning app, so the root does not jump",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: an app root that no longer exists shows as unreadable instead of raising",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R5: an app-owned active tab roots at the app root, and switching to a Misc tab roots at that file\u0027s parent",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5: a Misc file in a deep path roots at its parent folder, not the home folder",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5: a Misc file at a drive root roots at the drive and Up reaches the drive list",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "A4: a loose file still gets the sidebar and its Files section",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R2: it sits beside the apps list in the expanded pane",
+      "file": "src/features/apps/Sidebar.explorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "A3: with no explorer prop the app rows and Home row are exactly as before",
+      "file": "src/features/apps/Sidebar.explorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "A3: the collapsed rail never shows the Files section",
+      "file": "src/features/apps/Sidebar.explorer.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "A4: with no apps saved the sidebar still shows the Files section",
+      "file": "src/features/apps/Sidebar.explorer.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "A2: package.json, package-lock.json, Cargo.toml, Cargo.lock and tauri.conf.json all say 2.2.0",
+      "file": "src/App.version.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    }
+  ],
+  "kickbacks": []
+}

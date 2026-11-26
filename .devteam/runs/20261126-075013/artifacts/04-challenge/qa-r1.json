@@ -1,0 +1,77 @@
+{
+  "findings": [
+    {
+      "cites": "R3",
+      "severity": "blocking",
+      "file": "src/App.explorer.test.tsx",
+      "line": 212,
+      "evidence": "The R3 click tests at lines 212, 229, 250 and 268 all use text files (README.md, keep.txt, gone.txt, a.ts) and assert only h.ed.open/onOpenFile and api.list calls. No test lists and clicks an image or PDF from the explorer, and no test asserts the preview pane appears. The openPath test in ExplorerPanel.test.tsx:210 opens README.md only, so a change that stopped sending binary files through the editor's preview handling would leave every test green.",
+      "description": "R3 acceptance 'Clicking an image or other binary-preview file opens the editor's existing preview form' has no test at all. Add a test that lists an image/PDF in the explorer, clicks it, and asserts the editor's preview form is shown (e.g. 'Preview of ...' or the preview test id) rather than a text editor."
+    },
+    {
+      "cites": "R4",
+      "severity": "advisory",
+      "file": "src/App.explorer.test.tsx",
+      "line": 299,
+      "evidence": "The editor-view root test at line 299 opens a single app-owned tab. The only active-tab switch test is line 347, which switches an app-owned tab to a Misc tab; no test opens tabs owned by two different apps and switches between them. Owner selection is covered in root.test.ts and reset-key handling in useExplorer.test.tsx:178, but not the 'between files owned by different apps' acceptance line end to end.",
+      "description": "R4 acceptance 'Switching the active tab between files owned by different apps moves the root to the newly active tab's owning app' is only proven compositionally, not by a test that performs that switch."
+    },
+    {
+      "cites": "R4",
+      "severity": "advisory",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "line": 259,
+      "evidence": "The test titled 'switching the selected app or tab changes the root without touching any tab' renders ExplorerPanel with no editor tabs and asserts only api.list calls. The nearest App-level check (App.explorer.test.tsx:358) compares only the number of tabs after an app-to-Misc switch, never the tabs' contents.",
+      "description": "R4 acceptance 'Changing the root does not close or alter any open tab' is asserted only as a tab count, not that each open tab (and its content) is unchanged."
+    },
+    {
+      "cites": "R2",
+      "severity": "advisory",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "line": 84,
+      "evidence": "The expand/collapse test asserts 'a.ts' disappears and aria-expanded flips to false, but no editor tab is opened in the test, so the edge case 'collapsing a folder hides its children but closes no open file tab' is not exercised.",
+      "description": "Add a test that opens a file from the explorer, then collapses its folder, and asserts the editor tab remains open."
+    },
+    {
+      "cites": "R2",
+      "severity": "advisory",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "line": 116,
+      "evidence": "The 'large folder' test uses a single pending promise for a folder named 'many' and one child; it proves the 'Loading...' status but never uses thousands of entries and never checks that the window stays responsive while a large level loads. The Rust large-level test (src-tauri/tests/explorer.rs:150) covers the 1200-entry cap, not the UI responsiveness edge case.",
+      "description": "R2 edge case 'A folder with thousands of entries shows a loading indication and keeps the window responsive while it loads' is only partially covered (loading shown, no scale/responsiveness check). EFF-002 is relaxed, so this is advisory."
+    },
+    {
+      "cites": "R3",
+      "severity": "advisory",
+      "file": "src/App.explorer.test.tsx",
+      "line": 226,
+      "evidence": "The click test asserts h.ed.open was called with the path and h.ed.pickOpenPaths was not called; it never asserts that no save/snapshot/write call is made. A click path that began writing to disk would not fail any explorer test.",
+      "description": "R3 edge case 'Clicking a file does not modify its contents on disk' has no test asserting the click only reads."
+    },
+    {
+      "cites": "R3",
+      "severity": "advisory",
+      "file": "src/App.explorer.test.tsx",
+      "line": 265,
+      "evidence": "The failing-open test opens keep.txt (line 251), clicks gone.txt and asserts only that a tablist exists (line 265); it never asserts keep.txt is still open and unchanged. The R1 unsaved-text test at line 176 covers this only through the palette/picker path.",
+      "description": "R3 edge case 'Opening a file does not close or change other open tabs' is not asserted after an explorer click."
+    },
+    {
+      "cites": "R1",
+      "severity": "advisory",
+      "file": "src/App.explorer.test.tsx",
+      "line": 163,
+      "evidence": "The 'picking several files opens each one' test picks two new files and asserts two opens; no picker test includes a file that is already open. Duplicate focus is tested for openPath in src/state/useEditor.test.tsx:172 and for the explorer in App.explorer.test.tsx:229, but not through the palette picker.",
+      "description": "R1 edge case 'a file that is already open is focused instead of duplicated' is not exercised through the palette picker path."
+    },
+    {
+      "cites": "R1",
+      "severity": "advisory",
+      "file": "src/App.explorer.test.tsx",
+      "line": 134,
+      "evidence": "The palette-entry tests cover the home view (line 134) and the app view (line 149) only; no test opens the palette while the editor view is mounted, although R1 says the entry is offered in every view and the pitfall says it must not disappear when the editor view is not current.",
+      "description": "R1's 'in every view' is not tested for the editor view."
+    }
+  ],
+  "verifications": []
+}

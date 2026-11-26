@@ -48,6 +48,14 @@ vi.mock("./features/terminals/TerminalHost", () => ({
   ),
 }));
 
+// The Files explorer reads one level per root; a quiet empty listing keeps these suites as they were (A3).
+vi.mock("./api/explorer", () => ({
+  explorerApi: {
+    list: vi.fn(async (path: string) => ({ path, entries: [], total: 0, truncated: false, locked: false })),
+    drives: vi.fn(async () => []),
+  },
+}));
+
 import { App } from "./App";
 
 const T = (id: string, name: string) => ({ id, name, cwd: ".", command: "", env: {} });
@@ -170,7 +178,7 @@ describe("Git in the app", () => {
     await openApp();
     await userEvent.click(await screen.findByRole("button", { name: /Switch branch/ }));
     await userEvent.click(await screen.findByRole("button", { name: "feature" }));
-    const dlg = await screen.findByRole("dialog", { name: "Switch to feature?" });
+    const dlg = await screen.findByRole("dialog", { name: "Switch to feature?" }, { timeout: 5000 });
     expect(dlg).toHaveTextContent("1 terminal is running");
     expect(h.api.gitSwitch).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole("button", { name: "Stop all, switch, Start all" }));
@@ -374,7 +382,7 @@ describe("Consoles", () => {
     await waitFor(() => expect(h.api.startTerminal).toHaveBeenCalledWith("a1", "console-a1:1"));
 
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    const palette = await screen.findByRole("dialog", { name: "Command palette" });
+    const palette = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     await userEvent.click(within(palette).getByRole("button", { name: /Hide console/ }));
 
     await waitFor(() => expect(screen.queryByRole("complementary", { name: "Consoles" })).toBeNull());

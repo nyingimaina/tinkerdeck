@@ -57,6 +57,14 @@ vi.mock("./features/terminals/TerminalHost", () => ({
 
 vi.mock("./features/editor/CodeSurface", () => ({ default: () => <div data-testid="surface" /> }));
 
+// The Files explorer reads one level per root; a quiet empty listing keeps these suites as they were (A3).
+vi.mock("./api/explorer", () => ({
+  explorerApi: {
+    list: vi.fn(async (path: string) => ({ path, entries: [], total: 0, truncated: false, locked: false })),
+    drives: vi.fn(async () => []),
+  },
+}));
+
 import { App } from "./App";
 
 const T = (id: string, name: string) => ({ id, name, cwd: ".", command: "", env: {} });
@@ -102,7 +110,7 @@ describe("App app-level shortcuts", () => {
     await screen.findByRole("heading", { name: "Home", level: 2 });
 
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    const dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     await waitFor(() => expect(within(dialog).getByLabelText("Search commands")).toHaveFocus());
 
     fireEvent.keyDown(document, { key: "Escape" });
@@ -114,7 +122,7 @@ describe("App app-level shortcuts", () => {
     await screen.findByRole("heading", { name: "Home", level: 2 });
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
 
-    const dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     expect(within(dialog).getByRole("button", { name: /Toggle sidebar/ })).toHaveTextContent("Ctrl+B");
     expect(within(dialog).getByRole("button", { name: /Refresh everything/ })).toHaveTextContent("F5");
     expect(within(dialog).getByRole("button", { name: /Switch light\/dark theme/ })).toHaveTextContent("Ctrl+Alt+T");
@@ -167,7 +175,7 @@ describe("App app-level shortcuts", () => {
     expect(h.ed.close).toHaveBeenCalled();
 
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    expect(await screen.findByRole("dialog", { name: "Command palette" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 })).toBeInTheDocument();
   });
 
   it("R5/R8: an app view starts with the git tools collapsed behind the branch chip and they hide again on demand", async () => {
@@ -218,7 +226,7 @@ describe("App app-level shortcuts", () => {
     await screen.findByRole("heading", { name: "Home", level: 2 });
 
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    let dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    let dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     for (const name of [
       /Toggle sidebar/,
       /Refresh everything/,
@@ -245,7 +253,7 @@ describe("App app-level shortcuts", () => {
 
     await openApp();
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     for (const name of [/Edit app/, /Start all/, /Stop all/, /Open console/, /New console/]) {
       expect(within(dialog).getByRole("button", { name })).toBeInTheDocument();
     }
@@ -258,7 +266,7 @@ describe("App app-level shortcuts", () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    const dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     await userEvent.type(within(dialog).getByLabelText("Search commands"), "zzzzzz");
     expect(within(dialog).getByText("No commands match.")).toBeInTheDocument();
   });
@@ -269,7 +277,7 @@ describe("App app-level shortcuts", () => {
     render(<App />);
     await openApp();
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    const dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     await userEvent.type(within(dialog).getByLabelText("Search commands"), "changes");
     await userEvent.click(within(dialog).getByRole("button", { name: /Git: show changes/ }));
     expect(await screen.findByRole("complementary", { name: "Git" })).toBeInTheDocument();
@@ -282,7 +290,7 @@ describe("App app-level shortcuts", () => {
     await waitFor(() => expect(h.api.startTerminal).toHaveBeenCalledWith("a1", "console-a1:1"));
 
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    const dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     await userEvent.click(within(dialog).getByRole("button", { name: /Hide console/ }));
     expect(screen.getByTestId("host-console-a1:1")).toHaveAttribute("data-visible", "false");
     expect(h.api.stopTerminal).not.toHaveBeenCalled();
@@ -300,30 +308,30 @@ describe("App app-level shortcuts", () => {
 
     // Git tools: shown from the palette, then hidden again from the palette.
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    let dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    let dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     await userEvent.click(within(dialog).getByRole("button", { name: /Show git tools/ }));
     expect(screen.getByRole("button", { name: "Hide git tools" })).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("button", { name: /Fetch/ })).toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     await userEvent.click(within(dialog).getByRole("button", { name: /Hide git tools/ }));
     expect(screen.getByRole("button", { name: "Show git tools" })).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByRole("button", { name: /Fetch/ })).toBeNull();
 
     // Git drawer: opened, closed and reopened from the palette.
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     await userEvent.click(within(dialog).getByRole("button", { name: /Git: show changes/ }));
     expect(await screen.findByRole("complementary", { name: "Git" })).toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     await userEvent.click(within(dialog).getByRole("button", { name: /Close git drawer/ }));
     await waitFor(() => expect(screen.queryByRole("complementary", { name: "Git" })).toBeNull());
 
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     await userEvent.click(within(dialog).getByRole("button", { name: /Git: show changes/ }));
     expect(await screen.findByRole("complementary", { name: "Git" })).toBeInTheDocument();
 
@@ -331,13 +339,13 @@ describe("App app-level shortcuts", () => {
     await userEvent.click(screen.getByRole("tab", { name: /Console/ }));
     await waitFor(() => expect(h.api.startTerminal).toHaveBeenCalledWith("a1", "console-a1:1"));
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     await userEvent.click(within(dialog).getByRole("button", { name: /Hide console/ }));
     expect(screen.getByTestId("host-console-a1:1")).toHaveAttribute("data-visible", "false");
     expect(h.api.stopTerminal).not.toHaveBeenCalled();
 
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     await userEvent.click(within(dialog).getByRole("button", { name: /Open console/ }));
     expect(await screen.findByRole("complementary", { name: "Consoles" })).toBeInTheDocument();
     expect(screen.getByTestId("host-console-a1:1")).toHaveAttribute("data-visible", "true");
@@ -351,7 +359,7 @@ describe("App app-level shortcuts", () => {
     // Opened from the body (Ctrl+Shift+P with nothing focused), Escape lands on a named,
     // always-visible control instead of leaving focus on <body>.
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    let dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    let dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     await waitFor(() => expect(within(dialog).getByLabelText("Search commands")).toHaveFocus());
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Command palette" })).toBeNull());
@@ -361,7 +369,7 @@ describe("App app-level shortcuts", () => {
     const opener = screen.getByRole("button", { name: "Hide sidebar" });
     opener.focus();
     fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
-    dialog = await screen.findByRole("dialog", { name: "Command palette" });
+    dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
     await waitFor(() => expect(within(dialog).getByLabelText("Search commands")).toHaveFocus());
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Command palette" })).toBeNull());

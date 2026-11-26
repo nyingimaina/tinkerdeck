@@ -1,15 +1,26 @@
 {
-  "rules": [],
+  "rules": [
+    {
+      "rule": "USR-003",
+      "count": 1,
+      "runs": [
+        "20261126-075013"
+      ],
+      "lastDescription": "The row memoisation that the A1/EFF-002 relaxation relies on is defeated by an unstable callback, so a large folder re-renders up to 1000 file rows on every App update (typing included). That is needless work and a responsiveness bug on the",
+      "lastFile": "src/App.tsx"
+    }
+  ],
   "files": [
     {
       "path": "src/App.tsx",
-      "count": 4,
+      "count": 5,
       "runs": [
         "20261125-153618",
-        "20261125-202512"
+        "20261125-202512",
+        "20261126-075013"
       ],
-      "lastDescription": "R7\u0027s edge case that hide/show commands for every hideable tool (git tools, git drawer, console) appear in the palette and can hide/reopen the tool is proven only for the console; the git-tools and git-drawer palette commands have no test.",
-      "lastRule": ""
+      "lastDescription": "The row memoisation that the A1/EFF-002 relaxation relies on is defeated by an unstable callback, so a large folder re-renders up to 1000 file rows on every App update (typing included). That is needless work and a responsiveness bug on the",
+      "lastRule": "USR-003"
     },
     {
       "path": "docs/ui-tidy-up-plan.md",
@@ -46,11 +57,30 @@
       ],
       "lastDescription": "R10\u0027s plan-based acceptance - each building block\u0027s package or in-house decision, the jattac fallback, licence/maintenance/React 18.3 compatibility and reuse-before-adding - is not proven by any test; only the cmdk adoption and lazy load ar",
       "lastRule": ""
+    },
+    {
+      "path": "src-tauri/src/features/explorer/mod.rs",
+      "count": 1,
+      "runs": [
+        "20261126-075013"
+      ],
+      "lastDescription": "Listing a directory touches every child directory just to fill the per-row \u0060locked\u0060 flag. The same locked status is already reported when a folder\u0027s own level is requested (Listing.locked), so the eager check is extra descendant I/O on ever",
+      "lastRule": ""
+    },
+    {
+      "path": "src/App.explorer.test.tsx",
+      "count": 1,
+      "runs": [
+        "20261126-075013"
+      ],
+      "lastDescription": "R3 acceptance \u0027Clicking an image or other binary-preview file opens the editor\u0027s existing preview form\u0027 has no test at all. Add a test that lists an image/PDF in the explorer, clicks it, and asserts the editor\u0027s preview form is shown (e.g. ",
+      "lastRule": ""
     }
   ],
   "absorbed": [
     "20261125-153618",
-    "20261125-202512"
+    "20261125-202512",
+    "20261126-075013"
   ],
   "promotionAsked": {}
 }

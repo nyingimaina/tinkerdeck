@@ -23,6 +23,18 @@
         "src/features/git",
         "docs"
       ]
+    },
+    {
+      "runId": "20261126-075013",
+      "feature": "The command palette offers an \u0027Open file\u2026\u0027 entry in every view (and 4 more)",
+      "areas": [
+        "src",
+        "src/features/explorer",
+        "src-tauri/src/features",
+        "src/features/apps",
+        "src-tauri",
+        "src/api"
+      ]
     }
   ]
 }

@@ -1,0 +1,927 @@
+{
+  "runId": "20261126-075013",
+  "seriesId": "db5bb811",
+  "revision": 1,
+  "baseCommit": "43e2d47^",
+  "headCommit": "43e2d47",
+  "files": [
+    {
+      "path": "package-lock.json",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "package.json",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src-tauri/Cargo.lock",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src-tauri/Cargo.toml",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src-tauri/src/features/explorer/commands.rs",
+      "status": "added",
+      "isTest": false,
+      "added": [
+        {
+          "kind": "function",
+          "name": "explorer_list",
+          "file": "src-tauri/src/features/explorer/commands.rs"
+        },
+        {
+          "kind": "function",
+          "name": "explorer_drives",
+          "file": "src-tauri/src/features/explorer/commands.rs"
+        }
+      ],
+      "removed": [],
+      "symbols": [
+        "explorer_list",
+        "explorer_drives"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src-tauri/src/features/explorer/mod.rs",
+      "status": "added",
+      "isTest": false,
+      "added": [
+        {
+          "kind": "struct",
+          "name": "Entry",
+          "file": "src-tauri/src/features/explorer/mod.rs"
+        },
+        {
+          "kind": "struct",
+          "name": "Listing",
+          "file": "src-tauri/src/features/explorer/mod.rs"
+        },
+        {
+          "kind": "struct",
+          "name": "Row",
+          "file": "src-tauri/src/features/explorer/mod.rs"
+        },
+        {
+          "kind": "function",
+          "name": "hidden",
+          "file": "src-tauri/src/features/explorer/mod.rs"
+        },
+        {
+          "kind": "function",
+          "name": "list_level",
+          "file": "src-tauri/src/features/explorer/mod.rs"
+        },
+        {
+          "kind": "function",
+          "name": "list_level_with",
+          "file": "src-tauri/src/features/explorer/mod.rs"
+        },
+        {
+          "kind": "function",
+          "name": "drives",
+          "file": "src-tauri/src/features/explorer/mod.rs"
+        }
+      ],
+      "removed": [],
+      "symbols": [
+        "Entry",
+        "Listing",
+        "Row",
+        "hidden",
+        "list_level",
+        "list_level_with",
+        "drives"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src-tauri/src/features/mod.rs",
+      "status": "added",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src-tauri/src/lib.rs",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [
+        "CloseRequested",
+        "run"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src-tauri/tauri.conf.json",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src-tauri/tests/explorer.rs",
+      "status": "added",
+      "isTest": true,
+      "added": [
+        {
+          "kind": "function",
+          "name": "folder",
+          "file": "src-tauri/tests/explorer.rs"
+        },
+        {
+          "kind": "function",
+          "name": "file",
+          "file": "src-tauri/tests/explorer.rs"
+        },
+        {
+          "kind": "function",
+          "name": "names",
+          "file": "src-tauri/tests/explorer.rs"
+        },
+        {
+          "kind": "function",
+          "name": "r2_lists_one_level_and_tells_folders_from_files",
+          "file": "src-tauri/tests/explorer.rs"
+        },
+        {
+          "kind": "function",
+          "name": "r2_children_are_fetched_only_when_their_level_is_requested",
+          "file": "src-tauri/tests/explorer.rs"
+        },
+        {
+          "kind": "function",
+          "name": "r2_hides_the_four_noisy_names_by_default_at_any_depth",
+          "file": "src-tauri/tests/explorer.rs"
+        },
+        {
+          "kind": "function",
+          "name": "r2_show_hidden_reveals_the_four_names_and_can_hide_them_again",
+          "file": "src-tauri/tests/explorer.rs"
+        },
+        {
+          "kind": "function",
+          "name": "r2_other_dot_named_entries_are_listed_normally",
+          "file": "src-tauri/tests/explorer.rs"
+        },
+        {
+          "kind": "function",
+          "name": "r2_an_empty_folder_lists_no_children_without_error",
+          "file": "src-tauri/tests/explorer.rs"
+        },
+        {
+          "kind": "function",
+          "name": "r2_an_unreadable_folder_is_locked_and_does_not_raise",
+          "file": "src-tauri/tests/explorer.rs"
+        },
+        {
+          "kind": "function",
+          "name": "r2_listing_a_level_never_opens_its_child_folders",
+          "file": "src-tauri/tests/explorer.rs"
+        },
+        {
+          "kind": "function",
+          "name": "r4_a_missing_app_root_is_locked_instead_of_raising",
+          "file": "src-tauri/tests/explorer.rs"
+        },
+        {
+          "kind": "function",
+          "name": "a1_a_large_level_is_capped_with_total_and_truncated",
+          "file": "src-tauri/tests/explorer.rs"
+        },
+        {
+          "kind": "function",
+          "name": "a1_folders_come_first_then_files_sorted_by_name",
+          "file": "src-tauri/tests/explorer.rs"
+        },
+        {
+          "kind": "function",
+          "name": "a1_scanning_stops_at_the_scan_limit",
+          "file": "src-tauri/tests/explorer.rs"
+        },
+        {
+          "kind": "function",
+          "name": "r5_drives_are_listed_as_drive_roots",
+          "file": "src-tauri/tests/explorer.rs"
+        }
+      ],
+      "removed": [],
+      "symbols": [
+        "folder",
+        "file",
+        "names",
+        "r2_lists_one_level_and_tells_folders_from_files",
+        "r2_children_are_fetched_only_when_their_level_is_requested",
+        "r2_hides_the_four_noisy_names_by_default_at_any_depth",
+        "r2_show_hidden_reveals_the_four_names_and_can_hide_them_again",
+        "r2_other_dot_named_entries_are_listed_normally",
+        "r2_an_empty_folder_lists_no_children_without_error",
+        "r2_an_unreadable_folder_is_locked_and_does_not_raise",
+        "r2_listing_a_level_never_opens_its_child_folders",
+        "r4_a_missing_app_root_is_locked_instead_of_raising",
+        "a1_a_large_level_is_capped_with_total_and_truncated",
+        "a1_folders_come_first_then_files_sorted_by_name",
+        "a1_scanning_stops_at_the_scan_limit",
+        "r5_drives_are_listed_as_drive_roots"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/App.editor.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/App.explorer.test.tsx",
+      "status": "added",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R1",
+        "R3",
+        "R2",
+        "R4",
+        "R5"
+      ]
+    },
+    {
+      "path": "src/App.features.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R5",
+        "R8",
+        "R9",
+        "R6",
+        "R4"
+      ]
+    },
+    {
+      "path": "src/App.layout.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R6",
+        "R7",
+        "R8",
+        "R9"
+      ]
+    },
+    {
+      "path": "src/App.shortcuts.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R4",
+        "R7",
+        "R5",
+        "R8",
+        "R2",
+        "R9"
+      ]
+    },
+    {
+      "path": "src/App.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R1",
+        "R5",
+        "R2",
+        "R10",
+        "R6"
+      ]
+    },
+    {
+      "path": "src/App.themes.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "path": "src/App.tsx",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [
+        "App"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/App.updatecheck.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/App.updates.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/App.version.test.tsx",
+      "status": "added",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/api/explorer.test.ts",
+      "status": "added",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R2",
+        "R5"
+      ]
+    },
+    {
+      "path": "src/api/explorer.ts",
+      "status": "added",
+      "isTest": false,
+      "added": [
+        {
+          "kind": "interface",
+          "name": "ExplorerEntry",
+          "file": "src/api/explorer.ts"
+        },
+        {
+          "kind": "interface",
+          "name": "ExplorerListing",
+          "file": "src/api/explorer.ts"
+        },
+        {
+          "kind": "const",
+          "name": "explorerApi",
+          "file": "src/api/explorer.ts"
+        }
+      ],
+      "removed": [],
+      "symbols": [
+        "ExplorerEntry",
+        "ExplorerListing",
+        "explorerApi"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/apps/Sidebar.explorer.test.tsx",
+      "status": "added",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "path": "src/features/apps/Sidebar.module.css",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/features/apps/Sidebar.tsx",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [
+        "Sidebar"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/explorer/ExplorerPanel.module.css",
+      "status": "added",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/features/explorer/ExplorerPanel.test.tsx",
+      "status": "added",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R2",
+        "R3",
+        "R5",
+        "R4"
+      ]
+    },
+    {
+      "path": "src/features/explorer/ExplorerPanel.tsx",
+      "status": "added",
+      "isTest": false,
+      "added": [
+        {
+          "kind": "interface",
+          "name": "ExplorerPanelProps",
+          "file": "src/features/explorer/ExplorerPanel.tsx"
+        },
+        {
+          "kind": "component",
+          "name": "ExplorerPanel",
+          "file": "src/features/explorer/ExplorerPanel.tsx"
+        }
+      ],
+      "removed": [],
+      "symbols": [
+        "ExplorerPanelProps",
+        "ExplorerPanel"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/explorer/root.test.ts",
+      "status": "added",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R4",
+        "R5"
+      ]
+    },
+    {
+      "path": "src/features/explorer/root.ts",
+      "status": "added",
+      "isTest": false,
+      "added": [
+        {
+          "kind": "type",
+          "name": "ExplorerView",
+          "file": "src/features/explorer/root.ts"
+        },
+        {
+          "kind": "type",
+          "name": "ExplorerRootSource",
+          "file": "src/features/explorer/root.ts"
+        },
+        {
+          "kind": "interface",
+          "name": "ExplorerRoot",
+          "file": "src/features/explorer/root.ts"
+        },
+        {
+          "kind": "interface",
+          "name": "ExplorerRootOptions",
+          "file": "src/features/explorer/root.ts"
+        },
+        {
+          "kind": "function",
+          "name": "isDriveRoot",
+          "file": "src/features/explorer/root.ts"
+        },
+        {
+          "kind": "function",
+          "name": "parentFolder",
+          "file": "src/features/explorer/root.ts"
+        },
+        {
+          "kind": "function",
+          "name": "explorerRoot",
+          "file": "src/features/explorer/root.ts"
+        }
+      ],
+      "removed": [],
+      "symbols": [
+        "ExplorerView",
+        "ExplorerRootSource",
+        "ExplorerRoot",
+        "ExplorerRootOptions",
+        "isDriveRoot",
+        "parentFolder",
+        "explorerRoot"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/explorer/useExplorer.test.tsx",
+      "status": "added",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R2",
+        "R5",
+        "R4"
+      ]
+    },
+    {
+      "path": "src/features/explorer/useExplorer.ts",
+      "status": "added",
+      "isTest": false,
+      "added": [
+        {
+          "kind": "interface",
+          "name": "ExplorerLevelState",
+          "file": "src/features/explorer/useExplorer.ts"
+        },
+        {
+          "kind": "const",
+          "name": "MAX_CACHED_LEVELS",
+          "file": "src/features/explorer/useExplorer.ts"
+        },
+        {
+          "kind": "interface",
+          "name": "ExploreOptions",
+          "file": "src/features/explorer/useExplorer.ts"
+        },
+        {
+          "kind": "interface",
+          "name": "ExplorerController",
+          "file": "src/features/explorer/useExplorer.ts"
+        },
+        {
+          "kind": "function",
+          "name": "useExplorer",
+          "file": "src/features/explorer/useExplorer.ts"
+        }
+      ],
+      "removed": [],
+      "symbols": [
+        "ExplorerLevelState",
+        "MAX_CACHED_LEVELS",
+        "ExploreOptions",
+        "ExplorerController",
+        "useExplorer"
+      ],
+      "requirements": []
+    }
+  ],
+  "added": [
+    {
+      "kind": "function",
+      "name": "explorer_list",
+      "file": "src-tauri/src/features/explorer/commands.rs"
+    },
+    {
+      "kind": "function",
+      "name": "explorer_drives",
+      "file": "src-tauri/src/features/explorer/commands.rs"
+    },
+    {
+      "kind": "struct",
+      "name": "Entry",
+      "file": "src-tauri/src/features/explorer/mod.rs"
+    },
+    {
+      "kind": "struct",
+      "name": "Listing",
+      "file": "src-tauri/src/features/explorer/mod.rs"
+    },
+    {
+      "kind": "struct",
+      "name": "Row",
+      "file": "src-tauri/src/features/explorer/mod.rs"
+    },
+    {
+      "kind": "function",
+      "name": "hidden",
+      "file": "src-tauri/src/features/explorer/mod.rs"
+    },
+    {
+      "kind": "function",
+      "name": "list_level",
+      "file": "src-tauri/src/features/explorer/mod.rs"
+    },
+    {
+      "kind": "function",
+      "name": "list_level_with",
+      "file": "src-tauri/src/features/explorer/mod.rs"
+    },
+    {
+      "kind": "function",
+      "name": "drives",
+      "file": "src-tauri/src/features/explorer/mod.rs"
+    },
+    {
+      "kind": "interface",
+      "name": "ExplorerEntry",
+      "file": "src/api/explorer.ts"
+    },
+    {
+      "kind": "interface",
+      "name": "ExplorerListing",
+      "file": "src/api/explorer.ts"
+    },
+    {
+      "kind": "const",
+      "name": "explorerApi",
+      "file": "src/api/explorer.ts"
+    },
+    {
+      "kind": "interface",
+      "name": "ExplorerPanelProps",
+      "file": "src/features/explorer/ExplorerPanel.tsx"
+    },
+    {
+      "kind": "component",
+      "name": "ExplorerPanel",
+      "file": "src/features/explorer/ExplorerPanel.tsx"
+    },
+    {
+      "kind": "type",
+      "name": "ExplorerView",
+      "file": "src/features/explorer/root.ts"
+    },
+    {
+      "kind": "type",
+      "name": "ExplorerRootSource",
+      "file": "src/features/explorer/root.ts"
+    },
+    {
+      "kind": "interface",
+      "name": "ExplorerRoot",
+      "file": "src/features/explorer/root.ts"
+    },
+    {
+      "kind": "interface",
+      "name": "ExplorerRootOptions",
+      "file": "src/features/explorer/root.ts"
+    },
+    {
+      "kind": "function",
+      "name": "isDriveRoot",
+      "file": "src/features/explorer/root.ts"
+    },
+    {
+      "kind": "function",
+      "name": "parentFolder",
+      "file": "src/features/explorer/root.ts"
+    },
+    {
+      "kind": "function",
+      "name": "explorerRoot",
+      "file": "src/features/explorer/root.ts"
+    },
+    {
+      "kind": "interface",
+      "name": "ExplorerLevelState",
+      "file": "src/features/explorer/useExplorer.ts"
+    },
+    {
+      "kind": "const",
+      "name": "MAX_CACHED_LEVELS",
+      "file": "src/features/explorer/useExplorer.ts"
+    },
+    {
+      "kind": "interface",
+      "name": "ExploreOptions",
+      "file": "src/features/explorer/useExplorer.ts"
+    },
+    {
+      "kind": "interface",
+      "name": "ExplorerController",
+      "file": "src/features/explorer/useExplorer.ts"
+    },
+    {
+      "kind": "function",
+      "name": "useExplorer",
+      "file": "src/features/explorer/useExplorer.ts"
+    }
+  ],
+  "removed": [],
+  "routesAdded": [],
+  "tablesAdded": [],
+  "proven": {
+    "R1": [
+      "src/App.explorer.test.tsx",
+      "src/App.test.tsx"
+    ],
+    "R3": [
+      "src/App.explorer.test.tsx",
+      "src/App.themes.test.tsx",
+      "src/features/explorer/ExplorerPanel.test.tsx"
+    ],
+    "R2": [
+      "src/App.explorer.test.tsx",
+      "src/App.shortcuts.test.tsx",
+      "src/App.test.tsx",
+      "src/api/explorer.test.ts",
+      "src/features/apps/Sidebar.explorer.test.tsx",
+      "src/features/explorer/ExplorerPanel.test.tsx",
+      "src/features/explorer/useExplorer.test.tsx"
+    ],
+    "R4": [
+      "src/App.explorer.test.tsx",
+      "src/App.features.test.tsx",
+      "src/App.shortcuts.test.tsx",
+      "src/features/explorer/ExplorerPanel.test.tsx",
+      "src/features/explorer/root.test.ts",
+      "src/features/explorer/useExplorer.test.tsx"
+    ],
+    "R5": [
+      "src/App.explorer.test.tsx",
+      "src/App.features.test.tsx",
+      "src/App.shortcuts.test.tsx",
+      "src/App.test.tsx",
+      "src/api/explorer.test.ts",
+      "src/features/explorer/ExplorerPanel.test.tsx",
+      "src/features/explorer/root.test.ts",
+      "src/features/explorer/useExplorer.test.tsx"
+    ],
+    "R8": [
+      "src/App.features.test.tsx",
+      "src/App.layout.test.tsx",
+      "src/App.shortcuts.test.tsx"
+    ],
+    "R9": [
+      "src/App.features.test.tsx",
+      "src/App.layout.test.tsx",
+      "src/App.shortcuts.test.tsx"
+    ],
+    "R6": [
+      "src/App.features.test.tsx",
+      "src/App.layout.test.tsx",
+      "src/App.test.tsx"
+    ],
+    "R7": [
+      "src/App.layout.test.tsx",
+      "src/App.shortcuts.test.tsx"
+    ],
+    "R10": [
+      "src/App.test.tsx"
+    ]
+  },
+  "checks": [
+    {
+      "component": "ExplorerCore",
+      "path": "src-tauri/src/features/explorer/mod.rs",
+      "status": "missing"
+    },
+    {
+      "component": "ExplorerCommands",
+      "path": "src-tauri/src/features/explorer/commands.rs",
+      "status": "missing"
+    },
+    {
+      "component": "FeaturesModule",
+      "path": "src-tauri/src/features/mod.rs",
+      "status": "confirmed"
+    },
+    {
+      "component": "ExplorerCoreTests",
+      "path": "src-tauri/tests/explorer.rs",
+      "status": "missing"
+    },
+    {
+      "component": "TauriRegistration",
+      "path": "src-tauri/src/lib.rs",
+      "status": "missing"
+    },
+    {
+      "component": "ExplorerApi",
+      "path": "src/api/explorer.ts",
+      "status": "missing"
+    },
+    {
+      "component": "ExplorerRoot",
+      "path": "src/features/explorer/root.ts",
+      "status": "confirmed"
+    },
+    {
+      "component": "ExplorerRootTests",
+      "path": "src/features/explorer/root.test.ts",
+      "status": "missing"
+    },
+    {
+      "component": "UseExplorer",
+      "path": "src/features/explorer/useExplorer.ts",
+      "status": "missing"
+    },
+    {
+      "component": "UseExplorerTests",
+      "path": "src/features/explorer/useExplorer.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "ExplorerPanel",
+      "path": "src/features/explorer/ExplorerPanel.tsx",
+      "status": "confirmed"
+    },
+    {
+      "component": "ExplorerPanelStyles",
+      "path": "src/features/explorer/ExplorerPanel.module.css",
+      "status": "confirmed"
+    },
+    {
+      "component": "ExplorerPanelTests",
+      "path": "src/features/explorer/ExplorerPanel.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "SidebarExplorerSection",
+      "path": "src/features/apps/Sidebar.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "SidebarExplorerStyles",
+      "path": "src/features/apps/Sidebar.module.css",
+      "status": "confirmed"
+    },
+    {
+      "component": "SidebarCharacterizationTests",
+      "path": "src/features/apps/Sidebar.collapse.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "SidebarExplorerTests",
+      "path": "src/features/apps/Sidebar.explorer.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "AppShell",
+      "path": "src/App.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "AppExplorerTests",
+      "path": "src/App.explorer.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "VersionBump",
+      "path": "package.json",
+      "status": "confirmed"
+    }
+  ],
+  "unanticipated": 24,
+  "recordedAt": "2026-11-26T11:49:57.3789456+00:00"
+}

@@ -18,9 +18,9 @@
   {
     "id": "20261126-075013",
     "startedAt": "2026-11-26T07:50:13.4474164+00:00",
-    "status": "Running",
+    "status": "Completed",
     "snippet": "The command palette offers an \u0027Open file\u2026\u0027 entry in every view (and 4 more)",
     "costUsd": 0.7011340560000002,
-    "final": false
+    "final": true
   }
 ]

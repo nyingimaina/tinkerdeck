@@ -1,0 +1,110 @@
+{
+  "checks": [
+    {
+      "id": "no-secrets",
+      "name": "No secrets in code",
+      "status": "passed",
+      "seconds": 0.1668613,
+      "output": ""
+    },
+    {
+      "id": "no-debug-leftovers",
+      "name": "No debugging leftovers",
+      "status": "passed",
+      "seconds": 0.0790671,
+      "output": ""
+    },
+    {
+      "id": "tauri-no-invoke-in-features",
+      "name": "Screens ask the core through src/api only",
+      "status": "passed",
+      "seconds": 0.063821,
+      "output": ""
+    },
+    {
+      "id": "tauri-no-panics",
+      "name": "The Rust core does not panic",
+      "status": "passed",
+      "seconds": 0.0555373,
+      "output": ""
+    },
+    {
+      "id": "tauri-csp-set",
+      "name": "The window has a content security policy",
+      "status": "passed",
+      "seconds": 0.0527787,
+      "output": ""
+    },
+    {
+      "id": "tauri-least-privilege",
+      "name": "Permissions are small and specific",
+      "status": "passed",
+      "seconds": 0.0550624,
+      "output": ""
+    },
+    {
+      "id": "tauri-no-signing-key",
+      "name": "No signing keys in the project",
+      "status": "passed",
+      "seconds": 0.101675,
+      "output": ""
+    },
+    {
+      "id": "tauri-versions",
+      "name": "One version number everywhere",
+      "status": "passed",
+      "seconds": 0.1992968,
+      "output": ""
+    },
+    {
+      "id": "tauri-web-typecheck",
+      "name": "Window: type check",
+      "status": "passed",
+      "seconds": 6.9066016,
+      "output": ""
+    },
+    {
+      "id": "tauri-rust-format",
+      "name": "Core: formatting",
+      "status": "passed",
+      "seconds": 1.0096989,
+      "output": ""
+    },
+    {
+      "id": "tauri-web-tests",
+      "name": "Window: tests, with coverage",
+      "status": "passed",
+      "seconds": 28.4116402,
+      "output": ""
+    },
+    {
+      "id": "tauri-web-build",
+      "name": "Window: build",
+      "status": "passed",
+      "seconds": 21.9502761,
+      "output": ""
+    },
+    {
+      "id": "tauri-rust-lints",
+      "name": "Core: lints (clippy, warnings are errors)",
+      "status": "passed",
+      "seconds": 1.7855587,
+      "output": ""
+    },
+    {
+      "id": "tauri-rust-tests",
+      "name": "Core: tests",
+      "status": "passed",
+      "seconds": 17.7172897,
+      "output": ""
+    },
+    {
+      "id": "tauri-rust-build",
+      "name": "Core: the app compiles",
+      "status": "passed",
+      "seconds": 1.1016592,
+      "output": ""
+    }
+  ],
+  "tests": []
+}

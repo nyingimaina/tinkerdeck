@@ -42,3 +42,6 @@
 {"at":"2026-11-26T06:34:05.6541137+00:00","event":"exited","runId":"20261125-202512","args":"resume","pid":44004,"exitCode":2,"note":"ended with the run awaitingdecision"}
 {"at":"2026-11-26T06:38:39.0324161+00:00","event":"spawned","runId":"20261125-202512","args":"resume","pid":0,"exitCode":null,"note":""}
 {"at":"2026-11-26T06:38:39.8558529+00:00","event":"started","runId":"20261125-202512","args":"resume","pid":2896,"exitCode":null,"note":"the run was running"}
+{"at":"2026-11-26T06:46:03.0358624+00:00","event":"exited","runId":"20261125-202512","args":"resume","pid":2896,"exitCode":2,"note":"ended with the run awaitingdecision"}
+{"at":"2026-11-26T06:52:35.6972422+00:00","event":"spawned","runId":"20261125-202512","args":"resume","pid":0,"exitCode":null,"note":""}
+{"at":"2026-11-26T06:52:36.2670308+00:00","event":"started","runId":"20261125-202512","args":"resume","pid":52804,"exitCode":null,"note":"the run was running"}

@@ -3,11 +3,12 @@
   "files": [
     {
       "path": "src/App.tsx",
-      "count": 2,
+      "count": 4,
       "runs": [
-        "20261125-153618"
+        "20261125-153618",
+        "20261125-202512"
       ],
-      "lastDescription": "R5 acceptance \u0027Parts that are not shown are loaded when needed rather than up front, so the initial view does not carry them\u0027 has no test that can fail: the new code-splitting of GitDrawer/ConsoleNav/EditPane/ThemeFinder/CommandPalette is u",
+      "lastDescription": "R7\u0027s edge case that hide/show commands for every hideable tool (git tools, git drawer, console) appear in the palette and can hide/reopen the tool is proven only for the console; the git-tools and git-drawer palette commands have no test.",
       "lastRule": ""
     },
     {
@@ -18,10 +19,38 @@
       ],
       "lastDescription": "The plan puts the branch popover in both the panel (P9) and dialog (D10) inventories, and the R1 test cannot notice a part appearing more than once, so the \u0027exactly one place\u0027 acceptance is both unproven and currently false.",
       "lastRule": ""
+    },
+    {
+      "path": "src/features/git/ChangesView.tsx",
+      "count": 1,
+      "runs": [
+        "20261125-202512"
+      ],
+      "lastDescription": "Hiding the git drawer loses the in-progress commit message, so R8\u0027s edge case \u0027Hiding the git drawer does not ... lose an in-progress git message\u0027 is not met and is not covered by a test.",
+      "lastRule": ""
+    },
+    {
+      "path": "src/App.layout.test.tsx",
+      "count": 1,
+      "runs": [
+        "20261125-202512"
+      ],
+      "lastDescription": "R9\u0027s restart edge cases - a console open at close is not restarted and old output is not restored, and a dialog/banner/branch menu/theme finder/app edit form open at close is not reopened with stale content - have no test; only the sidebar ",
+      "lastRule": ""
+    },
+    {
+      "path": "src/App.test.tsx",
+      "count": 1,
+      "runs": [
+        "20261125-202512"
+      ],
+      "lastDescription": "R10\u0027s plan-based acceptance - each building block\u0027s package or in-house decision, the jattac fallback, licence/maintenance/React 18.3 compatibility and reuse-before-adding - is not proven by any test; only the cmdk adoption and lazy load ar",
+      "lastRule": ""
     }
   ],
   "absorbed": [
-    "20261125-153618"
+    "20261125-153618",
+    "20261125-202512"
   ],
   "promotionAsked": {}
 }

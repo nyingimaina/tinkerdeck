@@ -10,9 +10,9 @@
   {
     "id": "20261125-202512",
     "startedAt": "2026-11-25T20:25:12.6734679+00:00",
-    "status": "Running",
+    "status": "Completed",
     "snippet": "Keep the footer, and make its toggle behave the same as the sidebar\u0027s Ctrl\u002BB\u2026 (and 4 more)",
     "costUsd": 0.9282659219999999,
-    "final": false
+    "final": true
   }
 ]

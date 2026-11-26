@@ -1,0 +1,103 @@
+{
+  "checks": [
+    {
+      "id": "no-secrets",
+      "name": "No secrets in code",
+      "status": "passed",
+      "seconds": 2.3708669,
+      "output": ""
+    },
+    {
+      "id": "no-debug-leftovers",
+      "name": "No debugging leftovers",
+      "status": "passed",
+      "seconds": 0.3679791,
+      "output": ""
+    },
+    {
+      "id": "tauri-no-invoke-in-features",
+      "name": "Screens ask the core through src/api only",
+      "status": "passed",
+      "seconds": 0.4604221,
+      "output": ""
+    },
+    {
+      "id": "tauri-no-panics",
+      "name": "The Rust core does not panic",
+      "status": "passed",
+      "seconds": 0.4383045,
+      "output": ""
+    },
+    {
+      "id": "tauri-csp-set",
+      "name": "The window has a content security policy",
+      "status": "passed",
+      "seconds": 0.2499567,
+      "output": ""
+    },
+    {
+      "id": "tauri-least-privilege",
+      "name": "Permissions are small and specific",
+      "status": "passed",
+      "seconds": 0.1522551,
+      "output": ""
+    },
+    {
+      "id": "tauri-no-signing-key",
+      "name": "No signing keys in the project",
+      "status": "passed",
+      "seconds": 0.3319791,
+      "output": ""
+    },
+    {
+      "id": "tauri-versions",
+      "name": "One version number everywhere",
+      "status": "passed",
+      "seconds": 0,
+      "output": ""
+    },
+    {
+      "id": "tauri-web-typecheck",
+      "name": "Window: type check",
+      "status": "passed",
+      "seconds": 0,
+      "output": ""
+    },
+    {
+      "id": "tauri-rust-format",
+      "name": "Core: formatting",
+      "status": "passed",
+      "seconds": 0,
+      "output": ""
+    },
+    {
+      "id": "tauri-web-build",
+      "name": "Window: build",
+      "status": "passed",
+      "seconds": 0,
+      "output": ""
+    },
+    {
+      "id": "tauri-rust-lints",
+      "name": "Core: lints (clippy, warnings are errors)",
+      "status": "passed",
+      "seconds": 0,
+      "output": ""
+    },
+    {
+      "id": "tauri-rust-build",
+      "name": "Core: the app compiles",
+      "status": "passed",
+      "seconds": 0,
+      "output": ""
+    },
+    {
+      "id": "tauri-rust-tests",
+      "name": "Core: tests",
+      "status": "failed",
+      "seconds": 159.9709229,
+      "output": "\u2026\ntest runtime::tests::exit_zero_with_stop_command_is_detached_and_stop_runs_the_command ... ok\r\ntest update::tests::versions_parse_and_compare ... ok\r\ntest update::tests::redirects_are_followed_like_github_release_downloads ... ok\r\ntest update::tests::verify_file_catches_truncation_and_corruption ... ok\r\ntest runtime::tests::shell_exit_reaps_leftover_children ... ok\r\ntest update::tests::missing_and_unreachable_servers_give_plain_messages ... ok\r\ntest runtime::tests::empty_command_opens_interactive_shell_that_accepts_input ... FAILED\r\ntest runtime::tests::the_terminal_shell_overrides_the_default_and_a_missing_shell_fails_clearly ... ok\r\ntest git::tests::plain_push_sends_new_commits ... ok\r\ntest git::tests::fetch_then_pull_brings_a_teammates_commit ... ok\r\ntest git::tests::push_is_rejected_when_behind_with_a_helpful_message_and_never_forces ... ok\r\ntest git::tests::pull_never_merges_when_branches_diverged_and_changes_nothing ... ok\r\ntest runtime::tests::t4_unknown_command_is_nonzero_and_error_visible ... ok\r\ntest runtime::tests::git_bash_runs_commands_in_the_project_folder_with_real_exit_codes ... ok\r\ntest git::tests::sync_on_a_branch_without_upstream_just_pushes_it ... ok\r\ntest git::tests::sync_stops_at_the_pull_when_diverged ... ok\r\ntest git::tests::sync_pulls_then_pushes ... ok\r\n\r\nfailures:\r\n\r\n---- engine::tests::up_with_wait_stops_early_and_explains_when_a_terminal_fails stdout ----\r\n\r\nthread \u0027engine::tests::up_with_wait_stops_early_and_explains_when_a_terminal_fails\u0027 (33844) panicked at src\\engine.rs:904:9:\r\nassertion \u0060left == right\u0060 failed: {\u0022elapsed_ms\u0022:2044,\u0022ready\u0022:true,\u0022terminals\u0022:[{\u0022name\u0022:\u0022db\u0022,\u0022ready\u0022:true,\u0022state\u0022:\u0022running\u0022},{\u0022name\u0022:\u0022api\u0022,\u0022ready\u0022:true,\u0022state\u0022:\u0022running\u0022}]}\r\n  left: (Some(true), None)\r\n right: (Some(false), Some(\u0022api\u0022))\r\nnote: run with \u0060RUST_BACKTRACE=1\u0060 environment variable to display a backtrace\r\n\r\n---- engine::tests::run_brief_turns_a_failing_test_run_into_counts_and_the_failures_only stdout ----\r\n\r\nthread \u0027engine::tests::run_brief_turns_a_failing_test_run_into_counts_and_the_failures_only\u0027 (28596) panicked at src\\engine.rs:866:9:\r\nassertion \u0060left == right\u0060 failed\r\n  left: String(\u0022\u0022)\r\n right: \u0022AssertionError: expected 3 to be 4\u0022\r\n\r\n---- engine::tests::run_returns_exit_code_and_output_without_a_terminal stdout ----\r\n\r\nthread \u0027engine::tests::run_returns_exit_code_and_output_without_a_terminal\u0027 (23268) panicked at src\\engine.rs:1007:9:\r\nassertion \u0060left == right\u0060 failed\r\n  left: Null\r\n right: 3\r\n\r\n---- runtime::tests::empty_command_opens_interactive_shell_that_accepts_input stdout ----\r\n\r\nthread \u0027runtime::tests::empty_command_opens_interactive_shell_that_accepts_input\u0027 (41296) panicked at src\\runtime.rs:639:13:\r\nno echo: \u001BcPS C:\\Users\\nying\\AppData\\Local\\Temp\\.tmpUIVPDx\u003E\r\n\r\n\r\nfailures:\r\n    engine::tests::run_brief_turns_a_failing_test_run_into_counts_and_the_failures_only\r\n    engine::tests::run_returns_exit_code_and_output_without_a_terminal\r\n    engine::tests::up_with_wait_stops_early_and_explains_when_a_terminal_fails\r\n    runtime::tests::empty_command_opens_interactive_shell_that_accepts_input\r\n\r\ntest result: FAILED. 266 passed; 4 failed; 1 ignored; 0 measured; 0 filtered out; finished in 142.85s\r\n\r\n\n    Finished \u0060test\u0060 profile [unoptimized \u002B debuginfo] target(s) in 13.97s\r\n     Running unittests src\\lib.rs (src-tauri\\target\\debug\\build\\tinkerdeck/44560fda5c08c730\\out\\tinkerdeck_lib-44560fda5c08c730.exe)\r\nerror: test failed, to rerun pass \u0060--lib\u0060"
+    }
+  ],
+  "tests": []
+}

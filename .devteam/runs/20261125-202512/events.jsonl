@@ -552,3 +552,15 @@
 {"seq":552,"at":"2026-11-26T06:45:59.4571128+00:00","type":"evidence.recorded","stage":"challenge","message":"18 changed file(s) and 7 requirement(s) are written down after Challenge."}
 {"seq":553,"at":"2026-11-26T06:45:59.5341519+00:00","type":"stage.started","stage":"prove","message":"Engine assembles the proof report"}
 {"seq":554,"at":"2026-11-26T06:46:01.1051756+00:00","type":"browser.skipped","stage":"prove","message":"Browser journeys not run: this stack has no browser journeys"}
+{"seq":555,"at":"2026-11-26T06:46:02.3467256+00:00","type":"revision.sealed","stage":"prove","message":"Revision 2 is sealed: commit 0b46ec3, checkpoint a5226d0, evidence 12734919e078d7bb, proof none."}
+{"seq":556,"at":"2026-11-26T06:46:02.6142432+00:00","type":"series.committed","stage":"prove","message":"Revision 2 of 2 is built and committed (0b46ec3)"}
+{"seq":557,"at":"2026-11-26T06:46:02.6934801+00:00","type":"escalated","stage":"prove","message":"Needs your decision: Revision 2 of 2 is ready to try","data":{"card":"series-064602689","kind":"Series"}}
+{"seq":558,"at":"2026-11-26T06:52:34.2819443+00:00","type":"decision.recorded","stage":"prove","message":"web:dashboard decided: It works: finish the feature","data":{"card":"series-064602689"}}
+{"seq":559,"at":"2026-11-26T06:52:36.5833428+00:00","type":"run.resumed","message":"Resumed"}
+{"seq":560,"at":"2026-11-26T06:52:37.3466879+00:00","type":"stage.started","stage":"prove","message":"Engine assembles the proof report"}
+{"seq":561,"at":"2026-11-26T06:52:40.9612814+00:00","type":"contract.observed","stage":"prove","message":"Revision 2 offers 0 new names; 8 of 20 things the design named were found","data":{"added":"0","missing":"12","unanticipated":"0"}}
+{"seq":562,"at":"2026-11-26T06:52:44.9172869+00:00","type":"facts.written","message":"Metrics and readiness saved: Not ready: something is still broken.","data":{"readiness":"Blocked"}}
+{"seq":563,"at":"2026-11-26T06:52:45.2134361+00:00","type":"workflows.learned","message":"1173 tool use(s) recorded."}
+{"seq":564,"at":"2026-11-26T06:52:45.4337735+00:00","type":"lessons.findings","message":"19 finding(s) taken into what this project has learned"}
+{"seq":565,"at":"2026-11-26T06:52:45.5727244+00:00","type":"proof.written","stage":"prove","message":"Proof report written","data":{"report":".devteam/runs/20261125-202512/proof-report.md"}}
+{"seq":566,"at":"2026-11-26T06:52:46.5180426+00:00","type":"run.completed","stage":"prove","message":"Feature complete in 627m 28s, $0.93"}

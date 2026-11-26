@@ -1,0 +1,386 @@
+{
+  "runId": "20261125-202512",
+  "seriesId": "a24447ad",
+  "revision": 2,
+  "baseCommit": "0b46ec3^",
+  "headCommit": "0b46ec3",
+  "files": [
+    {
+      "path": "docs/ui-tidy-up-plan.md",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "package-lock.json",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "package.json",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/App.features.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R5",
+        "R8",
+        "R9",
+        "R6",
+        "R4"
+      ]
+    },
+    {
+      "path": "src/App.layout.test.tsx",
+      "status": "added",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R6",
+        "R7",
+        "R8",
+        "R9"
+      ]
+    },
+    {
+      "path": "src/App.shortcuts.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R4",
+        "R7",
+        "R5",
+        "R8",
+        "R2",
+        "R9"
+      ]
+    },
+    {
+      "path": "src/App.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R1",
+        "R5",
+        "R2",
+        "R10",
+        "R6"
+      ]
+    },
+    {
+      "path": "src/App.tsx",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [
+        "App"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/apps/AppFooter.module.css",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/features/apps/AppFooter.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R2",
+        "R6"
+      ]
+    },
+    {
+      "path": "src/features/apps/AppFooter.tsx",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [
+        "AppFooter"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/command-palette/CommandPalette.module.css",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/features/command-palette/CommandPalette.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R7",
+        "R8"
+      ]
+    },
+    {
+      "path": "src/features/command-palette/CommandPalette.tsx",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [
+        "PaletteAction",
+        "CommandPalette",
+        "ConfirmDialogsProps",
+        "ConfirmDialogs",
+        "HelpDialogProps",
+        "HelpDialog"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/git/GitBar.collapse.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R5",
+        "R8"
+      ]
+    },
+    {
+      "path": "src/features/git/GitBar.tsx",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [
+        "GitBar"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/terminals/ConsoleNav.module.css",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/features/terminals/ConsoleNav.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R8"
+      ]
+    },
+    {
+      "path": "src/features/terminals/ConsoleNav.tsx",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [
+        "ShellChoice",
+        "ConsoleNav"
+      ],
+      "requirements": []
+    }
+  ],
+  "added": [],
+  "removed": [],
+  "routesAdded": [],
+  "tablesAdded": [],
+  "proven": {
+    "R5": [
+      "src/App.features.test.tsx",
+      "src/App.shortcuts.test.tsx",
+      "src/App.test.tsx",
+      "src/features/git/GitBar.collapse.test.tsx"
+    ],
+    "R8": [
+      "src/App.features.test.tsx",
+      "src/App.layout.test.tsx",
+      "src/App.shortcuts.test.tsx",
+      "src/features/command-palette/CommandPalette.test.tsx",
+      "src/features/git/GitBar.collapse.test.tsx",
+      "src/features/terminals/ConsoleNav.test.tsx"
+    ],
+    "R9": [
+      "src/App.features.test.tsx",
+      "src/App.layout.test.tsx",
+      "src/App.shortcuts.test.tsx"
+    ],
+    "R6": [
+      "src/App.features.test.tsx",
+      "src/App.layout.test.tsx",
+      "src/App.test.tsx",
+      "src/features/apps/AppFooter.test.tsx"
+    ],
+    "R4": [
+      "src/App.features.test.tsx",
+      "src/App.shortcuts.test.tsx"
+    ],
+    "R7": [
+      "src/App.layout.test.tsx",
+      "src/App.shortcuts.test.tsx",
+      "src/features/command-palette/CommandPalette.test.tsx"
+    ],
+    "R2": [
+      "src/App.shortcuts.test.tsx",
+      "src/App.test.tsx",
+      "src/features/apps/AppFooter.test.tsx"
+    ],
+    "R1": [
+      "src/App.test.tsx"
+    ],
+    "R10": [
+      "src/App.test.tsx"
+    ]
+  },
+  "checks": [
+    {
+      "component": "AppShell",
+      "path": "src/App.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "AppFooter",
+      "path": "src/features/apps/AppFooter.tsx",
+      "status": "confirmed"
+    },
+    {
+      "component": "AppFooterStyles",
+      "path": "src/features/apps/AppFooter.module.css",
+      "status": "confirmed"
+    },
+    {
+      "component": "AppFooterTests",
+      "path": "src/features/apps/AppFooter.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "AppTestsUpdate",
+      "path": "src/App.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "AppFeaturesTestsUpdate",
+      "path": "src/App.features.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "AppShortcutTestsUpdate",
+      "path": "src/App.shortcuts.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "PaletteAndLayoutAppTests",
+      "path": "src/App.layout.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "CommandPalette",
+      "path": "src/features/command-palette/CommandPalette.tsx",
+      "status": "confirmed"
+    },
+    {
+      "component": "CommandPaletteStyles",
+      "path": "src/features/command-palette/CommandPalette.module.css",
+      "status": "confirmed"
+    },
+    {
+      "component": "CommandPaletteTests",
+      "path": "src/features/command-palette/CommandPalette.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "ConsoleNavPanel",
+      "path": "src/features/terminals/ConsoleNav.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "ConsoleNavStyles",
+      "path": "src/features/terminals/ConsoleNav.module.css",
+      "status": "confirmed"
+    },
+    {
+      "component": "ConsoleNavTests",
+      "path": "src/features/terminals/ConsoleNav.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "GitBarChip",
+      "path": "src/features/git/GitBar.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "GitBarCollapseTests",
+      "path": "src/features/git/GitBar.collapse.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "TestSetup",
+      "path": "src/test/setup.ts",
+      "status": "missing"
+    },
+    {
+      "component": "PackageManifest",
+      "path": "package.json",
+      "status": "confirmed"
+    },
+    {
+      "component": "PackageLock",
+      "path": "package-lock.json",
+      "status": "confirmed"
+    },
+    {
+      "component": "TidyUpPlanRevision2",
+      "path": "docs/ui-tidy-up-plan.md",
+      "status": "confirmed"
+    }
+  ],
+  "unanticipated": 0,
+  "recordedAt": "2026-11-26T06:52:37.5179907+00:00"
+}

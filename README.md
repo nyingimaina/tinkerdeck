@@ -10,7 +10,7 @@ The full requirements are in [BRS-app-launcher.md](BRS-app-launcher.md).
 
 ## Install
 
-Run `installer\output\Tinkerdeck-Setup-2.0.0.exe`. It adds a Start Menu shortcut (and an optional desktop shortcut) and an uninstaller. It installs per user, without admin rights, unless you choose otherwise.
+Run `installer\output\Tinkerdeck-Setup-2.1.0.exe`. It adds a Start Menu shortcut (and an optional desktop shortcut) and an uninstaller. It installs per user, without admin rights, unless you choose otherwise.
 
 Requires Windows 10 version 1809 or newer (ConPTY) and the WebView2 runtime (already present on Windows 11).
 
@@ -45,7 +45,13 @@ powershell -File scripts/publish-release.ps1   # uploads installer, checksum, la
 
 **The 2.0.0 transition.** The project was renamed (it was `lite-commander`). Copies installed before 2.0.0 only accept installer URLs under the old repository path (GitHub redirects it). So publish 2.0.0 with `TD_RELEASE_URL_BASE=https://github.com/nyingimaina/lite-commander/releases/download/v2.0.0` set when `npm run installer` signs the manifest; Tinkerdeck itself accepts both paths. Later releases can use the new path once no old copies are expected.
 
+**One command for the routine:** `powershell -File scripts/ship.ps1` asks up front whether to bump the version, build the installer, commit, push and release (each on its own), shows the plan, and then performs the chosen ones in that order. `-DryRun` shows the plan without changing anything; `scripts/ship.tests.ps1` tests its helpers. Give action switches (for example `-Bump minor -Build -Release -Yes`) to skip the questions.
+
 Losing the private key means installed copies cannot be updated automatically any more; they would need one manual install of a build that carries a new public key.
+
+## Keyboard
+
+**Ctrl+Shift+P** opens the command palette, which lists every action with its shortcut. Other shortcuts: **Ctrl+B** sidebar, **F5** refresh, **Ctrl+Alt+T** switch light/dark; in the editor **Ctrl+S**, **Ctrl+N**, **Ctrl+O** and **Ctrl+W**. App shortcuts also work while a terminal has focus; every other key goes to the shell.
 
 ## Command line and LLM tools
 

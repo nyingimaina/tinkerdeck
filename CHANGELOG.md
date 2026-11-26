@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.1.0
+
+**A tidier window**
+- **Fewer controls on show.** Editor, Check for updates, Refresh and Help now live in one **Utilities** menu (an update that is waiting still shows on it). Shell, theme, light/dark and **+ App** stay in the top bar.
+- **A status strip** at the bottom with the version and a sidebar toggle that always agrees with Ctrl+B.
+- **Parts appear when wanted.** The git tools and the console can be hidden and shown (**Show git tools**, **Hide console**), so an app opens uncluttered.
+- **Command palette: Ctrl+Shift+P.** Lists every action with its shortcut: add or edit an app, start, stop and restart, git, console, editor, themes, updates, help and **Reset layout**. An action that cannot run right now says why.
+- **Keyboard shortcuts**: Ctrl+B sidebar, F5 refresh, Ctrl+Shift+P palette, Ctrl+Alt+T switch light/dark. They also work while a terminal has focus, and every other key still goes to the shell.
+- Release helper for maintainers: `scripts\ship.ps1` asks which of bump, build, commit, push and release to do, then does them together.
+
 ## 2.0.0
 
 **Lite Commander is now Tinkerdeck: a tinkerer's deck.** New name, new icon, same app.

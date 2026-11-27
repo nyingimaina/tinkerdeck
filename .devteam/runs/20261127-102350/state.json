@@ -1,0 +1,1908 @@
+{
+  "runId": "20261127-102350",
+  "options": {
+    "browser": "end",
+    "visible": false,
+    "document": false,
+    "referenceFolders": [],
+    "grantedFolders": []
+  },
+  "browser": {
+    "ran": false,
+    "passed": false,
+    "visible": false,
+    "document": false,
+    "seconds": 0,
+    "treeHash": "95D15FBABB68D48B2879DA29D08262107448AA8E66B3E9F071EB7F27B3AB3318",
+    "reason": "this stack has no browser journeys",
+    "output": ""
+  },
+  "isVerification": false,
+  "stageSeconds": {
+    "define": 1126.3381239,
+    "design": 2063.1687972,
+    "build": 6021.3269824,
+    "challenge": 4774.3016557
+  },
+  "timeCapExtensions": {},
+  "stageClockStart": {
+    "design": 1004.7826229,
+    "define": 694.0513536,
+    "build": 5473.5447418,
+    "challenge": 4131.2439038,
+    "prove": 0
+  },
+  "featureRequest": "# Workspace-owned files open as tabs in the workspace strip (and 7 more)\r\n\r\nThis request comes from a conversation with the developer about their app.\r\nAnything marked suspected or not checked is a guess: confirm it in the code before building on it.\r\n\r\n## What this is about\r\nToday every opened file switches the whole main area to one global editor screen (App.tsx:130 onOpened -\u003E setView(\u0022editor\u0022), App.tsx:665), which takes the user out of the app they were working in. Wanted: a file under a workspace\u0027s root folder (deepest root wins, the existing ownerOf rule) opens as a tab in that workspace\u0027s own tab strip next to its terminals, with no editor side pane. Files under no workspace stay in the global editor view. The same feature also adds a right-click context menu to the explorer (including \u0027Reveal in File Explorer\u0027 and \u0027Open terminal here\u0027), and renames App/Project to Workspace everywhere: UI, code, tinkerdeck.json (with a v1 to v2 migration) and the tdk CLI/MCP.\r\n\r\n## What to build or fix\r\n\r\n### 1. Workspace-owned files open as tabs in the workspace strip (confirmed)\r\nOwnership is by path: a file belongs to the workspace whose root folder contains its path, and the deepest root wins. This is the existing ownerOf in src/state/editorGroups.ts:9-23; reuse it unchanged. Opening a file that a workspace owns, from anywhere (explorer, Ctrl\u002BO, tdk, etc.), switches to that workspace and selects the file\u0027s tab in its tab strip (src/features/terminals/TabStrip.tsx), next to the terminals and the Console tab group. It no longer switches the main view to the global editor (today App.tsx:130 useEditor({ onOpened: () =\u003E setView(\u0022editor\u0022) })). Required behaviour:\n- Each workspace has ONE selected tab, which can be a terminal/console or an editor file. Today a workspace remembers only selectedTerminalId and the editor has one global editor.activeId, so this needs a unified per-workspace selection.\n- Inside a workspace the editor has NO vertical side pane. Today that pane is the grouped \u0027Open editors\u0027 tablist (EditorView.tsx:125-157). File tabs live only in the workspace strip.\n- On an editor tab the strip\u0027s Start/Stop/Restart buttons (TabStrip.tsx:67-77, App.tsx:713-723) are replaced by the editor actions: Save, Save as, Raw/Preview (today EditorView.tsx:61-82). The editor status bar (language/EOL/encoding, EditorView.tsx:160-213) stays with the editor tab.\n- File tabs show dirty state and close like today\u0027s editor tabs. Closing follows the existing editor rules: unsaved changes are kept, and the Bin stays global.\n- Keep exactly ONE CodeSurface instance, lazily loaded via React.lazy (EditorView.tsx:12, CodeSurface.tsx:1-2), for whichever editor tab is visible, whether in a workspace or in the global view. Per-document EditorState stays in the states map (CodeSurface.tsx:40), and the liveIds mechanism (EditorView.tsx:184-193) keeps the other docs\u0027 state. Terminals keep staying mounted while hidden (App.tsx:726-753), so switching between a file tab and a terminal tab must not kill or remount terminals.\n- Editor shortcuts Ctrl\u002BS/N/O/W are bound on window today while EditorView is mounted (EditorView.tsx:26-43). They must apply only while an editor tab is the active/visible tab. With a terminal tab focused, Ctrl\u002BW/Ctrl\u002BN etc. must go to the terminal, not the editor.\n- New (Ctrl\u002BN or button) while inside a workspace creates an unsaved document whose \u0027home\u0027 is that workspace. Without this it would go to Misc, because unsaved docs have no path (editorGroups.ts:33-42). The home is remembered until the first save; after that the path decides.\n- Tabs move deliberately when ownership changes: Save as into or out of a workspace folder, rename/move through the explorer (explorer commands already re-point or close affected tabs, useExplorerOps.ts:36-38), a workspace root change, or a workspace deletion. The tab moves to its new home (another workspace strip or the global view) with its content, dirty state and undo intact. Nothing is lost.\r\n\r\nEvidence:\r\n- src/App.tsx:130 useEditor({ onOpened: () =\u003E setView(\u0022editor\u0022) })\r\n- src/App.tsx:665 view === \u0022editor\u0022 ? \u003CEditorView .../\u003E\r\n- src/state/editorGroups.ts:9-23 ownerOf (deepest app root containing the path)\r\n- src/state/editorGroups.ts:33-42 groupTabs: unowned/unsaved -\u003E Misc, last\r\n- src/features/editor/EditorView.tsx:24,125-157 grouped side pane\r\n- src/features/editor/EditorView.tsx:26-43 window-level Ctrl\u002BS/N/O/W\r\n- src/features/editor/EditorView.tsx:12 React.lazy CodeSurface; EditorView.tsx:184-193 liveIds\r\n- src/features/editor/CodeSurface.tsx:40 per-doc states map\r\n- src/features/terminals/TabStrip.tsx:36-59 terminals \u002B Console only; TabStrip.tsx:67-77 Start/Stop/Restart\r\n- src/App.tsx:713-723, src/App.tsx:726-753 terminals stay mounted\r\n- BRS-app-launcher.md:356 (7.14 Organisation)\r\n- developer: \u0027By path: the file is under the app\u0027s root folder (deepest app wins)\u0027\r\n- developer: \u0027when editor is open within a workspace, it should not be accompanies by the sidepane\u0027\r\n\r\n### 2. Global editor view holds only files that belong to no workspace (confirmed)\r\nThe header Editor button (App.tsx:573-574, toggles main view between \u0027home\u0027 and \u0027editor\u0027) keeps opening the global editor view. That view now lists ONLY files owned by no workspace (today\u0027s Misc group) plus unsaved docs that have no workspace home. Workspace-owned files never appear there: a file is in exactly one strip, never two. Grouping is not needed in this view; show a plain list/strip of the unowned files. Opening an unowned file opens this view and selects it. The Bin stays global.\r\n\r\nEvidence:\r\n- src/App.tsx:573-574 header Editor button toggles view\r\n- src/state/editorGroups.ts:33-42 Misc = unowned/unsaved\r\n- developer: \u0027Only files that belong to no app (today\u0027s Misc)\u0027\r\n\r\n### 3. Explorer right-click context menu (confirmed)\r\nAdd a context menu to the explorer tree (src/features/explorer/ExplorerPanel.tsx) using @radix-ui/react-context-menu (new dependency). It is unstyled; style it only with the existing theme CSS variables (--panel, --panel-2, --border, --hover, --text, --muted, --accent, --shadow, --radius in src/styles/global.css:1-41) so that it follows data-theme dark/light. Radix handles flip/shift at window edges, submenus, keyboard navigation, typeahead, Escape/click-outside closing and focus return. cmdk (package.json:28) already pulls in Radix base packages, so the added cost should be small, but this has not been measured: check the vite build output after adding it. Entries:\n- File: Open, Reveal in File Explorer, Copy path, Copy relative path (relative to the owning workspace root; for unowned files, decide sensibly, e.g. relative to the explorer root), Rename, Move, Delete.\n- Folder: New file, New folder, Reveal in File Explorer, Open terminal here (see separate item; hidden when no workspace owns the folder), Copy path, Rename, Move, Delete.\n- Empty area of the tree: New file, New folder, Refresh, Show/Hide hidden files.\nThe menu opens on right-click and also with Shift\u002BF10 or the Menu key on the focused tree item. F2 (rename) and Del (delete) work as shortcuts on the focused item. Rename/Move/Delete/New reuse the existing toolbar ops and backend commands explorer_create/rename/move/delete (src-tauri/src/features/explorer/commands.rs:42,134,149,164), which already re-point or close affected editor tabs (useExplorerOps.ts:36-38). The toolbar (ExplorerPanel.tsx:354-396) stays. There is no context menu anywhere in src/ today.\r\n\r\nEvidence:\r\n- grep contextmenu|onContextMenu|ContextMenu in src: no matches\r\n- src/features/explorer/ExplorerPanel.tsx:354-396 toolbar New file/New folder/Rename/Move/Delete\r\n- src-tauri/src/features/explorer/commands.rs:42,134,149,164\r\n- src/features/explorer/useExplorerOps.ts:36-38\r\n- src/styles/global.css:1-41 theme variables\r\n- package.json:28 cmdk 1.1.1; node_modules/@radix-ui contains react-dialog, react-portal, react-dismissable-layer, react-focus-scope, react-presence, react-primitive\r\n- developer: \u0027reveal in file system, new file, new folder, rename, delete e.t.c and what else?\u0027\r\n\r\n### 4. Backend command: reveal a path in File Explorer (confirmed)\r\nAdd a new Tauri command that reveals an arbitrary file or folder in Windows File Explorer by running explorer.exe /select,\u003Cpath\u003E. The only existing shell-out is open_config_folder, which opens the config dir only. Use it for the menu\u0027s \u0027Reveal in File Explorer\u0027. Pass the path as a separate argument (no shell string building), and validate that the path exists.\r\n\r\nEvidence:\r\n- src-tauri/src/commands.rs:205-212 open_config_folder (only explorer.exe use)\r\n\r\n### 5. \u0027Open terminal here\u0027 opens a Console instance in the owning workspace (confirmed)\r\nOn a folder, \u0027Open terminal here\u0027 opens a NEW Console instance in the workspace that owns the folder (ownerOf, deepest root wins). It starts in the clicked folder and is selected in that workspace\u0027s strip; the app switches to that workspace first if needed. It is temporary and is NOT saved to the config (users who want to keep it add a terminal in the workspace Edit pane as today). It is hidden for folders under no workspace, because the global view has no terminals. Today console instances have ids console-\u003CappId\u003E:\u003Cn\u003E:\u003Cshell\u003E and always start in the root: console_def_with_id hard-codes cwd \u0022.\u0022 and command \u0022\u0022 (model.rs:227-235), resolved against app.root (commands.rs:51-55). The console instance must carry its start folder the way it already carries its shell, instead of the hard-coded \u0022.\u0022. Keep the folder relative to the workspace root, or validate it stays inside the root. The shell used is the default console shell (powershell.exe, pwsh.exe, cmd.exe, gitbash, wsl.exe are supported, mcp.rs:29). Any id format change must keep existing console ids parsing.\r\n\r\nEvidence:\r\n- src/features/terminals/TabStrip.tsx:16-19,46-53 Console tab group\r\n- src-tauri/src/model.rs:205-225 console id format with shell\r\n- src-tauri/src/model.rs:227-235 cwd: \u0022.\u0022, command: String::new()\r\n- src-tauri/src/commands.rs:51-55 console resolved against app.root\r\n- src-tauri/src/bin/tdk/mcp.rs:29 supported shells\r\n- developer: \u0027Include it as a Console instance in the owning workspace\u0027\r\n\r\n### 6. Rename App/Project to Workspace in UI and code (confirmed)\r\nUse \u0027Workspace\u0027 as the single term everywhere in the UI and code: UI text, component/file names, identifiers, types and state (e.g. SidebarProjects, AppDef, apps, selectedTerminalId per app, editorGroups \u0027app\u0027 naming, save_apps command and its frontend calls), tests, and the BRS doc where it names the concept. A grep of \\bProjects?\\b|\\bWorkspaces?\\b over src/*.tsx gave 116 matches in 10 files (Sidebar.tsx, SidebarProjects.tsx, SidebarTabs.tsx, EditPane.tsx, ExplorerPanel.tsx, tests), and \u0027app\u0027 is used throughout frontend and backend. Where \u0027app\u0027 means Tinkerdeck itself (e.g. \u0027restarts the app\u0027), it stays. User-facing config messages such as \u0027Your saved apps\u2026\u0027 (config.rs:86,96,107) become \u0027workspaces\u0027. All new UI text from this feature says \u0027workspace\u0027.\r\n\r\nEvidence:\r\n- grep \\bProjects?\\b|\\bWorkspaces?\\b in src/*.tsx: 116 occurrences in 10 files\r\n- src-tauri/src/model.rs:121 pub apps: Vec\u003CAppDef\u003E\r\n- src-tauri/src/commands.rs:67 save_apps\r\n- src-tauri/src/config.rs:86,96,107 \u0027Your saved apps\u0027 messages\r\n- developer: \u0027we need to cannonize from App/Project to Workspace\u0027; \u0027ok but include workspace rename in this feature\u0027\r\n\r\n### 7. tinkerdeck.json v2 with \u0027workspaces\u0027 and migration from v1 (confirmed)\r\nBump CONFIG_VERSION from 1 to 2 (model.rs:6). In v2 the top-level key \u0060apps\u0060 becomes \u0060workspaces\u0060 (model.rs:121); rename the inner fields too where they say \u0027app\u0027. Loading: parse() checks the version before deserialising (config.rs:48-59). A v1 file is read as before and converted to v2 in memory. It is written as v2 on the next normal save, and the save keeps the previous file as .bak, so the v1 copy survives. A file with version \u003E 2 stays TooNew as today. Consequence by design: once written as v2, an older Tinkerdeck build refuses the file with its existing \u0027newer version\u0027 message and will not save over it (config.rs:92-98). The migration is one-way. Add tests: v1 file loads into the same workspaces; the first save writes v2 plus .bak; a v2 round-trip works; v3 is rejected as TooNew.\r\n\r\nEvidence:\r\n- src-tauri/src/model.rs:6 CONFIG_VERSION = 1\r\n- src-tauri/src/model.rs:121 pub apps: Vec\u003CAppDef\u003E\r\n- src-tauri/src/config.rs:10 FILE_NAME = tinkerdeck.json\r\n- src-tauri/src/config.rs:48-59 version checked first; \u003E CONFIG_VERSION -\u003E TooNew\r\n- src-tauri/src/config.rs:92-98 TooNew locks with \u0027newer version\u0027 message\r\n- developer: \u0027Everything, including tinkerdeck.json and the tdk CLI, with a migration\u0027\r\n\r\n### 8. Rename app to workspace in the tdk CLI and MCP server (confirmed)\r\nIn tdk: the help/usage text (\u003Capp\u003E -\u003E \u003Cworkspace\u003E, cli.rs:43-82), the RPC method names sent to Tinkerdeck (app.add, app.detect, app.up/down and app.{cmd}, cli.rs:185,192,197 -\u003E workspace.*), their JSON params ({\u0022app\u0022: ...} -\u003E {\u0022workspace\u0022: ...}), the matching RPC handlers in the app, and the MCP tool arguments/descriptions (mcp.rs, 48 uses of \u0027app\u0027, e.g. mcp.rs:325 arguments { \u0022app\u0022: \u0022Shop\u0022 }). Workspace arguments stay positional, so scripts like \u0060tdk up Shop\u0060 keep working. tdk and the app ship together, so the RPC names change in step and no old-name aliases are planned (see open question). Where \u0027app\u0027 means Tinkerdeck itself (cli.rs:73 \u0027restarts the app\u0027), keep it. Also check src-tauri/src/bin/tdk/register.rs for \u0027app\u0027 wording.\r\n\r\nEvidence:\r\n- src-tauri/src/bin/tdk/cli.rs:43-82 usage text with \u003Capp\u003E\r\n- src-tauri/src/bin/tdk/cli.rs:185,192,197 call(\u0022app.{cmd}\u0022/\u0022app.add\u0022/\u0022app.detect\u0022, json!({\u0022app\u0022: ...}))\r\n- src-tauri/src/bin/tdk/cli.rs:73 \u0027restarts the app\u0027 = Tinkerdeck\r\n- src-tauri/src/bin/tdk/mcp.rs: 48 occurrences of app; mcp.rs:325\r\n- src-tauri/src/bin/tdk/register.rs\r\n- src-tauri/src/bin/tdk/client.rs only RPC client found in repo\r\n\r\n## Not part of this\r\n- Split views (editor beside a terminal)\r\n- Dragging tabs between workspaces or between a workspace and the global view\r\n- Chunked/streamed file loading. Files stay read whole with the 5 MB edit cap (src-tauri/src/editor.rs:11, 75-87); CodeMirror already renders only visible lines. A read-only large-file viewer could be a separate issue later\r\n- Saving an \u0027Open terminal here\u0027 console as a permanent workspace terminal (users add terminals through the Edit pane as today)\r\n- Terminals in the global editor view\r\n\r\n## Not settled yet (do not treat as fact)\r\n- Assumed, not verified: nothing outside this repo calls Tinkerdeck\u0027s RPC with the old \u0027app.*\u0027 method names except tdk, so no aliases are kept. This is wrong if another tool or script talks to the RPC directly; if so, keep the old names as aliases.\r\n- The added bundle size of @radix-ui/react-context-menu has not been measured; check the vite build output after adding it.\r\n- \u0027Copy relative path\u0027 for files under no workspace: relative to what was not discussed. Suggested default: the explorer\u0027s current root.\r\n\r\n## Requirements agreed in the conversation\r\n\r\nThe developer and the assistant already agreed these while talking. Build on them; do not ask again what they settle.\r\n\r\n- **R1**: An editor for a file that belongs to a registered workspace is hosted as a tab in that workspace\u0027s tab strip alongside the workspace\u0027s terminal tabs, and the workspace view stays on screen.\r\n  - Done when: Opening a file under a workspace\u0027s root folder shows an editor tab in that workspace\u0027s tab strip while the workspace\u0027s terminal tabs remain visible.\r\n  - Done when: Selecting the editor tab shows the file; selecting a terminal tab returns to that terminal without the workspace view being replaced.\r\n  - Done when: The workspace\u0027s tab strip contains editor tabs and terminal tabs at the same time.\r\n- **R2**: Editors for files that belong to no registered workspace are kept in a global editor view\u0027s tab strip, separate from any workspace\u0027s tab strip. The global strip lists only these unowned files, corresponding to today\u0027s Misc group.\r\n  - Done when: Opening a file outside every workspace root shows it in the global tab strip.\r\n  - Done when: That editor does not appear in any workspace\u0027s tab strip.\r\n  - Done when: The global tab strip lists only files that belong to no workspace.\r\n- **R3**: A file belongs to the workspace whose root folder contains the file\u0027s path. When more than one registered workspace\u0027s root contains the path, the deepest root wins.\r\n  - Done when: A file anywhere under a workspace\u0027s root folder is treated as belonging to that workspace.\r\n  - Done when: A file under two nested workspace roots is treated as belonging to the deeper workspace.\r\n  - Done when: A file outside every workspace root belongs to no workspace.\r\n- **R4**: Each open editor appears in exactly one strip: a file owned by a workspace only in its owning workspace\u0027s tab strip, and a file that belongs to no workspace only in the global tab strip. No file appears in both strips.\r\n  - Done when: An editor for a workspace-owned file is absent from the global tab strip.\r\n  - Done when: An editor for an unowned file is absent from every workspace\u0027s tab strip.\r\n  - Done when: Opening the same file does not create a second copy in another strip.\r\n- **R5**: Inside a workspace, the editor is shown without the side pane that lists or groups open editors by owner; the workspace\u0027s own tab strip is the only tab list there. The global editor view still lists only unowned files, as a plain list with no grouping.\r\n  - Done when: Opening a file in a workspace shows the editor without the vertical \u0027Open editors\u0027 list that groups editors by owner.\r\n  - Done when: The editor tab sits in the workspace\u0027s tab strip, and selecting it shows the file.\r\n  - Done when: The global editor view shows a plain list of unowned files with no grouping.\r\n- **R6**: There is a single editor instance, loaded lazily: editor code is not loaded until a file is first opened, and the same one editor surface shows whichever editor tab is visible, whether in a workspace or in the global view.\r\n  - Done when: Before the first file is opened, the editor code is not loaded.\r\n  - Done when: Opening a second file reuses the existing editor surface instead of creating another.\r\n  - Done when: Switching from a workspace editor tab to another editor tab or to the global view shows the selected file in the same editor surface.\r\n- **R7**: The registered-app concept is renamed to Workspace everywhere: user-facing labels and messages, the saved configuration file, the tdk command-line tool and its MCP tool arguments, and internal code identifiers all use Workspace instead of App or Project, with matching plural and possessive forms. Where \u0027app\u0027 means Tinkerdeck itself (for example \u0027restarts the app\u0027), that wording stays.\r\n  - Done when: User-facing labels and messages for registered apps say Workspace, not App or Project; plural and possessive forms read Workspaces and Workspace\u0027s.\r\n  - Done when: The saved configuration uses a workspaces key in place of an apps key.\r\n  - Done when: tdk help text, its positional arguments and its MCP tool arguments say workspace; scripts that pass the workspace as a positional argument, such as \u0027tdk up Shop\u0027, keep working.\r\n  - Done when: The editor-tab and context-menu text introduced by this feature uses the same Workspace wording.\r\n- **R8**: Right-clicking a file or folder in the explorer opens a context menu with common file operations: files offer Reveal in File Explorer, Rename and Delete; folders offer New file, New folder, Reveal in File Explorer, Rename, Delete and, when the folder belongs to a workspace, Open terminal here (R10).\r\n  - Done when: Right-clicking a file shows a menu with Reveal in File Explorer, Rename and Delete.\r\n  - Done when: Right-clicking a folder shows a menu with New file, New folder, Reveal in File Explorer, Rename and Delete.\r\n  - Done when: Choosing an action performs the same result as the existing explorer toolbar action of the same name.\r\n  - Done when: Reveal in File Explorer opens the operating system\u0027s file manager with the item selected.\r\n- **R9**: The saved configuration file moves to version 2, where a workspaces key replaces apps. A version 1 file is read as before and converted in memory, and is written as version 2 on the next save while the previous file is kept as a .bak. An older Tinkerdeck that opens a version 2 file refuses it with its existing \u0027written by a newer version\u0027 message and does not overwrite it.\r\n  - Done when: A version 1 configuration containing an apps list loads and its entries appear as workspaces.\r\n  - Done when: After the next save the file is version 2 with a workspaces key and no apps key.\r\n  - Done when: The previous configuration is retained as a .bak file.\r\n  - Done when: A version 2 file opened by an older build is refused with the existing newer-version message and is not overwritten.\r\n- **R10**: Right-clicking a folder inside a workspace offers \u0027Open terminal here\u0027, which opens a new Console instance in the workspace that owns that folder (the deepest matching root), so the new console appears in that workspace\u0027s tab strip.\r\n  - Done when: Right-clicking a folder inside a workspace shows an \u0027Open terminal here\u0027 item.\r\n  - Done when: Choosing it opens a new Console instance in that workspace\u0027s tab strip.\r\n  - Done when: With nested workspaces the console is created in the deeper workspace that owns the folder.\r\n\r\n\u003C!--devteam-requirements:eyJzdW1tYXJ5IjoiV2hlbiBhIGZpbGUgaXMgb3BlbmVkLCBpdHMgZWRpdG9yIGFwcGVhcnMgYXMgYSB0YWIgaW4gdGhlIHRhYiBzdHJpcCBvZiB0aGUgcmVnaXN0ZXJlZCB3b3Jrc3BhY2UgdGhhdCBvd25zIGl0IFx1MjAxNCB0aGUgd29ya3NwYWNlIHdob3NlIHJvb3QgZm9sZGVyIGNvbnRhaW5zIHRoZSBmaWxlXHUwMDI3cyBwYXRoLCB3aXRoIHRoZSBkZWVwZXN0IG1hdGNoaW5nIHJvb3Qgd2lubmluZyBcdTIwMTQgYmVzaWRlIHRoYXQgd29ya3NwYWNlXHUwMDI3cyB0ZXJtaW5hbCB0YWJzLCBhbmQgdGhlIHdvcmtzcGFjZSB2aWV3IHN0YXlzIG9uIHNjcmVlbiB3aXRob3V0IHRoZSBlZGl0b3JcdTAwMjdzIG9sZCBzaWRlIHBhbmUuIEZpbGVzIHRoYXQgYmVsb25nIHRvIG5vIHdvcmtzcGFjZSBzdGF5IGluIGEgZ2xvYmFsIGVkaXRvciB2aWV3IHdob3NlIHN0cmlwIGxpc3RzIG9ubHkgdGhvc2UgdW5vd25lZCBmaWxlcywgc28gbm8gZmlsZSBhcHBlYXJzIGluIHR3byBzdHJpcHMuIFRoZXJlIGlzIG9uZSBlZGl0b3IgaW5zdGFuY2UsIGxvYWRlZCBsYXppbHkgb24gdGhlIGZpcnN0IGZpbGUgb3BlbmVkIGFuZCByZXVzZWQgZm9yIHdoaWNoZXZlciBlZGl0b3IgdGFiIGlzIHZpc2libGUuIFRoZSBmZWF0dXJlIGFsc28gcmVuYW1lcyB0aGUgQXBwL1Byb2plY3QgY29uY2VwdCB0byBXb3Jrc3BhY2UgZXZlcnl3aGVyZSBcdTIwMTQgdXNlci1mYWNpbmcgVUksIHRoZSBzYXZlZCBjb25maWd1cmF0aW9uIGZpbGUgKHdpdGggYSB2ZXJzaW9uZWQgbWlncmF0aW9uKSwgdGhlIHRkayBjb21tYW5kLWxpbmUgdG9vbCBhbmQgaXRzIE1DUCB0b29sIGFyZ3VtZW50cywgYW5kIGludGVybmFsIGNvZGUgaWRlbnRpZmllcnMgXHUyMDE0IGFuZCBhZGRzIGEgcmlnaHQtY2xpY2sgY29udGV4dCBtZW51IG9uIGV4cGxvcmVyIGZpbGVzIGFuZCBmb2xkZXJzIHdpdGggY29tbW9uIG9wZXJhdGlvbnMgaW5jbHVkaW5nIFJldmVhbCBpbiBGaWxlIEV4cGxvcmVyLCBOZXcgZmlsZSwgTmV3IGZvbGRlciwgUmVuYW1lLCBEZWxldGUgYW5kLCBvbiBmb2xkZXJzIGluc2lkZSBhIHdvcmtzcGFjZSwgT3BlbiB0ZXJtaW5hbCBoZXJlLCB3aGljaCBvcGVucyBhIG5ldyBDb25zb2xlIGluc3RhbmNlIGluIHRoZSBvd25pbmcgd29ya3NwYWNlLiBTdGlsbCBvcGVuIGFyZSB0aGUgcmVtYWluaW5nIGNvbnRleHQtbWVudSBpdGVtcyBhbmQgd2hldGhlciBhIG1lbnUgYXBwZWFycyBvbiBlbXB0eSBzcGFjZSwgdGhlIGV4YWN0IHRlcm1zIG9mIE9wZW4gdGVybWluYWwgaGVyZSAoc3RhcnQgZm9sZGVyLCBzZWxlY3Rpb24sIHRlbXBvcmFyeSBzdGF0dXMsIGhpZGluZyBvbiB1bm93bmVkIGZvbGRlcnMpLCB0aGUgbWVudSBsaWJyYXJ5IGNvbmZpcm1hdGlvbiwgdGhlIHNpbmdsZS1zZWxlY3Rpb24gbW9kZWwgc2hhcmVkIHdpdGggdGVybWluYWxzLCBlZGl0b3Igc2hvcnRjdXRzIGFuZCBmb2N1cywgY2xvc2luZyB0YWJzIHdpdGggdW5zYXZlZCB3b3JrLCBleHBlY3RlZCB0YWIgY291bnRzLCBwbGFjZW1lbnQgb2YgYW4gdW5zYXZlZCBuZXcgZG9jdW1lbnQgKHdoaWNoIGhhcyBubyBwYXRoKSwgYW5kIGxhcmdlLWZpbGUvY2h1bmtlZCBsb2FkaW5nLiIsInJlcXVpcmVtZW50cyI6W3siaWQiOiJSMSIsInRleHQiOiJBbiBlZGl0b3IgZm9yIGEgZmlsZSB0aGF0IGJlbG9uZ3MgdG8gYSByZWdpc3RlcmVkIHdvcmtzcGFjZSBpcyBob3N0ZWQgYXMgYSB0YWIgaW4gdGhhdCB3b3Jrc3BhY2VcdTAwMjdzIHRhYiBzdHJpcCBhbG9uZ3NpZGUgdGhlIHdvcmtzcGFjZVx1MDAyN3MgdGVybWluYWwgdGFicywgYW5kIHRoZSB3b3Jrc3BhY2UgdmlldyBzdGF5cyBvbiBzY3JlZW4uIiwiYWNjZXB0YW5jZSI6WyJPcGVuaW5nIGEgZmlsZSB1bmRlciBhIHdvcmtzcGFjZVx1MDAyN3Mgcm9vdCBmb2xkZXIgc2hvd3MgYW4gZWRpdG9yIHRhYiBpbiB0aGF0IHdvcmtzcGFjZVx1MDAyN3MgdGFiIHN0cmlwIHdoaWxlIHRoZSB3b3Jrc3BhY2VcdTAwMjdzIHRlcm1pbmFsIHRhYnMgcmVtYWluIHZpc2libGUuIiwiU2VsZWN0aW5nIHRoZSBlZGl0b3IgdGFiIHNob3dzIHRoZSBmaWxlOyBzZWxlY3RpbmcgYSB0ZXJtaW5hbCB0YWIgcmV0dXJucyB0byB0aGF0IHRlcm1pbmFsIHdpdGhvdXQgdGhlIHdvcmtzcGFjZSB2aWV3IGJlaW5nIHJlcGxhY2VkLiIsIlRoZSB3b3Jrc3BhY2VcdTAwMjdzIHRhYiBzdHJpcCBjb250YWlucyBlZGl0b3IgdGFicyBhbmQgdGVybWluYWwgdGFicyBhdCB0aGUgc2FtZSB0aW1lLiJdLCJyYXRpb25hbGUiOiJLZWVwcyB0aGUgZGV2ZWxvcGVyIG9yaWVudGVkIGluc2lkZSB0aGUgd29ya3NwYWNlIGluc3RlYWQgb2YgYmVpbmcgdGFrZW4gdG8gYSBzZXBhcmF0ZSBmdWxsLXNjcmVlbiBlZGl0b3IuIiwiZGVyaXZlZEZyb20iOiIiLCJlZGdlQ2FzZXMiOlsiT3BlbmluZyBhIHNlY29uZCBmaWxlIGJlbG9uZ2luZyB0byB0aGUgc2FtZSB3b3Jrc3BhY2UgYWRkcyBhbm90aGVyIGVkaXRvciB0YWIgcmF0aGVyIHRoYW4gcmVwbGFjaW5nIHRoZSBmaXJzdC4iLCJTd2l0Y2hpbmcgZnJvbSBhbiBlZGl0b3IgdGFiIHRvIGEgdGVybWluYWwgdGFiIGFuZCBiYWNrIGxlYXZlcyB0aGUgZWRpdG9yIHRhYiBvcGVuLiJdLCJwaXRmYWxscyI6WyJPcGVuaW5nIGEgZmlsZSBtdXN0IG5vdCBkaXNjYXJkIHRlcm1pbmFsIHN0YXRlIG9yIG5hdmlnYXRlIGF3YXkgZnJvbSB0aGUgd29ya3NwYWNlIHZpZXcuIiwiT3BlbmluZyBhbmQgY2xvc2luZyBlZGl0b3IgdGFicyBtdXN0IG5vdCBzdG9wIG9yIHJlc2V0IHRoZSB3b3Jrc3BhY2VcdTAwMjdzIHRlcm1pbmFscy4iXSwicnVsZXMiOltdLCJmYWN0cyI6W119LHsiaWQiOiJSMiIsInRleHQiOiJFZGl0b3JzIGZvciBmaWxlcyB0aGF0IGJlbG9uZyB0byBubyByZWdpc3RlcmVkIHdvcmtzcGFjZSBhcmUga2VwdCBpbiBhIGdsb2JhbCBlZGl0b3Igdmlld1x1MDAyN3MgdGFiIHN0cmlwLCBzZXBhcmF0ZSBmcm9tIGFueSB3b3Jrc3BhY2VcdTAwMjdzIHRhYiBzdHJpcC4gVGhlIGdsb2JhbCBzdHJpcCBsaXN0cyBvbmx5IHRoZXNlIHVub3duZWQgZmlsZXMsIGNvcnJlc3BvbmRpbmcgdG8gdG9kYXlcdTAwMjdzIE1pc2MgZ3JvdXAuIiwiYWNjZXB0YW5jZSI6WyJPcGVuaW5nIGEgZmlsZSBvdXRzaWRlIGV2ZXJ5IHdvcmtzcGFjZSByb290IHNob3dzIGl0IGluIHRoZSBnbG9iYWwgdGFiIHN0cmlwLiIsIlRoYXQgZWRpdG9yIGRvZXMgbm90IGFwcGVhciBpbiBhbnkgd29ya3NwYWNlXHUwMDI3cyB0YWIgc3RyaXAuIiwiVGhlIGdsb2JhbCB0YWIgc3RyaXAgbGlzdHMgb25seSBmaWxlcyB0aGF0IGJlbG9uZyB0byBubyB3b3Jrc3BhY2UuIl0sInJhdGlvbmFsZSI6IkZpbGVzIG91dHNpZGUgZXZlcnkgd29ya3NwYWNlIHN0aWxsIG5lZWQgYSBwbGFjZSB0byBiZSBlZGl0ZWQgd2l0aG91dCBiZWluZyBmb3JjZWQgaW50byBhIHdvcmtzcGFjZSB0aGF0IGRvZXMgbm90IG93biB0aGVtLCBhbmQgdGhlIGdsb2JhbCB2aWV3IHN0YXlzIHJlc2VydmVkIGZvciBleGFjdGx5IHRob3NlIGZpbGVzLiIsImRlcml2ZWRGcm9tIjoiIiwiZWRnZUNhc2VzIjpbIlNldmVyYWwgdW5vd25lZCBmaWxlcyBjYW4gYmUgb3BlbiBpbiB0aGUgZ2xvYmFsIHRhYiBzdHJpcCBhdCB0aGUgc2FtZSB0aW1lLiIsIkFuIHVub3duZWQgZmlsZSBkb2VzIG5vdCBnYWluIGEgd29ya3NwYWNlXHUwMDI3cyB0YWIgc3RyaXAgbWVyZWx5IGJlY2F1c2UgdGhlIHdvcmtzcGFjZSB2aWV3IHdhcyBvcGVuIHdoZW4gdGhlIGZpbGUgd2FzIG9wZW5lZC4iXSwicGl0ZmFsbHMiOlsiQW4gdW5vd25lZCBmaWxlIG11c3Qgbm90IGJlIHNpbGVudGx5IGZpbGVkIHVuZGVyIGEgd29ya3NwYWNlLiJdLCJydWxlcyI6W10sImZhY3RzIjpbXX0seyJpZCI6IlIzIiwidGV4dCI6IkEgZmlsZSBiZWxvbmdzIHRvIHRoZSB3b3Jrc3BhY2Ugd2hvc2Ugcm9vdCBmb2xkZXIgY29udGFpbnMgdGhlIGZpbGVcdTAwMjdzIHBhdGguIFdoZW4gbW9yZSB0aGFuIG9uZSByZWdpc3RlcmVkIHdvcmtzcGFjZVx1MDAyN3Mgcm9vdCBjb250YWlucyB0aGUgcGF0aCwgdGhlIGRlZXBlc3Qgcm9vdCB3aW5zLiIsImFjY2VwdGFuY2UiOlsiQSBmaWxlIGFueXdoZXJlIHVuZGVyIGEgd29ya3NwYWNlXHUwMDI3cyByb290IGZvbGRlciBpcyB0cmVhdGVkIGFzIGJlbG9uZ2luZyB0byB0aGF0IHdvcmtzcGFjZS4iLCJBIGZpbGUgdW5kZXIgdHdvIG5lc3RlZCB3b3Jrc3BhY2Ugcm9vdHMgaXMgdHJlYXRlZCBhcyBiZWxvbmdpbmcgdG8gdGhlIGRlZXBlciB3b3Jrc3BhY2UuIiwiQSBmaWxlIG91dHNpZGUgZXZlcnkgd29ya3NwYWNlIHJvb3QgYmVsb25ncyB0byBubyB3b3Jrc3BhY2UuIl0sInJhdGlvbmFsZSI6Ikl0IGdpdmVzIG9uZSB1bmFtYmlndW91cyBhbnN3ZXIgZm9yIGV2ZXJ5IGZpbGUgYW5kIHJldXNlcyB0aGUgbGF1bmNoZXJcdTAwMjdzIGV4aXN0aW5nIG5vdGlvbiBvZiB3aGljaCBmb2xkZXIgZWFjaCB3b3Jrc3BhY2Ugb3ducy4iLCJkZXJpdmVkRnJvbSI6IiIsImVkZ2VDYXNlcyI6WyJXaGVuIGEgZmlsZSBpcyBzYXZlZCBhcywgcmVuYW1lZCBvciBtb3ZlZCBpbnRvIGEgZGlmZmVyZW50IHdvcmtzcGFjZVx1MDAyN3Mgcm9vdCwgaXQgYmVsb25ncyB0byB0aGF0IHdvcmtzcGFjZSBmcm9tIHRoZW4gb24uIiwiV2hlbiBhIGZpbGUgaXMgc2F2ZWQgb3V0c2lkZSBldmVyeSB3b3Jrc3BhY2Ugcm9vdCwgaXQgYmVsb25ncyB0byBubyB3b3Jrc3BhY2UgZnJvbSB0aGVuIG9uLiIsIldoZW4gYSB3b3Jrc3BhY2Ugcm9vdCBjaGFuZ2VzIG9yIHRoZSB3b3Jrc3BhY2UgaXMgcmVtb3ZlZCwgZmlsZXMgYXJlIHJlLWV2YWx1YXRlZCBhZ2FpbnN0IHRoZSByZW1haW5pbmcgcm9vdHMuIl0sInBpdGZhbGxzIjpbIkEgdGFiIG11c3Qgbm90IHN0YXkgZmlsZWQgdW5kZXIgYSB3b3Jrc3BhY2UgYWZ0ZXIgaXRzIGZpbGVcdTAwMjdzIHBhdGggbm8gbG9uZ2VyIGZhbGxzIHVuZGVyIHRoYXQgd29ya3NwYWNlXHUwMDI3cyByb290LiIsIkEgZmlsZSBtdXN0IG5vdCBiZSBhc3NpZ25lZCB0byBhIHdvcmtzcGFjZSBtZXJlbHkgYmVjYXVzZSB0aGF0IHdvcmtzcGFjZSB3YXMgb3BlbiB3aGVuIHRoZSBmaWxlIHdhcyBvcGVuZWQuIl0sInJ1bGVzIjpbXSwiZmFjdHMiOltdfSx7ImlkIjoiUjQiLCJ0ZXh0IjoiRWFjaCBvcGVuIGVkaXRvciBhcHBlYXJzIGluIGV4YWN0bHkgb25lIHN0cmlwOiBhIGZpbGUgb3duZWQgYnkgYSB3b3Jrc3BhY2Ugb25seSBpbiBpdHMgb3duaW5nIHdvcmtzcGFjZVx1MDAyN3MgdGFiIHN0cmlwLCBhbmQgYSBmaWxlIHRoYXQgYmVsb25ncyB0byBubyB3b3Jrc3BhY2Ugb25seSBpbiB0aGUgZ2xvYmFsIHRhYiBzdHJpcC4gTm8gZmlsZSBhcHBlYXJzIGluIGJvdGggc3RyaXBzLiIsImFjY2VwdGFuY2UiOlsiQW4gZWRpdG9yIGZvciBhIHdvcmtzcGFjZS1vd25lZCBmaWxlIGlzIGFic2VudCBmcm9tIHRoZSBnbG9iYWwgdGFiIHN0cmlwLiIsIkFuIGVkaXRvciBmb3IgYW4gdW5vd25lZCBmaWxlIGlzIGFic2VudCBmcm9tIGV2ZXJ5IHdvcmtzcGFjZVx1MDAyN3MgdGFiIHN0cmlwLiIsIk9wZW5pbmcgdGhlIHNhbWUgZmlsZSBkb2VzIG5vdCBjcmVhdGUgYSBzZWNvbmQgY29weSBpbiBhbm90aGVyIHN0cmlwLiJdLCJyYXRpb25hbGUiOiJPbmUgcGxhY2VtZW50IHBlciBmaWxlIGtlZXBzIHRoZSBzZWxlY3RlZCBpdGVtIHVuYW1iaWd1b3VzIGFuZCBhdm9pZHMgdHdvIGNvcGllcyBvZiB0aGUgc2FtZSBkb2N1bWVudCBnZXR0aW5nIG91dCBvZiBzdGVwLiIsImRlcml2ZWRGcm9tIjoiUjIsIFIzIiwiZWRnZUNhc2VzIjpbIk9wZW5pbmcgdGhlIHNhbWUgcGF0aCBhZ2FpbiByZXVzZXMgaXRzIGV4aXN0aW5nIHRhYiBpbiB0aGUgb25lIHN0cmlwIHRoYXQgb3ducyBpdC4iLCJXaGVuIGEgZmlsZVx1MDAyN3MgcGF0aCBtb3ZlcyBiZXR3ZWVuIGEgd29ya3NwYWNlIHJvb3QgYW5kIG5vIHdvcmtzcGFjZSwgaXRzIHNpbmdsZSB0YWIgbW92ZXMgdG8gdGhlIG1hdGNoaW5nIHN0cmlwIHJhdGhlciB0aGFuIGJlaW5nIGR1cGxpY2F0ZWQuIl0sInBpdGZhbGxzIjpbIlRoZSBzYW1lIGRvY3VtZW50IG11c3Qgbm90IGJlIHJlbmRlcmVkIGluIHR3byBzdHJpcHMgYXQgdGhlIHNhbWUgdGltZS4iXSwicnVsZXMiOltdLCJmYWN0cyI6W119LHsiaWQiOiJSNSIsInRleHQiOiJJbnNpZGUgYSB3b3Jrc3BhY2UsIHRoZSBlZGl0b3IgaXMgc2hvd24gd2l0aG91dCB0aGUgc2lkZSBwYW5lIHRoYXQgbGlzdHMgb3IgZ3JvdXBzIG9wZW4gZWRpdG9ycyBieSBvd25lcjsgdGhlIHdvcmtzcGFjZVx1MDAyN3Mgb3duIHRhYiBzdHJpcCBpcyB0aGUgb25seSB0YWIgbGlzdCB0aGVyZS4gVGhlIGdsb2JhbCBlZGl0b3IgdmlldyBzdGlsbCBsaXN0cyBvbmx5IHVub3duZWQgZmlsZXMsIGFzIGEgcGxhaW4gbGlzdCB3aXRoIG5vIGdyb3VwaW5nLiIsImFjY2VwdGFuY2UiOlsiT3BlbmluZyBhIGZpbGUgaW4gYSB3b3Jrc3BhY2Ugc2hvd3MgdGhlIGVkaXRvciB3aXRob3V0IHRoZSB2ZXJ0aWNhbCBcdTAwMjdPcGVuIGVkaXRvcnNcdTAwMjcgbGlzdCB0aGF0IGdyb3VwcyBlZGl0b3JzIGJ5IG93bmVyLiIsIlRoZSBlZGl0b3IgdGFiIHNpdHMgaW4gdGhlIHdvcmtzcGFjZVx1MDAyN3MgdGFiIHN0cmlwLCBhbmQgc2VsZWN0aW5nIGl0IHNob3dzIHRoZSBmaWxlLiIsIlRoZSBnbG9iYWwgZWRpdG9yIHZpZXcgc2hvd3MgYSBwbGFpbiBsaXN0IG9mIHVub3duZWQgZmlsZXMgd2l0aCBubyBncm91cGluZy4iXSwicmF0aW9uYWxlIjoiVGhlIHNpZGUgcGFuZSBkdXBsaWNhdGVkIHRoZSB3b3Jrc3BhY2UgdGFiIHN0cmlwXHUwMDI3cyBqb2IgYW5kIHRvb2sgc3BhY2UgYXdheSBmcm9tIHRoZSBlZGl0b3IuIiwiZGVyaXZlZEZyb20iOiJSMSwgUjIiLCJlZGdlQ2FzZXMiOlsiU3dpdGNoaW5nIGJldHdlZW4gYW4gZWRpdG9yIHRhYiBhbmQgYSB0ZXJtaW5hbCB0YWIgaW5zaWRlIGEgd29ya3NwYWNlIGRvZXMgbm90IGJyaW5nIHRoZSBzaWRlIHBhbmUgYmFjay4iLCJXaGVuIG5vIHVub3duZWQgZmlsZXMgYXJlIG9wZW4sIHRoZSBnbG9iYWwgdmlldyBzaG93cyBubyBncm91cCBoZWFkaW5ncy4iXSwicGl0ZmFsbHMiOlsiUmVtb3ZpbmcgdGhlIHNpZGUgcGFuZSBpbnNpZGUgYSB3b3Jrc3BhY2UgbXVzdCBub3QgcmVtb3ZlIG9yIGhpZGUgdGhlIHdvcmtzcGFjZVx1MDAyN3MgdGVybWluYWwgdGFicyBvciBpdHMgdGFiIHN0cmlwLiIsIlRoZSBzaWRlIHBhbmUgbXVzdCBub3QgYmUgcmUtYWRkZWQgZm9yIGEgd29ya3NwYWNlLW93bmVkIGZpbGUgbWVyZWx5IGJlY2F1c2UgaXQgd2FzIG9wZW5lZCBmcm9tIHRoZSBnbG9iYWwgdmlldy4iXSwicnVsZXMiOltdLCJmYWN0cyI6W119LHsiaWQiOiJSNiIsInRleHQiOiJUaGVyZSBpcyBhIHNpbmdsZSBlZGl0b3IgaW5zdGFuY2UsIGxvYWRlZCBsYXppbHk6IGVkaXRvciBjb2RlIGlzIG5vdCBsb2FkZWQgdW50aWwgYSBmaWxlIGlzIGZpcnN0IG9wZW5lZCwgYW5kIHRoZSBzYW1lIG9uZSBlZGl0b3Igc3VyZmFjZSBzaG93cyB3aGljaGV2ZXIgZWRpdG9yIHRhYiBpcyB2aXNpYmxlLCB3aGV0aGVyIGluIGEgd29ya3NwYWNlIG9yIGluIHRoZSBnbG9iYWwgdmlldy4iLCJhY2NlcHRhbmNlIjpbIkJlZm9yZSB0aGUgZmlyc3QgZmlsZSBpcyBvcGVuZWQsIHRoZSBlZGl0b3IgY29kZSBpcyBub3QgbG9hZGVkLiIsIk9wZW5pbmcgYSBzZWNvbmQgZmlsZSByZXVzZXMgdGhlIGV4aXN0aW5nIGVkaXRvciBzdXJmYWNlIGluc3RlYWQgb2YgY3JlYXRpbmcgYW5vdGhlci4iLCJTd2l0Y2hpbmcgZnJvbSBhIHdvcmtzcGFjZSBlZGl0b3IgdGFiIHRvIGFub3RoZXIgZWRpdG9yIHRhYiBvciB0byB0aGUgZ2xvYmFsIHZpZXcgc2hvd3MgdGhlIHNlbGVjdGVkIGZpbGUgaW4gdGhlIHNhbWUgZWRpdG9yIHN1cmZhY2UuIl0sInJhdGlvbmFsZSI6IkF2b2lkcyBsb2FkaW5nIGFuZCBrZWVwaW5nIG1hbnkgZWRpdG9ycyBpbiBtZW1vcnk7IHRoZSBlZGl0b3IgaXMgb25seSBwYWlkIGZvciB3aGVuIGEgZmlsZSBpcyBvcGVuZWQuIiwiZGVyaXZlZEZyb20iOiIiLCJlZGdlQ2FzZXMiOlsiRWFjaCBlZGl0b3IgdGFiIGtlZXBzIGl0cyBvd24gZG9jdW1lbnQgc3RhdGUgd2hpbGUgYW5vdGhlciB0YWIgaXMgZGlzcGxheWVkLiIsIlRoZSBmaXJzdCBmaWxlIG9wZW5lZCBhZnRlciBsYXVuY2ggdHJpZ2dlcnMgZXhhY3RseSBvbmUgZWRpdG9yIGxvYWQuIl0sInBpdGZhbGxzIjpbIkRvIG5vdCBtb3VudCBhIHNlcGFyYXRlIGVkaXRvciBpbnN0YW5jZSBwZXIgdGFiLiIsIkxhenkgbG9hZGluZyB0aGUgZWRpdG9yIG11c3Qgbm90IGxvc2UgdGhlIGZpbGUgYmVpbmcgb3BlbmVkIG9yIGxlYXZlIGEgYmxhbmsgZWRpdG9yIHdoaWxlIGl0IGxvYWRzLiJdLCJydWxlcyI6W10sImZhY3RzIjpbXX0seyJpZCI6IlI3IiwidGV4dCI6IlRoZSByZWdpc3RlcmVkLWFwcCBjb25jZXB0IGlzIHJlbmFtZWQgdG8gV29ya3NwYWNlIGV2ZXJ5d2hlcmU6IHVzZXItZmFjaW5nIGxhYmVscyBhbmQgbWVzc2FnZXMsIHRoZSBzYXZlZCBjb25maWd1cmF0aW9uIGZpbGUsIHRoZSB0ZGsgY29tbWFuZC1saW5lIHRvb2wgYW5kIGl0cyBNQ1AgdG9vbCBhcmd1bWVudHMsIGFuZCBpbnRlcm5hbCBjb2RlIGlkZW50aWZpZXJzIGFsbCB1c2UgV29ya3NwYWNlIGluc3RlYWQgb2YgQXBwIG9yIFByb2plY3QsIHdpdGggbWF0Y2hpbmcgcGx1cmFsIGFuZCBwb3NzZXNzaXZlIGZvcm1zLiBXaGVyZSBcdTAwMjdhcHBcdTAwMjcgbWVhbnMgVGlua2VyZGVjayBpdHNlbGYgKGZvciBleGFtcGxlIFx1MDAyN3Jlc3RhcnRzIHRoZSBhcHBcdTAwMjcpLCB0aGF0IHdvcmRpbmcgc3RheXMuIiwiYWNjZXB0YW5jZSI6WyJVc2VyLWZhY2luZyBsYWJlbHMgYW5kIG1lc3NhZ2VzIGZvciByZWdpc3RlcmVkIGFwcHMgc2F5IFdvcmtzcGFjZSwgbm90IEFwcCBvciBQcm9qZWN0OyBwbHVyYWwgYW5kIHBvc3Nlc3NpdmUgZm9ybXMgcmVhZCBXb3Jrc3BhY2VzIGFuZCBXb3Jrc3BhY2VcdTAwMjdzLiIsIlRoZSBzYXZlZCBjb25maWd1cmF0aW9uIHVzZXMgYSB3b3Jrc3BhY2VzIGtleSBpbiBwbGFjZSBvZiBhbiBhcHBzIGtleS4iLCJ0ZGsgaGVscCB0ZXh0LCBpdHMgcG9zaXRpb25hbCBhcmd1bWVudHMgYW5kIGl0cyBNQ1AgdG9vbCBhcmd1bWVudHMgc2F5IHdvcmtzcGFjZTsgc2NyaXB0cyB0aGF0IHBhc3MgdGhlIHdvcmtzcGFjZSBhcyBhIHBvc2l0aW9uYWwgYXJndW1lbnQsIHN1Y2ggYXMgXHUwMDI3dGRrIHVwIFNob3BcdTAwMjcsIGtlZXAgd29ya2luZy4iLCJUaGUgZWRpdG9yLXRhYiBhbmQgY29udGV4dC1tZW51IHRleHQgaW50cm9kdWNlZCBieSB0aGlzIGZlYXR1cmUgdXNlcyB0aGUgc2FtZSBXb3Jrc3BhY2Ugd29yZGluZy4iXSwicmF0aW9uYWxlIjoiVGhlIGRldmVsb3BlciB3YW50cyBvbmUgbmFtZSBmb3IgdGhlIGNvbmNlcHQsIGNhcnJpZWQgdGhyb3VnaCB0aGUgVUksIHN0b3JlZCBkYXRhIGFuZCBjb21tYW5kLWxpbmUgdG9vbGluZyByYXRoZXIgdGhhbiBsZWZ0IGZvciBhIHNlcGFyYXRlIGNoYW5nZS4iLCJkZXJpdmVkRnJvbSI6IiIsImVkZ2VDYXNlcyI6WyJBIHdvcmtzcGFjZSB0aGF0IHdhcyBwcmV2aW91c2x5IGxhYmVsbGVkIFByb2plY3Qgb3IgQXBwIGluIHRoZSBVSSBpcyByZWZlcnJlZCB0byBhcyBhIFdvcmtzcGFjZS4iLCJFeGlzdGluZyBzYXZlZCB3b3Jrc3BhY2VzIHN0aWxsIGxvYWQgYW5kIGFwcGVhciB1bmRlciB0aGUgbmV3IG5hbWUuIiwiQSB3b3Jrc3BhY2Ugd2hvc2Ugb3duIG5hbWUgY29udGFpbnMgdGhlIHdvcmRzIEFwcCBvciBQcm9qZWN0IGtlZXBzIHRoYXQgbmFtZSB1bmNoYW5nZWQuIiwiV29yZGluZyB3aGVyZSBcdTAwMjdhcHBcdTAwMjcgbWVhbnMgVGlua2VyZGVjayBpdHNlbGYsIHN1Y2ggYXMgXHUwMDI3cmVzdGFydHMgdGhlIGFwcFx1MDAyNywgc3RheXMgdW5jaGFuZ2VkLiJdLCJwaXRmYWxscyI6WyJSZW5hbWluZyBtdXN0IG5vdCBjaGFuZ2Ugd2hpY2ggZm9sZGVyIGEgd29ya3NwYWNlIG93bnMsIGl0cyB0ZXJtaW5hbHMsIG9yIHRoZSBtZWFuaW5nIG9mIGl0cyBzYXZlZCBjb25maWd1cmF0aW9uLiIsIk5ldyB0ZXh0IG11c3Qgbm90IHVzZSBBcHAgb3IgUHJvamVjdCBhcyB0aGUgbmFtZSBvZiB0aGUgY29uY2VwdC4iLCJEbyBub3QgcmV3cml0ZSBhIHdvcmtzcGFjZVx1MDAyN3Mgb3duIHVzZXItZ2l2ZW4gbmFtZS4iLCJFeGlzdGluZyBzY3JpcHRzIHRoYXQgcGFzcyBhIHdvcmtzcGFjZSBwb3NpdGlvbmFsIGFyZ3VtZW50IG11c3Qga2VlcCB3b3JraW5nLiJdLCJydWxlcyI6W10sImZhY3RzIjpbXX0seyJpZCI6IlI4IiwidGV4dCI6IlJpZ2h0LWNsaWNraW5nIGEgZmlsZSBvciBmb2xkZXIgaW4gdGhlIGV4cGxvcmVyIG9wZW5zIGEgY29udGV4dCBtZW51IHdpdGggY29tbW9uIGZpbGUgb3BlcmF0aW9uczogZmlsZXMgb2ZmZXIgUmV2ZWFsIGluIEZpbGUgRXhwbG9yZXIsIFJlbmFtZSBhbmQgRGVsZXRlOyBmb2xkZXJzIG9mZmVyIE5ldyBmaWxlLCBOZXcgZm9sZGVyLCBSZXZlYWwgaW4gRmlsZSBFeHBsb3JlciwgUmVuYW1lLCBEZWxldGUgYW5kLCB3aGVuIHRoZSBmb2xkZXIgYmVsb25ncyB0byBhIHdvcmtzcGFjZSwgT3BlbiB0ZXJtaW5hbCBoZXJlIChSMTApLiIsImFjY2VwdGFuY2UiOlsiUmlnaHQtY2xpY2tpbmcgYSBmaWxlIHNob3dzIGEgbWVudSB3aXRoIFJldmVhbCBpbiBGaWxlIEV4cGxvcmVyLCBSZW5hbWUgYW5kIERlbGV0ZS4iLCJSaWdodC1jbGlja2luZyBhIGZvbGRlciBzaG93cyBhIG1lbnUgd2l0aCBOZXcgZmlsZSwgTmV3IGZvbGRlciwgUmV2ZWFsIGluIEZpbGUgRXhwbG9yZXIsIFJlbmFtZSBhbmQgRGVsZXRlLiIsIkNob29zaW5nIGFuIGFjdGlvbiBwZXJmb3JtcyB0aGUgc2FtZSByZXN1bHQgYXMgdGhlIGV4aXN0aW5nIGV4cGxvcmVyIHRvb2xiYXIgYWN0aW9uIG9mIHRoZSBzYW1lIG5hbWUuIiwiUmV2ZWFsIGluIEZpbGUgRXhwbG9yZXIgb3BlbnMgdGhlIG9wZXJhdGluZyBzeXN0ZW1cdTAwMjdzIGZpbGUgbWFuYWdlciB3aXRoIHRoZSBpdGVtIHNlbGVjdGVkLiJdLCJyYXRpb25hbGUiOiJSaWdodC1jbGlja2luZyBsZXRzIHRoZSBkZXZlbG9wZXIgYWN0IG9uIHRoZSBleGFjdCBmaWxlIG9yIGZvbGRlciB3aXRob3V0IGh1bnRpbmcgZm9yIGEgdG9vbGJhciBidXR0b24sIHVzaW5nIG9wZXJhdGlvbnMgdGhlIGV4cGxvcmVyIGFscmVhZHkgcHJvdmlkZXMuIiwiZGVyaXZlZEZyb20iOiIiLCJlZGdlQ2FzZXMiOlsiUmVuYW1pbmcgb3IgZGVsZXRpbmcgYSBmaWxlIHRoYXQgaXMgb3BlbiBpbiBhbiBlZGl0b3IgbGVhdmVzIGl0cyB0YWIgcG9pbnRpbmcgYXQgdGhlIG5ldyBwYXRoIG9yIGNsb3NlcyBpdCwgbWF0Y2hpbmcgdGhlIGV4aXN0aW5nIHRvb2xiYXIgYmVoYXZpb3VyLiIsIlJlbmFtaW5nIGEgZm9sZGVyIHJlLXBvaW50cyBlZGl0b3IgdGFicyBmb3IgZmlsZXMgaW5zaWRlIGl0IHRvIHRoZWlyIG5ldyBwYXRocy4iLCJUaGUgbWVudSBvcGVucyBvbiB0aGUgaXRlbSB1bmRlciB0aGUgcG9pbnRlciwgbm90IG9uIGEgcHJldmlvdXNseSBzZWxlY3RlZCBpdGVtLiJdLCJwaXRmYWxscyI6WyJUaGUgbWVudSBtdXN0IG5vdCBjcmVhdGUgYSBzZWNvbmQsIGRpdmVyZ2VudCBpbXBsZW1lbnRhdGlvbiBvZiBmaWxlIG9wZXJhdGlvbnM7IGl0IG11c3QgcmV1c2UgdGhlIG9wZXJhdGlvbnMgdGhlIHRvb2xiYXIgdXNlcy4iLCJEZWxldGUgZnJvbSB0aGUgbWVudSBtdXN0IG5vdCBza2lwIGFueSBjb25maXJtYXRpb24gdGhlIGV4aXN0aW5nIGRlbGV0ZSBhY3Rpb24gYWxyZWFkeSByZXF1aXJlcy4iLCJSZXZlYWwgbXVzdCBzZWxlY3QgdGhlIGl0ZW0sIG5vdCBtZXJlbHkgb3BlbiBpdHMgcGFyZW50IGZvbGRlci4iLCJUaGUgbWVudSBtdXN0IGNsb3NlIGFmdGVyIGFuIGFjdGlvbiBvciBvbiBFc2NhcGUgb3IgYSBjbGljayBvdXRzaWRlLiJdLCJydWxlcyI6W10sImZhY3RzIjpbXX0seyJpZCI6IlI5IiwidGV4dCI6IlRoZSBzYXZlZCBjb25maWd1cmF0aW9uIGZpbGUgbW92ZXMgdG8gdmVyc2lvbiAyLCB3aGVyZSBhIHdvcmtzcGFjZXMga2V5IHJlcGxhY2VzIGFwcHMuIEEgdmVyc2lvbiAxIGZpbGUgaXMgcmVhZCBhcyBiZWZvcmUgYW5kIGNvbnZlcnRlZCBpbiBtZW1vcnksIGFuZCBpcyB3cml0dGVuIGFzIHZlcnNpb24gMiBvbiB0aGUgbmV4dCBzYXZlIHdoaWxlIHRoZSBwcmV2aW91cyBmaWxlIGlzIGtlcHQgYXMgYSAuYmFrLiBBbiBvbGRlciBUaW5rZXJkZWNrIHRoYXQgb3BlbnMgYSB2ZXJzaW9uIDIgZmlsZSByZWZ1c2VzIGl0IHdpdGggaXRzIGV4aXN0aW5nIFx1MDAyN3dyaXR0ZW4gYnkgYSBuZXdlciB2ZXJzaW9uXHUwMDI3IG1lc3NhZ2UgYW5kIGRvZXMgbm90IG92ZXJ3cml0ZSBpdC4iLCJhY2NlcHRhbmNlIjpbIkEgdmVyc2lvbiAxIGNvbmZpZ3VyYXRpb24gY29udGFpbmluZyBhbiBhcHBzIGxpc3QgbG9hZHMgYW5kIGl0cyBlbnRyaWVzIGFwcGVhciBhcyB3b3Jrc3BhY2VzLiIsIkFmdGVyIHRoZSBuZXh0IHNhdmUgdGhlIGZpbGUgaXMgdmVyc2lvbiAyIHdpdGggYSB3b3Jrc3BhY2VzIGtleSBhbmQgbm8gYXBwcyBrZXkuIiwiVGhlIHByZXZpb3VzIGNvbmZpZ3VyYXRpb24gaXMgcmV0YWluZWQgYXMgYSAuYmFrIGZpbGUuIiwiQSB2ZXJzaW9uIDIgZmlsZSBvcGVuZWQgYnkgYW4gb2xkZXIgYnVpbGQgaXMgcmVmdXNlZCB3aXRoIHRoZSBleGlzdGluZyBuZXdlci12ZXJzaW9uIG1lc3NhZ2UgYW5kIGlzIG5vdCBvdmVyd3JpdHRlbi4iXSwicmF0aW9uYWxlIjoiRXhpc3RpbmcgdXNlcnMga2VlcCB0aGVpciBzYXZlZCB3b3Jrc3BhY2VzLCBhbmQgdGhlIHN0b3JlZCBmaWxlIHN0YXlzIGNvbnNpc3RlbnQgd2l0aCB0aGUgcmVuYW1lZCBjb25jZXB0IHdpdGhvdXQgYSBzZXBhcmF0ZSB0b29sIG9yIG1hbnVhbCBlZGl0LiIsImRlcml2ZWRGcm9tIjoiUjciLCJlZGdlQ2FzZXMiOlsiQSB2ZXJzaW9uIDEgZmlsZSB3aXRoIG5vIGFwcHMga2V5IGxvYWRzIHdpdGggbm8gd29ya3NwYWNlcy4iLCJBIGZpbGUgd2hvc2UgdmVyc2lvbiBpcyBoaWdoZXIgdGhhbiAyIGlzIHJlZnVzZWQgYXMgdG9vIG5ldy4iLCJBIHZlcnNpb24gMiBmaWxlIGlzIG5vdCBtaWdyYXRlZCBhIHNlY29uZCB0aW1lIG9uIGxvYWQuIl0sInBpdGZhbGxzIjpbIkNvbnZlcnNpb24gbXVzdCBub3QgbG9zZSB3b3Jrc3BhY2UgZW50cmllcyBvciByZXdyaXRlIHRoZWlyIHVzZXItZ2l2ZW4gbmFtZXMuIiwiQSBmYWlsZWQgc2F2ZSBtdXN0IG5vdCBjb3JydXB0IG9yIGRlbGV0ZSB0aGUgZXhpc3RpbmcgY29uZmlndXJhdGlvbi4iLCJEb3duZ3JhZGluZyBpcyBvbmUtd2F5OiBhbiBvbGRlciBidWlsZCBtdXN0IG5vdCBzaWxlbnRseSBvdmVyd3JpdGUgYSB2ZXJzaW9uIDIgZmlsZS4iXSwicnVsZXMiOltdLCJmYWN0cyI6W119LHsiaWQiOiJSMTAiLCJ0ZXh0IjoiUmlnaHQtY2xpY2tpbmcgYSBmb2xkZXIgaW5zaWRlIGEgd29ya3NwYWNlIG9mZmVycyBcdTAwMjdPcGVuIHRlcm1pbmFsIGhlcmVcdTAwMjcsIHdoaWNoIG9wZW5zIGEgbmV3IENvbnNvbGUgaW5zdGFuY2UgaW4gdGhlIHdvcmtzcGFjZSB0aGF0IG93bnMgdGhhdCBmb2xkZXIgKHRoZSBkZWVwZXN0IG1hdGNoaW5nIHJvb3QpLCBzbyB0aGUgbmV3IGNvbnNvbGUgYXBwZWFycyBpbiB0aGF0IHdvcmtzcGFjZVx1MDAyN3MgdGFiIHN0cmlwLiIsImFjY2VwdGFuY2UiOlsiUmlnaHQtY2xpY2tpbmcgYSBmb2xkZXIgaW5zaWRlIGEgd29ya3NwYWNlIHNob3dzIGFuIFx1MDAyN09wZW4gdGVybWluYWwgaGVyZVx1MDAyNyBpdGVtLiIsIkNob29zaW5nIGl0IG9wZW5zIGEgbmV3IENvbnNvbGUgaW5zdGFuY2UgaW4gdGhhdCB3b3Jrc3BhY2VcdTAwMjdzIHRhYiBzdHJpcC4iLCJXaXRoIG5lc3RlZCB3b3Jrc3BhY2VzIHRoZSBjb25zb2xlIGlzIGNyZWF0ZWQgaW4gdGhlIGRlZXBlciB3b3Jrc3BhY2UgdGhhdCBvd25zIHRoZSBmb2xkZXIuIl0sInJhdGlvbmFsZSI6IkxldHMgdGhlIGRldmVsb3BlciBvcGVuIGEgc2hlbGwgZm9yIGEgc3BlY2lmaWMgZm9sZGVyIHdpdGhvdXQgbGVhdmluZyB0aGUgZXhwbG9yZXIsIGZpbGVkIHVuZGVyIHRoZSB3b3Jrc3BhY2UgdGhhdCBhY3R1YWxseSBvd25zIHRoZSBmb2xkZXIuIiwiZGVyaXZlZEZyb20iOiJSMywgUjciLCJlZGdlQ2FzZXMiOlsiUmlnaHQtY2xpY2tpbmcgYSBmb2xkZXIgaW4gb25lIHdvcmtzcGFjZSB3aGlsZSBhIGRpZmZlcmVudCB3b3Jrc3BhY2VcdTAwMjdzIHZpZXcgaXMgb24gc2NyZWVuIHN0aWxsIGNyZWF0ZXMgdGhlIGNvbnNvbGUgaW4gdGhlIGZvbGRlclx1MDAyN3Mgb3duaW5nIHdvcmtzcGFjZS4iLCJBIGZvbGRlciB1bmRlciB0d28gbmVzdGVkIHdvcmtzcGFjZSByb290cyBvcGVucyBpdHMgY29uc29sZSBpbiB0aGUgZGVlcGVyIHdvcmtzcGFjZS4iXSwicGl0ZmFsbHMiOlsiVGhlIGNvbnNvbGUgbXVzdCBiZWxvbmcgdG8gdGhlIGZvbGRlclx1MDAyN3Mgb3duaW5nIHdvcmtzcGFjZSwgbm90IHRvIHdoaWNoZXZlciB3b3Jrc3BhY2VcdTAwMjdzIHZpZXcgaGFwcGVuZWQgdG8gYmUgb3Blbi4iLCJUaGUgaXRlbSBtdXN0IG5vdCBjcmVhdGUgYSB0ZXJtaW5hbCBpbiBhIHdvcmtzcGFjZSB0aGF0IGRvZXMgbm90IG93biB0aGUgZm9sZGVyLiJdLCJydWxlcyI6W10sImZhY3RzIjpbXX1dLCJxdWVzdGlvbnMiOltdLCJjb3ZlcmFnZSI6W3sidG9waWMiOiJ1c2VycyIsInN0YXR1cyI6Im9wZW4iLCJub3RlIjoiVGhlIGRldmVsb3BlciBpcyB0aGUgb25seSB1c2VyIGRpc2N1c3NlZDsgcm9sZXMgYW5kIGRpZmZlcmluZyBwZXJtaXNzaW9ucyBhcmUgbm90IG1lbnRpb25lZC4ifSx7InRvcGljIjoiZGF0YSIsInN0YXR1cyI6ImFuc3dlcmVkIiwibm90ZSI6IkRlY2lkZWQ6IHRoZSByZW5hbWUgZ29lcyBhbGwgdGhlIHdheSB0byB0aGUgc2F2ZWQgZmlsZSBhbmQgdGhlIHRkayBDTEkvTUNQLCB3aXRoIGEgbWlncmF0aW9uLiBUaGUgY29uZmlnIG1vdmVzIHRvIHZlcnNpb24gMiB3aXRoIGEgd29ya3NwYWNlcyBrZXkgcmVwbGFjaW5nIGFwcHM7IGEgdmVyc2lvbiAxIGZpbGUgaXMgY29udmVydGVkIGluIG1lbW9yeSBhbmQgd3JpdHRlbiBhcyB2ZXJzaW9uIDIgb24gdGhlIG5leHQgc2F2ZSwga2VlcGluZyB0aGUgcHJldmlvdXMgZmlsZSBhcyAuYmFrIChSNywgUjkpLiJ9LHsidG9waWMiOiJwZXJtaXNzaW9ucyIsInN0YXR1cyI6Im9wZW4iLCJub3RlIjoiV2hldGhlciB3b3Jrc3BhY2Ugb3duZXJzaGlwIGFmZmVjdHMgd2hvIGNhbiBzZWUsIG9wZW4sIHJlbmFtZSwgZGVsZXRlIG9yIG9wZW4gYSB0ZXJtaW5hbCBvbiBhIGZpbGUgb3IgZm9sZGVyIGlzIG5vdCBkaXNjdXNzZWQuIn0seyJ0b3BpYyI6InZhbGlkYXRpb24iLCJzdGF0dXMiOiJub3QtYXBwbGljYWJsZSIsIm5vdGUiOiJDb250ZXh0LW1lbnUgTmV3IGZpbGUsIE5ldyBmb2xkZXIgYW5kIFJlbmFtZSBhcmUgZXhwZWN0ZWQgdG8gcmV1c2UgdGhlIGV4cGxvcmVyXHUwMDI3cyBleGlzdGluZyBuYW1lIHZhbGlkYXRpb247IG5vIG5ldyBpbnB1dCBydWxlcyBhcmUgaW50cm9kdWNlZC4ifSx7InRvcGljIjoic3RhdGVzIiwic3RhdHVzIjoib3BlbiIsIm5vdGUiOiJMYXp5IGxvYWRpbmcsIHRoZSBuby1zaWRlLXBhbmUgd29ya3NwYWNlIGxheW91dCBhbmQgXHUwMDI3T3BlbiB0ZXJtaW5hbCBoZXJlXHUwMDI3IG9uIGZvbGRlcnMgaW5zaWRlIGEgd29ya3NwYWNlIGFyZSBkZWNpZGVkOyBlbXB0eSwgZGlzYWJsZWQgYW5kIGVycm9yIHN0YXRlcyBvZiB0aGUgY29udGV4dCBtZW51LCB3aGV0aGVyIGEgbWVudSBhcHBlYXJzIG9uIGVtcHR5IGV4cGxvcmVyIHNwYWNlLCB3aGVyZSBhbiB1bnNhdmVkIG5ldyBkb2N1bWVudCAobm8gcGF0aCkgYmVsb25ncywgYW5kIGxhcmdlLWZpbGUgc3RhdGVzIHJlbWFpbiBvcGVuLiJ9LHsidG9waWMiOiJkdXBsaWNhdGVzIiwic3RhdHVzIjoiYW5zd2VyZWQiLCJub3RlIjoiRGVjaWRlZDogb25lIHN0cmlwIHBlciBlZGl0b3I7IG9wZW5pbmcgdGhlIHNhbWUgcGF0aCByZXVzZXMgaXRzIGV4aXN0aW5nIHRhYjsgd29ya3NwYWNlLW93bmVkIGZpbGVzIGFwcGVhciBvbmx5IGluIHRoZWlyIHdvcmtzcGFjZVx1MDAyN3Mgc3RyaXAgYW5kIHVub3duZWQgZmlsZXMgb25seSBpbiB0aGUgZ2xvYmFsIHZpZXcgKFIyLCBSNCkuIn0seyJ0b3BpYyI6InZvbHVtZSIsInN0YXR1cyI6Im9wZW4iLCJub3RlIjoiTGFyZ2UgZmlsZXMgc3VjaCBhcyBsb2dzIHdlcmUgcmFpc2VkLiBXaG9sZS1maWxlIGxvYWRpbmcgd2l0aCB0aGUgZXhpc3RpbmcgNSBNQiBlZGl0YWJsZSBjYXAgc3RhbmRzOyBjaHVua2VkIHN0cmVhbWluZyBieSB2aXNpYmxlIGxpbmVzIHdhcyBwcm9wb3NlZCBhbmQgdGhlIGFzc2lzdGFudCBzdWdnZXN0ZWQgbGVhdmluZyBpdCBvdXQsIGJ1dCB0aGUgZGV2ZWxvcGVyIGhhcyBub3QgYWdyZWVkLiBIb3cgbWFueSBlZGl0b3IgdGFicyBhIHdvcmtzcGFjZSBvciBnbG9iYWwgc3RyaXAgc2hvdWxkIGhhbmRsZSBpcyBub3QgZGlzY3Vzc2VkLiJ9LHsidG9waWMiOiJkZWxldGlvbiIsInN0YXR1cyI6Im9wZW4iLCJub3RlIjoiRGVsZXRlIGlzIHJlYWNoYWJsZSBmcm9tIHRoZSBjb250ZXh0IG1lbnUgYXMgd2VsbCBhcyB0aGUgdG9vbGJhcjsgd2hldGhlciBjbG9zaW5nIGFuIGVkaXRvciB0YWIgb3IgZGVsZXRpbmcgYSBmaWxlIHByb21wdHMsIGFuZCB3aGV0aGVyIGVpdGhlciBpcyByZWNvdmVyYWJsZSwgaXMgbm90IGRpc2N1c3NlZC4ifSx7InRvcGljIjoicHJpdmFjeSIsInN0YXR1cyI6Im5vdC1hcHBsaWNhYmxlIiwibm90ZSI6Ik5vIG5ldyBwZXJzb25hbCBvciBzZW5zaXRpdmUgZGF0YSBpcyBpbnRyb2R1Y2VkOyBleGlzdGluZyBmaWxlIGFjY2VzcyBhcHBsaWVzLiJ9LHsidG9waWMiOiJxdWFsaXR5Iiwic3RhdHVzIjoib3BlbiIsIm5vdGUiOiJBIHNpbmdsZSBsYXppbHkgbG9hZGVkIGVkaXRvciBpbnN0YW5jZSwgZHJhd2luZyBvbmx5IHZpc2libGUgbGluZXMsIGFuZCBcdTAwMjdPcGVuIHRlcm1pbmFsIGhlcmVcdTAwMjcgZmlsZWQgaW4gdGhlIG93bmluZyB3b3Jrc3BhY2UgYXJlIGRlY2lkZWQuIFRoZSBhc3Npc3RhbnRcdTAwMjdzIHBsYW4gdXNlcyBAcmFkaXgtdWkvcmVhY3QtY29udGV4dC1tZW51LCBidXQgdGhlIGRldmVsb3BlciBoYXMgbm90IGNvbmZpcm1lZCB0aGF0IGxpYnJhcnk7IHRoZSByZW1haW5pbmcgbWVudSBjb250ZW50cyAoT3BlbiwgQ29weSBwYXRoLCBDb3B5IHJlbGF0aXZlIHBhdGgsIE1vdmUsIGFuZCBhIG1lbnUgb24gZW1wdHkgc3BhY2UpIGFuZCBlZGl0b3Igc2hvcnRjdXRzIGFuZCBmb2N1cyBjbGFzaGluZyB3aXRoIHRlcm1pbmFscyByZW1haW4gb3Blbi4ifV0sImFzc3VtcHRpb25zIjpbIlRoZSBjb250ZXh0IG1lbnUgcmV1c2VzIHRoZSBleGlzdGluZyBleHBsb3JlciBmaWxlIG9wZXJhdGlvbnMsIHNvIHRhYiByZS1wb2ludGluZywgdmFsaWRhdGlvbiBhbmQgY29uZmlybWF0aW9ucyBzdGF5IGNvbnNpc3RlbnQgd2l0aCB0aGUgdG9vbGJhci4iLCJUaGUgY29udGV4dCBtZW51IGZvbGxvd3MgdGhlIGFwcFx1MDAyN3MgZXhpc3RpbmcgZGFyayBhbmQgbGlnaHQgdGhlbWUgdmFyaWFibGVzIHJhdGhlciB0aGFuIHVzaW5nIHRoZSBvcGVyYXRpbmcgc3lzdGVtXHUwMDI3cyBkZWZhdWx0IG1lbnUgYXBwZWFyYW5jZS4iLCJUaGUgbWlncmF0aW9uIGtlZXBzIHRoZSBwcmV2aW91cyBjb25maWd1cmF0aW9uIGFzIGEgLmJhayBmaWxlIGFuZCBkb2VzIG5vdCBvZmZlciBhIGRvd25ncmFkZSBwYXRoOyBvbGRlciBidWlsZHMgcmVmdXNlIGEgdmVyc2lvbiAyIGZpbGUgYnkgZGVzaWduLiJdLCJyb2xlcyI6WyJEZXZlbG9wZXI6IHdvcmtzIGluc2lkZSByZWdpc3RlcmVkIHdvcmtzcGFjZXMgd2l0aCB0ZXJtaW5hbHMgYW5kIGZpbGVzLCBhbmQgYWxzbyBvcGVucyBmaWxlcyB0aGF0IGJlbG9uZyB0byBubyB3b3Jrc3BhY2UiXSwib3V0T2ZTY29wZSI6W10sIm5vbkZ1bmN0aW9uYWwiOlt7ImFyZWEiOiJwZXJmb3JtYW5jZSIsInN0YXRlbWVudCI6IlRoZSBlZGl0b3IgZHJhd3Mgb25seSB0aGUgbGluZXMgdmlzaWJsZSBvbiBzY3JlZW4sIHNvIGEgbG9uZyBmaWxlIGRvZXMgbm90IHJlbmRlciBpdHMgZnVsbCB0ZXh0IHdoZW4gb3BlbmVkIG9yIHNjcm9sbGVkLiIsImFjY2VwdGFuY2UiOiJBIDEwLDAwMC1saW5lIGZpbGUgb3BlbnMgYW5kIHNjcm9sbHMgd2l0aG91dCByZW5kZXJpbmcgYWxsIDEwLDAwMCBsaW5lcyBhdCBvbmNlLiJ9LHsiYXJlYSI6ImFwcGVhcmFuY2UiLCJzdGF0ZW1lbnQiOiJUaGUgY29udGV4dCBtZW51IGZvbGxvd3MgdGhlIGFwcFx1MDAyN3MgZGFyayBhbmQgbGlnaHQgdGhlbWVzLCB1c2luZyB0aGUgZXhpc3RpbmcgdGhlbWUgY29sb3VycyByYXRoZXIgdGhhbiBhbiB1bnN0eWxlZCBkZWZhdWx0IG1lbnUuIiwiYWNjZXB0YW5jZSI6IkluIGJvdGggZGFyayBhbmQgbGlnaHQgdGhlbWUgdGhlIG1lbnUgYmFja2dyb3VuZCwgdGV4dCwgYm9yZGVyLCBob3ZlciBhbmQgYWNjZW50IG1hdGNoIHRoZSBzdXJyb3VuZGluZyBleHBsb3Jlci4ifSx7ImFyZWEiOiJyZWxpYWJpbGl0eSIsInN0YXRlbWVudCI6Ik1pZ3JhdGluZyB0aGUgY29uZmlndXJhdGlvbiBmcm9tIHZlcnNpb24gMSB0byB2ZXJzaW9uIDIgcHJlc2VydmVzIGV2ZXJ5IHNhdmVkIHdvcmtzcGFjZSBhbmQgaXRzIGZvbGRlciwgYW5kIGEgdmVyc2lvbiAyIGZpbGUgaXMgbmV2ZXIgc2lsZW50bHkgb3ZlcndyaXR0ZW4gYnkgYW4gb2xkZXIgYnVpbGQuIiwiYWNjZXB0YW5jZSI6IkEgdmVyc2lvbiAxIGZpbGUgd2l0aCBzZXZlcmFsIHdvcmtzcGFjZSBlbnRyaWVzIG1pZ3JhdGVzIHdpdGggYWxsIGVudHJpZXMgYW5kIHRoZWlyIHVzZXItZ2l2ZW4gbmFtZXMgaW50YWN0IGFuZCBhIC5iYWsgY29weSBsZWZ0IGJlaGluZC4ifV0sInJpc2tzIjpbIlRoZSBtaWdyYXRpb24gaXMgb25lLXdheTogb25jZSBzYXZlZCBhcyB2ZXJzaW9uIDIsIGFuIG9sZGVyIFRpbmtlcmRlY2sgcmVmdXNlcyB0aGUgZmlsZSB3aXRoIGl0cyBuZXdlci12ZXJzaW9uIG1lc3NhZ2UgYW5kIHdpbGwgbm90IHNhdmUgb3ZlciBpdCwgYnkgZGVzaWduLiIsIlRoZSBmdWxsIHJlbmFtZSBjaGFuZ2VzIGludGVybmFsIGNvZGUgaWRlbnRpZmllcnMgYW5kIHRoZSB0ZGsgQ0xJL01DUDsgcG9zaXRpb25hbCBzY3JpcHRzIGtlZXAgd29ya2luZywgYnV0IGFueSBpbnRlZ3JhdGlvbiB0aGF0IHJlbGllcyBvbiBcdTAwMjdhcHBcdTAwMjctbmFtZWQgTUNQIHRvb2wgYXJndW1lbnRzIG9yIG9uIHRoZSBvbGQgaGVscCB0ZXh0IG1heSBuZWVkIHVwZGF0aW5nLiIsIlRoZSBjb250ZXh0IG1lbnVcdTAwMjdzIGZ1bGwgY29udGVudHMgYXJlIHVucmVzb2x2ZWQgYmV5b25kIHRoZSBhZ3JlZWQgYWN0aW9uczogdGhlIGRldmVsb3BlciBhc2tlZCBcdTAwMjd3aGF0IGVsc2U/XHUwMDI3IGFuZCB0aGUgYXNzaXN0YW50IHByb3Bvc2VkIE9wZW4sIENvcHkgcGF0aCwgQ29weSByZWxhdGl2ZSBwYXRoIGFuZCBNb3ZlLCBub25lIG9mIHdoaWNoIGFyZSBhZ3JlZWQuIiwiXHUwMDI3T3BlbiB0ZXJtaW5hbCBoZXJlXHUwMDI3IGlzIGFncmVlZCBpbiBwcmluY2lwbGUgZm9yIGZvbGRlcnMgaW5zaWRlIGEgd29ya3NwYWNlLCBidXQgaXRzIGRldGFpbHMgYXJlIG5vdCBjb25maXJtZWQ6IHN0YXJ0aW5nIHRoZSBjb25zb2xlIGluIHRoZSByaWdodC1jbGlja2VkIGZvbGRlciByYXRoZXIgdGhhbiB0aGUgd29ya3NwYWNlIHJvb3QsIHNlbGVjdGluZyBpdCBhbmQgc3dpdGNoaW5nIHRvIHRoZSBvd25pbmcgd29ya3NwYWNlLCB0cmVhdGluZyBpdCBhcyBhIHRlbXBvcmFyeSBzaGVsbCB0aGF0IGlzIG5ldmVyIHNhdmVkLCBoaWRpbmcgdGhlIGl0ZW0gb24gZm9sZGVycyB0aGF0IGJlbG9uZyB0byBubyB3b3Jrc3BhY2UsIGFuZCBhZGRpbmcgYSBtZW51IG9uIGVtcHR5IGV4cGxvcmVyIHNwYWNlLiBUaGUgYmFja2VuZCB3b3VsZCBuZWVkIHRoZSBjb25zb2xlIHRvIGNhcnJ5IGEgc3RhcnQgZm9sZGVyLCBzaW5jZSBpdCBjdXJyZW50bHkgYWx3YXlzIHVzZXMgXHUwMDI3Llx1MDAyNy4iLCJUaGVyZSBpcyBubyByZXZlYWwtaW4tZmlsZS1zeXN0ZW0gY29tbWFuZCBmb3IgYW4gYXJiaXRyYXJ5IHBhdGggeWV0OyBvbmx5IG9wZW5fY29uZmlnX2ZvbGRlciBleGlzdHMsIHNvIFJldmVhbCBuZWVkcyBuZXcgYmFja2VuZCBzdXBwb3J0LiIsIlRoZSBjb250ZXh0LW1lbnUgbGlicmFyeSByZWNvbW1lbmRhdGlvbiAoQHJhZGl4LXVpL3JlYWN0LWNvbnRleHQtbWVudSkgaXMgc3RpbGwgbm90IGNvbmZpcm1lZCBieSB0aGUgZGV2ZWxvcGVyOyBpZiByZWplY3RlZCwgZWRnZSBwbGFjZW1lbnQsIGtleWJvYXJkIG5hdmlnYXRpb24gYW5kIGZvY3VzIGJlaGF2aW91ciBzdGlsbCBoYXZlIHRvIGJlIHByb3ZpZGVkLiIsIlRoZSB0b29sYmFyIGFuZCB0aGUgY29udGV4dCBtZW51IGV4cG9zZSB0aGUgc2FtZSBmaWxlIG9wZXJhdGlvbnM7IGlmIHRoZXkgZHJpZnQsIHRoZSBzYW1lIGFjdGlvbiBjYW4gYmVoYXZlIGRpZmZlcmVudGx5IGRlcGVuZGluZyBvbiB3aGVyZSBpdCBpcyBpbnZva2VkLiIsIkFuIHVuc2F2ZWQgbmV3IGRvY3VtZW50IGhhcyBubyBwYXRoLCBzbyB0aGUgcGF0aCBydWxlIGNhbm5vdCBwbGFjZSBpdDsgaXQgbmVlZHMgYSByZW1lbWJlcmVkIGhvbWUgd29ya3NwYWNlIHVudGlsIGl0IGlzIHNhdmVkLCBhbmQgd2hhdCBoYXBwZW5zIHdoZW4gaXQgaXMgc2F2ZWQgb3V0c2lkZSB0aGF0IHdvcmtzcGFjZVx1MDAyN3Mgcm9vdCBpcyBub3QgYWdyZWVkLiIsIkEgd29ya3NwYWNlIHJlbWVtYmVycyBvbmUgc2VsZWN0ZWQgdGVybWluYWwgd2hpbGUgdGhlIGVkaXRvciByZW1lbWJlcnMgb25lIGFjdGl2ZSB0YWIsIHNvIGEgc2hhcmVkIHN0cmlwIGNhbiBzaG93IHR3byBkaWZmZXJlbnQgXHUwMDI3c2VsZWN0ZWRcdTAwMjcgaXRlbXMgdW5sZXNzIGEgc2luZ2xlIHNlbGVjdGlvbiBtb2RlbCBpcyBjaG9zZW4uIiwiRWRpdG9yIHNob3J0Y3V0cyBDdHJsXHUwMDJCUy9OL08vVyBhcmUgYm91bmQgb24gd2luZG93IHdoaWxlIHRoZSBlZGl0b3IgaXMgbW91bnRlZDsgaG9zdGluZyBlZGl0b3IgdGFicyBiZXNpZGUgdGVybWluYWxzIHJpc2tzIGNsYXNoZXMgdW5sZXNzIHRoZSBzaG9ydGN1dHMgYWN0IG9ubHkgb24gdGhlIGFjdGl2ZSBlZGl0b3IgdGFiLiIsIlRoZSBoZWFkZXIgRWRpdG9yIGJ1dHRvbiB0b2dnbGVzIHRoZSBtYWluIHZpZXcgYmV0d2VlbiBob21lIGFuZCBlZGl0b3I7IG5vdyB0aGF0IHRoZSBnbG9iYWwgdmlldyBob2xkcyBvbmx5IHVub3duZWQgZmlsZXMsIHdoZXRoZXIgaXQgc2hvdWxkIGJlIHJlYWNoYWJsZSB3aGVuIHRoZXJlIGFyZSBub25lIGlzIG5vdCBkaXNjdXNzZWQuIiwiQSBmaWxlIG9wZW5lZCB3aGlsZSBvbmUgd29ya3NwYWNlXHUwMDI3cyB2aWV3IGlzIG9uIHNjcmVlbiBtYXkgYmVsb25nIHRvIGFub3RoZXIgd29ya3NwYWNlIG9yIHRvIG5vbmU7IHRoZSBwYXRoIHJ1bGUgZGVjaWRlcyBtZW1iZXJzaGlwLCBidXQgd2hldGhlciB0aGUgdmlldyBzaG91bGQgc3dpdGNoIHRvIHRoZSBvd25pbmcgd29ya3NwYWNlIGlzIG5vdCBkaXNjdXNzZWQuIFRoaXMgYWxzbyBhcHBsaWVzIHdoZW4gXHUwMDI3T3BlbiB0ZXJtaW5hbCBoZXJlXHUwMDI3IGlzIHVzZWQgd2hpbGUgYW5vdGhlciB3b3Jrc3BhY2UgaXMgb24gc2NyZWVuLiIsIkNodW5rZWQgc3RyZWFtaW5nIGJ5IHZpc2libGUgbGluZXMgaXMgbm90IGFncmVlZDsgdGhlIHdob2xlIGZpbGUgaXMgbG9hZGVkIGludG8gbWVtb3J5IHVwIHRvIHRoZSBleGlzdGluZyA1IE1CIGVkaXRhYmxlIGNhcCwgc28gbGFyZ2VyIGZpbGVzIHN1Y2ggYXMgbG9ncyBjYW5ub3QgYmUgb3BlbmVkIGFzIGVkaXRhYmxlIGZpbGVzIHlldC4iLCJXaXRoIHRoZSBzaWRlIHBhbmUgZ29uZSBpbnNpZGUgYSB3b3Jrc3BhY2UsIHRoZSB0YWIgc3RyaXAgaXMgdGhlIG9ubHkgbGlzdCBvZiB0aGF0IHdvcmtzcGFjZVx1MDAyN3MgZWRpdG9yIHRhYnM7IG92ZXJmbG93IGJlaGF2aW91ciB3aGVuIG1hbnkgZmlsZXMgb3IgY29uc29sZXMgYXJlIG9wZW4gaXMgdW5kZWZpbmVkLiIsIlNwbGl0IHZpZXdzLCBkcmFnZ2luZyB0YWJzIGJldHdlZW4gd29ya3NwYWNlcyBhbmQgY2h1bmtlZCBmaWxlIHN0cmVhbWluZyB3ZXJlIHByb3Bvc2VkIGFzIG91dCBvZiBzY29wZSBieSB0aGUgYXNzaXN0YW50LCBidXQgdGhlIGRldmVsb3BlciBoYXMgbm90IGNvbmZpcm1lZCB0aG9zZSBleGNsdXNpb25zLiJdLCJ0ZW5zaW9ucyI6W10sImdsb3NzYXJ5IjpbIlJlZ2lzdGVyZWQgd29ya3NwYWNlOiBhIHdvcmtzcGFjZSBjb25maWd1cmVkIGluIHRoZSBsYXVuY2hlciB0aGF0IG93bnMgYSByb290IGZvbGRlciBhbmQgaGFzIHRlcm1pbmFsIHRhYnM7IHByZXZpb3VzbHkgY2FsbGVkIGFuIGFwcCBvciBwcm9qZWN0LCBhbmQgbm93IG5hbWVkIFdvcmtzcGFjZSBpbiB0aGUgVUksIHRoZSBzYXZlZCBjb25maWd1cmF0aW9uIGFuZCB0aGUgdGRrIENMSS9NQ1AuIiwiT3duaW5nIHdvcmtzcGFjZTogdGhlIHJlZ2lzdGVyZWQgd29ya3NwYWNlIHdob3NlIHJvb3QgZm9sZGVyIGNvbnRhaW5zIGEgZmlsZVx1MDAyN3MgcGF0aDsgaWYgc2V2ZXJhbCByb290cyBjb250YWluIGl0LCB0aGUgZGVlcGVzdCBvbmUuIiwiV29ya3NwYWNlIHRhYiBzdHJpcDogdGhlIHJvdyBvZiB0YWJzIHNob3duIGluc2lkZSBhIHdvcmtzcGFjZSwgY29udGFpbmluZyB0aGUgd29ya3NwYWNlXHUwMDI3cyB0ZXJtaW5hbHMsIENvbnNvbGUgYW5kIGVkaXRvciB0YWJzLiIsIkdsb2JhbCB0YWIgc3RyaXA6IHRoZSByb3cgb2YgZWRpdG9yIHRhYnMgZm9yIGZpbGVzIHRoYXQgYmVsb25nIHRvIG5vIHJlZ2lzdGVyZWQgd29ya3NwYWNlLiIsIkVkaXRvciB0YWI6IGEgdGFiIHRoYXQgc2hvd3MgYSBmaWxlIGluIHRoZSBlZGl0b3IuIiwiVW5vd25lZCBmaWxlOiBhIGZpbGUgd2hvc2UgcGF0aCBpcyBub3QgdW5kZXIgYW55IHJlZ2lzdGVyZWQgd29ya3NwYWNlXHUwMDI3cyByb290LiIsIlNpZGUgcGFuZTogdGhlIGVkaXRvclx1MDAyN3MgdmVydGljYWwgbGlzdCB0aGF0IGdyb3VwcyBvcGVuIGVkaXRvcnMgYnkgb3duZXI7IGl0IGlzIG5vdCBzaG93biBpbnNpZGUgYSB3b3Jrc3BhY2UuIiwiU2luZ2xlIGVkaXRvciBzdXJmYWNlOiB0aGUgb25lIGVkaXRvciBpbnN0YW5jZSByZXVzZWQgdG8gc2hvdyB3aGljaGV2ZXIgZWRpdG9yIHRhYiBpcyBzZWxlY3RlZC4iLCJDb250ZXh0IG1lbnU6IHRoZSBtZW51IG9wZW5lZCBieSByaWdodC1jbGlja2luZyBhIGZpbGUsIGZvbGRlciBvciBlbXB0eSBleHBsb3JlciBzcGFjZS4iLCJSZXZlYWwgaW4gRmlsZSBFeHBsb3Jlcjogb3BlbnMgdGhlIG9wZXJhdGluZyBzeXN0ZW1cdTAwMjdzIGZpbGUgbWFuYWdlciB3aXRoIHRoZSBjaG9zZW4gZmlsZSBvciBmb2xkZXIgc2VsZWN0ZWQuIiwiT3BlbiB0ZXJtaW5hbCBoZXJlOiBhIGNvbnRleHQtbWVudSBhY3Rpb24gb24gYSBmb2xkZXIgaW5zaWRlIGEgd29ya3NwYWNlIHRoYXQgb3BlbnMgYSBuZXcgQ29uc29sZSBpbnN0YW5jZSBpbiB0aGUgb3duaW5nIHdvcmtzcGFjZVx1MDAyN3MgdGFiIHN0cmlwLiIsIlZlcnNpb24gMiBjb25maWd1cmF0aW9uOiB0aGUgc2F2ZWQgc2V0dGluZ3MgZmlsZSB3aXRoIGEgd29ya3NwYWNlcyBrZXk7IGEgdmVyc2lvbiAxIGZpbGUgd2l0aCBhcHBzIGlzIHJlYWQsIGNvbnZlcnRlZCBpbiBtZW1vcnkgYW5kIHdyaXR0ZW4gYXMgdmVyc2lvbiAyIG9uIHRoZSBuZXh0IHNhdmUsIGtlZXBpbmcgYSAuYmFrIGNvcHkuIl19--\u003E",
+  "packId": "tauri-desktop-app",
+  "status": "running",
+  "currentStage": "prove",
+  "stages": {
+    "define": "done",
+    "design": "done",
+    "build": "done",
+    "challenge": "done",
+    "prove": "running"
+  },
+  "defineRound": 5,
+  "designRound": 4,
+  "buildRound": 7,
+  "sliceHash": "EE886C629B2930F5",
+  "slicesDone": 3,
+  "sliceReports": [
+    {
+      "summary": "Slice 1 of 3: added src/state/workspaceTabs.ts (partitionTabs wrapping the existing groupTabs into per-workspace tabs plus the unowned list, selectedWorkspaceTab for one selected workspace tab, globalActiveTab for the unowned-only global strip) with tests; useEditor now reports each opened file\u0027s id and path through onOpened (only from openPath, never restore/newDoc) with characterization tests; added the pane-less EditorSurface (one lazy CodeSurface/PreviewPane, Save/Save as, Raw/Preview, file error, language/EOL/encoding bar, hidden-but-mounted support for A1) with its styles and tests; EditorView\u0027s old grouped view now delegates its body to EditorSurface while keeping today\u0027s behaviour intact, and a new GlobalEditorView export renders one flat ungrouped ZestTabs strip of unowned tabs only, never showing a workspace-owned file, with its own tests. Not wired into App/TabStrip yet: those and A3 are the later slices. Full npm test passes for every new and affected test; the only remaining failures are the two pre-existing HEAD failures (App.version.test.tsx and the App footer test hard-code 2.3.0 while package.json is 2.4.1), which are outside this slice\u0027s scope.",
+      "tests": [
+        {
+          "name": "R3: files under a workspace root go to that workspace, deepest root winning",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R3",
+            "R4"
+          ]
+        },
+        {
+          "name": "R3: two roots that tie for depth give the file to the first saved workspace",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R3"
+          ]
+        },
+        {
+          "name": "R3: a path outside every root (or unsaved) belongs to no workspace",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R3",
+            "R2"
+          ]
+        },
+        {
+          "name": "R3: slash direction, trailing separators and capitalisation do not change the owner",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R3"
+          ]
+        },
+        {
+          "name": "R2: the unowned list holds only files with no workspace home, never an owned file",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R2",
+            "R4"
+          ]
+        },
+        {
+          "name": "R4: every open editor lands in exactly one bucket, with no copy",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R4"
+          ]
+        },
+        {
+          "name": "R4: a tab that moves roots moves to the new strip without being duplicated",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R4",
+            "R3"
+          ]
+        },
+        {
+          "name": "uses the remembered editor tab while it is still open",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "falls back to the terminal when the remembered editor is gone or not open",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "shows the Console group when a Console instance is the selected terminal",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "has no selection when nothing is selected and no editor is open",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "keeps an unowned active tab, otherwise picks the first unowned tab",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "A2",
+            "R2",
+            "R4"
+          ]
+        },
+        {
+          "name": "R1: opening a second file adds another tab and reports each file\u0027s own id and path",
+          "file": "src/state/useEditor.test.tsx",
+          "requirements": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "name": "R2: an unowned file keeps its own path when reported, so it can go to the global view",
+          "file": "src/state/useEditor.test.tsx",
+          "requirements": [
+            "R2"
+          ]
+        },
+        {
+          "name": "R4: opening the same path again reuses its one tab and still reports it",
+          "file": "src/state/useEditor.test.tsx",
+          "requirements": [
+            "R4"
+          ]
+        },
+        {
+          "name": "R1: a failed open reports no file, so nothing is routed to a strip",
+          "file": "src/state/useEditor.test.tsx",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "R2: an unsaved document is not reported as an opened file",
+          "file": "src/state/useEditor.test.tsx",
+          "requirements": [
+            "R2"
+          ]
+        },
+        {
+          "name": "R1: fetches the editor only when a file is on screen, then saves the active file",
+          "file": "src/features/editor/EditorSurface.test.tsx",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "R1: opening another file reuses the one editor surface instead of loading a second",
+          "file": "src/features/editor/EditorSurface.test.tsx",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "R1: shows the too-large message and opens no editor, with a way to close the tab",
+          "file": "src/features/editor/EditorSurface.test.tsx",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "R2: a binary preview shows the render only and cannot be saved",
+          "file": "src/features/editor/EditorSurface.test.tsx",
+          "requirements": [
+            "R2"
+          ]
+        },
+        {
+          "name": "R5: the surface draws no editor tab list and no owner grouping",
+          "file": "src/features/editor/EditorSurface.test.tsx",
+          "requirements": [
+            "R5"
+          ]
+        },
+        {
+          "name": "R1: markdown offers Raw and Preview and keeps the one editor mounted underneath",
+          "file": "src/features/editor/EditorSurface.test.tsx",
+          "requirements": [
+            "R1",
+            "A1"
+          ]
+        },
+        {
+          "name": "A1: hiding the surface for a terminal tab keeps the same editor mounted",
+          "file": "src/features/editor/EditorSurface.test.tsx",
+          "requirements": [
+            "A1"
+          ]
+        },
+        {
+          "name": "R2/R4: lists only unowned files, never a workspace-owned one",
+          "file": "src/features/editor/EditorView.test.tsx",
+          "requirements": [
+            "R2",
+            "R4"
+          ]
+        },
+        {
+          "name": "R5: has one plain strip, no owner headings and no Open editors side pane",
+          "file": "src/features/editor/EditorView.test.tsx",
+          "requirements": [
+            "R5"
+          ]
+        },
+        {
+          "name": "R2: marks the dirty file and closes its tab from the strip",
+          "file": "src/features/editor/EditorView.test.tsx",
+          "requirements": [
+            "R2"
+          ]
+        },
+        {
+          "name": "A2: entering the view selects an unowned tab, never the active workspace file",
+          "file": "src/features/editor/EditorView.test.tsx",
+          "requirements": [
+            "A2",
+            "R4"
+          ]
+        },
+        {
+          "name": "R5: with no unowned file open it shows a clear empty message and no group headings",
+          "file": "src/features/editor/EditorView.test.tsx",
+          "requirements": [
+            "R5",
+            "R2"
+          ]
+        }
+      ],
+      "kickbacks": []
+    },
+    {
+      "summary": "Wired revision 1\u0027s workspace-owned editor tabs into the window. App.tsx now routes every opened file by owner: a file under a registered workspace root opens (and selects) an editor tab in that workspace\u0027s own TabStrip beside its terminals and Console, switching the main area to that workspace and never to the global view; files outside every root go to a flat, unowned-only GlobalEditorView opened by the header Editor button. Each workspace remembers one session editor tab, selecting a terminal/Console clears it, and opening the same file reuses its one tab. Startup files that arrive before the saved workspaces load are deferred and filed once they load (A3). A single workspace EditorSurface stays mounted and is only hidden while a terminal tab is selected, so terminals are not remounted (A1); the old grouped \u0027Open editors\u0027 side pane is no longer rendered inside a workspace (R5), while the global view lists only unowned files with no grouping (R2, A2). TabStrip gained editor tabs with a dirty-mark text alternative and a close control, and its terminal buttons are disabled while an editor tab is selected. Added/updated tests cover R1-R5 and A1-A3. Build passes and CodeSurface remains a separate lazy chunk; the only full-suite failures are the two pre-existing hard-coded 2.3.0 version assertions in App.test.tsx and App.version.test.tsx (package.json is 2.4.1 at HEAD and is out of this step\u0027s scope).",
+      "tests": [
+        {
+          "name": "R3: files under a workspace root go to that workspace, deepest root winning",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R1",
+            "R3"
+          ]
+        },
+        {
+          "name": "R3: two roots that tie for depth give the file to the first saved workspace",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R3"
+          ]
+        },
+        {
+          "name": "R3: a path outside every root (or unsaved) belongs to no workspace",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R2",
+            "R3"
+          ]
+        },
+        {
+          "name": "R3: slash direction, trailing separators and capitalisation do not change the owner",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R3"
+          ]
+        },
+        {
+          "name": "R2: the unowned list holds only files with no workspace home, never an owned file",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R2",
+            "R4"
+          ]
+        },
+        {
+          "name": "R4: every open editor lands in exactly one bucket, with no copy",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R4"
+          ]
+        },
+        {
+          "name": "R4: a tab that moves roots moves to the new strip without being duplicated",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R3",
+            "R4"
+          ]
+        },
+        {
+          "name": "R1/R3: deleting a workspace re-files its tabs under the remaining owner or the global view, never both",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R1",
+            "R3",
+            "R4"
+          ]
+        },
+        {
+          "name": "uses the remembered editor tab while it is still open",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "keeps an unowned active tab, otherwise picks the first unowned tab",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "A2"
+          ]
+        },
+        {
+          "name": "R1/R4: shows editor tabs beside the terminals with exactly one selected, a dirty mark and a close control",
+          "file": "src/features/apps/components.test.tsx",
+          "requirements": [
+            "R1",
+            "R4"
+          ]
+        },
+        {
+          "name": "R1: the terminal actions are disabled while an editor tab is selected",
+          "file": "src/features/apps/components.test.tsx",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "R5: the strip has no vertical owner pane and no group headings",
+          "file": "src/features/apps/components.test.tsx",
+          "requirements": [
+            "R5"
+          ]
+        },
+        {
+          "name": "R1: fetches the editor only when a file is on screen, then saves the active file",
+          "file": "src/features/editor/EditorSurface.test.tsx",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "R1: opening another file reuses the one editor surface instead of loading a second",
+          "file": "src/features/editor/EditorSurface.test.tsx",
+          "requirements": [
+            "R1",
+            "A1"
+          ]
+        },
+        {
+          "name": "R1: shows the too-large message and opens no editor, with a way to close the tab",
+          "file": "src/features/editor/EditorSurface.test.tsx",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "R5: the surface draws no editor tab list and no owner grouping",
+          "file": "src/features/editor/EditorSurface.test.tsx",
+          "requirements": [
+            "R5"
+          ]
+        },
+        {
+          "name": "A1: hiding the surface for a terminal tab keeps the same editor mounted",
+          "file": "src/features/editor/EditorSurface.test.tsx",
+          "requirements": [
+            "A1"
+          ]
+        },
+        {
+          "name": "R2/R4: lists only unowned files, never a workspace-owned one",
+          "file": "src/features/editor/EditorView.test.tsx",
+          "requirements": [
+            "R2",
+            "R4"
+          ]
+        },
+        {
+          "name": "R5: has one plain strip, no owner headings and no Open editors side pane",
+          "file": "src/features/editor/EditorView.test.tsx",
+          "requirements": [
+            "R5"
+          ]
+        },
+        {
+          "name": "A2: entering the view selects an unowned tab, never the active workspace file",
+          "file": "src/features/editor/EditorView.test.tsx",
+          "requirements": [
+            "A2",
+            "R2"
+          ]
+        },
+        {
+          "name": "R5: with no unowned file open it shows a clear empty message and no group headings",
+          "file": "src/features/editor/EditorView.test.tsx",
+          "requirements": [
+            "R5"
+          ]
+        },
+        {
+          "name": "R1: opening a second file adds another tab and reports each file\u0027s own id and path",
+          "file": "src/state/useEditor.test.tsx",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "R2: an unowned file keeps its own path when reported, so it can go to the global view",
+          "file": "src/state/useEditor.test.tsx",
+          "requirements": [
+            "R2"
+          ]
+        },
+        {
+          "name": "R4: opening the same path again reuses its one tab and still reports it",
+          "file": "src/state/useEditor.test.tsx",
+          "requirements": [
+            "R4"
+          ]
+        },
+        {
+          "name": "R1: a failed open reports no file, so nothing is routed to a strip",
+          "file": "src/state/useEditor.test.tsx",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "R1/R5: a workspace-owned file opened from the global view moves to the workspace strip, with no side pane",
+          "file": "src/App.editor.test.tsx",
+          "requirements": [
+            "R1",
+            "R5"
+          ]
+        },
+        {
+          "name": "A1: switching editor tab \u2192 terminal tab \u2192 editor tab keeps the one editor surface mounted",
+          "file": "src/App.editor.test.tsx",
+          "requirements": [
+            "A1",
+            "R1"
+          ]
+        },
+        {
+          "name": "R2: an unowned file opened while a workspace is on screen opens the global view, not the workspace strip",
+          "file": "src/App.editor.test.tsx",
+          "requirements": [
+            "R2",
+            "R4"
+          ]
+        },
+        {
+          "name": "A2: the global view selects an unowned tab even when a workspace file is the active document",
+          "file": "src/App.editor.test.tsx",
+          "requirements": [
+            "A2",
+            "R2"
+          ]
+        },
+        {
+          "name": "A3: a pending workspace-owned file is filed under its workspace once they load",
+          "file": "src/App.editor.test.tsx",
+          "requirements": [
+            "A3",
+            "R1"
+          ]
+        },
+        {
+          "name": "A3: a pending file outside every workspace root opens the global view and is selected there",
+          "file": "src/App.editor.test.tsx",
+          "requirements": [
+            "A3",
+            "R2"
+          ]
+        },
+        {
+          "name": "R1/R3: clicking a workspace-owned file opens it in the workspace strip and stays on the workspace",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R1",
+            "R3",
+            "R5"
+          ]
+        },
+        {
+          "name": "R4: clicking a file that is already open focuses its tab instead of opening a second",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R4"
+          ]
+        },
+        {
+          "name": "R5/A2: a workspace-owned active tab is never shown in the global view; the unowned tab is selected and roots at its parent",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R2",
+            "R5",
+            "A2"
+          ]
+        },
+        {
+          "name": "R1: picking several files opens each one",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "name": "R1: opening a file while another tab has unsaved text keeps that text",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R1",
+            "R4"
+          ]
+        }
+      ],
+      "kickbacks": []
+    },
+    {
+      "summary": "Finished the final slice (ExplorerRoutingCharacterization) and verified the whole revision. The explorer tests now prove a workspace-owned file opens in its owning workspace\u0027s tab strip while the workspace view stays on screen (R1/R3), that an already-open path reuses its one tab (R4), and that the global view never lists a workspace-owned file (R5/A2). Also raised the wait for the lazily-loaded image preview in src/App.explorer.test.tsx to 5s so it no longer times out under full-suite parallel load. The rest of the revision (src/state/workspaceTabs.ts partition \u002B per-workspace selection, the shared pane-less EditorSurface, the flat GlobalEditorView, editor tabs in TabStrip, App routing with deferred startup files and per-workspace editor selection) was already in place from earlier slices and was checked rather than rebuilt. Ran npm run lint, the focused Vitest suites, npm run build (CodeSurface remains its own lazy chunk) and the full npm test suite. Full suite: 746 passed; the only failures are the two version tests that already fail at HEAD (they expect 2.3.0 while package.json is 2.4.1 and both files are unmodified/out of scope); App.shortcuts and the image preview passed on their own after the full-suite parallel-load timeouts.",
+      "tests": [
+        {
+          "name": "R3: files under a workspace root go to that workspace, deepest root winning",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R3"
+          ]
+        },
+        {
+          "name": "R3: two roots that tie for depth give the file to the first saved workspace",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R3"
+          ]
+        },
+        {
+          "name": "R3: a path outside every root (or unsaved) belongs to no workspace",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R3"
+          ]
+        },
+        {
+          "name": "R3: slash direction, trailing separators and capitalisation do not change the owner",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R3"
+          ]
+        },
+        {
+          "name": "R2: the unowned list holds only files with no workspace home, never an owned file",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R2",
+            "R4"
+          ]
+        },
+        {
+          "name": "R4: every open editor lands in exactly one bucket, with no copy",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R4"
+          ]
+        },
+        {
+          "name": "R4: a tab that moves roots moves to the new strip without being duplicated",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R4",
+            "R3"
+          ]
+        },
+        {
+          "name": "R1/R3: deleting a workspace re-files its tabs under the remaining owner or the global view, never both",
+          "file": "src/state/workspaceTabs.test.ts",
+          "requirements": [
+            "R1",
+            "R3"
+          ]
+        },
+        {
+          "name": "R1: opening a second file adds another tab and reports each file\u0027s own id and path",
+          "file": "src/state/useEditor.test.tsx",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "R2: an unowned file keeps its own path when reported, so it can go to the global view",
+          "file": "src/state/useEditor.test.tsx",
+          "requirements": [
+            "R2"
+          ]
+        },
+        {
+          "name": "R4: opening the same path again reuses its one tab and still reports it",
+          "file": "src/state/useEditor.test.tsx",
+          "requirements": [
+            "R4"
+          ]
+        },
+        {
+          "name": "R1: shows the too-large message and opens no editor, with a way to close the tab",
+          "file": "src/features/editor/EditorSurface.test.tsx",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "R1: opening another file reuses the one editor surface instead of loading a second",
+          "file": "src/features/editor/EditorSurface.test.tsx",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "R5: the surface draws no editor tab list and no owner grouping",
+          "file": "src/features/editor/EditorSurface.test.tsx",
+          "requirements": [
+            "R5"
+          ]
+        },
+        {
+          "name": "A1: hiding the surface for a terminal tab keeps the same editor mounted",
+          "file": "src/features/editor/EditorSurface.test.tsx",
+          "requirements": [
+            "A1",
+            "R1"
+          ]
+        },
+        {
+          "name": "R2/R4: lists only unowned files, never a workspace-owned one",
+          "file": "src/features/editor/EditorView.test.tsx",
+          "requirements": [
+            "R2",
+            "R4"
+          ]
+        },
+        {
+          "name": "R5: has one plain strip, no owner headings and no Open editors side pane",
+          "file": "src/features/editor/EditorView.test.tsx",
+          "requirements": [
+            "R5"
+          ]
+        },
+        {
+          "name": "R2: marks the dirty file and closes its tab from the strip",
+          "file": "src/features/editor/EditorView.test.tsx",
+          "requirements": [
+            "R2"
+          ]
+        },
+        {
+          "name": "A2: entering the view selects an unowned tab, never the active workspace file",
+          "file": "src/features/editor/EditorView.test.tsx",
+          "requirements": [
+            "A2",
+            "R2"
+          ]
+        },
+        {
+          "name": "R5: with no unowned file open it shows a clear empty message and no group headings",
+          "file": "src/features/editor/EditorView.test.tsx",
+          "requirements": [
+            "R5"
+          ]
+        },
+        {
+          "name": "R1/R4: shows editor tabs beside the terminals with exactly one selected, a dirty mark and a close control",
+          "file": "src/features/apps/components.test.tsx",
+          "requirements": [
+            "R1",
+            "R4"
+          ]
+        },
+        {
+          "name": "R1: the terminal actions are disabled while an editor tab is selected",
+          "file": "src/features/apps/components.test.tsx",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "R1/R5: a workspace-owned file opened from the global view moves to the workspace strip, with no side pane",
+          "file": "src/App.editor.test.tsx",
+          "requirements": [
+            "R1",
+            "R5"
+          ]
+        },
+        {
+          "name": "A1: switching editor tab \u2192 terminal tab \u2192 editor tab keeps the one editor surface mounted",
+          "file": "src/App.editor.test.tsx",
+          "requirements": [
+            "A1",
+            "R1"
+          ]
+        },
+        {
+          "name": "R2: an unowned file opened while a workspace is on screen opens the global view, not the workspace strip",
+          "file": "src/App.editor.test.tsx",
+          "requirements": [
+            "R2"
+          ]
+        },
+        {
+          "name": "A2: the global view selects an unowned tab even when a workspace file is the active document",
+          "file": "src/App.editor.test.tsx",
+          "requirements": [
+            "A2",
+            "R2"
+          ]
+        },
+        {
+          "name": "A3: a pending workspace-owned file is filed under its workspace once they load",
+          "file": "src/App.editor.test.tsx",
+          "requirements": [
+            "A3",
+            "R1"
+          ]
+        },
+        {
+          "name": "A3: a pending file outside every workspace root opens the global view and is selected there",
+          "file": "src/App.editor.test.tsx",
+          "requirements": [
+            "A3",
+            "R2"
+          ]
+        },
+        {
+          "name": "R1: the home view offers it and choosing it opens the picked file in the editor view",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "R1: picking several files opens each one",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "R1: opening a file while another tab has unsaved text keeps that text",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R1"
+          ]
+        },
+        {
+          "name": "R1/R3: clicking a workspace-owned file opens it in the workspace strip and stays on the workspace",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R1",
+            "R3"
+          ]
+        },
+        {
+          "name": "R3: clicking an image opens it in the editor\u0027s existing preview form, not a text editor",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R3"
+          ]
+        },
+        {
+          "name": "R4: clicking a file that is already open focuses its tab instead of opening a second",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R4"
+          ]
+        },
+        {
+          "name": "R3: a file that fails to open shows the editor\u0027s existing error instead of crashing",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R3"
+          ]
+        },
+        {
+          "name": "R5/A2: a workspace-owned active tab is never shown in the global view; the unowned tab is selected and roots at its parent",
+          "file": "src/App.explorer.test.tsx",
+          "requirements": [
+            "R5",
+            "A2"
+          ]
+        }
+      ],
+      "kickbacks": []
+    }
+  ],
+  "revisionsUsed": 6,
+  "requirementKickbacks": 0,
+  "planReviewRounds": 1,
+  "planConflictHashes": [
+    "7D219854D4A0D70B",
+    "4633F73A56301EC0"
+  ],
+  "sizeApproved": false,
+  "lastPlanConflicts": [],
+  "planRounds": [
+    {
+      "number": 1,
+      "at": "2026-11-27T10:55:58.4287705+00:00",
+      "outcome": "conflicts",
+      "conflicts": [
+        {
+          "requirement": "R3",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design says it adds src/state/workspaceTabs.ts:, which its own scope does not allow.",
+          "evidence": "its impact (adds) names src/state/workspaceTabs.ts:; the scope is src/App.tsx, src/App.module.css, src/App.editor.test.tsx, src/App.explorer.test.tsx, src/state/useEditor.ts, src/state/useEditor.test.tsx, src/state/workspaceTabs.ts, src/state/workspaceTabs.test.ts, src/features/editor/EditorSurface.tsx, src/features/editor/EditorSurface.test.tsx, src/features/editor/EditorView.tsx, src/features/editor/EditorView.module.css, src/features/editor/EditorView.test.tsx, src/features/terminals/TabStrip.tsx, src/features/terminals/TabStrip.module.css, src/features/terminals/TabStrip.test.tsx."
+        },
+        {
+          "requirement": "R3",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design says it adds src/features/editor/EditorSurface.tsx:, which its own scope does not allow.",
+          "evidence": "its impact (adds) names src/features/editor/EditorSurface.tsx:; the scope is src/App.tsx, src/App.module.css, src/App.editor.test.tsx, src/App.explorer.test.tsx, src/state/useEditor.ts, src/state/useEditor.test.tsx, src/state/workspaceTabs.ts, src/state/workspaceTabs.test.ts, src/features/editor/EditorSurface.tsx, src/features/editor/EditorSurface.test.tsx, src/features/editor/EditorView.tsx, src/features/editor/EditorView.module.css, src/features/editor/EditorView.test.tsx, src/features/terminals/TabStrip.tsx, src/features/terminals/TabStrip.module.css, src/features/terminals/TabStrip.test.tsx."
+        },
+        {
+          "requirement": "R3",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design says it touches src/App.tsx:, which its own scope does not allow.",
+          "evidence": "its impact (touches) names src/App.tsx:; the scope is src/App.tsx, src/App.module.css, src/App.editor.test.tsx, src/App.explorer.test.tsx, src/state/useEditor.ts, src/state/useEditor.test.tsx, src/state/workspaceTabs.ts, src/state/workspaceTabs.test.ts, src/features/editor/EditorSurface.tsx, src/features/editor/EditorSurface.test.tsx, src/features/editor/EditorView.tsx, src/features/editor/EditorView.module.css, src/features/editor/EditorView.test.tsx, src/features/terminals/TabStrip.tsx, src/features/terminals/TabStrip.module.css, src/features/terminals/TabStrip.test.tsx."
+        },
+        {
+          "requirement": "R3",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design says it touches src/App.module.css:, which its own scope does not allow.",
+          "evidence": "its impact (touches) names src/App.module.css:; the scope is src/App.tsx, src/App.module.css, src/App.editor.test.tsx, src/App.explorer.test.tsx, src/state/useEditor.ts, src/state/useEditor.test.tsx, src/state/workspaceTabs.ts, src/state/workspaceTabs.test.ts, src/features/editor/EditorSurface.tsx, src/features/editor/EditorSurface.test.tsx, src/features/editor/EditorView.tsx, src/features/editor/EditorView.module.css, src/features/editor/EditorView.test.tsx, src/features/terminals/TabStrip.tsx, src/features/terminals/TabStrip.module.css, src/features/terminals/TabStrip.test.tsx."
+        },
+        {
+          "requirement": "R3",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design says it touches src/state/useEditor.ts:, which its own scope does not allow.",
+          "evidence": "its impact (touches) names src/state/useEditor.ts:; the scope is src/App.tsx, src/App.module.css, src/App.editor.test.tsx, src/App.explorer.test.tsx, src/state/useEditor.ts, src/state/useEditor.test.tsx, src/state/workspaceTabs.ts, src/state/workspaceTabs.test.ts, src/features/editor/EditorSurface.tsx, src/features/editor/EditorSurface.test.tsx, src/features/editor/EditorView.tsx, src/features/editor/EditorView.module.css, src/features/editor/EditorView.test.tsx, src/features/terminals/TabStrip.tsx, src/features/terminals/TabStrip.module.css, src/features/terminals/TabStrip.test.tsx."
+        },
+        {
+          "requirement": "R3",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design says it touches src/features/editor/EditorView.tsx:, which its own scope does not allow.",
+          "evidence": "its impact (touches) names src/features/editor/EditorView.tsx:; the scope is src/App.tsx, src/App.module.css, src/App.editor.test.tsx, src/App.explorer.test.tsx, src/state/useEditor.ts, src/state/useEditor.test.tsx, src/state/workspaceTabs.ts, src/state/workspaceTabs.test.ts, src/features/editor/EditorSurface.tsx, src/features/editor/EditorSurface.test.tsx, src/features/editor/EditorView.tsx, src/features/editor/EditorView.module.css, src/features/editor/EditorView.test.tsx, src/features/terminals/TabStrip.tsx, src/features/terminals/TabStrip.module.css, src/features/terminals/TabStrip.test.tsx."
+        },
+        {
+          "requirement": "R3",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design says it touches src/features/editor/EditorView.module.css:, which its own scope does not allow.",
+          "evidence": "its impact (touches) names src/features/editor/EditorView.module.css:; the scope is src/App.tsx, src/App.module.css, src/App.editor.test.tsx, src/App.explorer.test.tsx, src/state/useEditor.ts, src/state/useEditor.test.tsx, src/state/workspaceTabs.ts, src/state/workspaceTabs.test.ts, src/features/editor/EditorSurface.tsx, src/features/editor/EditorSurface.test.tsx, src/features/editor/EditorView.tsx, src/features/editor/EditorView.module.css, src/features/editor/EditorView.test.tsx, src/features/terminals/TabStrip.tsx, src/features/terminals/TabStrip.module.css, src/features/terminals/TabStrip.test.tsx."
+        },
+        {
+          "requirement": "R3",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design says it touches src/features/terminals/TabStrip.tsx:, which its own scope does not allow.",
+          "evidence": "its impact (touches) names src/features/terminals/TabStrip.tsx:; the scope is src/App.tsx, src/App.module.css, src/App.editor.test.tsx, src/App.explorer.test.tsx, src/state/useEditor.ts, src/state/useEditor.test.tsx, src/state/workspaceTabs.ts, src/state/workspaceTabs.test.ts, src/features/editor/EditorSurface.tsx, src/features/editor/EditorSurface.test.tsx, src/features/editor/EditorView.tsx, src/features/editor/EditorView.module.css, src/features/editor/EditorView.test.tsx, src/features/terminals/TabStrip.tsx, src/features/terminals/TabStrip.module.css, src/features/terminals/TabStrip.test.tsx."
+        },
+        {
+          "requirement": "R3",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design says it touches src/features/terminals/TabStrip.module.css:, which its own scope does not allow.",
+          "evidence": "its impact (touches) names src/features/terminals/TabStrip.module.css:; the scope is src/App.tsx, src/App.module.css, src/App.editor.test.tsx, src/App.explorer.test.tsx, src/state/useEditor.ts, src/state/useEditor.test.tsx, src/state/workspaceTabs.ts, src/state/workspaceTabs.test.ts, src/features/editor/EditorSurface.tsx, src/features/editor/EditorSurface.test.tsx, src/features/editor/EditorView.tsx, src/features/editor/EditorView.module.css, src/features/editor/EditorView.test.tsx, src/features/terminals/TabStrip.tsx, src/features/terminals/TabStrip.module.css, src/features/terminals/TabStrip.test.tsx."
+        }
+      ],
+      "resolution": "Sent back to the architect, who revised the design to settle it."
+    },
+    {
+      "number": 2,
+      "at": "2026-11-27T11:03:52.7218935+00:00",
+      "outcome": "conflicts",
+      "conflicts": [
+        {
+          "requirement": "R1",
+          "against": "20261126-075013:R1",
+          "kind": "regression",
+          "owner": "requirements",
+          "why": "The earlier accepted Open file requirement says the chosen files open in the editor and the main area switches to the editor view; this feature says a workspace-owned file opens in the workspace\u0027s own strip and the workspace view stays on screen instead. For a file under a workspace root both cannot be true, so the builder must say which one wins.",
+          "evidence": "R1: \u0027A file that belongs to a registered workspace opens as an editor tab in that workspace\u0027s tab strip, beside its terminal and Console tabs, and the workspace view stays on screen instead of being replaced by the global editor view.\u0027 20261126-075013:R1: \u0027Choosing it launches the operating system file picker; the chosen files open in the editor and the main area switches to the editor view.\u0027"
+        },
+        {
+          "requirement": "R1",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design\u0027s scope and impact.touches change files the compatibility layer calls old (src/App.tsx, src/App.module.css, src/state/useEditor.ts) and add a new module in src/state (src/state/workspaceTabs.ts) rather than in the new-code places features/, shared/ or api/, yet the design never says why R1-R5 cannot be met by new code plus an adapter there, and never says which tests freeze the old behaviour first.",
+          "evidence": "Compatibility layer: \u0027Old areas stay as they are. New code goes in the new places below and reaches old code only through adapters... everything in \u0060src\u0060 outside \u0060features/\u0060, \u0060shared/\u0060 and \u0060api/\u0060\u0027. Design scope includes \u0027src/App.tsx\u0027, \u0027src/App.module.css\u0027, \u0027src/state/useEditor.ts\u0027, \u0027src/state/workspaceTabs.ts\u0027; impact.adds: \u0027src/state/workspaceTabs.ts\u0027, \u0027src/state/workspaceTabs.test.ts\u0027. Design summary: \u0027adds one pure helper, src/state/workspaceTabs.ts\u0027 and \u0027App keeps a session-only selected editor tab id per workspace beside the existing L.selectedTerminalId\u0027 - no technical reason and no characterization test for the old files."
+        },
+        {
+          "requirement": "R5",
+          "against": "20261125-153618:R2",
+          "kind": "regression",
+          "owner": "requirements",
+          "why": "R5 removes the editor\u0027s vertical \u0027Open editors\u0027 side pane, which is an existing panel; the earlier accepted tidy-up requirement keeps every current screen, panel and the separate editor view and says none is redesigned or replaced. The two cannot both hold.",
+          "evidence": "R5: \u0027Inside a workspace the editor has no vertical side pane that lists or groups open editors by owner; the workspace\u0027s own tab strip is the only tab list there.\u0027 20261125-153618:R2: \u0027Keep every current screen, panel, dialog, the footer and the separate editor view... Done when: All existing screens, panels, dialogs and the footer are still present after the tidy-up; none is redesigned or replaced.\u0027"
+        }
+      ],
+      "resolution": "You chose: Change the requirement to fit The next check found the plan consistent."
+    },
+    {
+      "number": 3,
+      "at": "2026-11-27T11:40:58.0819263+00:00",
+      "outcome": "consistent",
+      "conflicts": [],
+      "resolution": ""
+    }
+  ],
+  "planCheck": "consistent",
+  "planWaivedRules": [],
+  "setAsideRequirements": [],
+  "reusedChecks": {},
+  "tensionPair": [],
+  "tensionDiagnoses": {},
+  "specialists": [],
+  "specialistsDone": [],
+  "specialistCallbacks": 0,
+  "specialistHashes": {},
+  "ran": [
+    "define",
+    "design",
+    "build",
+    "challenge",
+    "prove"
+  ],
+  "accepted": {
+    "define/analyst": "artifacts/01-define/analyst-r5-add3.json",
+    "design/architect": "artifacts/02-design/architect-r4.json",
+    "design/planchecker": "artifacts/02-design/planchecker-r4.json",
+    "build/developer": "artifacts/03-build/developer-r7.json",
+    "challenge/security": "artifacts/04-challenge/security-r7.json",
+    "challenge/qa": "artifacts/04-challenge/qa-r7.json",
+    "challenge/reviewer": "artifacts/04-challenge/reviewer-r7.json"
+  },
+  "extraRounds": 5,
+  "queueIds": [
+    "SEC-1",
+    "QA-1",
+    "QA-2",
+    "REV-1",
+    "REV-2",
+    "QA-10",
+    "REV-3"
+  ],
+  "focusFindingId": "REV-3",
+  "itemShift": 5,
+  "passStamps": {
+    "src/App.editor.test.tsx": "18192:639313865303721161",
+    "src/App.explorer.test.tsx": "46925:639313792161621067",
+    "src/App.module.css": "1166:639313841524628225",
+    "src/App.tsx": "48159:639313857513559992",
+    "src/features/apps/components.test.tsx": "17715:639313783253016050",
+    "src/features/editor/EditorSurface.module.css": "1343:639313768777648962",
+    "src/features/editor/EditorSurface.test.tsx": "5631:639313773521171875",
+    "src/features/editor/EditorSurface.tsx": "4976:639313768936650493",
+    "src/features/editor/EditorView.test.tsx": "13536:639313771994599415",
+    "src/features/editor/EditorView.tsx": "11298:639313769850899550",
+    "src/features/terminals/TabStrip.module.css": "1646:639313778626049563",
+    "src/features/terminals/TabStrip.tsx": "4156:639313778581031674",
+    "src/state/useEditor.test.tsx": "14496:639313768196797330",
+    "src/state/useEditor.ts": "14353:639313857178905584",
+    "src/state/workspaceTabs.test.ts": "8386:639313825892572658",
+    "src/state/workspaceTabs.ts": "2985:639313767424979361"
+  },
+  "scopeRestored": [],
+  "configStamp": "639312730475640621",
+  "scopePush": false,
+  "acceptCut": false,
+  "hostStamps": {
+    "REV-1": "46542:639313779707626077",
+    "REV-2": "46542:639313779707626077",
+    "QA-1": "5918:639313783356926395",
+    "QA-2": "11292:639313784358589669",
+    "SEC-1": "46542:639313779707626077",
+    "REV-3": "47213:639313841385685952",
+    "QA-10": "47213:639313841385685952"
+  },
+  "verifying": [],
+  "settled": 1,
+  "confirmedSettles": 1,
+  "falseSettles": 0,
+  "preflightCalls": 2,
+  "groupRiders": [
+    "REV-3"
+  ],
+  "groupHits": 0,
+  "groupMisses": 0,
+  "fullChecksRequired": [],
+  "scopedChecks": [],
+  "scopedFiles": 0,
+  "provedChecks": [],
+  "buildRanSincePass": false,
+  "fixFiles": {
+    "SEC-1": [
+      "src/App.editor.test.tsx",
+      "src/App.tsx"
+    ],
+    "QA-1": [
+      "src/state/workspaceTabs.test.ts"
+    ],
+    "REV-1": [
+      "src/App.editor.test.tsx",
+      "src/App.module.css",
+      "src/App.tsx"
+    ],
+    "REV-2": [
+      "src/App.editor.test.tsx",
+      "src/App.module.css",
+      "src/App.tsx"
+    ],
+    "QA-2": [
+      "src/App.editor.test.tsx",
+      "src/App.module.css",
+      "src/App.tsx"
+    ],
+    "REV-3": [
+      "src/App.editor.test.tsx"
+    ],
+    "QA-10": [
+      "src/App.editor.test.tsx"
+    ]
+  },
+  "acceptedByYou": [],
+  "appAcceptsLoaded": true,
+  "claimedBuilt": [],
+  "confirmedBuilt": 2,
+  "builtWrong": 0,
+  "canaryPasses": 2,
+  "parked": [],
+  "reviewPasses": 5,
+  "costUsd": 0.819144264,
+  "budgetUsd": 10,
+  "agentCalls": 30,
+  "modelCalls": {
+    "opencode-go/deepseek-v4.1-flash": 30
+  },
+  "startedAt": "2026-11-27T10:23:50.8379793+00:00",
+  "updatedAt": "2026-11-27T14:42:35.6371085+00:00",
+  "findings": [
+    {
+      "id": "REV-1",
+      "source": "reviewer",
+      "cites": "A2",
+      "severity": "blocking",
+      "description": "Opening the global editor view while a workspace editor tab is remembered and an unowned tab is open never settles: the workspace effect keeps reselecting the workspace-owned file and the global effect reselects the unowned one, so the global strip never stays on an unowned tab (A2) and the app spins, re-rendering and hammering editor.select/api.touch/localStorage. Gate the workspace sync on the workspace main area actually being shown (view === \u0027app\u0027), or give editor.activeId a single owner.",
+      "file": "src/App.tsx",
+      "line": 361,
+      "evidence": "App\u0027s workspace sync effect (src/App.tsx:361-363) runs whenever onWorkspaceEditor is true, regardless of view, and calls editor.select(workspaceTabId). GlobalEditorView\u0027s effect (src/features/editor/EditorView.tsx:166-168) calls editor.select(shownId) for the first unowned tab. Both are mounted while view === \u0027editor\u0027. Reproduced with a probe: open a workspace-owned file, select its tab, then open the global Editor view with one unowned tab open -\u003E the two effects alternate select(E)/select(U) forever (uncaught \u0027LOOP-LIMIT reached: 41 selection touches\u0027; without the guard the test hangs).",
+      "status": "fixed",
+      "raisedRound": 1,
+      "fixedRound": 5,
+      "note": "confirmed by the whole Challenge after being settled without a Build (The workspace selection effect is now gated on the workspace view actually being shown: src/App.tsx:364 \u0060if (view === \u0022app\u0022 \u0026\u0026 onWorkspaceEditor \u0026\u0026 workspaceTabId \u0026\u0026 activeDocId !== workspaceTabId) selectDoc(workspaceTabId)\u0060, so it cannot run while the global editor view is mounted. GlobalEditorView keeps the only writer there (src/features/editor/EditorView.tsx:166-168). The added SEC-1 test (src/App.editor.test.tsx:262-285) selects a workspace file, opens the global view with an unowned tab and asserts the unowned tab is selected and a.ts is absent; it passes, and the full targeted run (155 tests, 7 files) passed.)",
+      "repeats": 0
+    },
+    {
+      "id": "REV-2",
+      "source": "reviewer",
+      "cites": "R1",
+      "severity": "blocking",
+      "description": "Opening a workspace-owned file that cannot be read (too large, not found, unreadable) while the workspace is on screen shows the person nothing, because the existing error/too-large message is rendered only by the global editor view. This breaks R1\u0027s edge case \u0027A file larger than 5 MB shows the existing too-large message and opens no editor tab\u0027 and the requirement that existing error states/wording are kept.",
+      "file": "src/App.tsx",
+      "line": 763,
+      "evidence": "The workspace branch (src/App.tsx:763-887) renders TabStrip, TerminalHosts and EditorSurface but never renders editor.error; EditorSurface only shows the active doc\u0027s a.error (src/features/editor/EditorSurface.tsx:75), and the only editor.error renders are in the global view (src/features/editor/EditorView.tsx:212, old :67). A failed open sets only editor.error (src/state/useEditor.ts:124-129) and adds no doc; for a file over 5 MB read_text_file returns Err (src-tauri/src/editor.rs:86-87). Probe: inside a workspace, a rejected open of a \u0027too large\u0027 file leaves both role=alert and the \u0027too large\u0027 text null while the workspace stays on screen.",
+      "status": "fixed",
+      "raisedRound": 1,
+      "fixedRound": 5,
+      "note": "The workspace branch now renders the existing error text: src/App.tsx:785-792 renders \u0060editor.error\u0060 as \u0060role=\u0022alert\u0022\u0060 with the existing wording and a Dismiss button, above the tab strip. The added REV-2/R1 test (src/App.editor.test.tsx:227-245) opens a rejected \u0027too large\u0027 file inside the Qonsol workspace and asserts the too-large message is shown, the workspace stays on screen, no editor tab is created, and Dismiss clears it; it passes. (The banner\u0027s over-broad scope is a separate new finding above.)",
+      "repeats": 0
+    },
+    {
+      "id": "QA-1",
+      "source": "qa",
+      "cites": "R4",
+      "severity": "blocking",
+      "description": "Add a test that re-points an open tab from a workspace path to an unowned path and back (and/or changes a workspace root), asserting one tab, the matching strip, and that its text and unsaved mark survive the move.",
+      "file": "src/state/workspaceTabs.test.ts",
+      "line": 67,
+      "evidence": "The only re-filing move test (src/state/workspaceTabs.test.ts:67-75) re-points a tab between two workspace roots (E:/work/Qonsol/api -\u003E D:/lite). Deleting a workspace is covered (lines 77-90), but nothing moves a tab from a workspace root to an unowned path (or back), changes a workspace\u0027s root, or checks content/dirty after the move. The applyRepaths test (src/state/useEditor.test.tsx:300-311) moves within C:/x and never involves a workspace. So R4 acceptance 4 (\u0027path moves between a workspace root and no workspace ... moves to the matching strip rather than being duplicated\u0027) and R3\u0027s \u0027saved outside every workspace root\u0027 / root-change edges have no test that would fail if re-filing broke.",
+      "status": "fixed",
+      "raisedRound": 1,
+      "fixedRound": 3,
+      "note": "src/state/workspaceTabs.test.ts:77-95 re-points one tab from E:/work/Qonsol/api to an unowned path (C:/tmp/a.txt) and back, asserting one tab, the workspace strip vs. the unowned list, and content \u0027a draft\u0027 / dirty true in each case. Lines 97-117 move the owning workspace root and then remove it, asserting a single tab re-files to the parent workspace and then to unowned, again with content and dirty intact. The file\u0027s 15 tests pass.",
+      "repeats": 0
+    },
+    {
+      "id": "QA-2",
+      "source": "qa",
+      "cites": "A1",
+      "severity": "blocking",
+      "description": "A1\u0027s \u0027Showing a file tab does not stop, reset or remount any of the workspace\u0027s terminals\u0027 half has no test; a regression that unmounted or stopped the terminals when a file tab is shown would still pass the suite. Use a counted TerminalHost mock and assert the same host survives the editor\u003C-\u003Eterminal switch with no stop/restart call.",
+      "file": "src/App.editor.test.tsx",
+      "line": 42,
+      "evidence": "This file replaces TerminalHost with a bare \u003Cdiv/\u003E (line 42) and the A1 switch test (lines 161-177) asserts only that the same CodeSurface element persists. App.test.tsx:140-148 only switches terminal -\u003E terminal. No test asserts a terminal host stays mounted, stays visible, or that startTerminal/stopTerminal/restartTerminal are not called when an editor tab is selected.",
+      "status": "fixed",
+      "raisedRound": 1,
+      "fixedRound": 5,
+      "note": "confirmed by the whole Challenge after being built (src/App.editor.test.tsx:44-57 now mocks TerminalHost with mount/unmount counters, and the new A1 test (lines 196-225) switches editor -\u003E terminal -\u003E editor asserting the same host DOM node survives, h.hosts.mounts is 1, h.hosts.unmounts is 0, and startTerminal/stopTerminal/restartTerminal were not called after the workspace opened. This would fail if showing a file tab stopped or remounted a terminal. The full 7-file run passed (155/155).)",
+      "repeats": 0
+    },
+    {
+      "id": "QA-3",
+      "source": "qa",
+      "cites": "R1",
+      "severity": "advisory",
+      "description": "R1 acceptance 2/4 and R5\u0027s \u0027switching does not bring the side pane back\u0027 edge are proven only at component level. Strengthen the window switch test to assert the chosen tab/visible surface after each click and that no \u0027Open editors\u0027 tablist reappears.",
+      "file": "src/App.editor.test.tsx",
+      "line": 161,
+      "evidence": "The switch test clicks the api tab but never asserts the api tab becomes aria-selected, that the editor tab is deselected, or that the editor surface is hidden (data-hidden). The TabStrip \u0027exactly one selected\u0027 test (src/features/apps/components.test.tsx:174) passes activeTabId directly, so App\u0027s clearEditorSelection (src/App.tsx:802-814) is not exercised.",
+      "status": "advisory",
+      "raisedRound": 1,
+      "repeats": 0
+    },
+    {
+      "id": "QA-4",
+      "source": "qa",
+      "cites": "R2",
+      "severity": "advisory",
+      "description": "Add a mixed pick (one file under a workspace root, one outside every root) and assert the owned file appears only in the workspace strip and the unowned one only in the global strip.",
+      "file": "src/App.explorer.test.tsx",
+      "line": 183,
+      "evidence": "The only multi-file pick test opens two workspace-owned files (E:/q/a.ts, E:/q/b.ts). No test picks a workspace-owned file together with an unowned one and asserts the owned file stays out of the global strip (R2 edge \u0027even when the picker also returned unowned files\u0027).",
+      "status": "advisory",
+      "raisedRound": 1,
+      "repeats": 2
+    },
+    {
+      "id": "QA-5",
+      "source": "qa",
+      "cites": "USR-003",
+      "severity": "advisory",
+      "description": "Add a 50-tab/20-workspace partition test (and, if practical, a timing assertion) to prove the strip update stays fast at the stated volume.",
+      "file": "src/state/workspaceTabs.test.ts",
+      "line": 8,
+      "evidence": "partitionTabs is tested with 3 tabs and 3 workspaces. There is no test with the stated 50 open editor tabs and 20 workspaces, and no timing assertion (\u003C50 ms), so the partitioning scale/performance requirement is unverified.",
+      "status": "advisory",
+      "raisedRound": 1,
+      "repeats": 2
+    },
+    {
+      "id": "QA-6",
+      "source": "qa",
+      "cites": "USR-003",
+      "severity": "advisory",
+      "description": "Add a test that opens and closes ~30 documents and checks only the still-open ids remain in the editor state map (or otherwise proves closed tabs release their state).",
+      "file": "src/features/editor/CodeSurface.tsx",
+      "line": 153,
+      "evidence": "The liveIds pruning effect (lines 153-157) is not covered by any test; nothing opens and closes a run of documents and asserts the per-document states map drops the closed ids, so a memory leak would pass.",
+      "status": "advisory",
+      "raisedRound": 1,
+      "repeats": 2
+    },
+    {
+      "id": "QA-7",
+      "source": "qa",
+      "cites": "USR-006",
+      "severity": "advisory",
+      "description": "Add a keyboard-only test for the workspace editor tabs (move, select, close) and announce the selected tab, matching the accessibility acceptance check.",
+      "file": "src/features/apps/components.test.tsx",
+      "line": 174,
+      "evidence": "The editor-tab test asserts roles, labels, the close control and the dirty text alternative, but never operates the strip with the keyboard (ArrowLeft/ArrowRight/Enter/Space to select, focus the close button and close) as the accessibility requirement asks.",
+      "status": "advisory",
+      "raisedRound": 1,
+      "repeats": 0
+    },
+    {
+      "id": "SEC-1",
+      "source": "security",
+      "cites": "USR-003",
+      "severity": "blocking",
+      "description": "Infinite render/update loop (unbounded work, CPU and memory burn, UI becomes unresponsive and React aborts with a max-update-depth error) when the global editor view is shown while a workspace editor tab is still the remembered selection. Gate the App workspace-selection effect on view === \u0022app\u0022 (or clear editorSelection when entering the global view / on route to an unowned file) so the two selection effects can never disagree.",
+      "file": "src/App.tsx",
+      "line": 361,
+      "evidence": "The workspace-selection effect at src/App.tsx:361-363 is not gated on the current view: whenever a workspace editor tab is remembered it calls selectDoc(workspaceTabId) even while view === \u0022editor\u0022. GlobalEditorView adds a competing effect at src/features/editor/EditorView.tsx:166-168 that calls select(shownId) whenever the active document is not one of the unowned tabs. With a workspace-owned tab selected (it was opened via openPath, so editorSelection[app.id] points at it) and any unowned tab open, entering the global view makes both effects write different ids to editor.activeId on every commit: App selects the workspace tab, GlobalEditorView selects the unowned tab, forever. Reproduced against the current code with a probe test: React reports \u0022Maximum update depth exceeded ... at App (src/App.tsx:83)\u0022 and the commits never settle, each one re-running partitionTabs/groupTabs over every open tab and every workspace. Reachable by opening a workspace file (which sets the remembered selection) then opening an unowned file from the command palette (route sets view to \u0022editor\u0022 without clearing editorSelection), or by opening a workspace file and then pressing the header Editor button while an unowned tab is already open.",
+      "status": "fixed",
+      "raisedRound": 1,
+      "fixedRound": 2,
+      "note": "src/App.tsx:363-365 now gates the workspace-selection effect on view === \u0022app\u0022 (view added to its dependency list), so it cannot write editor.activeId while GlobalEditorView is mounted; GlobalEditorView\u0027s own select effect (src/features/editor/EditorView.tsx:166-168) is therefore the only one active in the global view and the two can no longer ping-pong. With a remembered workspace tab plus an open unowned tab, entering the global view settles on the unowned tab: the SEC-1 regression test at src/App.editor.test.tsx:194-217 passes (npx vitest run src/App.editor.test.tsx -t \u0022SEC-1\u0022: 1 passed), asserting the unowned tab is selected, the workspace tab is absent, and the surface shows the unowned file. The effect now stops once activeDocId === workspaceTabId because select is a stable useCallback.",
+      "repeats": 0
+    },
+    {
+      "id": "CHK-tauri-web-tests",
+      "source": "check:tauri-web-tests",
+      "cites": "TAU-011",
+      "severity": "advisory",
+      "description": "Check \u0027Window: tests, with coverage\u0027 is failing.",
+      "file": "",
+      "evidence": "\u2026\n    .ZestTabs-module_scrollArrowLeft__OWxCj,\r\n    .ZestTabs-module_scrollArrowRight__wFiOJ {\r\n      width: 28px;\r\n    }\r\n  }\r\n}\r\n\r\n\r\nstderr | src/features/apps/EditPane.executable.test.tsx \u003E the terminal executable flag (R11) \u003E R11: a non-executable terminal keeps its name, command and remove controls\r\nWarning: An update to EditPane inside a test was not wrapped in act(...).\r\n\r\nWhen testing, code that causes React state updates should be wrapped into act(...):\r\n\r\nact(() =\u003E {\r\n  /* fire events that update state */\r\n});\r\n/* assert on the output */\r\n\r\nThis ensures that you\u0027re testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\r\n    at EditPane (D:\\work\\nyingi\\code\\systems\\lite-commander\\src\\features\\apps\\EditPane.tsx:21:21)\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF Failed Tests 3 \u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\r\n\r\n FAIL  src/App.shortcuts.test.tsx \u003E App app-level shortcuts \u003E R7/R8: the palette hides and reopens the git tools, the git drawer and the console\r\nError: Test timed out in 5000ms.\r\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \u0022testTimeout\u0022.\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF[1/3]\u23AF\r\n\r\n FAIL  src/App.test.tsx \u003E App \u003E R2: the persistent footer is visible on Home, the app view and the separate editor view\r\nError: expect(element).toHaveTextContent()\r\n\r\nExpected element to have text content:\r\n  v2.3.0\r\nReceived:\r\n  Tinkerdeck\u00ABSidebarv2.4.1\r\n \u276F src/App.test.tsx:376:65\r\n    374|     render(\u003CApp /\u003E);\r\n    375|     await screen.findByRole(\u0022heading\u0022, { name: \u0022Home\u0022, level: 2 });\r\n    376|     expect(screen.getByRole(\u0022contentinfo\u0022, { name: \u0022Status\u0022 })).toHave\u2026\r\n       |                                                                 ^\r\n    377| \r\n    378|     await openApp();\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF[2/3]\u23AF\r\n\r\n FAIL  src/App.version.test.tsx \u003E the app version \u003E the shipped version is one number: package.json, package-lock.json, Cargo.toml, Cargo.lock and tauri.conf.json all say 2.3.0\r\nAssertionError: expected \u00272.4.1\u0027 to be \u00272.3.0\u0027 // Object.is equality\r\n\r\nExpected: \u00222.3.0\u0022\r\nReceived: \u00222.4.1\u0022\r\n\r\n \u276F src/App.version.test.tsx:15:21\r\n     13|   it(\u0022the shipped version is one number: package.json, package-lock.js\u2026\r\n     14|     const version = (JSON.parse(file(\u0022package.json\u0022)) as { version: st\u2026\r\n     15|     expect(version).toBe(\u00222.3.0\u0022);\r\n       |                     ^\r\n     16| \r\n     17|     const lock = JSON.parse(file(\u0022package-lock.json\u0022)) as { version: s\u2026\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF[3/3]\u23AF",
+      "status": "advisory",
+      "raisedRound": 1,
+      "note": "It was already failing before this run started, so it does not block this feature.",
+      "repeats": 0
+    },
+    {
+      "id": "QA-8",
+      "source": "qa",
+      "cites": "R1",
+      "severity": "advisory",
+      "description": "Add a two-workspace test: show workspace A, open a file under workspace B\u0027s root, and assert the view switches to B and selects that file\u0027s tab.",
+      "file": "src/App.editor.test.tsx",
+      "line": 143,
+      "evidence": "The view() fixture here declares only one workspace (Qonsol, E:\\q). Workspace-owned files are opened from Home (A3, src/App.editor.test.tsx:233) and from the global editor view (line 143), never while a second workspace is on screen. No test opens a file under workspace B\u0027s root while workspace A is shown, so R1 acceptance 5\u0027s \u0027a different workspace\u0027 branch (switch to the owner and select the tab) could break without a failure.",
+      "status": "advisory",
+      "raisedRound": 3,
+      "repeats": 0
+    },
+    {
+      "id": "QA-12",
+      "source": "qa",
+      "cites": "USR-006",
+      "severity": "advisory",
+      "description": "Add a keyboard-only test for the workspace strip: ArrowLeft/Right to move and select, reach the close control and close the tab, asserting aria-selected.",
+      "file": "src/features/apps/components.test.tsx",
+      "line": 174,
+      "evidence": "The workspace editor-tab tests click with the mouse only. Nothing uses the keyboard to move between the workspace tabs, select an editor tab and close it, nor asserts the selected tab is announced, as the accessibility acceptance requires; the dirty mark does have a text alternative (src/features/terminals/TabStrip.tsx:85).",
+      "status": "advisory",
+      "raisedRound": 3,
+      "repeats": 1
+    },
+    {
+      "id": "REV-3",
+      "source": "reviewer",
+      "cites": "USR-004",
+      "severity": "blocking",
+      "description": "Scope the workspace banner to a failed open of a file owned by the workspace on screen (record the failed path/owner, or clear/suppress controller-level errors that are not about the current workspace), so unrelated editor.api failures are not shown as a workspace \u0027file cannot be read\u0027 alert and the full suite passes again.",
+      "file": "src/App.tsx",
+      "line": 785,
+      "evidence": "The new workspace alert renders the controller-wide \u0060editor.error\u0060 for every workspace and every editor operation. \u0060src/state/useEditor.ts\u0060 sets that one shared error on any failure: startup \u0060api.list()\u0060 (lines 152-153), snapshot (lines 208, 306), save (line 330), close (line 347) and restore (line 370), not only a failed open of a workspace-owned file. This breaks an existing test: \u0060npx vitest run src/App.features.test.tsx -t T34\u0060 now fails with \u0027Found multiple elements with the role \u0022alert\u0022\u0027 at \u0060src/App.features.test.tsx:226\u0060 - the git pull error \u0060\u003Cp role=\u0022alert\u0022\u003E\u0060 plus this new banner (\u0060App.module.css\u0060 \u0060_error_...\u0060) showing the swallowed editor startup error \u0022TypeError: Cannot read properties of undefined (reading \u0027invoke\u0027)\u0022 (that suite does not mock \u0060./api/editor\u0060). A full \u0060npx vitest run\u0060 reports this as an unexplained new failure; the only known pre-existing failures are the App.version test and the App footer \u0027v2.3.0\u0027 test.",
+      "status": "fixed",
+      "raisedRound": 5,
+      "fixedRound": 7,
+      "note": "The workspace alert is now scoped to a failed open of a file owned by the workspace on screen. src/state/useEditor.ts:136-139 calls the new optional onOpenFailed({path,message}) only from openPath\u0027s catch (after api.open rejects); the controller-wide error set by startup api.list (lines 152-153), snapshot, save, close and restore no longer has a matching failedOpen. src/App.tsx:364-368 renders the workspace role=alert only when failedOpen exists, editor.error still equals that failure\u0027s message, and ownerOf(failedOpen.path, apps)?.id === app?.id; Dismiss clears both (src/App.tsx:803-808). I re-ran the previously failing test: \u0060npx vitest run src/App.features.test.tsx -t T34\u0060 -\u003E 1 passed, 32 skipped (single role=alert, git error only). A full \u0060npx vitest run\u0060 -\u003E 756 passed / 2 failed (758), the only failures being the known pre-existing version tests: src/App.test.tsx footer expects v2.3.0 but receives v2.4.1 (App.test.tsx:376) and src/App.version.test.tsx expects 2.3.0 (App.version.test.tsx:15). \u0060npx tsc --noEmit\u0060 is clean. The new tests in src/App.editor.test.tsx (REV-3/R1: unrelated editor failure not shown; REV-3/R1: failed open shown only in the owning workspace) assert the visible alert, not just that nothing throws.",
+      "repeats": 0
+    },
+    {
+      "id": "QA-10",
+      "source": "qa",
+      "cites": "USR-004",
+      "severity": "blocking",
+      "description": "The workspace should not surface unrelated editor errors: restrict the banner to the open that just failed in that workspace (or update the existing App.features test to mock the editor API), so the pre-existing git-error test passes again and \u0060npm test\u0060 has no unexplained failures.",
+      "file": "src/App.tsx",
+      "line": 788,
+      "evidence": "The new workspace editor-error banner renders the controller-level editor.error as role=\u0022alert\u0022 for every editor error, not only a failure of the current workspace open. App.features.test.tsx is unchanged and has no ./api/editor mock, so the real editor API throws (\u0022Cannot read properties of undefined (reading \u0027invoke\u0027)\u0022), sets editor.error, and the workspace now shows this alert alongside the git one. \u0060npx vitest run src/App.features.test.tsx\u0060 fails T34 (App.features.test.tsx:226, findByRole(\u0022alert\u0022)) with \u0022Found multiple elements with role \u0027alert\u0027\u0022: \u0060_message_3ed0be _error_3ed0be\u0060 (git pull error) and \u0060_error_6dc87e\u0060 (App.module.css .error). The full run is 4 failed / 752 passed; the other three are the two pre-existing version mismatches (App.version.test.tsx, and App.test.tsx:376 expecting v2.3.0 vs v2.4.1) plus one flaky App.explorer command-palette timeout that passes in isolation. At HEAD the workspace branch had no editor.error alert, so T34 saw only the git alert and passed.",
+      "status": "fixed",
+      "raisedRound": 5,
+      "fixedRound": 7,
+      "note": "confirmed by the whole Challenge after being built (The workspace banner is now gated on the failed open: App.tsx:364-368 requires failedOpen, editor.error === failedOpen.message and ownerOf(failedOpen.path) === app.id before rendering role=alert. useEditor only calls onOpenFailed when openPath rejects (useEditor.ts:136-139). App.features.test.tsx (unchanged, no ./api/editor mock) T34 now passes: \u0060npx vitest run src/App.features.test.tsx\u0060 is 33/33 green with a single role=alert, and the full \u0060npm test\u0060 run is 756 passed / 2 failed, the 2 failures being the pre-existing version mismatches in App.version.test.tsx and App.test.tsx (expected 2.3.0, package is 2.4.1). New tests App.editor.test.tsx:247 and :260 prove an unrelated editor failure is not shown in a workspace and a failed open is shown only by the owning workspace.)",
+      "repeats": 0
+    },
+    {
+      "id": "QA-12",
+      "source": "qa",
+      "cites": "R5",
+      "severity": "advisory",
+      "description": "After each switch assert screen.queryByRole(\u0022tablist\u0022, { name: \u0022Open editors\u0022 }) is null (and there is exactly one tablist).",
+      "file": "src/App.editor.test.tsx",
+      "line": 178,
+      "evidence": "The A1 switch test clicks editor tab -\u003E terminal tab -\u003E editor tab and asserts only that the same CodeSurface node and terminal host survive. It never asserts that the \u0022Open editors\u0022 side pane/tablist stays absent after the switch, so R5\u0027s edge case \u0022Switching between an editor tab and a terminal tab inside a workspace does not bring the side pane back\u0022 could regress unnoticed.",
+      "status": "advisory",
+      "raisedRound": 5,
+      "repeats": 1
+    },
+    {
+      "id": "QA-13",
+      "source": "qa",
+      "cites": "A2",
+      "severity": "advisory",
+      "description": "Add a close test that asserts the next unowned tab is selected, and closing the last one shows the empty message.",
+      "file": "src/features/editor/EditorView.test.tsx",
+      "line": 284,
+      "evidence": "The only global-strip close test (\u0022R2: marks the dirty file and closes its tab from the strip\u0022) just asserts editor.close was called. No test closes the active unowned tab and asserts the next unowned tab becomes selected, nor closes the last unowned tab and asserts the empty message, so A2 acceptance 2 is not directly proven (it is only implied by the select effect and separate empty test).",
+      "status": "advisory",
+      "raisedRound": 5,
+      "repeats": 1
+    },
+    {
+      "id": "QA-13",
+      "source": "qa",
+      "cites": "R1",
+      "severity": "advisory",
+      "description": "Add one App test that, with an editor tab selected, clicks a terminal (and the Console) tab and asserts that tab is aria-selected while the editor tab is not, so the one-selected-tab rule cannot regress silently.",
+      "file": "src/App.tsx",
+      "line": 831,
+      "evidence": "R1 acceptance \u0022choosing a terminal or Console tab clears the editor selection\u0022 has no App-level assertion. App.editor.test.tsx:178-225 (A1) clicks the terminal tab and back but only asserts the surface/host identity; components.test.tsx:174-189 passes activeTabId directly, so App\u0027s clearEditorSelection branch (App.tsx:831-843) is untouched by any test. Removing the clearEditorSelection call would leave every test green.",
+      "status": "advisory",
+      "raisedRound": 7,
+      "repeats": 0
+    },
+    {
+      "id": "QA-14",
+      "source": "qa",
+      "cites": "R1",
+      "severity": "advisory",
+      "description": "Add a success-path test that opens a file owned by workspace B while workspace A is on screen and asserts the view moves to B with the file\u0027s tab selected.",
+      "file": "src/App.editor.test.tsx",
+      "line": 260,
+      "evidence": "R1 acceptance \u0022opening a workspace-owned file while a different workspace ... is on screen switches to the owning workspace\u0022 is only exercised on the failure path: the REV-3 test opens E:/b/x.ts while Qonsol is on screen, mocks the open as rejected, and never asserts a switch to Bees. The success switch is tested from the global editor view (App.editor.test.tsx:160) and from the loading/Home state (A3, :344), but never from another workspace\u0027s view.",
+      "status": "advisory",
+      "raisedRound": 7,
+      "repeats": 0
+    },
+    {
+      "id": "QA-17",
+      "source": "qa",
+      "cites": "USR-003",
+      "severity": "advisory",
+      "description": "Add a scale test with 50 tabs and 20 workspaces that times partitionTabs (and a re-partition after one tab change) and asserts it stays under 50 ms, so the volume limit is actually proven.",
+      "file": "src/state/workspaceTabs.test.ts",
+      "line": 5,
+      "evidence": "The stated volume target (50 open editor tabs across 20 registered workspaces, strips updated in under 50 ms without a file-system scan) has no test. workspaceTabs.test.ts uses 3 workspaces and at most 5 tabs, and partitionTabs/groupTabs are never timed or given large input.",
+      "status": "advisory",
+      "raisedRound": 7,
+      "repeats": 0
+    },
+    {
+      "id": "QA-18",
+      "source": "qa",
+      "cites": "USR-006",
+      "severity": "advisory",
+      "description": "Add a keyboard test on TabStrip: focus the tablist, ArrowRight/Left moves the selected tab, Enter/Space selects an editor tab, and the close control is reachable.",
+      "file": "src/features/apps/components.test.tsx",
+      "line": 174,
+      "evidence": "The accessibility acceptance (workspace tab strip operable by keyboard; enter/arrow moves selection and an editor tab can be selected and closed by keyboard) has no test for the workspace TabStrip. The editor-tab tests only use mouse clicks and labels; the keyboard pattern exists only for the separate sidebar tabs (Sidebar.tabs.test.tsx:313-344).",
+      "status": "advisory",
+      "raisedRound": 7,
+      "repeats": 0
+    },
+    {
+      "id": "QA-19",
+      "source": "qa",
+      "cites": "USR-005",
+      "severity": "advisory",
+      "description": "Add a styles test asserting the editor tab uses the theme variables (and a distinct active indicator and dirty mark) for both dark and light themes.",
+      "file": "src/features/terminals/TabStrip.module.css",
+      "line": 22,
+      "evidence": "The appearance acceptance (in both dark and light theme the editor tab background, text, border, active indicator and dirty mark match the surrounding workspace strip) has no test. TabStrip.module.css uses var(--border)/var(--text)/var(--term-bg), but no test asserts the editor tab styles or a visible active/dirty state in either theme.",
+      "status": "advisory",
+      "raisedRound": 7,
+      "repeats": 0
+    },
+    {
+      "id": "QA-20",
+      "source": "qa",
+      "cites": "USR-003",
+      "severity": "advisory",
+      "description": "Add a test that opens and closes 30 files and asserts the controller\u0027s tab/doc map contains only the still-open tabs after each close; cover CodeSurface\u0027s liveIds pruning if a surface test can be added.",
+      "file": "src/state/useEditor.test.tsx",
+      "line": 147,
+      "evidence": "The resource-use acceptance (after opening and closing 30 files only the open tabs remain in the editor\u0027s state map and memory does not grow per closed tab) has no test. useEditor.test.tsx closes a single tab and checks docs/bins for it; there is no 30-file open/close loop, and CodeSurface\u0027s liveIds pruning (CodeSurface.tsx:153-157) has no test file at all.",
+      "status": "advisory",
+      "raisedRound": 7,
+      "repeats": 0
+    }
+  ],
+  "lastChecks": [
+    {
+      "id": "no-secrets",
+      "name": "No secrets in code",
+      "passed": true,
+      "seconds": 0.2344661,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "SEC-001"
+      ]
+    },
+    {
+      "id": "no-debug-leftovers",
+      "name": "No debugging leftovers",
+      "passed": true,
+      "seconds": 0.0812711,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "QUAL-001"
+      ]
+    },
+    {
+      "id": "tauri-no-invoke-in-features",
+      "name": "Screens ask the core through src/api only",
+      "passed": true,
+      "seconds": 0.0745309,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-002"
+      ]
+    },
+    {
+      "id": "tauri-no-panics",
+      "name": "The Rust core does not panic",
+      "passed": true,
+      "seconds": 0.0647207,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-006"
+      ]
+    },
+    {
+      "id": "tauri-csp-set",
+      "name": "The window has a content security policy",
+      "passed": true,
+      "seconds": 0.0785268,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-004"
+      ]
+    },
+    {
+      "id": "tauri-least-privilege",
+      "name": "Permissions are small and specific",
+      "passed": true,
+      "seconds": 0.1097191,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-005"
+      ]
+    },
+    {
+      "id": "tauri-no-signing-key",
+      "name": "No signing keys in the project",
+      "passed": true,
+      "seconds": 0.1594007,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-009"
+      ]
+    },
+    {
+      "id": "tauri-versions",
+      "name": "One version number everywhere",
+      "passed": true,
+      "seconds": 0.2911971,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "Version 2.4.1 everywhere.",
+      "rules": [
+        "TAU-013"
+      ]
+    },
+    {
+      "id": "tauri-web-typecheck",
+      "name": "Window: type check",
+      "passed": true,
+      "seconds": 10.0262882,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "\u003E tinkerdeck@2.4.1 lint\r\n\u003E tsc --noEmit",
+      "rules": []
+    },
+    {
+      "id": "tauri-rust-format",
+      "name": "Core: formatting",
+      "passed": true,
+      "seconds": 1.3498025,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No new unformatted files (29 old one(s) are in the baseline and are not judged).",
+      "rules": [
+        "TAU-001"
+      ]
+    },
+    {
+      "id": "tauri-web-build",
+      "name": "Window: build",
+      "passed": true,
+      "seconds": 23.1286161,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "\u2026\ndist/assets/ecl-Cabwm37j.js                5.13 kB \u2502 gzip:   2.31 kB\r\ndist/assets/crystal-SjHAIU92.js            5.13 kB \u2502 gzip:   2.07 kB\r\ndist/assets/ruby-BK5aLJev.js               5.21 kB \u2502 gzip:   2.16 kB\r\ndist/assets/julia-DuME0IfC.js              5.39 kB \u2502 gzip:   2.14 kB\r\ndist/assets/vbscript-BuJXcnF6.js           5.82 kB \u2502 gzip:   2.57 kB\r\ndist/assets/mirc-CjQqDB4T.js               5.92 kB \u2502 gzip:   2.68 kB\r\ndist/assets/cobol-CWcv1MsR.js              6.20 kB \u2502 gzip:   2.96 kB\r\ndist/assets/scheme-C41bIUwD.js             6.37 kB \u2502 gzip:   2.39 kB\r\ndist/assets/python-BuPzkPfP.js             6.48 kB \u2502 gzip:   2.73 kB\r\ndist/assets/xquery-CQfU5ijd.js             6.62 kB \u2502 gzip:   2.56 kB\r\ndist/assets/pug-DukmZTjD.js                6.67 kB \u2502 gzip:   1.94 kB\r\ndist/assets/textile-CnDTJFAw.js            6.80 kB \u2502 gzip:   2.44 kB\r\ndist/assets/nsis-LY0VT_u5.js               7.06 kB \u2502 gzip:   3.08 kB\r\ndist/assets/nginx-DdIZxoE0.js              7.34 kB \u2502 gzip:   2.72 kB\r\ndist/assets/powershell-CFHJl5sT.js         7.77 kB \u2502 gzip:   3.33 kB\r\ndist/assets/haxe-H-WmDvRZ.js               7.89 kB \u2502 gzip:   2.95 kB\r\ndist/assets/gherkin-heZmZLOM.js            7.96 kB \u2502 gzip:   5.09 kB\r\ndist/assets/erlang-BNw1qcRV.js             8.07 kB \u2502 gzip:   2.89 kB\r\ndist/assets/verilog-C6RDOZhf.js            8.24 kB \u2502 gzip:   3.52 kB\r\ndist/assets/index-BLEv8zXg.js              8.35 kB \u2502 gzip:   3.61 kB\r\ndist/assets/sas-B4kiWyti.js                9.33 kB \u2502 gzip:   4.11 kB\r\ndist/assets/perl-CdXCOZ3F.js               9.75 kB \u2502 gzip:   3.46 kB\r\ndist/assets/EditPane-DHGVzkht.js          10.52 kB \u2502 gzip:   3.83 kB\r\ndist/assets/clojure-BMjYHr_A.js           10.82 kB \u2502 gzip:   3.99 kB\r\ndist/assets/idl-BEugSyMb.js               11.63 kB \u2502 gzip:   4.52 kB\r\ndist/assets/dist-BTVQGR5q.js              12.74 kB \u2502 gzip:   5.62 kB\r\ndist/assets/dist-_zF6Hqo6.js              14.70 kB \u2502 gzip:   5.96 kB\r\ndist/assets/dist-adiVU5uz.js              16.34 kB \u2502 gzip:   7.47 kB\r\ndist/assets/javascript-qCveANmP.js        17.08 kB \u2502 gzip:   5.75 kB\r\ndist/assets/dist-DjcvyYfI.js              20.98 kB \u2502 gzip:   9.38 kB\r\ndist/assets/dist-BN_wOiJ3.js              22.01 kB \u2502 gzip:  10.17 kB\r\ndist/assets/clike-B9uivgTg.js             22.30 kB \u2502 gzip:   7.86 kB\r\ndist/assets/dist-lek_cIoo.js              23.09 kB \u2502 gzip:  10.40 kB\r\ndist/assets/stylus-B533Al4x.js            25.80 kB \u2502 gzip:   8.60 kB\r\ndist/assets/index-DML7eQDx.js             26.94 kB \u2502 gzip:   8.91 kB\r\ndist/assets/css-BnMrqG3P.js               27.13 kB \u2502 gzip:   8.47 kB\r\ndist/assets/dist-C2e7eEzE.js              28.28 kB \u2502 gzip:  12.84 kB\r\ndist/assets/dist-8gVgb346.js              28.79 kB \u2502 gzip:  11.71 kB\r\ndist/assets/dist-DpgtxTUW.js              30.85 kB \u2502 gzip:  12.67 kB\r\ndist/assets/purify.es-BKvm9NlY.js         31.55 kB \u2502 gzip:  12.23 kB\r\ndist/assets/dist-BOn3MTtb.js              32.36 kB \u2502 gzip:  13.08 kB\r\ndist/assets/sql-D0XecflT.js               37.05 kB \u2502 gzip:  10.94 kB\r\ndist/assets/dist-CGQzLVEO.js              45.12 kB \u2502 gzip:  15.64 kB\r\ndist/assets/dist-DV6u7UA4.js              45.17 kB \u2502 gzip:  19.19 kB\r\ndist/assets/dist-DtspgmJa.js              50.40 kB \u2502 gzip:  19.95 kB\r\ndist/assets/marked.esm-CG1o1NHW.js        55.11 kB \u2502 gzip:  16.76 kB\r\ndist/assets/CommandPalette-GzTUyzUh.js    56.71 kB \u2502 gzip:  19.64 kB\r\ndist/assets/dist-DkFldPKP.js              83.73 kB \u2502 gzip:  30.37 kB\r\ndist/assets/dist-C9Fxgunt.js              87.04 kB \u2502 gzip:  34.51 kB\r\ndist/assets/dist-Cq66qQ1f.js              98.32 kB \u2502 gzip:  28.59 kB\r\ndist/assets/dist-DUTcGUcD.js             103.95 kB \u2502 gzip:  34.39 kB\r\ndist/assets/CodeSurface-C3k8lu_M.js      364.45 kB \u2502 gzip: 117.40 kB\r\ndist/assets/index-DEO6I6ww.js            720.42 kB \u2502 gzip: 215.93 kB\r\n\u2713 built in 12.92s\r\n\n\r\n(!) Some chunks are larger than 500 kB after minification. Consider:\r\n- Using dynamic import() to code-split the application\r\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\r\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.",
+      "rules": []
+    },
+    {
+      "id": "tauri-rust-lints",
+      "name": "Core: lints (clippy, warnings are errors)",
+      "passed": true,
+      "seconds": 3.3300825,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No clippy issues.",
+      "rules": [
+        "TAU-001"
+      ]
+    },
+    {
+      "id": "tauri-rust-build",
+      "name": "Core: the app compiles",
+      "passed": true,
+      "seconds": 5.4625714,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "Finished \u0060dev\u0060 profile [unoptimized \u002B debuginfo] target(s) in 5.18s",
+      "rules": []
+    },
+    {
+      "id": "tauri-web-tests",
+      "name": "Window: tests, with coverage",
+      "passed": false,
+      "seconds": 54.5866259,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "\u2026\n    .ZestTabs-module_scrollArrowLeft__OWxCj,\r\n    .ZestTabs-module_scrollArrowRight__wFiOJ {\r\n      width: 28px;\r\n    }\r\n  }\r\n}\r\n\r\n\r\nstderr | src/features/apps/EditPane.executable.test.tsx \u003E the terminal executable flag (R11) \u003E R11: a non-executable terminal keeps its name, command and remove controls\r\nWarning: An update to EditPane inside a test was not wrapped in act(...).\r\n\r\nWhen testing, code that causes React state updates should be wrapped into act(...):\r\n\r\nact(() =\u003E {\r\n  /* fire events that update state */\r\n});\r\n/* assert on the output */\r\n\r\nThis ensures that you\u0027re testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\r\n    at EditPane (D:\\work\\nyingi\\code\\systems\\lite-commander\\src\\features\\apps\\EditPane.tsx:21:21)\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF Failed Tests 3 \u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\r\n\r\n FAIL  src/App.shortcuts.test.tsx \u003E App app-level shortcuts \u003E R7/R8: the palette hides and reopens the git tools, the git drawer and the console\r\nError: Test timed out in 5000ms.\r\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \u0022testTimeout\u0022.\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF[1/3]\u23AF\r\n\r\n FAIL  src/App.test.tsx \u003E App \u003E R2: the persistent footer is visible on Home, the app view and the separate editor view\r\nError: expect(element).toHaveTextContent()\r\n\r\nExpected element to have text content:\r\n  v2.3.0\r\nReceived:\r\n  Tinkerdeck\u00ABSidebarv2.4.1\r\n \u276F src/App.test.tsx:376:65\r\n    374|     render(\u003CApp /\u003E);\r\n    375|     await screen.findByRole(\u0022heading\u0022, { name: \u0022Home\u0022, level: 2 });\r\n    376|     expect(screen.getByRole(\u0022contentinfo\u0022, { name: \u0022Status\u0022 })).toHave\u2026\r\n       |                                                                 ^\r\n    377| \r\n    378|     await openApp();\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF[2/3]\u23AF\r\n\r\n FAIL  src/App.version.test.tsx \u003E the app version \u003E the shipped version is one number: package.json, package-lock.json, Cargo.toml, Cargo.lock and tauri.conf.json all say 2.3.0\r\nAssertionError: expected \u00272.4.1\u0027 to be \u00272.3.0\u0027 // Object.is equality\r\n\r\nExpected: \u00222.3.0\u0022\r\nReceived: \u00222.4.1\u0022\r\n\r\n \u276F src/App.version.test.tsx:15:21\r\n     13|   it(\u0022the shipped version is one number: package.json, package-lock.js\u2026\r\n     14|     const version = (JSON.parse(file(\u0022package.json\u0022)) as { version: st\u2026\r\n     15|     expect(version).toBe(\u00222.3.0\u0022);\r\n       |                     ^\r\n     16| \r\n     17|     const lock = JSON.parse(file(\u0022package-lock.json\u0022)) as { version: s\u2026\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF[3/3]\u23AF",
+      "rules": [
+        "TAU-011"
+      ]
+    },
+    {
+      "id": "tauri-rust-tests",
+      "name": "Core: tests",
+      "passed": true,
+      "seconds": 54.1871891,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "\u2026\ntest r2_children_are_fetched_only_when_their_level_is_requested ... ok\r\ntest r2_show_hidden_reveals_the_four_names_and_can_hide_them_again ... ok\r\ntest r2_other_dot_named_entries_are_listed_normally ... ok\r\ntest a1_folders_come_first_then_files_sorted_by_name ... ok\r\ntest r2_lists_one_level_and_tells_folders_from_files ... ok\r\ntest a1_scanning_stops_at_the_scan_limit ... ok\r\ntest r2_hides_the_four_noisy_names_by_default_at_any_depth ... ok\r\ntest r2_listing_a_level_never_opens_its_child_folders ... ok\r\ntest a1_a_large_level_is_capped_with_total_and_truncated ... ok\r\n\r\ntest result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.69s\r\n\r\n\r\nrunning 17 tests\r\ntest r9_a_move_between_drives_is_refused ... ok\r\ntest r9_create_refuses_empty_whitespace_and_windows_invalid_names ... ok\r\ntest r9_rename_of_a_missing_item_reports_it_is_gone ... ok\r\ntest r9_deleting_the_same_item_twice_reports_it_is_already_gone ... ok\r\ntest r9_create_makes_a_new_file_and_a_new_folder ... ok\r\ntest r9_rename_refuses_an_invalid_name_and_changes_nothing ... ok\r\ntest r9_delete_hands_the_item_to_the_recycle_bin_and_never_removes_it_itself ... ok\r\ntest r9_move_onto_the_folder_it_is_already_in_changes_nothing ... ok\r\ntest r9_delete_is_refused_when_the_recycle_bin_cannot_take_the_item ... ok\r\ntest r9_move_refuses_to_put_a_folder_inside_itself_or_a_descendant ... ok\r\ntest r9_move_refuses_a_destination_that_is_not_a_folder ... ok\r\ntest r9_rename_refuses_a_clash_and_leaves_both_items_untouched ... ok\r\ntest r9_create_refuses_a_name_clash_and_leaves_the_existing_file_untouched ... ok\r\ntest r9_move_moves_a_file_and_a_folder_into_another_folder ... ok\r\ntest r9_rename_renames_a_file_and_a_folder ... ok\r\ntest r9_move_refuses_a_name_clash_in_the_destination ... ok\r\ntest r9_delete_uses_the_real_recycle_bin ... ok\r\n\r\ntest result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.03s\r\n\r\n\r\nrunning 6 tests\r\ntest r11_a_saved_terminal_without_the_flag_loads_as_executable ... ok\r\ntest r11_start_all_and_stop_all_skip_non_executable_terminals ... ok\r\ntest r11_when_every_terminal_is_non_executable_the_bulk_action_has_nothing_to_do ... ok\r\ntest r11_the_flag_is_saved_so_it_survives_a_restart ... ok\r\ntest r11_stop_all_command_stops_executable_terminals_and_leaves_a_hand_started_non_executable_one_running ... ok\r\ntest r11_start_all_command_starts_executable_terminals_and_skips_non_executable_ones ... ok\r\n\r\ntest result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.81s\r\n\r\n\r\nrunning 0 tests\r\n\r\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\r\n\r\n\n    Finished \u0060test\u0060 profile [unoptimized \u002B debuginfo] target(s) in 2.17s\r\n     Running unittests src\\lib.rs (src-tauri\\target\\debug\\build\\tinkerdeck/ccdb7005659ca792\\out\\tinkerdeck_lib-ccdb7005659ca792.exe)\r\n     Running unittests src\\bin\\tdk\\main.rs (src-tauri\\target\\debug\\build\\tinkerdeck/655494d0831ad3e1\\out\\tdk-655494d0831ad3e1.exe)\r\n     Running unittests src\\main.rs (src-tauri\\target\\debug\\build\\tinkerdeck/cc0a3f1cd3435521\\out\\tinkerdeck-cc0a3f1cd3435521.exe)\r\n     Running tests\\editor_repath.rs (src-tauri\\target\\debug\\build\\tinkerdeck/44bd74b686fa8e69\\out\\editor_repath-44bd74b686fa8e69.exe)\r\n     Running tests\\explorer.rs (src-tauri\\target\\debug\\build\\tinkerdeck/b5182e66f5d9fed3\\out\\explorer-b5182e66f5d9fed3.exe)\r\n     Running tests\\explorer_ops.rs (src-tauri\\target\\debug\\build\\tinkerdeck/2179f9dbdf2d4f45\\out\\explorer_ops-2179f9dbdf2d4f45.exe)\r\n     Running tests\\terminal_executable.rs (src-tauri\\target\\debug\\build\\tinkerdeck/83e2df5954de4d59\\out\\terminal_executable-83e2df5954de4d59.exe)\r\n   Doc-tests tinkerdeck_lib",
+      "rules": [
+        "TAU-011"
+      ]
+    }
+  ],
+  "fullGreenHash": "95D15FBABB68D48B2879DA29D08262107448AA8E66B3E9F071EB7F27B3AB3318",
+  "baseline": [
+    {
+      "id": "no-secrets",
+      "name": "No secrets in code",
+      "passed": true,
+      "seconds": 0.4739053,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "SEC-001"
+      ]
+    },
+    {
+      "id": "no-debug-leftovers",
+      "name": "No debugging leftovers",
+      "passed": true,
+      "seconds": 0.0767211,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "QUAL-001"
+      ]
+    },
+    {
+      "id": "tauri-no-invoke-in-features",
+      "name": "Screens ask the core through src/api only",
+      "passed": true,
+      "seconds": 0.0452845,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-002"
+      ]
+    },
+    {
+      "id": "tauri-no-panics",
+      "name": "The Rust core does not panic",
+      "passed": true,
+      "seconds": 0.0414992,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-006"
+      ]
+    },
+    {
+      "id": "tauri-csp-set",
+      "name": "The window has a content security policy",
+      "passed": true,
+      "seconds": 0.0429298,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-004"
+      ]
+    },
+    {
+      "id": "tauri-least-privilege",
+      "name": "Permissions are small and specific",
+      "passed": true,
+      "seconds": 0.0525263,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-005"
+      ]
+    },
+    {
+      "id": "tauri-no-signing-key",
+      "name": "No signing keys in the project",
+      "passed": true,
+      "seconds": 0.0788251,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-009"
+      ]
+    },
+    {
+      "id": "tauri-versions",
+      "name": "One version number everywhere",
+      "passed": true,
+      "seconds": 0.2696685,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "Version 2.4.1 everywhere.",
+      "rules": [
+        "TAU-013"
+      ]
+    },
+    {
+      "id": "tauri-web-typecheck",
+      "name": "Window: type check",
+      "passed": true,
+      "seconds": 13.470958,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "\u003E tinkerdeck@2.4.1 lint\r\n\u003E tsc --noEmit",
+      "rules": []
+    },
+    {
+      "id": "tauri-rust-format",
+      "name": "Core: formatting",
+      "passed": true,
+      "seconds": 1.2111086,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No new unformatted files (29 old one(s) are in the baseline and are not judged).",
+      "rules": [
+        "TAU-001"
+      ]
+    },
+    {
+      "id": "tauri-web-tests",
+      "name": "Window: tests, with coverage",
+      "passed": false,
+      "seconds": 102.7008243,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "Failed twice in a row, so this is not a one-off.\n\u2026\n  @media (min-width: 768px) {\r\n    .ZestTabs-module_tabItem__Dlj4s {\r\n      padding: 6px 20px;\r\n    }\r\n\r\n    .ZestTabs-module_scrollArrowLeft__OWxCj,\r\n    .ZestTabs-module_scrollArrowRight__wFiOJ {\r\n      width: 28px;\r\n    }\r\n  }\r\n}\r\n\r\n\r\nstderr | src/features/apps/EditPane.executable.test.tsx \u003E the terminal executable flag (R11) \u003E R11: a non-executable terminal keeps its name, command and remove controls\r\nWarning: An update to EditPane inside a test was not wrapped in act(...).\r\n\r\nWhen testing, code that causes React state updates should be wrapped into act(...):\r\n\r\nact(() =\u003E {\r\n  /* fire events that update state */\r\n});\r\n/* assert on the output */\r\n\r\nThis ensures that you\u0027re testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\r\n    at EditPane (D:\\work\\nyingi\\code\\systems\\lite-commander\\src\\features\\apps\\EditPane.tsx:21:21)\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF Failed Tests 2 \u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\r\n\r\n FAIL  src/App.test.tsx \u003E App \u003E R2: the persistent footer is visible on Home, the app view and the separate editor view\r\nError: expect(element).toHaveTextContent()\r\n\r\nExpected element to have text content:\r\n  v2.3.0\r\nReceived:\r\n  Tinkerdeck\u00ABSidebarv2.4.1\r\n \u276F src/App.test.tsx:376:65\r\n    374|     render(\u003CApp /\u003E);\r\n    375|     await screen.findByRole(\u0022heading\u0022, { name: \u0022Home\u0022, level: 2 });\r\n    376|     expect(screen.getByRole(\u0022contentinfo\u0022, { name: \u0022Status\u0022 })).toHave\u2026\r\n       |                                                                 ^\r\n    377| \r\n    378|     await openApp();\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF[1/2]\u23AF\r\n\r\n FAIL  src/App.version.test.tsx \u003E the app version \u003E the shipped version is one number: package.json, package-lock.json, Cargo.toml, Cargo.lock and tauri.conf.json all say 2.3.0\r\nAssertionError: expected \u00272.4.1\u0027 to be \u00272.3.0\u0027 // Object.is equality\r\n\r\nExpected: \u00222.3.0\u0022\r\nReceived: \u00222.4.1\u0022\r\n\r\n \u276F src/App.version.test.tsx:15:21\r\n     13|   it(\u0022the shipped version is one number: package.json, package-lock.js\u2026\r\n     14|     const version = (JSON.parse(file(\u0022package.json\u0022)) as { version: st\u2026\r\n     15|     expect(version).toBe(\u00222.3.0\u0022);\r\n       |                     ^\r\n     16| \r\n     17|     const lock = JSON.parse(file(\u0022package-lock.json\u0022)) as { version: s\u2026\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF[2/2]\u23AF",
+      "rules": [
+        "TAU-011"
+      ]
+    },
+    {
+      "id": "tauri-web-build",
+      "name": "Window: build",
+      "passed": true,
+      "seconds": 18.7289176,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "\u2026\ndist/assets/ecl-Cabwm37j.js                5.13 kB \u2502 gzip:   2.31 kB\r\ndist/assets/crystal-SjHAIU92.js            5.13 kB \u2502 gzip:   2.07 kB\r\ndist/assets/ruby-BK5aLJev.js               5.21 kB \u2502 gzip:   2.16 kB\r\ndist/assets/julia-DuME0IfC.js              5.39 kB \u2502 gzip:   2.14 kB\r\ndist/assets/vbscript-BuJXcnF6.js           5.82 kB \u2502 gzip:   2.57 kB\r\ndist/assets/mirc-CjQqDB4T.js               5.92 kB \u2502 gzip:   2.68 kB\r\ndist/assets/cobol-CWcv1MsR.js              6.20 kB \u2502 gzip:   2.96 kB\r\ndist/assets/scheme-C41bIUwD.js             6.37 kB \u2502 gzip:   2.39 kB\r\ndist/assets/python-BuPzkPfP.js             6.48 kB \u2502 gzip:   2.73 kB\r\ndist/assets/xquery-CQfU5ijd.js             6.62 kB \u2502 gzip:   2.56 kB\r\ndist/assets/pug-DukmZTjD.js                6.67 kB \u2502 gzip:   1.94 kB\r\ndist/assets/textile-CnDTJFAw.js            6.80 kB \u2502 gzip:   2.44 kB\r\ndist/assets/nsis-LY0VT_u5.js               7.06 kB \u2502 gzip:   3.08 kB\r\ndist/assets/nginx-DdIZxoE0.js              7.34 kB \u2502 gzip:   2.72 kB\r\ndist/assets/powershell-CFHJl5sT.js         7.77 kB \u2502 gzip:   3.33 kB\r\ndist/assets/haxe-H-WmDvRZ.js               7.89 kB \u2502 gzip:   2.95 kB\r\ndist/assets/gherkin-heZmZLOM.js            7.96 kB \u2502 gzip:   5.09 kB\r\ndist/assets/erlang-BNw1qcRV.js             8.07 kB \u2502 gzip:   2.89 kB\r\ndist/assets/verilog-C6RDOZhf.js            8.24 kB \u2502 gzip:   3.52 kB\r\ndist/assets/index-DdOIiMi6.js              8.35 kB \u2502 gzip:   3.61 kB\r\ndist/assets/sas-B4kiWyti.js                9.33 kB \u2502 gzip:   4.11 kB\r\ndist/assets/perl-CdXCOZ3F.js               9.75 kB \u2502 gzip:   3.46 kB\r\ndist/assets/EditPane-BEmHSDfk.js          10.52 kB \u2502 gzip:   3.83 kB\r\ndist/assets/clojure-BMjYHr_A.js           10.82 kB \u2502 gzip:   3.99 kB\r\ndist/assets/idl-BEugSyMb.js               11.63 kB \u2502 gzip:   4.52 kB\r\ndist/assets/dist-Dv3DyqNH.js              12.74 kB \u2502 gzip:   5.62 kB\r\ndist/assets/dist-CWFSkdtL.js              14.70 kB \u2502 gzip:   5.96 kB\r\ndist/assets/dist-CsWQRbo6.js              16.34 kB \u2502 gzip:   7.47 kB\r\ndist/assets/javascript-qCveANmP.js        17.08 kB \u2502 gzip:   5.75 kB\r\ndist/assets/dist-CiLGhAt7.js              20.98 kB \u2502 gzip:   9.38 kB\r\ndist/assets/dist-DxEf9OV2.js              22.01 kB \u2502 gzip:  10.16 kB\r\ndist/assets/clike-B9uivgTg.js             22.30 kB \u2502 gzip:   7.86 kB\r\ndist/assets/dist-BamR4rvv.js              23.09 kB \u2502 gzip:  10.40 kB\r\ndist/assets/stylus-B533Al4x.js            25.80 kB \u2502 gzip:   8.60 kB\r\ndist/assets/index-Bd95KVSI.js             26.94 kB \u2502 gzip:   8.91 kB\r\ndist/assets/css-BnMrqG3P.js               27.13 kB \u2502 gzip:   8.47 kB\r\ndist/assets/dist-BuX_izme.js              28.28 kB \u2502 gzip:  12.84 kB\r\ndist/assets/dist-Dq2jKo4b.js              28.79 kB \u2502 gzip:  11.71 kB\r\ndist/assets/dist-DXd8gKQ6.js              30.85 kB \u2502 gzip:  12.67 kB\r\ndist/assets/purify.es-BKvm9NlY.js         31.55 kB \u2502 gzip:  12.23 kB\r\ndist/assets/dist-BRhrwQi2.js              32.36 kB \u2502 gzip:  13.08 kB\r\ndist/assets/sql-D0XecflT.js               37.05 kB \u2502 gzip:  10.94 kB\r\ndist/assets/dist-tHNgVKnb.js              45.12 kB \u2502 gzip:  15.64 kB\r\ndist/assets/dist-gh-flb3q.js              45.17 kB \u2502 gzip:  19.18 kB\r\ndist/assets/dist-DuUBSkGH.js              50.40 kB \u2502 gzip:  19.95 kB\r\ndist/assets/marked.esm-CG1o1NHW.js        55.11 kB \u2502 gzip:  16.76 kB\r\ndist/assets/CommandPalette-PybjI664.js    56.71 kB \u2502 gzip:  19.64 kB\r\ndist/assets/dist-C-krAnVR.js              83.73 kB \u2502 gzip:  30.37 kB\r\ndist/assets/dist-TqTX1goi.js              87.04 kB \u2502 gzip:  34.51 kB\r\ndist/assets/dist-DslkVYCb.js              98.32 kB \u2502 gzip:  28.59 kB\r\ndist/assets/dist-DxRyl20w.js             103.95 kB \u2502 gzip:  34.39 kB\r\ndist/assets/CodeSurface-Zh8BIcO8.js      364.45 kB \u2502 gzip: 117.39 kB\r\ndist/assets/index-DjE_BjqN.js            717.45 kB \u2502 gzip: 214.85 kB\r\n\u2713 built in 10.76s\r\n\n\r\n(!) Some chunks are larger than 500 kB after minification. Consider:\r\n- Using dynamic import() to code-split the application\r\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\r\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.",
+      "rules": []
+    },
+    {
+      "id": "tauri-rust-lints",
+      "name": "Core: lints (clippy, warnings are errors)",
+      "passed": true,
+      "seconds": 34.8228199,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "No clippy issues.",
+      "rules": [
+        "TAU-001"
+      ]
+    },
+    {
+      "id": "tauri-rust-tests",
+      "name": "Core: tests",
+      "passed": true,
+      "seconds": 313.7622617,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "\u2026\ntest r2_lists_one_level_and_tells_folders_from_files ... ok\r\ntest r2_other_dot_named_entries_are_listed_normally ... ok\r\ntest r2_show_hidden_reveals_the_four_names_and_can_hide_them_again ... ok\r\ntest a1_folders_come_first_then_files_sorted_by_name ... ok\r\ntest r2_hides_the_four_noisy_names_by_default_at_any_depth ... ok\r\ntest a1_scanning_stops_at_the_scan_limit ... ok\r\ntest r2_listing_a_level_never_opens_its_child_folders ... ok\r\ntest a1_a_large_level_is_capped_with_total_and_truncated ... ok\r\n\r\ntest result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.45s\r\n\r\n\r\nrunning 17 tests\r\ntest r9_a_move_between_drives_is_refused ... ok\r\ntest r9_create_refuses_empty_whitespace_and_windows_invalid_names ... ok\r\ntest r9_rename_of_a_missing_item_reports_it_is_gone ... ok\r\ntest r9_create_makes_a_new_file_and_a_new_folder ... ok\r\ntest r9_delete_is_refused_when_the_recycle_bin_cannot_take_the_item ... ok\r\ntest r9_deleting_the_same_item_twice_reports_it_is_already_gone ... ok\r\ntest r9_rename_refuses_an_invalid_name_and_changes_nothing ... ok\r\ntest r9_delete_hands_the_item_to_the_recycle_bin_and_never_removes_it_itself ... ok\r\ntest r9_move_onto_the_folder_it_is_already_in_changes_nothing ... ok\r\ntest r9_move_refuses_to_put_a_folder_inside_itself_or_a_descendant ... ok\r\ntest r9_move_refuses_a_destination_that_is_not_a_folder ... ok\r\ntest r9_rename_refuses_a_clash_and_leaves_both_items_untouched ... ok\r\ntest r9_create_refuses_a_name_clash_and_leaves_the_existing_file_untouched ... ok\r\ntest r9_rename_renames_a_file_and_a_folder ... ok\r\ntest r9_move_moves_a_file_and_a_folder_into_another_folder ... ok\r\ntest r9_move_refuses_a_name_clash_in_the_destination ... ok\r\ntest r9_delete_uses_the_real_recycle_bin ... ok\r\n\r\ntest result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.78s\r\n\r\n\r\nrunning 6 tests\r\ntest r11_when_every_terminal_is_non_executable_the_bulk_action_has_nothing_to_do ... ok\r\ntest r11_the_flag_is_saved_so_it_survives_a_restart ... ok\r\ntest r11_a_saved_terminal_without_the_flag_loads_as_executable ... ok\r\ntest r11_start_all_and_stop_all_skip_non_executable_terminals ... ok\r\ntest r11_stop_all_command_stops_executable_terminals_and_leaves_a_hand_started_non_executable_one_running ... ok\r\ntest r11_start_all_command_starts_executable_terminals_and_skips_non_executable_ones ... ok\r\n\r\ntest result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.79s\r\n\r\n\r\nrunning 0 tests\r\n\r\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\r\n\r\n\n   Compiling tinkerdeck v2.4.1 (D:\\work\\nyingi\\code\\systems\\lite-commander\\src-tauri)\r\n    Finished \u0060test\u0060 profile [unoptimized \u002B debuginfo] target(s) in 4m 33s\r\n     Running unittests src\\lib.rs (src-tauri\\target\\debug\\build\\tinkerdeck/ccdb7005659ca792\\out\\tinkerdeck_lib-ccdb7005659ca792.exe)\r\n     Running unittests src\\bin\\tdk\\main.rs (src-tauri\\target\\debug\\build\\tinkerdeck/655494d0831ad3e1\\out\\tdk-655494d0831ad3e1.exe)\r\n     Running unittests src\\main.rs (src-tauri\\target\\debug\\build\\tinkerdeck/cc0a3f1cd3435521\\out\\tinkerdeck-cc0a3f1cd3435521.exe)\r\n     Running tests\\editor_repath.rs (src-tauri\\target\\debug\\build\\tinkerdeck/44bd74b686fa8e69\\out\\editor_repath-44bd74b686fa8e69.exe)\r\n     Running tests\\explorer.rs (src-tauri\\target\\debug\\build\\tinkerdeck/b5182e66f5d9fed3\\out\\explorer-b5182e66f5d9fed3.exe)\r\n     Running tests\\explorer_ops.rs (src-tauri\\target\\debug\\build\\tinkerdeck/2179f9dbdf2d4f45\\out\\explorer_ops-2179f9dbdf2d4f45.exe)\r\n     Running tests\\terminal_executable.rs (src-tauri\\target\\debug\\build\\tinkerdeck/83e2df5954de4d59\\out\\terminal_executable-83e2df5954de4d59.exe)\r\n   Doc-tests tinkerdeck_lib",
+      "rules": [
+        "TAU-011"
+      ]
+    },
+    {
+      "id": "tauri-rust-build",
+      "name": "Core: the app compiles",
+      "passed": true,
+      "seconds": 8.2071213,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "Finished \u0060dev\u0060 profile [unoptimized \u002B debuginfo] target(s) in 7.49s",
+      "rules": []
+    }
+  ],
+  "checkPassedOn": {
+    "tauri-versions": "BB29B72B840F4784A6FBE22AC9B7A4E33596EF68D7CF22C2EA1184616051CC03",
+    "tauri-web-typecheck": "97E9ED11E86E23F2C11BF5CFA345BAFAB2A7B3ECF70F19B53896AB33B227C490",
+    "tauri-rust-format": "E1BB95467C6010B75A38168E1A4A9492988AC5BBD45B60DAF70CAA93514DB8A0",
+    "tauri-web-build": "8F63345FFF728F88A767339B422E5C0A371202501381701615DE5EDC921D50A7",
+    "tauri-rust-lints": "39AFEFD5C9E21536EB5ECD55FEF9BC4D3FA277E72D128823BA97A03A15B8043F",
+    "tauri-rust-tests": "CA3518E2A0C2234B0B55C432D5289D26050F970AD5ED5745FA0CCA2DBE675337",
+    "tauri-rust-build": "3467619DE8B80AE4B5C963FBF18BA765EC2218CA4E600165A79FB7D4F9029A1B"
+  },
+  "checkFailedOn": {
+    "tauri-web-tests": "C6D8E8A3D23D3E5B5CB7A1830FCD2278FD2FA7B0E09291F9F9815C8202F8F302"
+  },
+  "generatedByChecks": [],
+  "ignoredPaths": [],
+  "acceptedGaps": [],
+  "convertedFindings": [],
+  "scopeExtensions": [],
+  "rulings": [],
+  "shortcuts": 0,
+  "routeHistory": [],
+  "amendments": [],
+  "scopeSeen": {},
+  "scopeRequestsMade": 0,
+  "skippedFolders": [],
+  "skippedFiles": [],
+  "skippedWhy": [],
+  "blockerRepeats": 0,
+  "additionsJudgedFor": "EE886C629B2930F5",
+  "pendingAdditionIds": [],
+  "acceptedAdditions": [
+    {
+      "id": "A1",
+      "title": "Keep the one editor surface and every terminal mounted while the other is shown",
+      "parent": "R1",
+      "why": "Switching from a file tab to a terminal tab and back must not restart a terminal or throw away the file\u0027s cursor and undo history.",
+      "decidedBy": "engine",
+      "reason": "an enabling addition that touches nothing sensitive"
+    },
+    {
+      "id": "A2",
+      "title": "Keep the global view\u0027s active tab on an unowned file",
+      "parent": "R2",
+      "why": "The global strip must never show a workspace-owned file merely because it was the last editor tab selected.",
+      "decidedBy": "engine",
+      "reason": "an enabling addition that touches nothing sensitive"
+    },
+    {
+      "id": "A3",
+      "title": "File a file opened during startup after the workspace list is known",
+      "parent": "R1",
+      "why": "A file passed on the command line opens before the saved workspaces have loaded, so without deferring its route it would be misfiled as unowned.",
+      "decidedBy": "engine",
+      "reason": "an enabling addition that touches nothing sensitive"
+    }
+  ],
+  "designSeeded": false,
+  "preflightAnswered": false,
+  "analystQuestions": 1,
+  "analysisClosed": false,
+  "youDecided": 0,
+  "requirementsApproved": true,
+  "seriesProposed": true,
+  "seriesDeclined": false,
+  "proposedSeriesId": "569c7110",
+  "seriesId": "569c7110",
+  "revisionNumber": 1,
+  "title": "(Window) A file that belongs to a registered workspace opens as an editor tab in\u2026 (and 4 more)",
+  "subtitle": "Revision 1 of 3 \u00B7 part of: Workspace-owned files open as tabs in the workspace strip (and 7 more)",
+  "seriesBoundaryAnswered": false,
+  "signOffRounds": 2,
+  "changedFiles": [
+    "src/App.editor.test.tsx",
+    "src/App.explorer.test.tsx",
+    "src/App.module.css",
+    "src/App.tsx",
+    "src/features/apps/components.test.tsx",
+    "src/features/editor/EditorSurface.module.css",
+    "src/features/editor/EditorSurface.test.tsx",
+    "src/features/editor/EditorSurface.tsx",
+    "src/features/editor/EditorView.test.tsx",
+    "src/features/editor/EditorView.tsx",
+    "src/features/terminals/TabStrip.module.css",
+    "src/features/terminals/TabStrip.tsx",
+    "src/state/useEditor.test.tsx",
+    "src/state/useEditor.ts",
+    "src/state/workspaceTabs.test.ts",
+    "src/state/workspaceTabs.ts"
+  ]
+}

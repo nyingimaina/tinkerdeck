@@ -1,0 +1,176 @@
+{
+  "summary": "This is revision 1 of 3 of a larger feature (R1 to R5). When a file is opened, its editor should appear as a tab in the tab strip of the registered workspace that owns it - the workspace whose root folder contains the file\u0027s path, with the deepest matching root winning - beside that workspace\u0027s terminals and Console tab, while the workspace view stays on screen and the editor\u0027s old side pane is gone. Files that belong to no workspace stay in a separate global editor view whose strip lists only those unowned files, so one file is never shown in two strips. The feature also gives the explorer a keyboard-capable right-click menu with the existing file operations plus Reveal in File Explorer and Open terminal here, renames the App/Project concept to Workspace across the window, the saved configuration (version 2 with a version 1 migration), the tdk command-line tool and its MCP tool arguments, and keeps one lazily loaded editor surface reused for whichever editor tab is visible.",
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "(Window) A file that belongs to a registered workspace opens as an editor tab in that workspace\u0027s tab strip, beside its terminal and Console tabs, and the workspace view stays on screen instead of being replaced by the global editor view.",
+      "acceptance": [
+        "Opening a file under a workspace\u0027s root folder shows an editor tab in that workspace\u0027s tab strip while the workspace\u0027s terminal tabs remain visible.",
+        "Selecting the editor tab shows the file; selecting a terminal tab returns to that terminal without the workspace view being replaced.",
+        "The workspace\u0027s tab strip contains editor tabs and terminal tabs at the same time.",
+        "Each workspace shows exactly one selected tab: choosing an editor tab clears the terminal or Console selection in that workspace, and choosing a terminal or Console tab clears the editor selection."
+      ],
+      "rationale": "Keeps the developer inside the workspace they were working in and puts the open file next to the terminals it belongs with.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Opening a second file belonging to the same workspace adds another editor tab rather than replacing the first.",
+        "Switching from an editor tab to a terminal tab and back leaves the editor tab open and does not reload the editor code.",
+        "A file larger than 5 MB shows the existing too-large message and opens no editor tab.",
+        "Opening a file that belongs to a workspace while a different workspace is on screen switches to the owning workspace and selects the file\u0027s tab."
+      ],
+      "pitfalls": [
+        "Opening a file must not discard terminal state or navigate away from the workspace view.",
+        "Opening and closing editor tabs must not stop, reset or remount the workspace\u0027s terminals.",
+        "A terminal tab must not remain shown as selected while a file editor is visible."
+      ],
+      "rules": [
+        "PERF-001",
+        "TAU-012",
+        "USR-003",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "editable file size",
+          "attribute": "limit",
+          "op": "at-most",
+          "value": "5",
+          "unit": "MB",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "text": "(Window) Files that belong to no registered workspace are kept in a separate global editor view, and the header Editor button keeps opening that view; the global strip lists only unowned files and unsaved documents that have no workspace home, as a plain list with no grouping.",
+      "acceptance": [
+        "Opening a file outside every workspace root shows it in the global tab strip.",
+        "That editor does not appear in any workspace\u0027s tab strip.",
+        "The global tab strip lists only files that belong to no workspace and unsaved documents with no workspace home.",
+        "The header Editor button shows and hides the global editor view, and unowned files remain listed there.",
+        "The global view shows a plain list of unowned files with no owner grouping and gives a clear empty message when none are open."
+      ],
+      "rationale": "Files outside every workspace still need somewhere to be edited without being forced into a workspace that does not own them, and the global view stays reserved for exactly those files.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Several unowned files can be open in the global tab strip at the same time.",
+        "An unowned file does not gain a workspace\u0027s tab strip merely because a workspace view was on screen when the file was opened.",
+        "Opening an unowned file while a workspace is on screen opens the global editor view."
+      ],
+      "pitfalls": [
+        "An unowned file must not be silently filed under a workspace.",
+        "A workspace-owned file must not be listed in the global strip as well.",
+        "The global strip must not reintroduce the grouped side pane that R5 removes."
+      ],
+      "rules": [
+        "PERF-001",
+        "TAU-012",
+        "USR-003",
+        "USR-004"
+      ],
+      "facts": []
+    },
+    {
+      "id": "R3",
+      "text": "(Core rule, shown in the window) A file belongs to the workspace whose root folder contains the file\u0027s path; when more than one registered workspace\u0027s root contains the path, the deepest root wins; a file outside every workspace root belongs to no workspace.",
+      "acceptance": [
+        "A file anywhere under a workspace\u0027s root folder is treated as belonging to that workspace.",
+        "A file under two nested workspace roots is treated as belonging to the deeper workspace.",
+        "A file outside every workspace root belongs to no workspace."
+      ],
+      "rationale": "It gives one unambiguous owner for every file and reuses the launcher\u0027s existing notion of which folder each workspace owns.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "When a file is saved as, renamed or moved into a different workspace\u0027s root, it belongs to that workspace from then on.",
+        "When a file is saved outside every workspace root, it belongs to no workspace from then on.",
+        "When a workspace root changes or the workspace is deleted, affected files are re-evaluated against the remaining roots."
+      ],
+      "pitfalls": [
+        "A tab must not stay filed under a workspace after the file\u0027s path no longer falls under that workspace\u0027s root.",
+        "A file must not be assigned to a workspace merely because that workspace was open when the file was opened."
+      ],
+      "rules": [
+        "USR-003",
+        "USR-004"
+      ],
+      "facts": [
+        {
+          "subject": "file ownership rule",
+          "attribute": "owner",
+          "op": "equals",
+          "value": "the workspace whose root folder contains the file path, deepest root wins",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "file ownership rule",
+          "attribute": "outside every workspace root",
+          "op": "equals",
+          "value": "no workspace",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "text": "(Window) Each open editor appears in exactly one strip: a workspace-owned file only in its owning workspace\u0027s tab strip, and a file that belongs to no workspace only in the global tab strip; no file appears in both strips.",
+      "acceptance": [
+        "An editor for a workspace-owned file is absent from the global tab strip.",
+        "An editor for an unowned file is absent from every workspace\u0027s tab strip.",
+        "Opening the same file again selects its existing tab instead of creating a second copy in another strip."
+      ],
+      "rationale": "One placement per file keeps the selected item unambiguous and avoids two copies of the same document drifting apart.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Opening the same path again reuses its existing tab in the one strip that owns it.",
+        "When a file\u0027s path moves between a workspace root and no workspace, its single tab moves to the matching strip rather than being duplicated."
+      ],
+      "pitfalls": [
+        "The same document must not be rendered in two strips at the same time.",
+        "Opening a file from a second place, such as Ctrl\u002BO or tdk, must not create a duplicate tab."
+      ],
+      "rules": [
+        "PERF-001",
+        "USR-003",
+        "USR-004"
+      ],
+      "facts": []
+    },
+    {
+      "id": "R5",
+      "text": "(Window) Inside a workspace the editor has no vertical side pane that lists or groups open editors by owner; the workspace\u0027s own tab strip is the only tab list there. The global editor view still lists only unowned files, as a plain list with no grouping.",
+      "acceptance": [
+        "Opening a file in a workspace shows the editor without the vertical \u0027Open editors\u0027 list that groups editors by owner.",
+        "The editor tab sits in the workspace\u0027s tab strip, and selecting it shows the file.",
+        "The global editor view shows a plain list of unowned files with no group headings."
+      ],
+      "rationale": "The side pane duplicated the workspace tab strip\u0027s job and took space away from the editor.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Switching between an editor tab and a terminal tab inside a workspace does not bring the side pane back.",
+        "When no unowned files are open, the global view shows no group headings and a clear empty message."
+      ],
+      "pitfalls": [
+        "Removing the side pane inside a workspace must not remove or hide the workspace\u0027s terminal tabs or its tab strip.",
+        "The side pane must not be re-added for a workspace-owned file merely because it was opened from the global view."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-003",
+        "USR-004",
+        "USR-005"
+      ],
+      "facts": []
+    }
+  ],
+  "questions": [],
+  "coverage": [],
+  "assumptions": [],
+  "roles": [],
+  "outOfScope": [],
+  "nonFunctional": [],
+  "risks": [],
+  "tensions": [],
+  "glossary": []
+}

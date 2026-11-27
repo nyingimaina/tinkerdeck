@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "cites": "A2",
+      "severity": "blocking",
+      "file": "src/App.tsx",
+      "line": 361,
+      "evidence": "App's workspace sync effect (src/App.tsx:361-363) runs whenever onWorkspaceEditor is true, regardless of view, and calls editor.select(workspaceTabId). GlobalEditorView's effect (src/features/editor/EditorView.tsx:166-168) calls editor.select(shownId) for the first unowned tab. Both are mounted while view === 'editor'. Reproduced with a probe: open a workspace-owned file, select its tab, then open the global Editor view with one unowned tab open -> the two effects alternate select(E)/select(U) forever (uncaught 'LOOP-LIMIT reached: 41 selection touches'; without the guard the test hangs).",
+      "description": "Opening the global editor view while a workspace editor tab is remembered and an unowned tab is open never settles: the workspace effect keeps reselecting the workspace-owned file and the global effect reselects the unowned one, so the global strip never stays on an unowned tab (A2) and the app spins, re-rendering and hammering editor.select/api.touch/localStorage. Gate the workspace sync on the workspace main area actually being shown (view === 'app'), or give editor.activeId a single owner."
+    },
+    {
+      "cites": "R1",
+      "severity": "blocking",
+      "file": "src/App.tsx",
+      "line": 763,
+      "evidence": "The workspace branch (src/App.tsx:763-887) renders TabStrip, TerminalHosts and EditorSurface but never renders editor.error; EditorSurface only shows the active doc's a.error (src/features/editor/EditorSurface.tsx:75), and the only editor.error renders are in the global view (src/features/editor/EditorView.tsx:212, old :67). A failed open sets only editor.error (src/state/useEditor.ts:124-129) and adds no doc; for a file over 5 MB read_text_file returns Err (src-tauri/src/editor.rs:86-87). Probe: inside a workspace, a rejected open of a 'too large' file leaves both role=alert and the 'too large' text null while the workspace stays on screen.",
+      "description": "Opening a workspace-owned file that cannot be read (too large, not found, unreadable) while the workspace is on screen shows the person nothing, because the existing error/too-large message is rendered only by the global editor view. This breaks R1's edge case 'A file larger than 5 MB shows the existing too-large message and opens no editor tab' and the requirement that existing error states/wording are kept."
+    }
+  ],
+  "verifications": []
+}

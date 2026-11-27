@@ -63,3 +63,31 @@
 .consoleLabel {
   font-family: var(--font-mono);
 }
+.editorLabel {
+  max-width: 220px;
+}
+.editorName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dirty {
+  flex: none;
+  color: var(--amber);
+  font-size: 10px;
+  line-height: 1;
+}
+.close {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  line-height: 1;
+}
+.close:hover {
+  background: var(--hover);
+}

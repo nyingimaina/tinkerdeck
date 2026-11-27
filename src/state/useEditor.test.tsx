@@ -214,6 +214,58 @@ describe("useEditor", () => {
   });
 });
 
+describe("opening reports the file so the window can route it (R1, R2, R4)", () => {
+  it("R1: opening a second file adds another tab and reports each file's own id and path", async () => {
+    m.open.mockImplementation(async (path: string) =>
+      path.includes("a.txt") ? doc("a", "alpha", { path: "C:/x/a.txt" }) : doc("b", "beta", { path: "D:/loose/b.txt" }),
+    );
+    await mount();
+    await act(async () => ctl.current.openPath("C:/x/a.txt"));
+    await act(async () => ctl.current.openPath("D:/loose/b.txt"));
+
+    expect(ctl.current.tabs.map((t) => t.id)).toEqual(["a", "b"]);
+    expect(onOpened.mock.calls.map(([opened]) => opened)).toEqual([
+      { id: "a", path: "C:/x/a.txt" },
+      { id: "b", path: "D:/loose/b.txt" },
+    ]);
+  });
+
+  it("R2: an unowned file keeps its own path when reported, so it can go to the global view", async () => {
+    m.open.mockResolvedValue(doc("loose", "text", { path: "C:/tmp/loose.txt", title: "loose.txt" }));
+    await mount();
+    await act(async () => ctl.current.openPath("C:/tmp/loose.txt"));
+    expect(onOpened).toHaveBeenCalledWith({ id: "loose", path: "C:/tmp/loose.txt" });
+  });
+
+  it("R4: opening the same path again reuses its one tab and still reports it", async () => {
+    m.open.mockResolvedValue(doc("a", "text", { path: "C:/x/a.txt" }));
+    await mount();
+    await act(async () => ctl.current.openPath("C:/x/a.txt"));
+    await act(async () => ctl.current.openPath("C:/x/a.txt"));
+
+    expect(ctl.current.tabs.map((t) => t.id)).toEqual(["a"]);
+    expect(onOpened).toHaveBeenCalledTimes(2);
+    expect(onOpened).toHaveBeenLastCalledWith({ id: "a", path: "C:/x/a.txt" });
+  });
+
+  it("R1: a failed open reports no file, so nothing is routed to a strip", async () => {
+    m.open.mockRejectedValue("The file is too large to edit: C:/x/huge.bin");
+    await mount();
+    await act(async () => ctl.current.openPath("C:/x/huge.bin"));
+    expect(onOpened).not.toHaveBeenCalled();
+    expect(ctl.current.error).toContain("too large");
+    expect(ctl.current.tabs).toEqual([]);
+  });
+
+  it("R2: an unsaved document is not reported as an opened file", async () => {
+    m.newDoc.mockResolvedValue(doc("n", "", { path: null, title: "new 1" }));
+    await mount();
+    await act(async () => ctl.current.newDoc());
+    expect(ctl.current.tabs.map((t) => t.id)).toEqual(["n"]);
+    expect(onOpened).not.toHaveBeenCalled();
+  });
+});
+
 describe("explorer file operations keep the editor in step (R9)", () => {
   it("R9: flushPending sends the latest typing at once and waits for the snapshot", async () => {
     m.list.mockResolvedValue({ open: [entry("a")], bin: [] });

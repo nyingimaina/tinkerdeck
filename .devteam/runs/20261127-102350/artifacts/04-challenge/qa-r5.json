@@ -1,0 +1,67 @@
+{
+  "findings": [
+    {
+      "cites": "USR-004",
+      "severity": "blocking",
+      "file": "src/App.tsx",
+      "line": 788,
+      "evidence": "The new workspace editor-error banner renders the controller-level editor.error as role=\"alert\" for every editor error, not only a failure of the current workspace open. App.features.test.tsx is unchanged and has no ./api/editor mock, so the real editor API throws (\"Cannot read properties of undefined (reading 'invoke')\"), sets editor.error, and the workspace now shows this alert alongside the git one. `npx vitest run src/App.features.test.tsx` fails T34 (App.features.test.tsx:226, findByRole(\"alert\")) with \"Found multiple elements with role 'alert'\": `_message_3ed0be _error_3ed0be` (git pull error) and `_error_6dc87e` (App.module.css .error). The full run is 4 failed / 752 passed; the other three are the two pre-existing version mismatches (App.version.test.tsx, and App.test.tsx:376 expecting v2.3.0 vs v2.4.1) plus one flaky App.explorer command-palette timeout that passes in isolation. At HEAD the workspace branch had no editor.error alert, so T34 saw only the git alert and passed.",
+      "description": "The workspace should not surface unrelated editor errors: restrict the banner to the open that just failed in that workspace (or update the existing App.features test to mock the editor API), so the pre-existing git-error test passes again and `npm test` has no unexplained failures."
+    },
+    {
+      "cites": "R2",
+      "severity": "advisory",
+      "file": "src/App.explorer.test.tsx",
+      "line": 183,
+      "evidence": "The only multi-file pick test opens two workspace-owned files (E:/q/a.ts, E:/q/b.ts). No test opens a workspace-owned file together with an unowned one and asserts each lands in exactly its own strip, so R2's edge case \"Opening a workspace-owned file never adds it to the global strip, even when the picker also returned unowned files\" is unproven.",
+      "description": "Add a mixed pick (one file under a workspace root, one outside every root) and assert the owned file is only in the workspace strip and the unowned file only in the global strip."
+    },
+    {
+      "cites": "R5",
+      "severity": "advisory",
+      "file": "src/App.editor.test.tsx",
+      "line": 178,
+      "evidence": "The A1 switch test clicks editor tab -> terminal tab -> editor tab and asserts only that the same CodeSurface node and terminal host survive. It never asserts that the \"Open editors\" side pane/tablist stays absent after the switch, so R5's edge case \"Switching between an editor tab and a terminal tab inside a workspace does not bring the side pane back\" could regress unnoticed.",
+      "description": "After each switch assert screen.queryByRole(\"tablist\", { name: \"Open editors\" }) is null (and there is exactly one tablist)."
+    },
+    {
+      "cites": "A2",
+      "severity": "advisory",
+      "file": "src/features/editor/EditorView.test.tsx",
+      "line": 284,
+      "evidence": "The only global-strip close test (\"R2: marks the dirty file and closes its tab from the strip\") just asserts editor.close was called. No test closes the active unowned tab and asserts the next unowned tab becomes selected, nor closes the last unowned tab and asserts the empty message, so A2 acceptance 2 is not directly proven (it is only implied by the select effect and separate empty test).",
+      "description": "Add a close test that asserts the next unowned tab is selected, and closing the last one shows the empty message."
+    },
+    {
+      "cites": "USR-003",
+      "severity": "advisory",
+      "file": "src/state/workspaceTabs.test.ts",
+      "line": 8,
+      "evidence": "partitionTabs is exercised with at most 5 tabs and 3 workspaces. There is no test with the stated 50 open editor tabs and 20 registered workspaces and no timing assertion (<50 ms), so the partitioning volume/performance acceptance is unverified.",
+      "description": "Add a 50-tab/20-workspace partition test (with a generous timing bound) to prove the strip update stays fast and does not scan the file system."
+    },
+    {
+      "cites": "USR-003",
+      "severity": "advisory",
+      "file": "src/features/editor/CodeSurface.tsx",
+      "line": 153,
+      "evidence": "The liveIds pruning effect (lines 153-157) has no test and there is no CodeSurface test file. Nothing opens and closes ~30 documents and asserts the per-document states map drops the closed ids, so the resource-use acceptance (\"after opening and closing 30 files ... memory does not grow\") would pass even if pruning were removed.",
+      "description": "Add a test that opens and closes 30 documents and checks that only still-open ids remain in the editor state map."
+    },
+    {
+      "cites": "USR-006",
+      "severity": "advisory",
+      "file": "src/features/apps/components.test.tsx",
+      "line": 174,
+      "evidence": "The workspace editor-tab tests operate with the mouse only. Nothing uses the keyboard to move between the workspace's tabs, select an editor tab and close it, nor asserts the selected tab is announced, as the accessibility acceptance requires; the dirty mark does have a text alternative (TabStrip.tsx:85).",
+      "description": "Add a keyboard-only test for the workspace strip: ArrowLeft/Right to move and select, reach the close control and close the tab, asserting aria-selected."
+    }
+  ],
+  "verifications": [
+    {
+      "id": "QA-2",
+      "status": "fixed",
+      "evidence": "src/App.editor.test.tsx:44-57 now mocks TerminalHost with mount/unmount counters, and the new A1 test (lines 196-225) switches editor -> terminal -> editor asserting the same host DOM node survives, h.hosts.mounts is 1, h.hosts.unmounts is 0, and startTerminal/stopTerminal/restartTerminal were not called after the workspace opened. This would fail if showing a file tab stopped or remounted a terminal. The full 7-file run passed (155/155)."
+    }
+  ]
+}

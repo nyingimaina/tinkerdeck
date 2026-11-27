@@ -1,0 +1,133 @@
+{
+  "summary": "This revision builds R1-R5 only: already-open editors move into the tab strip of the workspace that owns the file, and the separate editor view becomes the plain strip for files no workspace owns. It reuses src/state/editorGroups.ts unchanged - ownerOf already returns the deepest workspace root that contains a path, and groupTabs already files unowned and unsaved tabs under Misc last - and adds one pure helper, src/state/workspaceTabs.ts, that partitions the editor's tabs once per tabs/apps change into a per-workspace list plus one unowned list. Because the strips are derived from that single partition, a tab can only ever appear in one of them, and a workspace root change or removal re-files its tabs on the next render without extra state (R3, R4). App keeps a session-only selected editor tab id per workspace beside the existing L.selectedTerminalId; when it is set it wins over the terminal selection, the terminal area stays mounted but hidden, and the workspace view stays on screen (R1). useEditor reports the opened tab id and path through onOpened so App can route without waiting for a render: a file owned by a workspace switches to that workspace and selects its tab; an unowned file opens the header's global view and selects it (R1, R2). A new pane-less EditorSurface (the existing lazy CodeSurface, per-tab Raw/Preview mode, Save/Save as actions and the language/EOL/encoding status bar) is shared by the workspace main area and the global view; EditorView now shows only unowned tabs as a plain horizontal strip with today's toolbar and the global bin, and the grouped vertical 'Open editors' side pane disappears (R2, R5). TabStrip gains editor tabs with dirty mark and close, one selectedTabId, and editor actions (Save, Save as, Raw/Preview) in place of Start/Stop/Restart when an editor tab is active. There is no Rust, src/api, command, permission, CSP, dependency or configuration change. Scale and cost: one O(open tabs x workspaces) partition per tabs/apps change (useEditor memoises its tabs array so the partition is not recomputed on unrelated renders), no polling and no new IO; the strip already scrolls horizontally, CodeMirror renders only visible lines, and only the visible document's text is loaded by the existing loader, so startup time, memory, network and storage are unchanged.",
+  "impact": {
+    "touches": [
+      "src/App.tsx",
+      "src/App.module.css",
+      "src/App.editor.test.tsx",
+      "src/App.explorer.test.tsx",
+      "src/state/useEditor.ts",
+      "src/state/useEditor.test.tsx",
+      "src/features/editor/EditorView.tsx",
+      "src/features/editor/EditorView.module.css",
+      "src/features/editor/EditorView.test.tsx",
+      "src/features/terminals/TabStrip.tsx",
+      "src/features/terminals/TabStrip.module.css",
+      "src/features/apps/components.test.tsx"
+    ],
+    "reuses": [
+      "src/state/editorGroups.ts ownerOf (deepest root wins) and groupTabs (unowned last under Misc) unchanged, for R3 and R4",
+      "src/state/useEditor.ts controller: openPath path-dedupe, select, save/saveAs, close and the global bin, and the existing applyRepaths/applyClosed bridge",
+      "src/features/editor/CodeSurface.tsx loaded through React.lazy with its per-document states map and liveIds",
+      "src/features/editor/PreviewPane.tsx, src/state/fileKinds.ts, src/state/previews.ts and src/state/editor.ts for preview, language and EOL/encoding labels",
+      "jattac.libs.web.zest-tabs ZestTabs for the workspace tab strip",
+      "src/state/useLauncher.ts terminal and Console selection (L.selectedTerminalId, L.selectApp, L.selectTerminal)",
+      "src/features/explorer/useExplorerOps.ts editor bridge unchanged",
+      "src/api/editor.ts typed editor API unchanged"
+    ],
+    "adds": [
+      "src/state/workspaceTabs.ts",
+      "src/state/workspaceTabs.test.ts",
+      "src/features/editor/EditorSurface.tsx",
+      "src/features/editor/EditorSurface.module.css",
+      "src/features/editor/EditorSurface.test.tsx"
+    ]
+  },
+  "scope": [
+    "src/App.tsx",
+    "src/App.module.css",
+    "src/App.editor.test.tsx",
+    "src/App.explorer.test.tsx",
+    "src/state/useEditor.ts",
+    "src/state/useEditor.test.tsx",
+    "src/state/workspaceTabs.ts",
+    "src/state/workspaceTabs.test.ts",
+    "src/features/editor/EditorSurface.tsx",
+    "src/features/editor/EditorSurface.module.css",
+    "src/features/editor/EditorSurface.test.tsx",
+    "src/features/editor/EditorView.tsx",
+    "src/features/editor/EditorView.module.css",
+    "src/features/editor/EditorView.test.tsx",
+    "src/features/terminals/TabStrip.tsx",
+    "src/features/terminals/TabStrip.module.css",
+    "src/features/apps/components.test.tsx"
+  ],
+  "components": [
+    {
+      "name": "EditorTabOwnership",
+      "path": "src/state/workspaceTabs.ts",
+      "requirements": ["R2", "R3", "R4"]
+    },
+    {
+      "name": "EditorState",
+      "path": "src/state/useEditor.ts",
+      "requirements": ["R1", "R2", "R4"]
+    },
+    {
+      "name": "EditorSurface",
+      "path": "src/features/editor/EditorSurface.tsx",
+      "requirements": ["R1", "R2", "R5", "A1"]
+    },
+    {
+      "name": "EditorSurfaceStyles",
+      "path": "src/features/editor/EditorSurface.module.css",
+      "requirements": ["R1", "R5"]
+    },
+    {
+      "name": "GlobalEditorView",
+      "path": "src/features/editor/EditorView.tsx",
+      "requirements": ["R2", "R5", "A2"]
+    },
+    {
+      "name": "GlobalEditorStyles",
+      "path": "src/features/editor/EditorView.module.css",
+      "requirements": ["R2", "R5"]
+    },
+    {
+      "name": "WorkspaceTabStrip",
+      "path": "src/features/terminals/TabStrip.tsx",
+      "requirements": ["R1", "R4", "R5"]
+    },
+    {
+      "name": "WorkspaceTabStripStyles",
+      "path": "src/features/terminals/TabStrip.module.css",
+      "requirements": ["R1"]
+    },
+    {
+      "name": "AppShell",
+      "path": "src/App.tsx",
+      "requirements": ["R1", "R2", "R4", "R5", "A1", "A2"]
+    },
+    {
+      "name": "AppShellStyles",
+      "path": "src/App.module.css",
+      "requirements": ["R1", "A1"]
+    }
+  ],
+  "additions": [
+    {
+      "id": "A1",
+      "title": "Keep a workspace editor and its terminals mounted while the other is shown",
+      "why": "Switching between a file tab and a terminal tab must not restart a terminal or throw away the file's cursor and undo history.",
+      "parent": "R1",
+      "kind": "enabling",
+      "touches": ["ui", "tests"],
+      "acceptance": [
+        "Switching from a file tab to a terminal tab and back in the same workspace leaves the terminal running and the file's cursor and undo history intact.",
+        "Showing a file tab does not stop, reset or remount any of the workspace's terminals."
+      ]
+    },
+    {
+      "id": "A2",
+      "title": "Keep the global view's selection on an unowned file",
+      "why": "The global strip must never show a workspace-owned file merely because it was the last editor tab selected.",
+      "parent": "R2",
+      "kind": "enabling",
+      "touches": ["ui", "tests"],
+      "acceptance": [
+        "Entering the global editor view with unowned tabs open selects an unowned tab, never a workspace-owned one.",
+        "Closing an unowned tab in the global view selects the next unowned tab, or shows the empty state when none remain."
+      ]
+    }
+  ]
+}

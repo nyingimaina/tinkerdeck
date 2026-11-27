@@ -147,6 +147,62 @@ describe("TabStrip", () => {
   });
 });
 
+describe("TabStrip: editor tabs live in the one workspace strip (R1, R4, R5)", () => {
+  const editors = [
+    { id: "e1", title: "a.ts", dirty: false },
+    { id: "e2", title: "b.ts", dirty: true },
+  ];
+  const setup = (over: Partial<React.ComponentProps<typeof TabStrip>> = {}) => {
+    const onSelect = vi.fn();
+    const onCloseEditor = vi.fn();
+    render(
+      <TabStrip
+        app={app}
+        selectedTerminalId="t1"
+        stateOf={() => st("stopped")}
+        onSelect={onSelect}
+        onStart={vi.fn()}
+        onStop={vi.fn()}
+        onRestart={vi.fn()}
+        onCloseEditor={onCloseEditor}
+        {...over}
+      />,
+    );
+    return { onSelect, onCloseEditor };
+  };
+
+  it("R1/R4: shows editor tabs beside the terminals with exactly one selected, a dirty mark and a close control", async () => {
+    const { onSelect, onCloseEditor } = setup({ editors, activeTabId: "e2" });
+    expect(screen.getByRole("tab", { name: /db/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /api/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /web/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /a\.ts/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /b\.ts/ })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getAllByLabelText("unsaved changes kept")).toHaveLength(1);
+
+    await userEvent.click(screen.getByRole("tab", { name: /a\.ts/ }));
+    expect(onSelect).toHaveBeenCalledWith("e1");
+
+    await userEvent.click(screen.getByLabelText("Close b.ts"));
+    expect(onCloseEditor).toHaveBeenCalledWith("e2");
+    expect(onSelect).toHaveBeenCalledTimes(1); // closing a tab did not also select it
+  });
+
+  it("R1: the terminal actions are disabled while an editor tab is selected", () => {
+    setup({ editors, activeTabId: "e1" });
+    expect(screen.getByRole("button", { name: /Start/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Stop/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Restart/ })).toBeDisabled();
+  });
+
+  it("R5: the strip has no vertical owner pane and no group headings", () => {
+    setup({ editors, activeTabId: "e1" });
+    expect(screen.queryByRole("group")).toBeNull();
+    expect(screen.queryByRole("tablist", { name: "Open editors" })).toBeNull();
+    expect(screen.getAllByRole("tablist")).toHaveLength(1);
+  });
+});
+
 describe("EmptyState / Banner / Dialog", () => {
   it("empty state offers its action", async () => {
     const onClick = vi.fn();

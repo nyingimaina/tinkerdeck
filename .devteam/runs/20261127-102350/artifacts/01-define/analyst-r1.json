@@ -1,0 +1,84 @@
+{
+  "summary": "",
+  "requirements": [],
+  "questions": [],
+  "ask": {
+    "text": "Suppose you start a new file with Ctrl+N while inside the Shop workspace and never save it, then close and reopen Tinkerdeck. Where should that unsaved file come back?",
+    "why": "It decides whether Tinkerdeck must remember which workspace a never-saved file belongs to, so it returns to the right strip after a restart; that changes the stored data and what the tests check.",
+    "topic": "data",
+    "options": [
+      {
+        "label": "Back in the Shop workspace's tab strip",
+        "consequence": "Tinkerdeck remembers the workspace of a never-saved file, so it returns where you started it after a restart.",
+        "recommended": true
+      },
+      {
+        "label": "In the global Editor list with files from no workspace",
+        "consequence": "A never-saved file started inside a workspace leaves that workspace after a restart, and nothing extra is stored.",
+        "recommended": false
+      },
+      {
+        "label": "Do not reopen never-saved new files at all",
+        "consequence": "A new file you never saved would be gone after a restart, which changes today's promise that typing is never lost.",
+        "recommended": false
+      }
+    ]
+  },
+  "coverage": [
+    {
+      "topic": "users",
+      "status": "assumed",
+      "note": "One local person on their own Windows machine; there are no accounts, roles or sharing."
+    },
+    {
+      "topic": "data",
+      "status": "open",
+      "note": "Being asked: whether a never-saved file's home workspace is stored so the file returns to that workspace after a restart. The workspace config becomes version 2 with a workspaces key and keeps a .bak (decided)."
+    },
+    {
+      "topic": "permissions",
+      "status": "not-applicable",
+      "note": "The app has no accounts, roles or sharing; its one user already has full access to the same local files today."
+    },
+    {
+      "topic": "validation",
+      "status": "answered",
+      "note": "The context menu reuses the explorer's existing name validation and delete warning; reveal and open-terminal validate that the path exists and, for a terminal, stays inside the owning workspace's root."
+    },
+    {
+      "topic": "states",
+      "status": "assumed",
+      "note": "Existing loading, empty, error and too-large states and wording are kept; the new global list gets an empty message, the menu closes on Escape or outside click, and menu actions are unavailable while an operation is running."
+    },
+    {
+      "topic": "duplicates",
+      "status": "answered",
+      "note": "One editor per file in exactly one strip; opening the same path again selects its existing tab instead of making a second copy."
+    },
+    {
+      "topic": "volume",
+      "status": "assumed",
+      "note": "A workspace may hold any number of open editor tabs for the session and the strip scrolls when it overflows; files stay whole-file reads under the existing 5 MB edit cap and only visible lines are drawn."
+    },
+    {
+      "topic": "deletion",
+      "status": "answered",
+      "note": "Closing a tab with unsaved text keeps it in the global Bin for 30 days; deleting a file or folder uses the existing confirm-and-delete action and re-points or closes affected tabs."
+    },
+    {
+      "topic": "privacy",
+      "status": "not-applicable",
+      "note": "No new personal or sensitive data is collected; the same local files are shown that the user can already open."
+    },
+    {
+      "topic": "quality",
+      "status": "answered",
+      "note": "Exactly one lazily loaded editor surface is reused, terminals stay mounted, and the menu is keyboard-operable (Shift+F10, Menu key, F2, Del) per the request; accessibility, performance and reliability are stated as non-functional requirements."
+    }
+  ],
+  "assumptions": [
+    "One local person uses Tinkerdeck on their own Windows machine; there are no accounts, roles, sharing or per-file permissions to add.",
+    "The explorer and editor keep their existing loading, empty, error and too-large states and wording; the new global file list shows an empty message when no unowned file is open, and the context menu closes on Escape, an outside click or after a choice.",
+    "A workspace or the global view keeps every editor tab it has for the session and the tab strip scrolls when it overflows; files remain whole-file reads under the existing 5 MB edit cap, so larger files and logs are not opened here."
+  ]
+}

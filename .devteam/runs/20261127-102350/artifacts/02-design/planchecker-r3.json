@@ -1,0 +1,29 @@
+{
+  "summary": "The plan cannot satisfy R1 and R5 as written: both contradict earlier accepted requirements, and the design changes old-area files and adds new code outside features/shared/api without the required justification or characterization tests.",
+  "conflicts": [
+    {
+      "requirement": "R1",
+      "against": "20261126-075013:R1",
+      "kind": "regression",
+      "owner": "requirements",
+      "why": "The earlier accepted Open file requirement says the chosen files open in the editor and the main area switches to the editor view; this feature says a workspace-owned file opens in the workspace's own strip and the workspace view stays on screen instead. For a file under a workspace root both cannot be true, so the builder must say which one wins.",
+      "evidence": "R1: 'A file that belongs to a registered workspace opens as an editor tab in that workspace's tab strip, beside its terminal and Console tabs, and the workspace view stays on screen instead of being replaced by the global editor view.' 20261126-075013:R1: 'Choosing it launches the operating system file picker; the chosen files open in the editor and the main area switches to the editor view.'"
+    },
+    {
+      "requirement": "R1",
+      "against": "design",
+      "kind": "scope",
+      "owner": "design",
+      "why": "The design's scope and impact.touches change files the compatibility layer calls old (src/App.tsx, src/App.module.css, src/state/useEditor.ts) and add a new module in src/state (src/state/workspaceTabs.ts) rather than in the new-code places features/, shared/ or api/, yet the design never says why R1-R5 cannot be met by new code plus an adapter there, and never says which tests freeze the old behaviour first.",
+      "evidence": "Compatibility layer: 'Old areas stay as they are. New code goes in the new places below and reaches old code only through adapters... everything in `src` outside `features/`, `shared/` and `api/`'. Design scope includes 'src/App.tsx', 'src/App.module.css', 'src/state/useEditor.ts', 'src/state/workspaceTabs.ts'; impact.adds: 'src/state/workspaceTabs.ts', 'src/state/workspaceTabs.test.ts'. Design summary: 'adds one pure helper, src/state/workspaceTabs.ts' and 'App keeps a session-only selected editor tab id per workspace beside the existing L.selectedTerminalId' - no technical reason and no characterization test for the old files."
+    },
+    {
+      "requirement": "R5",
+      "against": "20261125-153618:R2",
+      "kind": "regression",
+      "owner": "requirements",
+      "why": "R5 removes the editor's vertical 'Open editors' side pane, which is an existing panel; the earlier accepted tidy-up requirement keeps every current screen, panel and the separate editor view and says none is redesigned or replaced. The two cannot both hold.",
+      "evidence": "R5: 'Inside a workspace the editor has no vertical side pane that lists or groups open editors by owner; the workspace's own tab strip is the only tab list there.' 20261125-153618:R2: 'Keep every current screen, panel, dialog, the footer and the separate editor view... Done when: All existing screens, panels, dialogs and the footer are still present after the tidy-up; none is redesigned or replaced.'"
+    }
+  ]
+}

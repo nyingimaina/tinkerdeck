@@ -1,28 +1,22 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import ZestTabs from "jattac.libs.web.zest-tabs";
 import type { AppDef } from "../../state/model";
 import type { Theme } from "../../themes/types";
 import { groupTabs } from "../../state/editorGroups";
 import { detectKind } from "../../state/fileKinds";
-import { isBinaryPreview, previewKind } from "../../state/previews";
-import { binDaysLeft, BIN_DAYS, encodingLabel, eolLabel } from "../../state/editor";
+import { isBinaryPreview } from "../../state/previews";
+import { binDaysLeft, BIN_DAYS } from "../../state/editor";
 import type { EditorController } from "../../state/useEditor";
+import { globalActiveTab, partitionTabs } from "../../state/workspaceTabs";
+import { EditorSurface } from "./EditorSurface";
 import styles from "./EditorView.module.css";
-
-// The editor itself (CodeMirror and the language modules) is fetched only when a file is on screen.
-const CodeSurface = lazy(() => import("./CodeSurface"));
-// Rendered previews (markdown, html, svg, images, PDF) are likewise fetched only when asked for.
-const PreviewPane = lazy(() => import("./PreviewPane"));
 
 const daysText = (n: number) => `${n} ${n === 1 ? "day" : "days"} left`;
 
-export function EditorView({ editor, theme, apps = [], palette }: { editor: EditorController; theme: string; apps?: AppDef[]; palette?: Theme }) {
-  const [binOpen, setBinOpen] = useState(false);
-  const [modes, setModes] = useState<Record<string, "raw" | "preview">>({});
+/** The global editor's keyboard shortcuts: the same window-level ones the old view had (Ctrl+S/N/O/W). */
+function useEditorShortcuts(editor: EditorController) {
   const E = useRef(editor);
   E.current = editor;
-  const activeTab = editor.tabs.find((t) => t.id === editor.activeId) ?? null;
-  const groups = groupTabs(editor.tabs, apps);
-
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || !(e.ctrlKey || e.metaKey) || e.altKey) return;
@@ -31,8 +25,7 @@ export function EditorView({ editor, theme, apps = [], palette }: { editor: Edit
       const title = E.current.tabs.find((t) => t.id === id)?.title ?? "";
       if (k === "s" && id) {
         if (!isBinaryPreview(title)) void (e.shiftKey ? E.current.saveAs(id) : E.current.save(id));
-      }
-      else if (k === "n" && !e.shiftKey) void E.current.newDoc();
+      } else if (k === "n" && !e.shiftKey) void E.current.newDoc();
       else if (k === "o") void E.current.openDialog();
       else if (k === "w" && id) void E.current.close(id);
       else return;
@@ -41,20 +34,20 @@ export function EditorView({ editor, theme, apps = [], palette }: { editor: Edit
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+}
+
+/**
+ * The separate global editor view (R2, R4, R5, A2). It lists only editors with no workspace home,
+ * as one plain ungrouped strip, and never the vertical "Open editors" side pane. Kept for the old
+ * grouped view's tests until the window is switched over in the next slice.
+ */
+export function EditorView({ editor, theme, apps = [], palette }: { editor: EditorController; theme: string; apps?: AppDef[]; palette?: Theme }) {
+  const [binOpen, setBinOpen] = useState(false);
+  const groups = groupTabs(editor.tabs, apps);
+  useEditorShortcuts(editor);
 
   const now = Math.floor(Date.now() / 1000);
   const a = editor.active;
-  const kind = detectKind(activeTab?.title ?? "", a?.content);
-  const pk = activeTab ? previewKind(activeTab.title) : null;
-  const binary = !!activeTab && isBinaryPreview(activeTab.title);
-  const mode = binary ? "preview" : pk && activeTab ? (modes[activeTab.id] ?? "raw") : "raw";
-  const setMode = (m: "raw" | "preview") => activeTab && setModes((prev) => ({ ...prev, [activeTab.id]: m }));
-  const preview =
-    pk && activeTab ? (
-      <Suspense fallback={<div className={styles.loading}>Loading preview…</div>}>
-        <PreviewPane kind={pk} title={activeTab.title} path={activeTab.path} content={a?.content ?? ""} />
-      </Suspense>
-    ) : null;
 
   return (
     <div className={styles.root}>
@@ -64,16 +57,6 @@ export function EditorView({ editor, theme, apps = [], palette }: { editor: Edit
         </button>
         <button onClick={() => void editor.openDialog()} title="Open files (Ctrl+O)">
           Open…
-        </button>
-        <button onClick={() => editor.activeId && void editor.save(editor.activeId)} disabled={!editor.activeId || binary} title="Save (Ctrl+S)">
-          Save
-        </button>
-        <button
-          onClick={() => editor.activeId && void editor.saveAs(editor.activeId)}
-          disabled={!editor.activeId || binary}
-          title="Save as (Ctrl+Shift+S)"
-        >
-          Save as…
         </button>
         <span className={styles.spacer} />
         <button onClick={() => setBinOpen((v) => !v)} aria-expanded={binOpen} title="Editors closed with unsaved text, or idle for 7 days">
@@ -157,61 +140,124 @@ export function EditorView({ editor, theme, apps = [], palette }: { editor: Edit
           </nav>
 
           <div className={styles.editorCol}>
-            {pk && !binary && (
-              <div className={styles.modes} role="toolbar" aria-label="View">
-                <button aria-pressed={mode === "raw"} onClick={() => setMode("raw")}>
-                  Raw
-                </button>
-                <button aria-pressed={mode === "preview"} onClick={() => setMode("preview")}>
-                  Preview
-                </button>
-              </div>
-            )}
-            <div className={styles.surface}>
-              {a?.error ? (
-                <div className={styles.empty}>
-                  <p>{a.error}</p>
-                  <div className={styles.emptyButtons}>
-                    <button onClick={() => editor.activeId && void editor.close(editor.activeId)}>Close this tab</button>
-                  </div>
-                </div>
-              ) : binary && editor.activeId ? (
-                preview
-              ) : editor.activeId && a?.loaded ? (
-                <>
-                  <div style={{ display: mode === "preview" ? "none" : "block", height: "100%" }}>
-                    <Suspense fallback={<div className={styles.loading}>Loading editor…</div>}>
-                      <CodeSurface
-                        docId={editor.activeId}
-                        value={a.content}
-                        filename={kind.filename}
-                        dark={theme === "dark"}
-                        palette={palette}
-                        liveIds={editor.tabs.map((t) => t.id)}
-                        onChange={editor.setContent}
-                        onSave={() => editor.activeId && void editor.save(editor.activeId)}
-                      />
-                    </Suspense>
-                  </div>
-                  {mode === "preview" && preview}
-                </>
-              ) : (
-                <div className={styles.loading}>Opening…</div>
-              )}
-            </div>
-
-            <div className={styles.status}>
-              <span>Unsaved changes are kept automatically.</span>
-              <span className={styles.spacer} />
-              {activeTab && (
-                <>
-                  <span data-role="language">{kind.label}</span>
-                  <span>{eolLabel(activeTab.eol)}</span>
-                  <span>{encodingLabel(activeTab.encoding)}</span>
-                </>
-              )}
-            </div>
+            <EditorSurface editor={editor} theme={theme} palette={palette} />
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The global editor view (R2, R4, R5, A2): one plain ungrouped strip of unowned editors only, the
+ * New/Open/Bin toolbar, the error and the bin, and the shared editor surface as the body. A
+ * workspace-owned file is never listed or shown here, even when it is the editor's active document.
+ */
+export function GlobalEditorView({ editor, theme, apps = [], palette }: { editor: EditorController; theme: string; apps?: AppDef[]; palette?: Theme }) {
+  const [binOpen, setBinOpen] = useState(false);
+  const E = useRef(editor);
+  E.current = editor;
+  const unowned = useMemo(() => partitionTabs(editor.tabs, apps).unowned, [editor.tabs, apps]);
+  const shownId = globalActiveTab(unowned, editor.activeId);
+  const select = editor.select;
+  useEditorShortcuts(editor);
+
+  // Entering (or staying in) the global view must land on an unowned tab, never on a workspace file (A2).
+  useEffect(() => {
+    if (shownId && editor.activeId !== shownId) select(shownId);
+  }, [shownId, editor.activeId, select]);
+
+  const now = Math.floor(Date.now() / 1000);
+  const items = unowned.map((t) => {
+    const k = detectKind(t.title, t.id === editor.activeId ? editor.active?.content : undefined);
+    return {
+      value: t.id,
+      label: (
+        <span className={styles.tab} title={t.path ?? "not saved yet"}>
+          <span role="img" aria-label={k.label} className={styles.icon}>
+            {k.icon}
+          </span>
+          <span className={styles.name}>{t.title}</span>
+          {t.dirty && <span className={styles.dot} role="img" aria-label="unsaved changes kept" />}
+          <button
+            className={styles.close}
+            aria-label={`Close ${t.title}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              void editor.close(t.id);
+            }}
+          >
+            ×
+          </button>
+        </span>
+      ),
+    };
+  });
+
+  return (
+    <div className={styles.root}>
+      <div className={styles.toolbar}>
+        <button onClick={() => void editor.newDoc()} title="New file (Ctrl+N)">
+          New
+        </button>
+        <button onClick={() => void editor.openDialog()} title="Open files (Ctrl+O)">
+          Open…
+        </button>
+        <span className={styles.spacer} />
+        <button onClick={() => setBinOpen((v) => !v)} aria-expanded={binOpen} title="Editors closed with unsaved text, or idle for 7 days">
+          Bin ({editor.bin.length})
+        </button>
+      </div>
+
+      {editor.error && (
+        <div className={styles.error} role="alert">
+          <span>{editor.error}</span>
+          <button onClick={editor.dismissError}>Dismiss</button>
+        </div>
+      )}
+
+      {binOpen && (
+        <div className={styles.bin}>
+          <p className={styles.binNote}>
+            Editors you close with unsaved text, or leave unused for {7} days, wait here for {BIN_DAYS} days, then are forgotten.
+          </p>
+          {editor.bin.length === 0 && <p className={styles.binNote}>The bin is empty.</p>}
+          {editor.bin.map((b) => (
+            <div key={b.id} className={styles.binRow}>
+              <span className={styles.binTitle} title={b.path ?? "never saved"}>
+                {b.title}
+              </span>
+              <span className={styles.binDays}>{daysText(binDaysLeft(b.binnedAt, now))}</span>
+              <button aria-label={`Restore ${b.title}`} onClick={() => void editor.restore(b.id)}>
+                Restore
+              </button>
+              <button aria-label={`Delete ${b.title} for good`} onClick={() => void editor.discard(b.id)}>
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {unowned.length === 0 ? (
+        <div className={styles.empty}>
+          <p>Nothing is open. Text you type here is kept automatically, even if you never save.</p>
+          <div className={styles.emptyButtons}>
+            <button onClick={() => void editor.newDoc()}>New file</button>
+            <button onClick={() => void editor.openDialog()}>Open a file…</button>
+          </div>
+          <p className={styles.hint}>You can also right-click any file in Explorer and choose "Edit with Tinkerdeck".</p>
+        </div>
+      ) : (
+        <div className={styles.editorCol}>
+          <div className={styles.modes}>
+            <ZestTabs id="global-editor-tabs" items={items} activeValue={shownId ?? ""} onChange={(v) => select(String(v))} />
+          </div>
+          {shownId === editor.activeId ? (
+            <EditorSurface editor={editor} theme={theme} palette={palette} />
+          ) : (
+            <div className={styles.loading}>Opening…</div>
+          )}
         </div>
       )}
     </div>

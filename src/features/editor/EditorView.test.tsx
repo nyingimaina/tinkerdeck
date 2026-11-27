@@ -7,7 +7,7 @@ vi.mock("./CodeSurface", () => {
   return { default: (p: { docId: string; value: string }) => <div data-testid="surface">{p.docId}:{p.value}</div> };
 });
 
-import { EditorView } from "./EditorView";
+import { EditorView, GlobalEditorView } from "./EditorView";
 import type { EditorController } from "../../state/useEditor";
 
 const now = Math.floor(Date.now() / 1000);
@@ -249,5 +249,58 @@ describe("EditorView: Raw and Preview", () => {
     render(<EditorView editor={c} theme="light" />);
     fireEvent.keyDown(window, { key: "s", ctrlKey: true });
     expect(c.save).not.toHaveBeenCalled();
+  });
+});
+
+describe("GlobalEditorView: the plain unowned-only strip (R2, R4, R5, A2)", () => {
+  const apps = [{ id: "q", name: "Qonsol", root: "E:/q", terminals: [] }];
+  const mixed = (over: Partial<EditorController> = {}) =>
+    controller({
+      tabs: [
+        tab("owned", { title: "owned.ts", path: "E:/q/src/owned.ts" }),
+        tab("u1", { title: "u1.txt", path: "C:/tmp/u1.txt" }),
+        tab("u2", { title: "u2.txt", path: "C:/tmp/u2.txt", dirty: true }),
+      ],
+      activeId: "u1",
+      active: { content: "loose", loaded: true, error: null },
+      ...over,
+    });
+
+  it("R2/R4: lists only unowned files, never a workspace-owned one", () => {
+    render(<GlobalEditorView editor={mixed()} theme="light" apps={apps as never} />);
+    expect(screen.getByRole("tab", { name: /u1\.txt/ })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: /u2\.txt/ })).toBeTruthy();
+    expect(screen.queryByRole("tab", { name: /owned\.ts/ })).toBeNull();
+    expect(screen.queryByText("Qonsol")).toBeNull();
+  });
+
+  it("R5: has one plain strip, no owner headings and no Open editors side pane", () => {
+    render(<GlobalEditorView editor={mixed()} theme="light" apps={apps as never} />);
+    expect(screen.getAllByRole("tablist")).toHaveLength(1);
+    expect(screen.queryByRole("group")).toBeNull();
+    expect(screen.queryByText(/Open editors/)).toBeNull();
+  });
+
+  it("R2: marks the dirty file and closes its tab from the strip", () => {
+    const c = mixed();
+    render(<GlobalEditorView editor={c} theme="light" apps={apps as never} />);
+    expect(screen.getAllByLabelText("unsaved changes kept")).toHaveLength(1);
+    fireEvent.click(screen.getByLabelText("Close u2.txt"));
+    expect(c.close).toHaveBeenCalledWith("u2");
+  });
+
+  it("A2: entering the view selects an unowned tab, never the active workspace file", async () => {
+    const c = mixed({ activeId: "owned", active: { content: "x", loaded: true, error: null } });
+    render(<GlobalEditorView editor={c} theme="light" apps={apps as never} />);
+    await waitFor(() => expect(c.select).toHaveBeenCalledWith("u1"));
+    expect(screen.queryByRole("tab", { name: /owned\.ts/ })).toBeNull();
+  });
+
+  it("R5: with no unowned file open it shows a clear empty message and no group headings", () => {
+    const c = controller({ tabs: [tab("owned", { path: "E:/q/a.ts" })], activeId: "owned" });
+    render(<GlobalEditorView editor={c} theme="light" apps={apps as never} />);
+    expect(screen.getByText(/Nothing is open/)).toBeTruthy();
+    expect(screen.queryByRole("group")).toBeNull();
+    expect(screen.queryByRole("tablist")).toBeNull();
   });
 });

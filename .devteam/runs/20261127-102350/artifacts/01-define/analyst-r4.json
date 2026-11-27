@@ -1,0 +1,255 @@
+{
+  "summary": "This is revision 1 of 3 of the larger workspace-editor feature and covers R1 to R5 only. A file that belongs to a registered workspace opens as an editor tab in that workspace's own tab strip beside its terminal and Console tabs; the main area switches to the owning workspace when needed and never to the global editor view. Files that belong to no workspace stay in a separate global editor view whose strip lists only those unowned files, so one file is never shown in two strips. Ownership is by path with the deepest root winning, and each workspace has one selected tab that can be a terminal, Console or editor tab. Inside a workspace the editor has no vertical 'Open editors' side pane, while the global view shows a plain ungrouped list. The single CodeSurface is loaded lazily on first use and reused for whichever editor tab is visible. For workspace-owned files this revision deliberately replaces the earlier accepted Open file requirement, and for the side pane it deliberately replaces the earlier accepted tidy-up requirement; the remaining parts of the overall request (explorer context menu, App/Project to Workspace rename, configuration version 2 migration, tdk/MCP rename and the other later items) are delivered in later revisions. The existing old window files that own the main view and the editor's active document are expected to change, but only after characterization tests freeze today's behaviour.",
+  "roles": [
+    "Developer: one local person who uses Tinkerdeck on their own Windows machine, works inside registered workspaces with terminals and files, and also opens files that belong to no workspace."
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "(Window) A file that belongs to a registered workspace opens as an editor tab in that workspace's tab strip, beside its terminal and Console tabs. The main area switches to that owning workspace when another view is showing, and never switches to the global editor view for a workspace-owned file. Each workspace has one selected tab, which can be a terminal, the Console or an editor tab.",
+      "rationale": "Keeps the developer inside the workspace they were working in and puts the open file next to the terminals it belongs with, instead of taking them out of the app they were using.",
+      "acceptance": [
+        "Opening a file under a workspace's root folder shows an editor tab in that workspace's tab strip while the workspace's terminal tabs remain visible.",
+        "Selecting the editor tab shows the file; selecting a terminal tab returns to that terminal without the workspace view being replaced.",
+        "The workspace's tab strip contains editor tabs and terminal tabs at the same time.",
+        "Each workspace shows exactly one selected tab: choosing an editor tab clears the terminal or Console selection in that workspace, and choosing a terminal or Console tab clears the editor selection.",
+        "Opening a workspace-owned file while a different workspace, the Home view or the global editor view is on screen switches to the owning workspace and selects the file's tab.",
+        "For a workspace-owned file this requirement takes precedence over the earlier accepted Open file requirement 20261126-075013:R1: the main area switches to the owning workspace and does not switch to the global editor view.",
+        "The existing window files that own the main view, the editor's active-document state and their styles are changed where the new placement cannot be reached from new code alone; each change sits behind a small adapter and is preceded by characterization tests that pass on today's behaviour.",
+        "New supporting code lives under src/features, src/shared or src/api; a new pure helper that only extends the existing editor state may live beside it under src/state and is covered by its own tests."
+      ],
+      "edgeCases": [
+        "Opening a second file belonging to the same workspace adds another editor tab rather than replacing the first.",
+        "Switching from an editor tab to a terminal tab and back leaves the editor tab open and does not reload the editor code.",
+        "A file larger than 5 MB shows the existing too-large message and opens no editor tab.",
+        "Opening the same path again selects its existing tab instead of creating a second copy.",
+        "A file under two nested workspace roots goes to the deeper workspace's strip.",
+        "When a workspace's root changes or the workspace is deleted, its open file tabs are re-filed under the workspace that now owns them, or under the global view, without being duplicated.",
+        "If two workspace roots are equally deep, the workspace that appears first in the saved workspace list owns the file."
+      ],
+      "pitfalls": [
+        "Opening a file must not discard terminal state or navigate away from the owning workspace view.",
+        "Opening and closing editor tabs must not stop, reset or remount the workspace's terminals.",
+        "A terminal tab must not remain shown as selected while a file editor is visible.",
+        "The old Open file behaviour must not be changed in place without first pinning what it does today with characterization tests."
+      ],
+      "rules": ["USR-003", "USR-004", "USR-005", "USR-006"],
+      "facts": [
+        { "subject": "editable file size", "attribute": "limit", "op": "at-most", "value": "5", "unit": "MB" },
+        { "subject": "workspace tab strip selected tab", "attribute": "count", "op": "equals", "value": "1" },
+        { "subject": "workspace-owned file", "attribute": "opening view", "op": "equals", "value": "the owning workspace view, never the global editor view" }
+      ]
+    },
+    {
+      "id": "R2",
+      "text": "(Window) Files that belong to no registered workspace are kept in a separate global editor view, and the header Editor button keeps opening that view. The global strip lists only unowned files and unsaved documents that have no workspace home, as a plain list with no grouping.",
+      "rationale": "Files outside every workspace still need somewhere to be edited without being forced into a workspace that does not own them, and the global view stays reserved for exactly those files.",
+      "acceptance": [
+        "Opening a file outside every workspace root shows it in the global tab strip.",
+        "That editor does not appear in any workspace's tab strip.",
+        "The global tab strip lists only files that belong to no workspace and unsaved documents with no workspace home.",
+        "The header Editor button shows and hides the global editor view, and unowned files remain listed there.",
+        "The global view shows a plain list of unowned files with no owner grouping and gives a clear empty message when none are open.",
+        "For unowned files the earlier accepted Open file requirement 20261126-075013:R1 still applies: the chosen files open in the editor and the main area switches to the global editor view."
+      ],
+      "edgeCases": [
+        "Several unowned files can be open in the global tab strip at the same time.",
+        "An unowned file does not gain a workspace's tab strip merely because a workspace view was on screen when the file was opened.",
+        "Opening an unowned file while a workspace is on screen opens the global editor view.",
+        "Opening a workspace-owned file never adds it to the global strip, even when the picker also returned unowned files."
+      ],
+      "pitfalls": [
+        "An unowned file must not be silently filed under a workspace.",
+        "A workspace-owned file must not be listed in the global strip as well.",
+        "The global strip must not reintroduce the grouped side pane that R5 removes."
+      ],
+      "rules": ["USR-003", "USR-004", "USR-005", "USR-006"],
+      "facts": [
+        { "subject": "global editor strip", "attribute": "contents", "op": "equals", "value": "files that belong to no workspace and unsaved documents with no workspace home" }
+      ]
+    },
+    {
+      "id": "R3",
+      "text": "(Core rule, shown in the window) A file belongs to the workspace whose root folder contains the file's path. When more than one registered workspace's root contains the path, the deepest root wins. A file outside every workspace root belongs to no workspace.",
+      "rationale": "It gives one unambiguous owner for every file and reuses the launcher's existing notion of which folder each workspace owns.",
+      "acceptance": [
+        "A file anywhere under a workspace's root folder is treated as belonging to that workspace.",
+        "A file under two nested workspace roots is treated as belonging to the deeper workspace.",
+        "A file outside every workspace root belongs to no workspace.",
+        "When two workspace roots are equally deep, the workspace that appears first in the saved workspace list owns the file, so the file still has exactly one owner."
+      ],
+      "edgeCases": [
+        "When a file is saved as, renamed or moved into a different workspace's root, it belongs to that workspace from then on.",
+        "When a file is saved outside every workspace root, it belongs to no workspace from then on.",
+        "When a workspace root changes or the workspace is deleted, affected files are re-evaluated against the remaining roots.",
+        "Paths that differ only by slash direction, trailing separator or capitalisation are treated as the same path."
+      ],
+      "pitfalls": [
+        "A tab must not stay filed under a workspace after the file's path no longer falls under that workspace's root.",
+        "A file must not be assigned to a workspace merely because that workspace was open when the file was opened.",
+        "A file must not be given two owners when two roots tie for depth."
+      ],
+      "rules": ["USR-003", "USR-004"],
+      "facts": [
+        { "subject": "file ownership rule", "attribute": "owner", "op": "equals", "value": "the workspace whose root folder contains the file path, deepest root wins" },
+        { "subject": "file ownership rule", "attribute": "outside every workspace root", "op": "equals", "value": "no workspace" },
+        { "subject": "file ownership rule", "attribute": "tie between equally deep roots", "op": "equals", "value": "the workspace that appears first in the saved workspace list" }
+      ]
+    },
+    {
+      "id": "R4",
+      "text": "(Window) Each open editor appears in exactly one strip: a workspace-owned file only in its owning workspace's tab strip, and a file that belongs to no workspace only in the global tab strip. No file appears in both strips.",
+      "rationale": "One placement per file keeps the selected item unambiguous and avoids two copies of the same document drifting apart.",
+      "acceptance": [
+        "An editor for a workspace-owned file is absent from the global tab strip.",
+        "An editor for an unowned file is absent from every workspace's tab strip.",
+        "Opening the same file again selects its existing tab instead of creating a second copy in another strip.",
+        "When a file's path moves between a workspace root and no workspace, its single tab moves to the matching strip rather than being duplicated."
+      ],
+      "edgeCases": [
+        "Opening the same path again reuses its existing tab in the one strip that owns it.",
+        "Opening a file from a second place, such as Ctrl+O or the explorer, does not create a duplicate tab.",
+        "A tab that becomes owned by a different workspace after a root change moves to that workspace's strip with its content and unsaved-changes mark intact."
+      ],
+      "pitfalls": [
+        "The same document must not be rendered in two strips at the same time.",
+        "Re-filing a tab after an ownership change must not close it or lose its unsaved text.",
+        "A file must not be shown in the global strip merely because it was the last editor tab selected."
+      ],
+      "rules": ["USR-003", "USR-004"],
+      "facts": [
+        { "subject": "open editor", "attribute": "number of strips", "op": "equals", "value": "1" }
+      ]
+    },
+    {
+      "id": "R5",
+      "text": "(Window) Inside a workspace the editor has no vertical side pane that lists or groups open editors by owner; the workspace's own tab strip is the only tab list there. The global editor view still lists only unowned files, as a plain list with no grouping. For this one pane, this requirement replaces the earlier accepted tidy-up requirement 20261125-153618:R2: the 'Open editors' side pane is intentionally removed, while every other screen, panel, dialog, the footer and the separate editor view remain present and are not redesigned.",
+      "rationale": "The side pane duplicated the workspace tab strip's job and took space away from the editor, but removing it must not take away any other part of the window.",
+      "acceptance": [
+        "Opening a file in a workspace shows the editor without the vertical 'Open editors' list that groups editors by owner.",
+        "The editor tab sits in the workspace's tab strip, and selecting it shows the file.",
+        "The global editor view shows a plain list of unowned files with no group headings.",
+        "For the 'Open editors' side pane this requirement takes precedence over the earlier accepted tidy-up requirement 20261125-153618:R2: that one pane is removed, and no other screen, panel, dialog, the footer or the separate editor view is removed or redesigned.",
+        "Removing the side pane is also covered by characterization tests of today's editor view before its behaviour changes."
+      ],
+      "edgeCases": [
+        "Switching between an editor tab and a terminal tab inside a workspace does not bring the side pane back.",
+        "When no unowned files are open, the global view shows no group headings and a clear empty message.",
+        "A workspace-owned file opened from the global view is shown in the workspace strip with no side pane, not in the global view."
+      ],
+      "pitfalls": [
+        "Removing the side pane inside a workspace must not remove or hide the workspace's terminal tabs or its tab strip.",
+        "The side pane must not be re-added for a workspace-owned file merely because it was opened from the global view.",
+        "The side pane removal must not remove any other existing panel, dialog, the footer or the separate editor view."
+      ],
+      "rules": ["USR-003", "USR-004", "USR-005", "USR-006"],
+      "facts": [
+        { "subject": "editor side pane", "attribute": "shown inside a workspace", "op": "must-not", "value": "be shown" },
+        { "subject": "editor side pane", "attribute": "removal scope", "op": "equals", "value": "only the 'Open editors' pane" }
+      ]
+    }
+  ],
+  "outOfScope": [
+    "Split views showing an editor beside a terminal.",
+    "Dragging tabs between workspaces or between a workspace and the global view.",
+    "Chunked or streamed file loading and a read-only large-file viewer; files stay whole-file reads under the existing 5 MB edit cap.",
+    "Saving an 'Open terminal here' Console as a permanent workspace terminal.",
+    "Terminals in the global editor view.",
+    "The rest of the overall request, delivered in later revisions: the explorer right-click menu, the App/Project to Workspace rename, the configuration version 2 migration, the tdk/MCP rename, the editor action bar and shortcut scoping, unsaved-document home workspace, tab movement on ownership change, and the Reveal in File Explorer command."
+  ],
+  "nonFunctional": [
+    {
+      "area": "performance",
+      "statement": "The editor is one lazily loaded surface: no editor code is fetched before the first file is opened, and opening another file reuses that surface instead of loading a second editor.",
+      "acceptance": "Before the first file is opened no editor chunk is requested; after `npm run build` the editor appears as a separate lazy chunk; opening a second file does not create another editor instance."
+    },
+    {
+      "area": "performance",
+      "statement": "Partitioning the open editors by owner happens once per change and stays fast with many tabs and workspaces.",
+      "acceptance": "With 50 open editor tabs and 20 registered workspaces, switching a tab or opening a file updates the strips in under 50 ms and does not scan the file system."
+    },
+    {
+      "area": "performance",
+      "statement": "The editor draws only the lines visible on screen, so a long file opens and scrolls without rendering its full text.",
+      "acceptance": "A 10,000-line file opens and scrolls without rendering all 10,000 lines at once."
+    },
+    {
+      "area": "reliability",
+      "statement": "Switching between an editor tab and a terminal tab never restarts, remounts or clears any terminal.",
+      "acceptance": "Start a long-running command in a terminal tab, switch to an editor tab and back: the command is still running and its scrollback is intact."
+    },
+    {
+      "area": "reliability",
+      "statement": "Existing behaviour is frozen before it changes: characterization tests for the old window files pass on the code before the change, and the full existing test suite passes after it.",
+      "acceptance": "The characterization tests pass against the unmodified old files; after the change, `npm test` passes with the updated expectations for workspace-owned files and no unexplained failures."
+    },
+    {
+      "area": "accessibility",
+      "statement": "The workspace tab strip is operable by keyboard and announces its selected tab, and every editor tab has a readable label, an unsaved-changes mark and a close control.",
+      "acceptance": "Using only the keyboard, the developer can move between the workspace's tabs, select an editor tab and close it; the selected tab is announced and the dirty mark has a text alternative."
+    },
+    {
+      "area": "appearance",
+      "statement": "Editor tabs and the empty global view follow the app's dark and light themes using the existing theme colours, with a visible active tab and dirty mark.",
+      "acceptance": "In both dark and light theme the editor tab background, text, border, active indicator and dirty mark match the surrounding workspace strip."
+    },
+    {
+      "area": "security",
+      "statement": "This revision adds no new IPC command, capability, dependency or network call; it only reuses the existing editor and workspace calls.",
+      "acceptance": "The capabilities file and package dependencies are unchanged, and no new command name appears in the source."
+    },
+    {
+      "area": "resource use",
+      "statement": "Only one editor surface is kept alive, and per-document state is kept only for currently open tabs so closing a tab releases its editor state.",
+      "acceptance": "After opening and closing 30 files in a session, only the open tabs remain in the editor's state map and memory does not grow with every closed tab."
+    }
+  ],
+  "risks": [
+    "Existing tests encode today's behaviour, including opening a workspace-owned file in the global editor view and the grouped 'Open editors' side pane; those expectations must be replaced deliberately, not deleted silently.",
+    "Ctrl+O can return several files with different owners; only one main view can be shown, so some opened files are not visible until their workspace is selected.",
+    "Two workspaces with the same root folder, or roots that differ only by case or trailing separator, still need one owner; this revision chooses the first in the saved list.",
+    "Keeping one editor surface while tabs move between strips risks losing cursor position or undo history; this needs characterization tests and explicit checks.",
+    "The requirement now deliberately replaces parts of 20261126-075013:R1 and 20261125-153618:R2; reviewers must accept that precedence rather than treating the change as a regression.",
+    "The old window files that own the view and active-document state are on the compatibility layer's old side, so changing them without freezing today's behaviour first would be an unreviewable regression."
+  ],
+  "tensions": [
+    {
+      "requirements": ["R1", "R2"],
+      "scenario": "Ctrl+O can pick several files at once, some owned by the Shop workspace and some owned by no workspace. R1 wants a Shop file to bring the Shop view on screen, while R2 wants an unowned file to open the global editor view; only one view can be shown, so after one multi-file open some of the chosen files are not visible. The builder should say whether the last chosen file decides the view or whether multi-select should be limited."
+    }
+  ],
+  "glossary": [
+    "Registered workspace: a workspace configured in the launcher that owns a root folder and has terminal tabs; previously called an app or project.",
+    "Owning workspace: the registered workspace whose root folder contains a file's path; if several roots contain it, the deepest one.",
+    "Workspace tab strip: the row of tabs shown inside a workspace, containing the workspace's terminals, the Console tab group and its editor tabs.",
+    "Global editor view: the separate view, opened by the header Editor button, that lists and edits files belonging to no registered workspace.",
+    "Editor tab: a tab that shows a file in the editor.",
+    "Unowned file: a file whose path is not under any registered workspace's root.",
+    "Side pane: the editor's vertical list that groups open editors by owner; it is not shown inside a workspace in this revision.",
+    "Single editor surface: the one editor instance reused to show whichever editor tab is selected.",
+    "Characterization test: a test that records and freezes what an existing piece of code does today, written before that code is changed."
+  ],
+  "questions": [],
+  "coverage": [
+    { "topic": "users", "status": "assumed", "note": "One local person on their own Windows machine; there are no accounts, roles or sharing." },
+    { "topic": "data", "status": "not-applicable", "note": "This revision stores no new data: it reuses the existing editor tab list and the saved workspace roots; the selected editor tab per workspace is session state, not saved." },
+    { "topic": "permissions", "status": "not-applicable", "note": "The app has no accounts, roles or sharing; its one user already has full access to the same local files today." },
+    { "topic": "validation", "status": "not-applicable", "note": "This revision adds no new input or name entry; the existing too-large-file and open-error messages are reused." },
+    { "topic": "states", "status": "assumed", "note": "Existing loading, empty, error and too-large states and wording are kept; the global view gets an empty message when no unowned file is open, and the tab strip scrolls when many tabs are open." },
+    { "topic": "duplicates", "status": "answered", "note": "One editor per file in exactly one strip; opening the same path again selects its existing tab instead of making a second copy." },
+    { "topic": "volume", "status": "assumed", "note": "A workspace's strip keeps all editor tabs it has for the session and scrolls when it overflows; planning target is 50 open editor tabs per workspace and 20 workspaces, and files stay whole-file reads under the existing 5 MB edit cap." },
+    { "topic": "deletion", "status": "answered", "note": "Closing a tab with unsaved text keeps it in the global Bin for 30 days; deleting a workspace re-files its open tabs under the new owner, and deleting a file through the explorer keeps its existing confirm-and-close behaviour." },
+    { "topic": "privacy", "status": "not-applicable", "note": "No new personal or sensitive data is collected; the same local files are shown that the user can already open." },
+    { "topic": "quality", "status": "answered", "note": "Exactly one lazily loaded editor surface is reused, terminals stay mounted, tabs are partitioned once per change, and accessibility, performance, reliability, appearance, security and resource use are stated as non-functional requirements." }
+  ],
+  "assumptions": [
+    "One local person uses Tinkerdeck on their own Windows machine; there are no accounts, roles, sharing or per-file permissions to add.",
+    "The existing loading, empty, error and too-large states and wording are kept; the global view shows an empty message when no unowned file is open, and the workspace tab strip scrolls when it overflows.",
+    "A workspace or the global view keeps every editor tab it has for the session; the planning target is 50 open editor tabs per workspace and 20 workspaces, and files remain whole-file reads under the existing 5 MB edit cap.",
+    "When two workspace roots are equally deep, the workspace that appears first in the saved workspace list owns the file.",
+    "When Ctrl+O returns several files with different owners, every chosen file opens in its own strip; the main area ends on the owner of the last chosen file, and the other files stay open in their own strips.",
+    "The per-workspace selected tab is remembered for the session only; this revision does not add restart persistence for it.",
+    "Only the vertical 'Open editors' side pane is removed; every other screen, panel, dialog, the footer and the separate editor view stay as they are.",
+    "This revision adds no new dependency, IPC command, permission or stored field; the context menu, rename, configuration migration and tdk/MCP changes are later revisions."
+  ]
+}

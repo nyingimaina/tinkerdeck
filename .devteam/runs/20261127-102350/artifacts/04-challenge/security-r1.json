@@ -1,0 +1,13 @@
+{
+  "findings": [
+    {
+      "cites": "USR-003",
+      "severity": "blocking",
+      "file": "src/App.tsx",
+      "line": 361,
+      "evidence": "The workspace-selection effect at src/App.tsx:361-363 is not gated on the current view: whenever a workspace editor tab is remembered it calls selectDoc(workspaceTabId) even while view === \"editor\". GlobalEditorView adds a competing effect at src/features/editor/EditorView.tsx:166-168 that calls select(shownId) whenever the active document is not one of the unowned tabs. With a workspace-owned tab selected (it was opened via openPath, so editorSelection[app.id] points at it) and any unowned tab open, entering the global view makes both effects write different ids to editor.activeId on every commit: App selects the workspace tab, GlobalEditorView selects the unowned tab, forever. Reproduced against the current code with a probe test: React reports \"Maximum update depth exceeded ... at App (src/App.tsx:83)\" and the commits never settle, each one re-running partitionTabs/groupTabs over every open tab and every workspace. Reachable by opening a workspace file (which sets the remembered selection) then opening an unowned file from the command palette (route sets view to \"editor\" without clearing editorSelection), or by opening a workspace file and then pressing the header Editor button while an unowned tab is already open.",
+      "description": "Infinite render/update loop (unbounded work, CPU and memory burn, UI becomes unresponsive and React aborts with a max-update-depth error) when the global editor view is shown while a workspace editor tab is still the remembered selection. Gate the App workspace-selection effect on view === \"app\" (or clear editorSelection when entering the global view / on route to an unowned file) so the two selection effects can never disagree."
+    }
+  ],
+  "verifications": []
+}

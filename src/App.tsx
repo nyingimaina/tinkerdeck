@@ -12,7 +12,8 @@ import { TopBar } from "./features/apps/TopBar";
 import { GitBar } from "./features/git/GitBar";
 import type { GitTab } from "./features/git/GitDrawer";
 import { HomeScreen } from "./features/home/HomeScreen";
-import { EditorView } from "./features/editor/EditorView";
+import { GlobalEditorView } from "./features/editor/EditorView";
+import { EditorSurface } from "./features/editor/EditorSurface";
 import { ExplorerPanel } from "./features/explorer/ExplorerPanel";
 import { explorerRoot } from "./features/explorer/root";
 import { TabStrip } from "./features/terminals/TabStrip";
@@ -31,8 +32,10 @@ import {
   type AppDef,
   type TermState,
 } from "./state/model";
-import { useEditor } from "./state/useEditor";
+import { useEditor, type OpenedFile } from "./state/useEditor";
 import { useGit } from "./state/useGit";
+import { ownerOf } from "./state/editorGroups";
+import { editorsOf, partitionTabs, selectedWorkspaceTab } from "./state/workspaceTabs";
 import { useThemeFinder } from "./themes/useThemeFinder";
 import { useThemes } from "./themes/useThemes";
 import { useLauncher } from "./state/useLauncher";
@@ -74,6 +77,12 @@ const readCollapsed = () => {
 export function App() {
   const L = useLauncher();
   const [view, setView] = useState<"home" | "app" | "editor">("home");
+  // Which editor tab each workspace last selected, for the session only. Selecting a terminal or
+  // Console clears it, so a workspace always shows exactly one selected tab (R1).
+  const [editorSelection, setEditorSelection] = useState<Record<string, string>>({});
+  // A failed open of a file, so the workspace only shows an editor error that belongs to a file
+  // it owns (R1); an unrelated editor failure is never shown as a workspace "cannot read" alert.
+  const [failedOpen, setFailedOpen] = useState<{ path: string; message: string } | null>(null);
   const [editing, setEditing] = useState<Editing | null>(null);
   const [pendingSave, setPendingSave] = useState<{ apps: AppDef[]; ids: string[] } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<AppDef | null>(null);
@@ -126,8 +135,55 @@ export function App() {
     save: L.setUpdateSettings,
   });
 
+  // Route an opened file to the strip that owns it (R1, R2, A3). A file passed on the command
+  // line can arrive before the saved workspaces are known, so it waits in pendingRoutes until
+  // they load and is then filed against the current roots, exactly once.
+  const appsRef = useRef<AppDef[] | undefined>(apps);
+  appsRef.current = apps;
+  const workspacesLoaded = L.loaded && !!L.config;
+  const loadedRef = useRef(workspacesLoaded);
+  loadedRef.current = workspacesLoaded;
+  const pendingRoutes = useRef<OpenedFile[]>([]);
+  const routeRef = useRef<(opened: OpenedFile) => void>(() => {});
+  const clearEditorSelection = (appId: string) =>
+    setEditorSelection((m) => {
+      if (!(appId in m)) return m;
+      const next = { ...m };
+      delete next[appId];
+      return next;
+    });
+
   // the text editor (BRS 7.14): files sent from Explorer's "Edit with Tinkerdeck" land here
-  const editor = useEditor({ onOpened: () => setView("editor") });
+  const editor = useEditor({
+    onOpened: (opened) => {
+      setFailedOpen(null);
+      if (!loadedRef.current) {
+        pendingRoutes.current.push(opened);
+        return;
+      }
+      routeRef.current(opened);
+    },
+    onOpenFailed: (failure) => setFailedOpen(failure),
+  });
+  routeRef.current = (opened) => {
+    const owner = ownerOf(opened.path, appsRef.current ?? []);
+    if (owner) {
+      // A workspace-owned file goes to its workspace's strip; the main area never shows the
+      // global editor view for it (R1). The workspace's remembered selection points at it (R4).
+      setEditorSelection((m) => ({ ...m, [owner.id]: opened.id }));
+      L.selectApp(owner.id);
+      L.touchApp(owner.id);
+      setView("app");
+    } else {
+      // No workspace home: the global editor view lists it (R2).
+      setView("editor");
+    }
+  };
+  useEffect(() => {
+    if (!workspacesLoaded || pendingRoutes.current.length === 0) return;
+    const queued = pendingRoutes.current.splice(0);
+    for (const opened of queued) routeRef.current(opened);
+  }, [workspacesLoaded]);
 
   // The explorer's file operations keep the editor's tabs in step (R9). The bridge is memoised on
   // the editor's own stable callbacks so the explorer's memoised file rows are not re-rendered by
@@ -288,6 +344,38 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [L.states, L.consoles]);
 
+  // Split the open editors by owner once per change: the workspace strips read byApp and the
+  // global view reads unowned, so an editor can only ever appear in one strip (R3, R4, A2).
+  const ownership = useMemo(() => partitionTabs(editor.tabs, apps ?? []), [editor.tabs, apps]);
+  const workspaceEditors = app ? editorsOf(ownership, app.id) : [];
+  // The one selected tab of the workspace on screen (R1): a still-open editor tab, else the
+  // Console group when a Console instance is selected, else the selected terminal.
+  const workspaceTabId = app
+    ? selectedWorkspaceTab({
+        editorId: editorSelection[app.id] ?? null,
+        editorIds: workspaceEditors.map((t) => t.id),
+        consoleTabId: consoleId(app.id),
+        selectedTerminalId: L.selectedTerminalId,
+      })
+    : null;
+  const onWorkspaceEditor = !!workspaceTabId && workspaceEditors.some((t) => t.id === workspaceTabId);
+  // A failed open is shown in the workspace only when the file belongs to that workspace and the
+  // error on screen is still that failure's message, never for an unrelated editor error (REV-3).
+  const workspaceOpenFailed =
+    !!failedOpen &&
+    !!editor.error &&
+    editor.error === failedOpen.message &&
+    ownerOf(failedOpen.path, apps ?? [])?.id === app?.id;
+  const selectDoc = editor.select;
+  const activeDocId = editor.activeId;
+  // Coming back to a workspace whose editor tab is selected shows that file, whichever document
+  // the editor happened to have in front (R1, R4). Only while the workspace view is on screen:
+  // the global view has its own selection effect, and letting both write editor.activeId makes them
+  // disagree and loop forever (SEC-1).
+  useEffect(() => {
+    if (view === "app" && onWorkspaceEditor && workspaceTabId && activeDocId !== workspaceTabId) selectDoc(workspaceTabId);
+  }, [view, onWorkspaceEditor, workspaceTabId, activeDocId, selectDoc]);
+
   if (!L.loaded || !L.config || !apps) {
     return <div className={styles.loading}>{L.error ? L.error : "Loading…"}</div>;
   }
@@ -333,12 +421,14 @@ export function App() {
     setGitToolsOpen(false);
     // A calm start (R9): open on the app's first terminal, or no tab at all when it has no
     // terminals, so a console or drawer left open on an earlier visit is not reopened.
+    clearEditorSelection(id);
     const target = list.find((a) => a.id === id);
     L.selectTerminal(id, target?.terminals[0]?.id ?? "");
     setView("app");
   };
   const openConsole = () => {
     if (!app) return;
+    clearEditorSelection(app.id);
     L.openConsoleTab(app.id);
     hideGitTab();
     setView("app");
@@ -643,6 +733,7 @@ export function App() {
             homeActive={showHome}
             onSelectApp={openApp}
             onSelectTerminal={(a, t) => {
+              clearEditorSelection(a);
               L.selectTerminal(a, t);
               L.touchApp(a);
               setView("app");
@@ -663,7 +754,7 @@ export function App() {
 
         <main className={styles.main}>
           {view === "editor" ? (
-            <EditorView editor={editor} theme={config.theme} apps={apps} palette={T.active} />
+            <GlobalEditorView editor={editor} theme={config.theme} apps={apps} palette={T.active} />
           ) : apps.length === 0 || (!app && !showHome) ? (
             <EmptyState
               title="No apps yet. An app groups the terminals you run together."
@@ -703,7 +794,22 @@ export function App() {
                 open={gitToolsOpen}
                 onOpenChange={setGitToolsOpen}
               />
-              {app.terminals.length === 0 && !onConsole ? (
+              {workspaceOpenFailed && (
+                // A workspace-owned file that cannot be read (too large, not found, unreadable) has
+                // no tab to sit in, so its existing message is shown here, in the workspace (R1).
+                <div className={styles.error} role="alert">
+                  <span>{editor.error}</span>
+                  <button
+                    onClick={() => {
+                      editor.dismissError();
+                      setFailedOpen(null);
+                    }}
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
+              {app.terminals.length === 0 && !onConsole && !onWorkspaceEditor ? (
                 <EmptyState
                   title="This app has no terminals."
                   buttonLabel="Add a terminal"
@@ -716,12 +822,30 @@ export function App() {
                 stateOf={L.stateOf}
                 consoleTabId={consoleId(app.id)}
                 consoleState={consoleAgg}
-                onSelect={(tid) => (tid === consoleId(app.id) ? L.openConsoleTab(app.id) : L.selectTerminal(app.id, tid))}
+                editors={workspaceEditors}
+                activeTabId={workspaceTabId}
+                onCloseEditor={(id) => {
+                  if (editorSelection[app.id] === id) clearEditorSelection(app.id);
+                  void editor.close(id);
+                }}
+                onSelect={(tabId) => {
+                  if (workspaceEditors.some((t) => t.id === tabId)) {
+                    // Selecting an editor tab clears the terminal/Console selection in this
+                    // workspace by taking priority over it (R1).
+                    setEditorSelection((m) => ({ ...m, [app.id]: tabId }));
+                    editor.select(tabId);
+                  } else {
+                    // Selecting a terminal or Console clears the editor selection (R1).
+                    clearEditorSelection(app.id);
+                    if (tabId === consoleId(app.id)) L.openConsoleTab(app.id);
+                    else L.selectTerminal(app.id, tabId);
+                  }
+                }}
                 onStart={() => L.selectedTerminalId && L.actions.start(app.id, L.selectedTerminalId)}
                 onStop={() => L.selectedTerminalId && L.actions.stop(app.id, L.selectedTerminalId)}
                 onRestart={() => L.selectedTerminalId && L.actions.restart(app.id, L.selectedTerminalId)}
               />
-              <div className={styles.termWrap}>
+              <div className={styles.termWrap} style={onWorkspaceEditor ? { display: "none" } : undefined}>
                 <div className={styles.termArea}>
                   {apps.flatMap((a) => [
                     ...a.terminals
@@ -774,6 +898,13 @@ export function App() {
                   </Suspense>
                 )}
               </div>
+              {workspaceEditors.length > 0 && (
+                // One editor surface, kept mounted while a terminal tab is shown so the file's
+                // cursor and undo history survive the switch (R1, R5, A1).
+                <div className={styles.editorArea} style={onWorkspaceEditor ? undefined : { display: "none" }}>
+                  <EditorSurface editor={editor} theme={config.theme} palette={T.active} hidden={!onWorkspaceEditor} />
+                </div>
+              )}
               {gitTabKept && (
                 <div hidden={gitTab === null}>
                   <Suspense fallback={null}>

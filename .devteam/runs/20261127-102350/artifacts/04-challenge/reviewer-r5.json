@@ -1,0 +1,24 @@
+{
+  "findings": [
+    {
+      "cites": "USR-004",
+      "severity": "blocking",
+      "file": "src/App.tsx",
+      "line": 785,
+      "evidence": "The new workspace alert renders the controller-wide `editor.error` for every workspace and every editor operation. `src/state/useEditor.ts` sets that one shared error on any failure: startup `api.list()` (lines 152-153), snapshot (lines 208, 306), save (line 330), close (line 347) and restore (line 370), not only a failed open of a workspace-owned file. This breaks an existing test: `npx vitest run src/App.features.test.tsx -t T34` now fails with 'Found multiple elements with the role \"alert\"' at `src/App.features.test.tsx:226` - the git pull error `<p role=\"alert\">` plus this new banner (`App.module.css` `_error_...`) showing the swallowed editor startup error \"TypeError: Cannot read properties of undefined (reading 'invoke')\" (that suite does not mock `./api/editor`). A full `npx vitest run` reports this as an unexplained new failure; the only known pre-existing failures are the App.version test and the App footer 'v2.3.0' test.",
+      "description": "Scope the workspace banner to a failed open of a file owned by the workspace on screen (record the failed path/owner, or clear/suppress controller-level errors that are not about the current workspace), so unrelated editor.api failures are not shown as a workspace 'file cannot be read' alert and the full suite passes again."
+    }
+  ],
+  "verifications": [
+    {
+      "id": "REV-1",
+      "status": "fixed",
+      "evidence": "The workspace selection effect is now gated on the workspace view actually being shown: src/App.tsx:364 `if (view === \"app\" && onWorkspaceEditor && workspaceTabId && activeDocId !== workspaceTabId) selectDoc(workspaceTabId)`, so it cannot run while the global editor view is mounted. GlobalEditorView keeps the only writer there (src/features/editor/EditorView.tsx:166-168). The added SEC-1 test (src/App.editor.test.tsx:262-285) selects a workspace file, opens the global view with an unowned tab and asserts the unowned tab is selected and a.ts is absent; it passes, and the full targeted run (155 tests, 7 files) passed."
+    },
+    {
+      "id": "REV-2",
+      "status": "fixed",
+      "evidence": "The workspace branch now renders the existing error text: src/App.tsx:785-792 renders `editor.error` as `role=\"alert\"` with the existing wording and a Dismiss button, above the tab strip. The added REV-2/R1 test (src/App.editor.test.tsx:227-245) opens a rejected 'too large' file inside the Qonsol workspace and asserts the too-large message is shown, the workspace stays on screen, no editor tab is created, and Dismiss clears it; it passes. (The banner's over-broad scope is a separate new finding above.)"
+    }
+  ]
+}

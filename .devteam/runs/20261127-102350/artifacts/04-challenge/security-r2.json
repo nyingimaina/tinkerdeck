@@ -1,0 +1,10 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "SEC-1",
+      "status": "fixed",
+      "evidence": "src/App.tsx:363-365 now gates the workspace-selection effect on view === \"app\" (view added to its dependency list), so it cannot write editor.activeId while GlobalEditorView is mounted; GlobalEditorView's own select effect (src/features/editor/EditorView.tsx:166-168) is therefore the only one active in the global view and the two can no longer ping-pong. With a remembered workspace tab plus an open unowned tab, entering the global view settles on the unowned tab: the SEC-1 regression test at src/App.editor.test.tsx:194-217 passes (npx vitest run src/App.editor.test.tsx -t \"SEC-1\": 1 passed), asserting the unowned tab is selected, the workspace tab is absent, and the surface shows the unowned file. The effect now stops once activeDocId === workspaceTabId because select is a stable useCallback."
+    }
+  ]
+}

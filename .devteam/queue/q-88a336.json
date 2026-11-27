@@ -5,6 +5,6 @@
   "fromConversation": "t-20261127-095110-415a",
   "created": "2026-11-27T10:19:56.7438248Z",
   "order": 6,
-  "status": "queued",
-  "runId": ""
+  "status": "started",
+  "runId": "20261127-102350"
 }

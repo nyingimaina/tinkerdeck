@@ -19,6 +19,11 @@ export interface ActiveDoc {
   loaded: boolean;
   error: string | null;
 }
+/** A file that was just opened, so the window can route it to the strip that owns it (R1, R2). */
+export interface OpenedFile {
+  id: string;
+  path: string | null;
+}
 export interface EditorController {
   ready: boolean;
   tabs: EditorTab[];
@@ -79,7 +84,14 @@ const tabOf = (e: { id: string; title: string; path: string | null; dirty: boole
  * Editor state (BRS 7.14). Typing is snapshotted to disk after a quiet moment, so nothing is lost
  * even when never saved; closing a tab with unsaved text sends it to the bin instead of discarding it.
  */
-export function useEditor({ onOpened }: { onOpened?: () => void } = {}): EditorController {
+export function useEditor({
+  onOpened,
+  onOpenFailed,
+}: {
+  onOpened?: (opened: OpenedFile) => void;
+  /** A file that could not be opened, with its path and the existing error wording. */
+  onOpenFailed?: (failure: { path: string; message: string }) => void;
+} = {}): EditorController {
   const [order, setOrder] = useState<string[]>([]);
   const [docs, setDocs] = useState<Record<string, DocState>>({});
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -93,6 +105,8 @@ export function useEditor({ onOpened }: { onOpened?: () => void } = {}): EditorC
   orderRef.current = order;
   const opened = useRef(onOpened);
   opened.current = onOpened;
+  const openFailed = useRef(onOpenFailed);
+  openFailed.current = onOpenFailed;
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const latest = useRef<Record<string, string>>({});
 
@@ -116,10 +130,12 @@ export function useEditor({ onOpened }: { onOpened?: () => void } = {}): EditorC
   const openPath = useCallback(
     async (path: string) => {
       try {
-        addDoc(await api.open(path));
-        opened.current?.();
+        const d = await api.open(path);
+        addDoc(d);
+        opened.current?.({ id: d.id, path: d.path });
       } catch (e) {
         fail(e);
+        openFailed.current?.({ path, message: errorText(e) });
       }
     },
     [addDoc],

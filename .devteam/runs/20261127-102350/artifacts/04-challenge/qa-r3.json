@@ -1,0 +1,56 @@
+{
+  "findings": [
+    {
+      "cites": "R1",
+      "severity": "advisory",
+      "file": "src/App.editor.test.tsx",
+      "line": 143,
+      "evidence": "The view() fixture here declares only one workspace (Qonsol, E:\\q). Workspace-owned files are opened from Home (A3, src/App.editor.test.tsx:233) and from the global editor view (line 143), never while a second workspace is on screen. No test opens a file under workspace B's root while workspace A is shown, so R1 acceptance 5's 'a different workspace' branch (switch to the owner and select the tab) could break without a failure.",
+      "description": "Add a two-workspace test: show workspace A, open a file under workspace B's root, and assert the view switches to B and selects that file's tab."
+    },
+    {
+      "cites": "R2",
+      "severity": "advisory",
+      "file": "src/App.explorer.test.tsx",
+      "line": 183,
+      "evidence": "The only multi-file pick test opens two workspace-owned files (E:/q/a.ts, E:/q/b.ts). No test picks a workspace-owned file together with an unowned one and asserts the owned file stays out of the global strip and the unowned one out of the workspace strip (R2 edge 'even when the picker also returned unowned files').",
+      "description": "Add a mixed pick (one file under a workspace root, one outside every root) and assert each file appears in exactly its one strip."
+    },
+    {
+      "cites": "USR-003",
+      "severity": "advisory",
+      "file": "src/state/workspaceTabs.test.ts",
+      "line": 8,
+      "evidence": "partitionTabs is exercised with at most 5 tabs and 3 workspaces; there is no test with the stated 50 open editor tabs and 20 workspaces and no timing assertion (<50 ms), so the partitioning performance acceptance is unverified.",
+      "description": "Add a 50-tab/20-workspace partition test (with a generous timing bound) to prove the strip update stays fast and does not scan the file system."
+    },
+    {
+      "cites": "USR-003",
+      "severity": "advisory",
+      "file": "src/features/editor/CodeSurface.tsx",
+      "line": 153,
+      "evidence": "The liveIds pruning effect (lines 153-157) has no test and there is no CodeSurface test file. Nothing opens and closes ~30 documents and asserts the per-document states map drops the closed ids, so the resource-use acceptance ('after opening and closing 30 files ... memory does not grow') would pass even if pruning were removed.",
+      "description": "Add a test that opens and closes 30 documents and checks that only still-open ids remain in the editor state map."
+    },
+    {
+      "cites": "USR-006",
+      "severity": "advisory",
+      "file": "src/features/apps/components.test.tsx",
+      "line": 174,
+      "evidence": "The workspace editor-tab tests click with the mouse only. Nothing uses the keyboard to move between the workspace tabs, select an editor tab and close it, nor asserts the selected tab is announced, as the accessibility acceptance requires; the dirty mark does have a text alternative (src/features/terminals/TabStrip.tsx:85).",
+      "description": "Add a keyboard-only test for the workspace strip: ArrowLeft/Right to move and select, reach the close control and close the tab, asserting aria-selected."
+    }
+  ],
+  "verifications": [
+    {
+      "id": "QA-1",
+      "status": "fixed",
+      "evidence": "src/state/workspaceTabs.test.ts:77-95 re-points one tab from E:/work/Qonsol/api to an unowned path (C:/tmp/a.txt) and back, asserting one tab, the workspace strip vs. the unowned list, and content 'a draft' / dirty true in each case. Lines 97-117 move the owning workspace root and then remove it, asserting a single tab re-files to the parent workspace and then to unowned, again with content and dirty intact. The file's 15 tests pass."
+    },
+    {
+      "id": "QA-2",
+      "status": "open",
+      "evidence": "src/App.editor.test.tsx:42 still mocks TerminalHost as a bare <div/>, and the A1 switch test (lines 161-177) only asserts the same CodeSurface element persists. App.test.tsx:140-148 switches terminal -> terminal only. No test asserts a terminal host stays mounted (or stays visible=false) when an editor tab is selected, or that startTerminal/stopTerminal/restartTerminal are not called when a file tab is shown, so A1 acceptance 2 could regress unnoticed."
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "REV-3",
+      "status": "fixed",
+      "evidence": "The workspace alert is now scoped to a failed open of a file owned by the workspace on screen. src/state/useEditor.ts:136-139 calls the new optional onOpenFailed({path,message}) only from openPath's catch (after api.open rejects); the controller-wide error set by startup api.list (lines 152-153), snapshot, save, close and restore no longer has a matching failedOpen. src/App.tsx:364-368 renders the workspace role=alert only when failedOpen exists, editor.error still equals that failure's message, and ownerOf(failedOpen.path, apps)?.id === app?.id; Dismiss clears both (src/App.tsx:803-808). I re-ran the previously failing test: `npx vitest run src/App.features.test.tsx -t T34` -> 1 passed, 32 skipped (single role=alert, git error only). A full `npx vitest run` -> 756 passed / 2 failed (758), the only failures being the known pre-existing version tests: src/App.test.tsx footer expects v2.3.0 but receives v2.4.1 (App.test.tsx:376) and src/App.version.test.tsx expects 2.3.0 (App.version.test.tsx:15). `npx tsc --noEmit` is clean. The new tests in src/App.editor.test.tsx (REV-3/R1: unrelated editor failure not shown; REV-3/R1: failed open shown only in the owning workspace) assert the visible alert, not just that nothing throws."
+    }
+  ]
+}

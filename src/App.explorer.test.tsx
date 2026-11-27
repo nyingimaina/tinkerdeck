@@ -229,7 +229,7 @@ describe("Open file… in the command palette", () => {
 });
 
 describe("opening files from the Files explorer", () => {
-  it("R3: clicking a file opens it through the editor's open path and shows the editor view", async () => {
+  it("R1/R3: clicking a workspace-owned file opens it in the workspace strip and stays on the workspace", async () => {
     h.ex.list.mockImplementation(async (path: string) =>
       path === "E:\\q" ? listing(path, [folder("E:\\q\\src"), file("E:\\q\\README.md")]) : listing(path),
     );
@@ -241,8 +241,10 @@ describe("opening files from the Files explorer", () => {
 
     await userEvent.click(within(files).getByTitle("E:\\q\\README.md"));
 
-    expect(await screen.findByRole("button", { name: "Open…" })).toBeInTheDocument();
-    expect(await screen.findByRole("tab", { name: /README\.md/ })).toBeInTheDocument();
+    const tab = await screen.findByRole("tab", { name: /README\.md/ });
+    expect(tab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("heading", { name: "Qonsol", level: 2 })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Open…" })).toBeNull();
     expect(h.ed.open).toHaveBeenCalledWith("E:\\q\\README.md");
   });
 
@@ -261,14 +263,14 @@ describe("opening files from the Files explorer", () => {
 
     await userEvent.click(within(files).getByTitle("E:\\q\\photo.png"));
 
-    expect(await screen.findByRole("button", { name: "Open…" })).toBeInTheDocument();
-    expect(await screen.findByAltText("Preview of photo.png")).toBeInTheDocument();
+    expect(await screen.findByAltText("Preview of photo.png", {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: /photo\.png/ })).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByTestId("surface")).toBeNull();
     expect(h.ed.open).toHaveBeenCalledWith("E:\\q\\photo.png");
     expect(h.ed.readBytes).toHaveBeenCalledWith("E:\\q\\photo.png");
   });
 
-  it("R3: clicking a file that is already open focuses its tab instead of opening a second", async () => {
+  it("R4: clicking a file that is already open focuses its tab instead of opening a second", async () => {
     h.ed.list.mockResolvedValue({ open: [entry("E:\\q\\README.md")], bin: [] });
     h.ex.list.mockImplementation(async (path: string) =>
       path === "E:\\q" ? listing(path, [file("E:\\q\\README.md")]) : listing(path),
@@ -279,14 +281,13 @@ describe("opening files from the Files explorer", () => {
     await openApp();
     const files = await showFiles();
 
-    const before = (await screen.findAllByRole("tab")).length;
     await userEvent.click(within(files).getByTitle("E:\\q\\README.md"));
 
-    const editors = await screen.findByRole("tablist", { name: "Open editors" });
-    expect(await within(editors).findByRole("tab", { name: /README\.md/ })).toBeInTheDocument();
-    expect(within(editors).getAllByRole("tab")).toHaveLength(1);
+    const tabs = await screen.findAllByRole("tab", { name: /README\.md/ });
+    expect(tabs).toHaveLength(1);
+    expect(tabs[0]).toHaveAttribute("aria-selected", "true");
+    expect(h.ed.open).toHaveBeenCalledTimes(1);
     expect(h.ed.open).toHaveBeenCalledWith("E:\\q\\README.md");
-    expect(before).toBeGreaterThan(0);
   });
 
   it("R3: a file that fails to open shows the editor's existing error instead of crashing", async () => {
@@ -304,7 +305,9 @@ describe("opening files from the Files explorer", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("not found");
     expect(screen.getByRole("region", { name: "Files" })).toBeInTheDocument();
-    expect(screen.getByRole("tablist", { name: "Open editors" })).toBeInTheDocument();
+    // The only open editor belongs to a workspace, so the global view stays empty and lists it never.
+    expect(screen.getByText(/Nothing is open/)).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: /keep\.txt/ })).toBeNull();
   });
 
   it("R3: clicking a folder expands it and never opens it as a file", async () => {
@@ -411,19 +414,16 @@ describe("the explorer root follows the user", () => {
 });
 
 describe("a Misc (app-less) tab", () => {
-  it("R5: an app-owned active tab roots at the app root, and switching to a Misc tab roots at that file's parent", async () => {
+  it("R5/A2: a workspace-owned active tab is never shown in the global view; the unowned tab is selected and roots at its parent", async () => {
     h.ed.list.mockResolvedValue({ open: [entry("E:\\q\\src\\a.ts"), entry("C:\\loose\\notes.txt")], bin: [] });
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
     await openEditor();
     await showFiles();
 
-    await waitFor(() => expect(h.ex.list).toHaveBeenCalledWith("E:\\q", false));
-    const tabs = await screen.findAllByRole("tab");
-
-    await userEvent.click(screen.getByRole("tab", { name: /notes\.txt/ }));
     await waitFor(() => expect(h.ex.list).toHaveBeenCalledWith("C:\\loose", false));
-    expect((await screen.findAllByRole("tab")).length).toBe(tabs.length);
+    expect(screen.queryByRole("tab", { name: /a\.ts/ })).toBeNull();
+    expect(screen.getByRole("tab", { name: /notes\.txt/ })).toHaveAttribute("aria-selected", "true");
   });
 
   it("R5: a Misc file in a deep path roots at its parent folder, not the home folder", async () => {
@@ -491,12 +491,12 @@ describe("the home folder root (R13)", () => {
 
   it("R13: switching back to the home view keeps every open editor tab", async () => {
     h.ex.home.mockResolvedValue("C:\\Users\\me");
-    h.ed.list.mockResolvedValue({ open: [entry("E:\\q\\README.md")], bin: [] });
+    h.ed.list.mockResolvedValue({ open: [entry("C:\\loose\\notes.txt")], bin: [] });
     render(<App />);
     await screen.findByRole("heading", { name: "Home", level: 2 });
     await openEditor();
     await showFiles();
-    expect(await screen.findByRole("tab", { name: /README\.md/ })).toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: /notes\.txt/ })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("tab", { name: "Projects" }));
     await userEvent.click(screen.getByRole("button", { name: /Home/ }));
@@ -505,7 +505,7 @@ describe("the home folder root (R13)", () => {
     expect(h.ed.close).not.toHaveBeenCalled();
 
     await openEditor();
-    expect(await screen.findByRole("tab", { name: /README\.md/ })).toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: /notes\.txt/ })).toBeInTheDocument();
   });
 
   it("R13: switching from an app-owned tab to a misc file roots at its parent, and Up still reaches the drive list", async () => {
@@ -516,8 +516,7 @@ describe("the home folder root (R13)", () => {
     await openEditor();
     await showFiles();
 
-    await waitFor(() => expect(h.ex.list).toHaveBeenCalledWith("E:\\q", false));
-    await userEvent.click(await screen.findByRole("tab", { name: /notes\.txt/ }));
+    // The app-owned tab is not part of the global view, which stays on the unowned file (A2).
     await waitFor(() => expect(h.ex.list).toHaveBeenCalledWith("C:\\loose", false));
 
     await userEvent.click(screen.getByRole("button", { name: "Up" }));

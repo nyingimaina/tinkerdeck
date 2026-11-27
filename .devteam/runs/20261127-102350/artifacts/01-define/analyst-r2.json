@@ -1,0 +1,499 @@
+{
+  "summary": "When a file is opened, its editor should appear as a tab in the tab strip of the registered workspace that owns it - the workspace whose root folder contains the file's path, with the deepest matching root winning - beside that workspace's terminals and Console tab, while the workspace view stays on screen and the editor's old side pane is gone. Files that belong to no workspace stay in a separate global editor view whose strip lists only those unowned files, so one file is never shown in two strips. The feature also gives the explorer a keyboard-capable right-click menu with the existing file operations plus Reveal in File Explorer and Open terminal here, renames the App/Project concept to Workspace across the window, the saved configuration (version 2 with a version 1 migration), the tdk command-line tool and its MCP tool arguments, and keeps one lazily loaded editor surface reused for whichever editor tab is visible.",
+  "roles": [
+    "Developer: the one local person who uses Tinkerdeck on their own Windows machine, works inside registered workspaces with terminals and files, and also opens files that belong to no workspace."
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "(Window) A file that belongs to a registered workspace opens as an editor tab in that workspace's tab strip, beside its terminal and Console tabs, and the workspace view stays on screen instead of being replaced by the global editor view.",
+      "rationale": "Keeps the developer inside the workspace they were working in and puts the open file next to the terminals it belongs with.",
+      "acceptance": [
+        "Opening a file under a workspace's root folder shows an editor tab in that workspace's tab strip while the workspace's terminal tabs remain visible.",
+        "Selecting the editor tab shows the file; selecting a terminal tab returns to that terminal without the workspace view being replaced.",
+        "The workspace's tab strip contains editor tabs and terminal tabs at the same time.",
+        "Each workspace shows exactly one selected tab: choosing an editor tab clears the terminal or Console selection in that workspace, and choosing a terminal or Console tab clears the editor selection."
+      ],
+      "edgeCases": [
+        "Opening a second file belonging to the same workspace adds another editor tab rather than replacing the first.",
+        "Switching from an editor tab to a terminal tab and back leaves the editor tab open and does not reload the editor code.",
+        "A file larger than 5 MB shows the existing too-large message and opens no editor tab.",
+        "Opening a file that belongs to a workspace while a different workspace is on screen switches to the owning workspace and selects the file's tab."
+      ],
+      "pitfalls": [
+        "Opening a file must not discard terminal state or navigate away from the workspace view.",
+        "Opening and closing editor tabs must not stop, reset or remount the workspace's terminals.",
+        "A terminal tab must not remain shown as selected while a file editor is visible."
+      ],
+      "rules": ["PERF-001", "TAU-012", "USR-003", "USR-004"],
+      "facts": [
+        { "subject": "editable file size", "attribute": "limit", "op": "at-most", "value": "5", "unit": "MB" }
+      ]
+    },
+    {
+      "id": "R2",
+      "text": "(Window) Files that belong to no registered workspace are kept in a separate global editor view, and the header Editor button keeps opening that view; the global strip lists only unowned files and unsaved documents that have no workspace home, as a plain list with no grouping.",
+      "rationale": "Files outside every workspace still need somewhere to be edited without being forced into a workspace that does not own them, and the global view stays reserved for exactly those files.",
+      "acceptance": [
+        "Opening a file outside every workspace root shows it in the global tab strip.",
+        "That editor does not appear in any workspace's tab strip.",
+        "The global tab strip lists only files that belong to no workspace and unsaved documents with no workspace home.",
+        "The header Editor button shows and hides the global editor view, and unowned files remain listed there.",
+        "The global view shows a plain list of unowned files with no owner grouping and gives a clear empty message when none are open."
+      ],
+      "edgeCases": [
+        "Several unowned files can be open in the global tab strip at the same time.",
+        "An unowned file does not gain a workspace's tab strip merely because a workspace view was on screen when the file was opened.",
+        "Opening an unowned file while a workspace is on screen opens the global editor view."
+      ],
+      "pitfalls": [
+        "An unowned file must not be silently filed under a workspace.",
+        "A workspace-owned file must not be listed in the global strip as well.",
+        "The global strip must not reintroduce the grouped side pane that R5 removes."
+      ],
+      "rules": ["PERF-001", "TAU-012", "USR-003", "USR-004"],
+      "facts": []
+    },
+    {
+      "id": "R3",
+      "text": "(Core rule, shown in the window) A file belongs to the workspace whose root folder contains the file's path; when more than one registered workspace's root contains the path, the deepest root wins; a file outside every workspace root belongs to no workspace.",
+      "rationale": "It gives one unambiguous owner for every file and reuses the launcher's existing notion of which folder each workspace owns.",
+      "acceptance": [
+        "A file anywhere under a workspace's root folder is treated as belonging to that workspace.",
+        "A file under two nested workspace roots is treated as belonging to the deeper workspace.",
+        "A file outside every workspace root belongs to no workspace."
+      ],
+      "edgeCases": [
+        "When a file is saved as, renamed or moved into a different workspace's root, it belongs to that workspace from then on.",
+        "When a file is saved outside every workspace root, it belongs to no workspace from then on.",
+        "When a workspace root changes or the workspace is deleted, affected files are re-evaluated against the remaining roots."
+      ],
+      "pitfalls": [
+        "A tab must not stay filed under a workspace after the file's path no longer falls under that workspace's root.",
+        "A file must not be assigned to a workspace merely because that workspace was open when the file was opened."
+      ],
+      "rules": ["USR-003", "USR-004"],
+      "facts": [
+        { "subject": "file ownership rule", "attribute": "owner", "op": "equals", "value": "the workspace whose root folder contains the file path, deepest root wins" },
+        { "subject": "file ownership rule", "attribute": "outside every workspace root", "op": "equals", "value": "no workspace" }
+      ]
+    },
+    {
+      "id": "R4",
+      "text": "(Window) Each open editor appears in exactly one strip: a workspace-owned file only in its owning workspace's tab strip, and a file that belongs to no workspace only in the global tab strip; no file appears in both strips.",
+      "rationale": "One placement per file keeps the selected item unambiguous and avoids two copies of the same document drifting apart.",
+      "acceptance": [
+        "An editor for a workspace-owned file is absent from the global tab strip.",
+        "An editor for an unowned file is absent from every workspace's tab strip.",
+        "Opening the same file again selects its existing tab instead of creating a second copy in another strip."
+      ],
+      "edgeCases": [
+        "Opening the same path again reuses its existing tab in the one strip that owns it.",
+        "When a file's path moves between a workspace root and no workspace, its single tab moves to the matching strip rather than being duplicated."
+      ],
+      "pitfalls": [
+        "The same document must not be rendered in two strips at the same time.",
+        "Opening a file from a second place, such as Ctrl+O or tdk, must not create a duplicate tab."
+      ],
+      "rules": ["PERF-001", "USR-003", "USR-004"],
+      "facts": []
+    },
+    {
+      "id": "R5",
+      "text": "(Window) Inside a workspace the editor has no vertical side pane that lists or groups open editors by owner; the workspace's own tab strip is the only tab list there. The global editor view still lists only unowned files, as a plain list with no grouping.",
+      "rationale": "The side pane duplicated the workspace tab strip's job and took space away from the editor.",
+      "acceptance": [
+        "Opening a file in a workspace shows the editor without the vertical 'Open editors' list that groups editors by owner.",
+        "The editor tab sits in the workspace's tab strip, and selecting it shows the file.",
+        "The global editor view shows a plain list of unowned files with no group headings."
+      ],
+      "edgeCases": [
+        "Switching between an editor tab and a terminal tab inside a workspace does not bring the side pane back.",
+        "When no unowned files are open, the global view shows no group headings and a clear empty message."
+      ],
+      "pitfalls": [
+        "Removing the side pane inside a workspace must not remove or hide the workspace's terminal tabs or its tab strip.",
+        "The side pane must not be re-added for a workspace-owned file merely because it was opened from the global view."
+      ],
+      "rules": ["TAU-012", "USR-003", "USR-004", "USR-005"],
+      "facts": []
+    },
+    {
+      "id": "R6",
+      "text": "(Window) There is a single editor instance, loaded lazily: editor code is not loaded until a file is first opened, and the same one editor surface shows whichever editor tab is visible, whether in a workspace or in the global view.",
+      "rationale": "Avoids loading and keeping many editors in memory; the editor is only paid for when a file is opened.",
+      "acceptance": [
+        "Before the first file is opened, the editor code is not loaded.",
+        "Opening a second file reuses the existing editor surface instead of creating another.",
+        "Switching from a workspace editor tab to another editor tab or to the global view shows the selected file in the same editor surface.",
+        "Each editor tab keeps its own document state and cursor position while another tab is displayed."
+      ],
+      "edgeCases": [
+        "The first file opened after launch triggers exactly one editor load.",
+        "Switching from an editor tab to a terminal tab and back does not load a second editor.",
+        "While the editor loads, the app shows the existing loading state rather than a blank pane."
+      ],
+      "pitfalls": [
+        "Do not mount a separate editor instance per tab.",
+        "Lazy loading the editor must not lose the file being opened or leave a blank editor while it loads.",
+        "Removing the grouped side pane must not drop the per-document editor state that keeps other tabs intact."
+      ],
+      "rules": ["PERF-001", "TAU-012", "USR-003", "USR-004"],
+      "facts": []
+    },
+    {
+      "id": "R7",
+      "text": "(Window, core and tdk) The registered-app concept is renamed to Workspace everywhere: user-facing labels and messages, the saved configuration file, the tdk command-line tool and its MCP tool arguments, the RPC method names and parameters tdk sends, and internal code identifiers all use Workspace instead of App or Project, with matching plural and possessive forms. Where 'app' means Tinkerdeck itself (for example 'restarts the app'), that wording stays.",
+      "rationale": "The developer wants one name for the concept, carried through the UI, stored data and command-line tooling rather than left for a separate change.",
+      "acceptance": [
+        "User-facing labels and messages for registered apps say Workspace, not App or Project; plural and possessive forms read Workspaces and Workspace's.",
+        "Messages about the saved file say workspaces, for example 'Your saved workspaces could not be read'.",
+        "The saved configuration uses a workspaces key in place of an apps key.",
+        "tdk help text, its positional arguments and its MCP tool arguments say workspace; scripts that pass the workspace as a positional argument, such as 'tdk up Shop', keep working.",
+        "tdk sends workspace.add, workspace.detect, workspace.up, workspace.down and workspace command RPCs with a workspace parameter instead of app.* method names and an app parameter.",
+        "The editor-tab and context-menu text introduced by this feature uses the same Workspace wording."
+      ],
+      "edgeCases": [
+        "A workspace that was previously labelled Project or App in the UI is referred to as a Workspace.",
+        "Existing saved workspaces still load and appear under the new name.",
+        "A workspace whose own user-given name contains the words App or Project keeps that name unchanged.",
+        "Wording where 'app' means Tinkerdeck itself, such as 'restarts the app', stays unchanged."
+      ],
+      "pitfalls": [
+        "Renaming must not change which folder a workspace owns, its terminals, or the meaning of its saved configuration.",
+        "New text must not use App or Project as the name of the concept.",
+        "Do not rewrite a workspace's own user-given name.",
+        "Existing scripts that pass a workspace positional argument must keep working."
+      ],
+      "rules": ["USR-003", "USR-004"],
+      "facts": [
+        { "subject": "registered app concept", "attribute": "term", "op": "equals", "value": "Workspace" },
+        { "subject": "tdk RPC method names", "attribute": "prefix", "op": "equals", "value": "workspace." },
+        { "subject": "tdk RPC workspace parameter", "attribute": "key", "op": "equals", "value": "workspace" }
+      ]
+    },
+    {
+      "id": "R8",
+      "text": "(Window) Right-clicking a file, a folder or the empty area of the explorer tree opens a context menu. Files offer Open, Reveal in File Explorer, Copy path, Copy relative path, Rename, Move and Delete; folders offer New file, New folder, Reveal in File Explorer, Open terminal here only when a workspace owns the folder, Copy path, Rename, Move and Delete; empty tree space offers New file, New folder, Refresh and Show/Hide hidden files. Each action does the same as the existing toolbar or backend action, and the menu also opens with Shift+F10 or the Menu key, with F2 and Del as rename and delete shortcuts on the focused item.",
+      "rationale": "Right-clicking lets the developer act on the exact file or folder without hunting for a toolbar button, using operations the explorer already provides.",
+      "acceptance": [
+        "Right-clicking a file at the pointer shows a menu with Open, Reveal in File Explorer, Copy path, Copy relative path, Rename, Move and Delete.",
+        "Right-clicking a folder shows New file, New folder, Reveal in File Explorer, Copy path, Rename, Move and Delete, plus Open terminal here only when a workspace owns that folder.",
+        "Right-clicking empty tree space shows New file, New folder, Refresh and Show/Hide hidden files.",
+        "The menu opens for the item under the pointer, not for a previously selected item.",
+        "Shift+F10 or the Menu key on the focused tree item opens the same menu; Escape, a click outside or choosing an action closes it and focus returns to the tree item.",
+        "F2 starts a rename and Del starts a delete on the focused tree item.",
+        "Choosing an action performs the same result as the existing explorer toolbar action of the same name, including its name validation, delete confirmation and editor-tab re-pointing.",
+        "Copy path copies the absolute path; Copy relative path copies the path relative to the owning workspace root, or to the explorer's current root when no workspace owns the file.",
+        "Reveal in File Explorer opens the operating system's file manager with the item selected."
+      ],
+      "edgeCases": [
+        "Renaming or deleting a file that is open in an editor leaves its tab pointing at the new path or closes it, matching the existing toolbar behaviour.",
+        "Renaming a folder re-points editor tabs for files inside it to their new paths.",
+        "Right-clicking while the explorer is still loading, or on an empty folder, still shows the menu that applies to the visible area.",
+        "Menu actions are unavailable while another explorer operation is running.",
+        "Reveal on a path that no longer exists shows an error and opens nothing."
+      ],
+      "pitfalls": [
+        "The menu must not create a second, divergent implementation of file operations; it must reuse the operations the toolbar uses.",
+        "Delete from the menu must not skip any confirmation the existing delete action already requires.",
+        "Reveal must select the item, not merely open its parent folder.",
+        "The menu must not open for the wrong item or stay open after an action, Escape or an outside click."
+      ],
+      "rules": ["PERF-001", "TAU-012", "USR-001", "USR-003", "USR-004"],
+      "facts": [
+        { "subject": "context menu trigger", "attribute": "keys", "op": "one-of", "value": "right-click, Shift+F10, Menu key" },
+        { "subject": "file context menu", "attribute": "items", "op": "equals", "value": "Open, Reveal in File Explorer, Copy path, Copy relative path, Rename, Move, Delete" },
+        { "subject": "empty-area context menu", "attribute": "items", "op": "equals", "value": "New file, New folder, Refresh, Show/Hide hidden files" }
+      ]
+    },
+    {
+      "id": "R9",
+      "text": "(Core) The saved configuration file moves to version 2, where a workspaces key replaces apps. A version 1 file is read as before and converted in memory, and is written as version 2 on the next save while the previous file is kept as a .bak. A file whose version is higher than 2 is refused as too new, and an older Tinkerdeck that opens a version 2 file refuses it with its existing 'written by a newer version' message and does not overwrite it.",
+      "rationale": "Existing users keep their saved workspaces, and the stored file stays consistent with the renamed concept without a separate tool or manual edit.",
+      "acceptance": [
+        "A version 1 configuration containing an apps list loads and its entries appear as workspaces.",
+        "After the next save the file is version 2 with a workspaces key and no apps key.",
+        "The previous configuration is retained as a .bak file.",
+        "A version 2 file loads without being migrated a second time and survives a save-and-reload round trip.",
+        "A version 3 file is refused as too new with the existing message and is not overwritten.",
+        "A version 1 file opened by an older build still behaves as it does today."
+      ],
+      "edgeCases": [
+        "A version 1 file with no apps key loads with no workspaces.",
+        "A version 2 file opened by an older build is refused with the existing newer-version message and is not overwritten.",
+        "A version 1 configuration with several workspaces migrates with all entries and their user-given names intact.",
+        "If the v1 to v2 save fails, the existing configuration file is not corrupted or deleted."
+      ],
+      "pitfalls": [
+        "Conversion must not lose workspace entries or rewrite their user-given names.",
+        "A failed save must not corrupt or delete the existing configuration.",
+        "Downgrading is one-way: an older build must not silently overwrite a version 2 file."
+      ],
+      "rules": ["PERF-001", "USR-003", "USR-004"],
+      "facts": [
+        { "subject": "configuration file", "attribute": "version", "op": "equals", "value": "2" },
+        { "subject": "configuration workspace list", "attribute": "top-level key", "op": "equals", "value": "workspaces" },
+        { "subject": "configuration previous file", "attribute": "kept as", "op": "equals", "value": ".bak" }
+      ]
+    },
+    {
+      "id": "R10",
+      "text": "(Window and core) Right-clicking a folder inside a workspace offers 'Open terminal here', which opens a new Console instance in the workspace that owns that folder (the deepest matching root), starts it in the clicked folder and selects it in that workspace's tab strip, switching to that workspace first if needed. The Console is temporary and is not saved to the configuration; the item is hidden for folders that belong to no workspace.",
+      "rationale": "Lets the developer open a shell for a specific folder without leaving the explorer, filed under the workspace that actually owns the folder.",
+      "acceptance": [
+        "Right-clicking a folder inside a workspace shows an 'Open terminal here' item.",
+        "Choosing it opens a new Console instance in the owning workspace's tab strip and selects it.",
+        "The new Console starts in the clicked folder rather than the workspace root.",
+        "With nested workspaces the Console is created in the deeper workspace that owns the folder.",
+        "Right-clicking a folder that belongs to no workspace shows no 'Open terminal here' item.",
+        "The temporary Console does not appear as a saved terminal in the workspace's Edit pane and is gone after a restart; users who want a permanent terminal add one through the Edit pane as today.",
+        "The Console uses the default console shell."
+      ],
+      "edgeCases": [
+        "Right-clicking a folder in one workspace while a different workspace's view is on screen still creates the Console in the folder's owning workspace.",
+        "Right-clicking the workspace root folder opens the Console at the root.",
+        "A folder name containing spaces or non-ASCII characters still opens the Console in that folder.",
+        "A folder that has just been deleted shows an error and opens no Console."
+      ],
+      "pitfalls": [
+        "The Console must belong to the folder's owning workspace, not to whichever workspace's view happened to be open.",
+        "The item must not create a terminal in a workspace that does not own the folder.",
+        "The start folder must stay inside the owning workspace's root.",
+        "An id format change must keep existing Console ids parsing and must not break existing consoles."
+      ],
+      "rules": ["PERF-001", "TAU-012", "USR-003", "USR-004"],
+      "facts": [
+        { "subject": "Open terminal here console", "attribute": "start folder", "op": "equals", "value": "the clicked folder relative to the owning workspace root" },
+        { "subject": "Open terminal here console", "attribute": "saved in configuration", "op": "must-not", "value": "be saved" }
+      ]
+    },
+    {
+      "id": "R11",
+      "text": "(Window) On an editor tab the workspace strip shows the editor actions instead of the terminal Start/Stop/Restart buttons: Save, Save as, and Raw/Preview when the file can be previewed; the language, line-ending and encoding status bar stays with the editor tab. On a terminal or Console tab the Start/Stop/Restart buttons stay and the editor actions are absent.",
+      "rationale": "The strip belongs to the workspace as a whole, so its actions must match the tab in front instead of offering Start for a file or Save for a terminal.",
+      "acceptance": [
+        "With an editor tab selected, Save and Save as are shown and act on that file; Raw/Preview is shown for a previewable file and absent otherwise.",
+        "With a terminal or Console tab selected, Start/Stop/Restart are shown and act on that terminal, and Save, Save as and Raw/Preview are absent.",
+        "Save saves the current text and Save as lets the developer choose a path, as today; saving an unsaved document asks for a path.",
+        "The language, line-ending and encoding status bar is shown for an editor tab and is absent for a terminal or Console tab.",
+        "For a binary or preview-only file, Save and Save as are unavailable as today."
+      ],
+      "edgeCases": [
+        "Switching from a terminal tab to an editor tab replaces the actions and status bar immediately.",
+        "Save on a file with no changes completes without an error.",
+        "If a save fails, the error is shown and the editor tab stays marked as having unsaved changes."
+      ],
+      "pitfalls": [
+        "Start must never be offered as an action on a file tab.",
+        "Save must never save a terminal tab, and the status bar must not be shown for a terminal.",
+        "Hiding the terminal actions for a file tab must not disable the terminal controls when a terminal tab is selected again."
+      ],
+      "rules": ["TAU-012", "USR-003", "USR-005"],
+      "facts": []
+    },
+    {
+      "id": "R12",
+      "text": "(Window) Editor shortcuts Ctrl+S, Ctrl+Shift+S (Save as), Ctrl+N, Ctrl+O and Ctrl+W apply only while an editor tab is the visible tab; when a terminal or Console tab is selected they are not handled by the editor and the key goes to the terminal.",
+      "rationale": "Editor shortcuts bound while the editor is mounted would otherwise hijack keys inside a terminal and risk saving or closing a hidden file.",
+      "acceptance": [
+        "With an editor tab visible, Ctrl+S saves, Ctrl+Shift+S saves as, Ctrl+N creates a document, Ctrl+O opens files and Ctrl+W closes the editor tab as today.",
+        "With a terminal or Console tab selected, Ctrl+W and Ctrl+N do not close or create editor tabs, and the key reaches the terminal.",
+        "With a terminal tab selected, Ctrl+S does not save a hidden editor tab.",
+        "In the global editor view the shortcuts work as they do today."
+      ],
+      "edgeCases": [
+        "Ctrl+W on the last editor tab closes it and follows the existing rule that unsaved text is kept in the Bin.",
+        "When no editor tab is visible anywhere, none of the editor shortcuts is consumed.",
+        "The terminal's own shortcuts, such as copy and paste, keep working."
+      ],
+      "pitfalls": [
+        "Do not keep a window-level editor shortcut listener active while a terminal is in front.",
+        "Do not double-handle a shortcut so that both the editor and the terminal act on it.",
+        "Scoping the shortcuts must not break Ctrl+S in the global editor view."
+      ],
+      "rules": ["TAU-012", "USR-003", "USR-004"],
+      "facts": []
+    },
+    {
+      "id": "R13",
+      "text": "(Window and core) A new unsaved document created with Ctrl+N or the New action while a workspace is on screen belongs to that workspace: it appears in that workspace's strip, and its home workspace is remembered until the first save; after a save the file's path decides ownership. The home workspace survives a restart, so a never-saved document returns to its workspace's strip with its kept text.",
+      "rationale": "An unsaved document has no path, so the ownership rule cannot place it; without a remembered home it would fall into the global list even though the developer started it inside a workspace.",
+      "acceptance": [
+        "Ctrl+N or New while the Shop workspace is on screen creates an unsaved editor tab in the Shop strip.",
+        "The new document's home is Shop until its first save.",
+        "After closing and reopening Tinkerdeck, a never-saved document created in Shop returns to the Shop strip with the text that was typed.",
+        "After a first save inside Shop's root the document stays in Shop; after Save as outside every root it moves to the global view.",
+        "A new document created while the global editor view is on screen has no workspace home and stays in the global strip."
+      ],
+      "edgeCases": [
+        "Several never-saved documents from different workspaces each return to their own workspace after a restart.",
+        "Cancelling Save as leaves the document with its original home workspace.",
+        "If the home workspace no longer exists at startup, the never-saved document appears in the global view instead.",
+        "A never-saved document created in a workspace whose view is later left open elsewhere still belongs to that workspace."
+      ],
+      "pitfalls": [
+        "An unsaved document inside a workspace must not be placed in Misc or the global view while its home exists.",
+        "Remembering the home must not lose the typed text across a restart.",
+        "A saved document's ownership must follow its path, not a stale home."
+      ],
+      "rules": ["PERF-001", "USR-003", "USR-004"],
+      "facts": [
+        { "subject": "new unsaved document", "attribute": "home workspace", "op": "equals", "value": "the workspace on screen when it is created, until the first save" },
+        { "subject": "new unsaved document home", "attribute": "kept across restart", "op": "must", "value": "yes" }
+      ]
+    },
+    {
+      "id": "R14",
+      "text": "(Window) When an open file's ownership changes - Save as into or out of a workspace folder, rename or move through the explorer, a workspace root change, or a workspace deletion - its tab moves to the strip of its new owner (another workspace or the global view) with its content, unsaved text, unsaved-changes mark and undo history intact, and no copy is left behind.",
+      "rationale": "The tab must follow its file deliberately instead of being lost or duplicated when the path or the workspace roots change.",
+      "acceptance": [
+        "Save as into another workspace's root moves the tab out of the old strip and into the new owning workspace's strip with the same content and unsaved-changes mark.",
+        "Save as outside every workspace root moves the tab to the global strip.",
+        "Renaming or moving a file through the explorer re-points its tab and moves it if its owner changes, with no duplicate left in the old strip.",
+        "Changing a workspace's root re-evaluates its open files: files no longer under the root move to the global view, and newly covered files move into that workspace.",
+        "Deleting a workspace re-files its open file tabs under the new owner (usually the global view) without losing unsaved text or undo history.",
+        "After a move, Undo still reverses the last change made before the move."
+      ],
+      "edgeCases": [
+        "A dirty tab moved between strips keeps its unsaved text and its unsaved-changes mark.",
+        "Moving a folder through the explorer moves the tabs of all open files inside it at once.",
+        "The tab that was selected in the old workspace becomes the selected tab in the new owner's strip.",
+        "Moving a tab must not restart or remount any terminal in either workspace."
+      ],
+      "pitfalls": [
+        "A tab must not be closed merely because its ownership changed.",
+        "A moved tab must not lose unsaved text, cursor position or undo history, and must not appear in both strips.",
+        "Changing a workspace's root or deleting a workspace must not leave a tab filed under a root that no longer contains its path."
+      ],
+      "rules": ["PERF-001", "USR-003", "USR-004"],
+      "facts": []
+    },
+    {
+      "id": "R15",
+      "text": "(Core) A new Tauri command reveals an arbitrary existing file or folder in Windows File Explorer by running explorer.exe with the path as a separate argument, and it validates that the path exists before opening anything.",
+      "rationale": "The only explorer.exe shell-out today opens the config folder, so the menu's Reveal action needs a command that can reveal any path safely.",
+      "acceptance": [
+        "Choosing Reveal on an existing file or folder opens File Explorer with that item selected.",
+        "A path that no longer exists shows a clear error message and opens nothing.",
+        "A path containing spaces, quotes or an ampersand still opens correctly because the path is passed as its own argument, not built into a shell string.",
+        "The command is callable from the explorer for paths inside and outside every workspace root.",
+        "No new capability or dependency is required beyond the app's current commands and the existing explorer.exe use."
+      ],
+      "edgeCases": [
+        "Revealing a folder root and revealing a file both select the right item.",
+        "A path with non-ASCII characters or on another drive still opens.",
+        "The command releases its process handle after launching File Explorer."
+      ],
+      "pitfalls": [
+        "Never build a command string from the path or pass it through a shell.",
+        "Do not open the parent folder without selecting the item.",
+        "A non-existent or unreadable path must not silently open the wrong folder."
+      ],
+      "rules": ["PERF-001", "USR-003"],
+      "facts": []
+    }
+  ],
+  "outOfScope": [
+    "Split views showing an editor beside a terminal.",
+    "Dragging tabs between workspaces or between a workspace and the global view.",
+    "Chunked or streamed file loading and a read-only large-file viewer; files stay whole-file reads under the existing 5 MB edit cap.",
+    "Saving an 'Open terminal here' Console as a permanent workspace terminal; users add permanent terminals through the Edit pane as today.",
+    "Terminals in the global editor view.",
+    "Keeping the old app.* RPC names as aliases; tdk and the app ship together, so the RPC names change in step."
+  ],
+  "nonFunctional": [
+    {
+      "area": "performance",
+      "statement": "The editor draws only the lines visible on screen, so a long file opens and scrolls without rendering its full text.",
+      "acceptance": "A 10,000-line file opens and scrolls without rendering all 10,000 lines at once."
+    },
+    {
+      "area": "performance",
+      "statement": "Editor code is not part of the first load and is fetched only when a file is first opened; the production build output is checked to record the size added by the context-menu library.",
+      "acceptance": "Before the first file is opened no editor chunk is requested, and after `npm run build` the editor appears as a separate lazy chunk while the added menu library's size is noted from the build output."
+    },
+    {
+      "area": "performance",
+      "statement": "The explorer and its context menu stay responsive with large folders and many open tabs, and opening the menu does not scan the tree.",
+      "acceptance": "Right-clicking in a folder with 1,000 entries and a workspace with 50 open tabs opens the menu without a visible delay, showing only its fixed items."
+    },
+    {
+      "area": "reliability",
+      "statement": "Switching between an editor tab and a terminal tab never restarts, remounts or clears any terminal.",
+      "acceptance": "Start a long-running command in a terminal tab, switch to an editor tab and back: the command is still running and its scrollback is intact."
+    },
+    {
+      "area": "reliability",
+      "statement": "Migrating the configuration from version 1 to version 2 preserves every saved workspace and its folder, and a failed save never corrupts the existing configuration.",
+      "acceptance": "A version 1 file with several workspace entries migrates with all entries and their user-given names intact and a .bak copy left behind; a simulated failed v2 save leaves the existing file readable."
+    },
+    {
+      "area": "accessibility",
+      "statement": "The context menu and the workspace tab strip are operable by keyboard with a visible focus: the menu opens with Shift+F10 or the Menu key, arrow keys move, Enter chooses, Escape closes, and focus returns to the tree item.",
+      "acceptance": "Using only the keyboard, the developer can open the context menu, reach and choose any item, close it with Escape, and see focus back on the same tree item; every menu item and tab has a readable label."
+    },
+    {
+      "area": "security",
+      "statement": "Reveal passes the path to File Explorer as a separate argument and validates that it exists, so a crafted path cannot run a command.",
+      "acceptance": "A path shaped like a command line, or containing a quote or ampersand, opens as a literal path or fails with an error, and never executes anything."
+    },
+    {
+      "area": "appearance",
+      "statement": "The context menu follows the app's dark and light themes using the existing theme colours rather than an unstyled default menu.",
+      "acceptance": "In both dark and light theme the menu background, text, border, hover and accent match the surrounding explorer."
+    }
+  ],
+  "risks": [
+    "There is no confirmation that anything other than tdk calls Tinkerdeck's RPC, so dropping the old app.* method names and app parameter could break an unknown external tool.",
+    "The bundle cost of the proposed @radix-ui/react-context-menu has not been measured; check the vite build output after adding it.",
+    "The request proposes @radix-ui/react-context-menu while house rule USR-001 asks for the project's preferred jattac menu components; the architect must record which is used and why.",
+    "Keeping a file tab's content, unsaved text and undo history while its tab moves between strips, with only one editor surface, is the riskiest part and needs characterization tests of today's editor and tab behaviour first.",
+    "The migration is one-way by design: once the file is version 2, an older Tinkerdeck refuses it and will not save over it.",
+    "Copy relative path for a file under no workspace is unspecified; the default chosen here is the explorer's current root.",
+    "Two workspaces with the same root folder, or roots that differ only by case or trailing separator, still need one unambiguous owner when the deepest-root rule ties."
+  ],
+  "tensions": [
+    {
+      "requirements": ["R1", "R2"],
+      "scenario": "Ctrl+O can pick several files at once, some owned by the Shop workspace and some owned by no workspace. R1 wants each owned file to bring the Shop view on screen, while R2 wants an unowned file to open the global view; only one view can be shown, so opening several files in one action leaves some of them unseen. The builder should say whether multi-select opens every file or only the last one."
+    }
+  ],
+  "glossary": [
+    "Registered workspace: a workspace configured in the launcher that owns a root folder and has terminal tabs; previously called an app or project, now named Workspace in the UI, the saved configuration and the tdk CLI/MCP.",
+    "Owning workspace: the registered workspace whose root folder contains a file's path; if several roots contain it, the deepest one.",
+    "Workspace tab strip: the row of tabs shown inside a workspace, containing the workspace's terminals, the Console tab group and its editor tabs.",
+    "Global tab strip: the row of editor tabs for files that belong to no registered workspace.",
+    "Editor tab: a tab that shows a file in the editor.",
+    "Unowned file: a file whose path is not under any registered workspace's root.",
+    "Side pane: the editor's vertical list that groups open editors by owner; it is not shown inside a workspace.",
+    "Single editor surface: the one editor instance reused to show whichever editor tab is selected.",
+    "Context menu: the menu opened by right-clicking a file, a folder or empty explorer space, or by Shift+F10 or the Menu key.",
+    "Reveal in File Explorer: opens the operating system's file manager with the chosen file or folder selected.",
+    "Open terminal here: a context-menu action on a folder inside a workspace that opens a new Console instance in the owning workspace's tab strip.",
+    "Version 2 configuration: the saved settings file with a workspaces key; a version 1 file with apps is read, converted in memory and written as version 2 on the next save, keeping a .bak copy."
+  ],
+  "questions": [],
+  "coverage": [
+    { "topic": "users", "status": "assumed", "note": "One local person on their own Windows machine; there are no accounts, roles or sharing." },
+    { "topic": "data", "status": "answered", "note": "Decided: a never-saved document created inside a workspace returns to that workspace's tab strip after a restart, so its home workspace is stored; the saved config becomes version 2 with a workspaces key and a v1 migration." },
+    { "topic": "permissions", "status": "not-applicable", "note": "The app has no accounts, roles or sharing; its one user already has full access to the same local files today." },
+    { "topic": "validation", "status": "answered", "note": "The context menu reuses the explorer's existing name validation, move rules and delete confirmation; Reveal validates that the path exists; an Open terminal here start folder must stay inside the owning workspace's root." },
+    { "topic": "states", "status": "assumed", "note": "Existing loading, empty, error and too-large states and wording are kept; the global list gets an empty message, the menu closes on Escape, an outside click or a choice, and menu actions are unavailable while an operation runs." },
+    { "topic": "duplicates", "status": "answered", "note": "One editor per file in exactly one strip; opening the same path again selects its existing tab instead of making a second copy." },
+    { "topic": "volume", "status": "assumed", "note": "A workspace may hold any number of open editor tabs for the session and the strip scrolls when it overflows; files stay whole-file reads under the existing 5 MB edit cap and only visible lines are drawn." },
+    { "topic": "deletion", "status": "answered", "note": "Closing a tab with unsaved text keeps it in the global Bin for 30 days; deleting a file or folder uses the existing confirm-and-delete action and re-points or closes affected tabs." },
+    { "topic": "privacy", "status": "not-applicable", "note": "No new personal or sensitive data is collected; the same local files are shown that the user can already open." },
+    { "topic": "quality", "status": "answered", "note": "Exactly one lazily loaded editor surface is reused, terminals stay mounted, editor shortcuts are scoped to the visible editor tab, and the menu is keyboard-operable; accessibility, performance, reliability and security are stated as non-functional requirements." }
+  ],
+  "assumptions": [
+    "One local person uses Tinkerdeck on their own Windows machine; there are no accounts, roles, sharing or per-file permissions to add.",
+    "The explorer and editor keep their existing loading, empty, error and too-large states and wording; the new global file list shows an empty message when no unowned file is open, and the context menu closes on Escape, an outside click or after a choice.",
+    "A workspace or the global view keeps every editor tab it has for the session and the tab strip scrolls when it overflows; files remain whole-file reads under the existing 5 MB edit cap, so larger files and logs are not opened here.",
+    "Copy relative path for a file under no workspace is relative to the explorer's current root.",
+    "The context menu is built on @radix-ui/react-context-menu as the request proposes unless the architect records an exception for house rule USR-001; its production bundle cost is measured from the vite build output.",
+    "No old-name app.* RPC aliases are kept, because tdk and the app ship together and no other caller is known; this is recorded as a risk.",
+    "Where 'app' means Tinkerdeck itself, such as 'restarts the app', the wording stays.",
+    "Delete keeps its existing behaviour of refusing permanent deletion and using the Recycle Bin after one confirmation."
+  ]
+}

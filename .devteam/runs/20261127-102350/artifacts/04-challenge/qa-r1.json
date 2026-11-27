@@ -1,0 +1,61 @@
+{
+  "findings": [
+    {
+      "cites": "R4",
+      "severity": "blocking",
+      "file": "src/state/workspaceTabs.test.ts",
+      "line": 67,
+      "evidence": "The only re-filing move test (src/state/workspaceTabs.test.ts:67-75) re-points a tab between two workspace roots (E:/work/Qonsol/api -> D:/lite). Deleting a workspace is covered (lines 77-90), but nothing moves a tab from a workspace root to an unowned path (or back), changes a workspace's root, or checks content/dirty after the move. The applyRepaths test (src/state/useEditor.test.tsx:300-311) moves within C:/x and never involves a workspace. So R4 acceptance 4 ('path moves between a workspace root and no workspace ... moves to the matching strip rather than being duplicated') and R3's 'saved outside every workspace root' / root-change edges have no test that would fail if re-filing broke.",
+      "description": "Add a test that re-points an open tab from a workspace path to an unowned path and back (and/or changes a workspace root), asserting one tab, the matching strip, and that its text and unsaved mark survive the move."
+    },
+    {
+      "cites": "A1",
+      "severity": "blocking",
+      "file": "src/App.editor.test.tsx",
+      "line": 42,
+      "evidence": "This file replaces TerminalHost with a bare <div/> (line 42) and the A1 switch test (lines 161-177) asserts only that the same CodeSurface element persists. App.test.tsx:140-148 only switches terminal -> terminal. No test asserts a terminal host stays mounted, stays visible, or that startTerminal/stopTerminal/restartTerminal are not called when an editor tab is selected.",
+      "description": "A1's 'Showing a file tab does not stop, reset or remount any of the workspace's terminals' half has no test; a regression that unmounted or stopped the terminals when a file tab is shown would still pass the suite. Use a counted TerminalHost mock and assert the same host survives the editor<->terminal switch with no stop/restart call."
+    },
+    {
+      "cites": "R1",
+      "severity": "advisory",
+      "file": "src/App.editor.test.tsx",
+      "line": 161,
+      "evidence": "The switch test clicks the api tab but never asserts the api tab becomes aria-selected, that the editor tab is deselected, or that the editor surface is hidden (data-hidden). The TabStrip 'exactly one selected' test (src/features/apps/components.test.tsx:174) passes activeTabId directly, so App's clearEditorSelection (src/App.tsx:802-814) is not exercised.",
+      "description": "R1 acceptance 2/4 and R5's 'switching does not bring the side pane back' edge are proven only at component level. Strengthen the window switch test to assert the chosen tab/visible surface after each click and that no 'Open editors' tablist reappears."
+    },
+    {
+      "cites": "R2",
+      "severity": "advisory",
+      "file": "src/App.explorer.test.tsx",
+      "line": 183,
+      "evidence": "The only multi-file pick test opens two workspace-owned files (E:/q/a.ts, E:/q/b.ts). No test picks a workspace-owned file together with an unowned one and asserts the owned file stays out of the global strip (R2 edge 'even when the picker also returned unowned files').",
+      "description": "Add a mixed pick (one file under a workspace root, one outside every root) and assert the owned file appears only in the workspace strip and the unowned one only in the global strip."
+    },
+    {
+      "cites": "USR-003",
+      "severity": "advisory",
+      "file": "src/state/workspaceTabs.test.ts",
+      "line": 8,
+      "evidence": "partitionTabs is tested with 3 tabs and 3 workspaces. There is no test with the stated 50 open editor tabs and 20 workspaces, and no timing assertion (<50 ms), so the partitioning scale/performance requirement is unverified.",
+      "description": "Add a 50-tab/20-workspace partition test (and, if practical, a timing assertion) to prove the strip update stays fast at the stated volume."
+    },
+    {
+      "cites": "USR-003",
+      "severity": "advisory",
+      "file": "src/features/editor/CodeSurface.tsx",
+      "line": 153,
+      "evidence": "The liveIds pruning effect (lines 153-157) is not covered by any test; nothing opens and closes a run of documents and asserts the per-document states map drops the closed ids, so a memory leak would pass.",
+      "description": "Add a test that opens and closes ~30 documents and checks only the still-open ids remain in the editor state map (or otherwise proves closed tabs release their state)."
+    },
+    {
+      "cites": "USR-006",
+      "severity": "advisory",
+      "file": "src/features/apps/components.test.tsx",
+      "line": 174,
+      "evidence": "The editor-tab test asserts roles, labels, the close control and the dirty text alternative, but never operates the strip with the keyboard (ArrowLeft/ArrowRight/Enter/Space to select, focus the close button and close) as the accessibility requirement asks.",
+      "description": "Add a keyboard-only test for the workspace editor tabs (move, select, close) and announce the selected tab, matching the accessibility acceptance check."
+    }
+  ],
+  "verifications": []
+}

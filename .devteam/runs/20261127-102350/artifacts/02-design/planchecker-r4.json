@@ -1,0 +1,4 @@
+{
+  "summary": "Consistent: the design stays within R1-R5, derives both strips from one partition so R3/R4 hold, removes only the 'Open editors' pane for R5, and the old App/useEditor changes are justified with characterization tests first, as R1's acceptance permits.",
+  "conflicts": []
+}

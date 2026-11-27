@@ -1,0 +1,75 @@
+{
+  "findings": [
+    {
+      "cites": "R1",
+      "severity": "advisory",
+      "file": "src/App.tsx",
+      "line": 831,
+      "evidence": "R1 acceptance \"choosing a terminal or Console tab clears the editor selection\" has no App-level assertion. App.editor.test.tsx:178-225 (A1) clicks the terminal tab and back but only asserts the surface/host identity; components.test.tsx:174-189 passes activeTabId directly, so App's clearEditorSelection branch (App.tsx:831-843) is untouched by any test. Removing the clearEditorSelection call would leave every test green.",
+      "description": "Add one App test that, with an editor tab selected, clicks a terminal (and the Console) tab and asserts that tab is aria-selected while the editor tab is not, so the one-selected-tab rule cannot regress silently."
+    },
+    {
+      "cites": "R1",
+      "severity": "advisory",
+      "file": "src/App.editor.test.tsx",
+      "line": 260,
+      "evidence": "R1 acceptance \"opening a workspace-owned file while a different workspace ... is on screen switches to the owning workspace\" is only exercised on the failure path: the REV-3 test opens E:/b/x.ts while Qonsol is on screen, mocks the open as rejected, and never asserts a switch to Bees. The success switch is tested from the global editor view (App.editor.test.tsx:160) and from the loading/Home state (A3, :344), but never from another workspace's view.",
+      "description": "Add a success-path test that opens a file owned by workspace B while workspace A is on screen and asserts the view moves to B with the file's tab selected."
+    },
+    {
+      "cites": "A2",
+      "severity": "advisory",
+      "file": "src/features/editor/EditorView.test.tsx",
+      "line": 284,
+      "evidence": "A2 acceptance \"Closing an unowned tab in the global view selects the next unowned tab, or shows the empty message when none remain\" is not asserted. The only close test clicks Close u2.txt and asserts c.close was called; it never checks which tab becomes selected or that the empty message appears when the last unowned tab closes. The globalActiveTab unit helper is tested in isolation (workspaceTabs.test.ts:162-169) but the close-then-select path is not.",
+      "description": "Add a global-view test that closes the active unowned tab and asserts the next unowned tab is selected, and one that closes the last unowned tab and asserts the empty message."
+    },
+    {
+      "cites": "R5",
+      "severity": "advisory",
+      "file": "src/App.editor.test.tsx",
+      "line": 178,
+      "evidence": "R5 edge case \"Switching between an editor tab and a terminal tab inside a workspace does not bring the side pane back\" is only checked before switching (App.editor.test.tsx:172). The A1 switch test (lines 178-194) asserts the surface survives but never re-asserts that no \"Open editors\" tablist/group appeared after the terminal->editor round trip.",
+      "description": "After the editor->terminal->editor switch, assert screen.queryByRole(\"tablist\", { name: \"Open editors\" }) and queryByRole(\"group\") are still null."
+    },
+    {
+      "cites": "USR-003",
+      "severity": "advisory",
+      "file": "src/state/workspaceTabs.test.ts",
+      "line": 5,
+      "evidence": "The stated volume target (50 open editor tabs across 20 registered workspaces, strips updated in under 50 ms without a file-system scan) has no test. workspaceTabs.test.ts uses 3 workspaces and at most 5 tabs, and partitionTabs/groupTabs are never timed or given large input.",
+      "description": "Add a scale test with 50 tabs and 20 workspaces that times partitionTabs (and a re-partition after one tab change) and asserts it stays under 50 ms, so the volume limit is actually proven."
+    },
+    {
+      "cites": "USR-006",
+      "severity": "advisory",
+      "file": "src/features/apps/components.test.tsx",
+      "line": 174,
+      "evidence": "The accessibility acceptance (workspace tab strip operable by keyboard; enter/arrow moves selection and an editor tab can be selected and closed by keyboard) has no test for the workspace TabStrip. The editor-tab tests only use mouse clicks and labels; the keyboard pattern exists only for the separate sidebar tabs (Sidebar.tabs.test.tsx:313-344).",
+      "description": "Add a keyboard test on TabStrip: focus the tablist, ArrowRight/Left moves the selected tab, Enter/Space selects an editor tab, and the close control is reachable."
+    },
+    {
+      "cites": "USR-005",
+      "severity": "advisory",
+      "file": "src/features/terminals/TabStrip.module.css",
+      "line": 22,
+      "evidence": "The appearance acceptance (in both dark and light theme the editor tab background, text, border, active indicator and dirty mark match the surrounding workspace strip) has no test. TabStrip.module.css uses var(--border)/var(--text)/var(--term-bg), but no test asserts the editor tab styles or a visible active/dirty state in either theme.",
+      "description": "Add a styles test asserting the editor tab uses the theme variables (and a distinct active indicator and dirty mark) for both dark and light themes."
+    },
+    {
+      "cites": "USR-003",
+      "severity": "advisory",
+      "file": "src/state/useEditor.test.tsx",
+      "line": 147,
+      "evidence": "The resource-use acceptance (after opening and closing 30 files only the open tabs remain in the editor's state map and memory does not grow per closed tab) has no test. useEditor.test.tsx closes a single tab and checks docs/bins for it; there is no 30-file open/close loop, and CodeSurface's liveIds pruning (CodeSurface.tsx:153-157) has no test file at all.",
+      "description": "Add a test that opens and closes 30 files and asserts the controller's tab/doc map contains only the still-open tabs after each close; cover CodeSurface's liveIds pruning if a surface test can be added."
+    }
+  ],
+  "verifications": [
+    {
+      "id": "QA-10",
+      "status": "fixed",
+      "evidence": "The workspace banner is now gated on the failed open: App.tsx:364-368 requires failedOpen, editor.error === failedOpen.message and ownerOf(failedOpen.path) === app.id before rendering role=alert. useEditor only calls onOpenFailed when openPath rejects (useEditor.ts:136-139). App.features.test.tsx (unchanged, no ./api/editor mock) T34 now passes: `npx vitest run src/App.features.test.tsx` is 33/33 green with a single role=alert, and the full `npm test` run is 756 passed / 2 failed, the 2 failures being the pre-existing version mismatches in App.version.test.tsx and App.test.tsx (expected 2.3.0, package is 2.4.1). New tests App.editor.test.tsx:247 and :260 prove an unrelated editor failure is not shown in a workspace and a failed open is shown only by the owning workspace."
+    }
+  ]
+}

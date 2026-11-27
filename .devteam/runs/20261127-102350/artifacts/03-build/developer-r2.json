@@ -1,0 +1,191 @@
+{
+  "summary": "Fixed the one open security finding (SEC-1). src/App.tsx's workspace-selection effect now only runs while the workspace view is on screen (`view === \"app\"`, added to its dependencies), so it can no longer fight GlobalEditorView's own selection effect over editor.activeId and loop forever when the global editor view is shown with a remembered workspace editor tab and an unowned tab open. Added a regression test in src/App.editor.test.tsx that opens a workspace-owned file (remembering its tab), then presses the header Editor button with an unowned tab already open and asserts the global view settles on the unowned tab; it times out/hits max-update-depth against the old ungated effect and passes with the fix. Nothing else was changed. Checks: npm run lint passes; the focused Vitest suites (App.editor, App.explorer, features/editor, workspaceTabs, useEditor, components) pass (157 tests incl. SEC-1); npm run build passes with CodeSurface still its own lazy chunk. Full npm test: 750 pass, 2 fail, both pre-existing version tests at HEAD and out of scope (src/App.version.test.tsx and src/App.test.tsx footer hard-code v2.3.0 while package.json is 2.4.1; neither file is in this revision).",
+  "tests": [
+    {
+      "name": "R3: files under a workspace root go to that workspace, deepest root winning",
+      "file": "src/state/workspaceTabs.test.ts",
+      "requirements": ["R3"]
+    },
+    {
+      "name": "R3: two roots that tie for depth give the file to the first saved workspace",
+      "file": "src/state/workspaceTabs.test.ts",
+      "requirements": ["R3"]
+    },
+    {
+      "name": "R3: a path outside every root (or unsaved) belongs to no workspace",
+      "file": "src/state/workspaceTabs.test.ts",
+      "requirements": ["R3"]
+    },
+    {
+      "name": "R3: slash direction, trailing separators and capitalisation do not change the owner",
+      "file": "src/state/workspaceTabs.test.ts",
+      "requirements": ["R3"]
+    },
+    {
+      "name": "R2: the unowned list holds only files with no workspace home, never an owned file",
+      "file": "src/state/workspaceTabs.test.ts",
+      "requirements": ["R2", "R4"]
+    },
+    {
+      "name": "R4: every open editor lands in exactly one bucket, with no copy",
+      "file": "src/state/workspaceTabs.test.ts",
+      "requirements": ["R4"]
+    },
+    {
+      "name": "R4: a tab that moves roots moves to the new strip without being duplicated",
+      "file": "src/state/workspaceTabs.test.ts",
+      "requirements": ["R4", "R3"]
+    },
+    {
+      "name": "R1/R3: deleting a workspace re-files its tabs under the remaining owner or the global view, never both",
+      "file": "src/state/workspaceTabs.test.ts",
+      "requirements": ["R1", "R3"]
+    },
+    {
+      "name": "R1: opening a second file adds another tab and reports each file's own id and path",
+      "file": "src/state/useEditor.test.tsx",
+      "requirements": ["R1"]
+    },
+    {
+      "name": "R2: an unowned file keeps its own path when reported, so it can go to the global view",
+      "file": "src/state/useEditor.test.tsx",
+      "requirements": ["R2"]
+    },
+    {
+      "name": "R4: opening the same path again reuses its one tab and still reports it",
+      "file": "src/state/useEditor.test.tsx",
+      "requirements": ["R4"]
+    },
+    {
+      "name": "R1: shows the too-large message and opens no editor, with a way to close the tab",
+      "file": "src/features/editor/EditorSurface.test.tsx",
+      "requirements": ["R1"]
+    },
+    {
+      "name": "R1: opening another file reuses the one editor surface instead of loading a second",
+      "file": "src/features/editor/EditorSurface.test.tsx",
+      "requirements": ["R1"]
+    },
+    {
+      "name": "R5: the surface draws no editor tab list and no owner grouping",
+      "file": "src/features/editor/EditorSurface.test.tsx",
+      "requirements": ["R5"]
+    },
+    {
+      "name": "A1: hiding the surface for a terminal tab keeps the same editor mounted",
+      "file": "src/features/editor/EditorSurface.test.tsx",
+      "requirements": ["A1", "R1"]
+    },
+    {
+      "name": "R2/R4: lists only unowned files, never a workspace-owned one",
+      "file": "src/features/editor/EditorView.test.tsx",
+      "requirements": ["R2", "R4"]
+    },
+    {
+      "name": "R5: has one plain strip, no owner headings and no Open editors side pane",
+      "file": "src/features/editor/EditorView.test.tsx",
+      "requirements": ["R5"]
+    },
+    {
+      "name": "R2: marks the dirty file and closes its tab from the strip",
+      "file": "src/features/editor/EditorView.test.tsx",
+      "requirements": ["R2"]
+    },
+    {
+      "name": "A2: entering the view selects an unowned tab, never the active workspace file",
+      "file": "src/features/editor/EditorView.test.tsx",
+      "requirements": ["A2", "R2"]
+    },
+    {
+      "name": "R5: with no unowned file open it shows a clear empty message and no group headings",
+      "file": "src/features/editor/EditorView.test.tsx",
+      "requirements": ["R5"]
+    },
+    {
+      "name": "R1/R4: shows editor tabs beside the terminals with exactly one selected, a dirty mark and a close control",
+      "file": "src/features/apps/components.test.tsx",
+      "requirements": ["R1", "R4"]
+    },
+    {
+      "name": "R1: the terminal actions are disabled while an editor tab is selected",
+      "file": "src/features/apps/components.test.tsx",
+      "requirements": ["R1"]
+    },
+    {
+      "name": "R1/R5: a workspace-owned file opened from the global view moves to the workspace strip, with no side pane",
+      "file": "src/App.editor.test.tsx",
+      "requirements": ["R1", "R5"]
+    },
+    {
+      "name": "A1: switching editor tab → terminal tab → editor tab keeps the one editor surface mounted",
+      "file": "src/App.editor.test.tsx",
+      "requirements": ["A1", "R1"]
+    },
+    {
+      "name": "R2: an unowned file opened while a workspace is on screen opens the global view, not the workspace strip",
+      "file": "src/App.editor.test.tsx",
+      "requirements": ["R2"]
+    },
+    {
+      "name": "SEC-1: entering the global view with a remembered workspace editor tab does not loop between the two selection effects",
+      "file": "src/App.editor.test.tsx",
+      "requirements": ["R1", "R2", "R4"]
+    },
+    {
+      "name": "A2: the global view selects an unowned tab even when a workspace file is the active document",
+      "file": "src/App.editor.test.tsx",
+      "requirements": ["A2", "R2"]
+    },
+    {
+      "name": "A3: a pending workspace-owned file is filed under its workspace once they load",
+      "file": "src/App.editor.test.tsx",
+      "requirements": ["A3", "R1"]
+    },
+    {
+      "name": "A3: a pending file outside every workspace root opens the global view and is selected there",
+      "file": "src/App.editor.test.tsx",
+      "requirements": ["A3", "R2"]
+    },
+    {
+      "name": "R1: the home view offers it and choosing it opens the picked file in the editor view",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": ["R1"]
+    },
+    {
+      "name": "R1: picking several files opens each one",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": ["R1"]
+    },
+    {
+      "name": "R1: opening a file while another tab has unsaved text keeps that text",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": ["R1"]
+    },
+    {
+      "name": "R1/R3: clicking a workspace-owned file opens it in the workspace strip and stays on the workspace",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": ["R1", "R3"]
+    },
+    {
+      "name": "R3: clicking an image opens it in the editor's existing preview form, not a text editor",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": ["R3"]
+    },
+    {
+      "name": "R4: clicking a file that is already open focuses its tab instead of opening a second",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": ["R4"]
+    },
+    {
+      "name": "R3: a file that fails to open shows the editor's existing error instead of crashing",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": ["R3"]
+    },
+    {
+      "name": "R5/A2: a workspace-owned active tab is never shown in the global view; the unowned tab is selected and roots at its parent",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": ["R5", "A2"]
+    }
+  ],
+  "kickbacks": []
+}

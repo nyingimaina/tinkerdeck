@@ -1,0 +1,78 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+.actions button {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+.actions button:hover:not(:disabled) {
+  background: var(--hover);
+}
+.spacer {
+  flex: 1;
+}
+.modes {
+  display: flex;
+  gap: 2px;
+}
+.modes button {
+  height: 24px;
+  padding: 0 12px;
+}
+.modes button[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.surface {
+  flex: 1;
+  min-height: 0;
+  background: var(--panel);
+}
+.surface :global(.cm-editor) {
+  height: 100%;
+}
+.surface :global(.cm-scroller) {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.loading,
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  color: var(--muted);
+  text-align: center;
+  padding: 24px;
+}
+.emptyButtons {
+  display: flex;
+  gap: 8px;
+}
+.status {
+  display: flex;
+  gap: 16px;
+  padding: 4px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 12px;
+}

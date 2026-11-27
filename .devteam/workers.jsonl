@@ -132,3 +132,4 @@
 {"at":"2026-11-27T09:25:05.0952664+00:00","event":"exited","runId":"20261127-072115","args":"resume","pid":45340,"exitCode":2,"note":"ended with the run awaitingdecision"}
 {"at":"2026-11-27T09:25:33.5659059+00:00","event":"spawned","runId":"20261127-072115","args":"resume","pid":0,"exitCode":null,"note":""}
 {"at":"2026-11-27T09:25:34.1215545+00:00","event":"started","runId":"20261127-072115","args":"resume","pid":8900,"exitCode":null,"note":"the run was running"}
+{"at":"2026-11-27T09:25:41.4872105+00:00","event":"exited","runId":"20261127-072115","args":"resume","pid":8900,"exitCode":0,"note":"ended with the run completed"}

@@ -3,7 +3,7 @@
   "name": "io.github.nyingimaina/tinkerdeck",
   "title": "Tinkerdeck",
   "description": "Start, stop and watch a project's local dev terminals (servers, databases, shells), run one-off commands and use git, with cheap plain-text output. Windows desktop app plus the tdk command line.",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "repository": {
     "url": "https://github.com/nyingimaina/tinkerdeck",
     "source": "github"
@@ -12,7 +12,7 @@
   "packages": [
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/nyingimaina/tinkerdeck/releases/download/v2.4.0/Tinkerdeck-Setup-2.4.0.exe",
+      "identifier": "https://github.com/nyingimaina/tinkerdeck/releases/download/v2.4.1/Tinkerdeck-Setup-2.4.1.exe",
       "transport": { "type": "stdio" },
       "packageArguments": [{ "type": "positional", "value": "mcp" }]
     }

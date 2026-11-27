@@ -1,6 +1,6 @@
 [package]
 name = "tinkerdeck"
-version = "2.4.0"
+version = "2.4.1"
 description = "Tinkerdeck, a tinkerer's deck: group a project's terminals into apps, start and stop them reliably, with git, an editor and an MCP server."
 edition = "2021"
 default-run = "tinkerdeck"

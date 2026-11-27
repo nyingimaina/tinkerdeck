@@ -4,8 +4,8 @@
   "Commit": "f1471333e28db69259a5246c6142670c95cf5008",
   "Left": [],
   "MadeRepository": false,
-  "Finished": false,
-  "Merged": false,
-  "MergeCommit": null,
+  "Finished": true,
+  "Merged": true,
+  "MergeCommit": "f1471333e28db69259a5246c6142670c95cf5008",
   "BranchDeleted": false
 }

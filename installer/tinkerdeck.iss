@@ -3,7 +3,7 @@
 ; Expects the release build at src-tauri\target\release\tinkerdeck.exe
 
 #define AppName "Tinkerdeck"
-#define AppVersion "2.4.0"
+#define AppVersion "2.4.1"
 #define AppPublisher "Nyingi"
 #define AppExe "tinkerdeck.exe"
 #define CliExe "tdk.exe"

@@ -10,7 +10,7 @@ The full requirements are in [BRS-app-launcher.md](BRS-app-launcher.md).
 
 ## Install
 
-Run `installer\output\Tinkerdeck-Setup-2.4.1.exe`. It adds a Start Menu shortcut (and an optional desktop shortcut) and an uninstaller. It installs per user, without admin rights, unless you choose otherwise.
+Run `installer\output\Tinkerdeck-Setup-2.4.2.exe`. It adds a Start Menu shortcut (and an optional desktop shortcut) and an uninstaller. It installs per user, without admin rights, unless you choose otherwise.
 
 Requires Windows 10 version 1809 or newer (ConPTY) and the WebView2 runtime (already present on Windows 11).
 

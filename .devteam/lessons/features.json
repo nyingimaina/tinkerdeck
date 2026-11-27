@@ -67,6 +67,18 @@
         "src/features/apps",
         "src"
       ]
+    },
+    {
+      "runId": "20261127-072115",
+      "feature": "The Files header shows both the context the explorer is following and the\u2026 (and 4 more)",
+      "areas": [
+        "src/features/apps",
+        "src",
+        "src/features/explorer",
+        "src/features/command-palette",
+        "src/shared",
+        "src/features/terminals"
+      ]
     }
   ]
 }

@@ -12,12 +12,13 @@
     },
     {
       "rule": "USR-006",
-      "count": 1,
+      "count": 2,
       "runs": [
-        "20261126-115005"
+        "20261126-115005",
+        "20261127-072115"
       ],
-      "lastDescription": "Every dialog that moved to the side pane (confirmations, update, help, theme finder) is unreadable in the app\u0027s default dark theme: the package pane stays light while the dialog text keeps the app\u0027s light colours. USR-006 requires readable/",
-      "lastFile": "src/features/apps/SidePane.tsx"
+      "lastDescription": "The one status indicator visible while Files is open is hidden from assistive technology, so the roll-up is conveyed to sighted users only; expose it without changing the tab/button names (e.g. reference the dot\u0027s label from the tab and rai",
+      "lastFile": "src/features/apps/SidebarTabs.tsx"
     },
     {
       "rule": "USR-004",
@@ -178,12 +179,22 @@
     },
     {
       "path": "src/features/apps/Sidebar.tabs.test.tsx",
+      "count": 2,
+      "runs": [
+        "20261127-045127",
+        "20261127-072115"
+      ],
+      "lastDescription": "The performance acceptance check for R10\u0027s tab switch - 300 apps and 3,000 terminals, panel update under 100 ms - has no test at that size and no timing assertion at all.",
+      "lastRule": ""
+    },
+    {
+      "path": "src/features/apps/SidebarTabs.tsx",
       "count": 1,
       "runs": [
-        "20261127-045127"
+        "20261127-072115"
       ],
-      "lastDescription": "R2\u0027s \u0027stays fixed at the top of the expanded sidebar\u0027 and acceptance \u0027The tab strip keeps the same position with one app as with many\u0027 have no test that would fail if the strip were moved below the Projects list. Add an order assertion (top",
-      "lastRule": ""
+      "lastDescription": "The one status indicator visible while Files is open is hidden from assistive technology, so the roll-up is conveyed to sighted users only; expose it without changing the tab/button names (e.g. reference the dot\u0027s label from the tab and rai",
+      "lastRule": "USR-006"
     }
   ],
   "absorbed": [
@@ -192,7 +203,8 @@
     "20261126-075013",
     "20261126-115005",
     "20261126-163957",
-    "20261127-045127"
+    "20261127-045127",
+    "20261127-072115"
   ],
   "promotionAsked": {}
 }

@@ -1,0 +1,381 @@
+{
+  "runId": "20261127-072115",
+  "seriesId": "f205422c",
+  "revision": 2,
+  "baseCommit": "cc86bb1^",
+  "headCommit": "cc86bb1",
+  "files": [
+    {
+      "path": "src/App.explorer.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R1",
+        "R3",
+        "R2",
+        "R4",
+        "R5",
+        "R9",
+        "R13",
+        "R6",
+        "R10",
+        "R8"
+      ]
+    },
+    {
+      "path": "src/App.shortcuts.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R4",
+        "R6",
+        "R7",
+        "R5",
+        "R8",
+        "R2",
+        "R9",
+        "R11",
+        "R12"
+      ]
+    },
+    {
+      "path": "src/App.tsx",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [
+        "App"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/apps/Sidebar.module.css",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/features/apps/Sidebar.tabs.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R1",
+        "R4",
+        "R2",
+        "R10",
+        "R5",
+        "R3",
+        "R7"
+      ]
+    },
+    {
+      "path": "src/features/apps/Sidebar.tsx",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [
+        "Sidebar"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/apps/SidebarProjects.tsx",
+      "status": "modified",
+      "isTest": false,
+      "added": [
+        {
+          "kind": "function",
+          "name": "projectsRollup",
+          "file": "src/features/apps/SidebarProjects.tsx"
+        }
+      ],
+      "removed": [],
+      "symbols": [
+        "appRollup",
+        "projectsRollup",
+        "SidebarProjects"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/apps/SidebarTabs.module.css",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/features/apps/SidebarTabs.tsx",
+      "status": "modified",
+      "isTest": false,
+      "added": [
+        {
+          "kind": "const",
+          "name": "sidebarProjectsStatusId",
+          "file": "src/features/apps/SidebarTabs.tsx"
+        }
+      ],
+      "removed": [],
+      "symbols": [
+        "SidebarTab",
+        "sidebarTabId",
+        "sidebarPanelId",
+        "sidebarProjectsStatusId",
+        "SidebarTabs"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/command-palette/CommandPalette.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R8",
+        "R7",
+        "R6",
+        "R9"
+      ]
+    },
+    {
+      "path": "src/features/command-palette/CommandPalette.tsx",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [
+        "PaletteAction",
+        "CommandPalette",
+        "ConfirmDialogsProps",
+        "ConfirmDialogs",
+        "HelpDialogProps",
+        "HelpDialog"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/explorer/ExplorerPanel.module.css",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/features/explorer/ExplorerPanel.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R2",
+        "R3",
+        "R5",
+        "R4",
+        "R13",
+        "R6",
+        "R10",
+        "R9"
+      ]
+    },
+    {
+      "path": "src/features/explorer/ExplorerPanel.tsx",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [
+        "ExplorerPanelProps",
+        "ExplorerPanel"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/terminals/TerminalHost.shortcuts.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R4",
+        "R9"
+      ]
+    },
+    {
+      "path": "src/shared/shortcuts.test.ts",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R6",
+        "R9",
+        "R4"
+      ]
+    },
+    {
+      "path": "src/shared/shortcuts.ts",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [
+        "AppShortcutId",
+        "AppShortcut",
+        "APP_SHORTCUTS",
+        "shortcutKeys",
+        "KeyEventLike",
+        "matchShortcut",
+        "isAppShortcut"
+      ],
+      "requirements": []
+    }
+  ],
+  "added": [
+    {
+      "kind": "function",
+      "name": "projectsRollup",
+      "file": "src/features/apps/SidebarProjects.tsx"
+    },
+    {
+      "kind": "const",
+      "name": "sidebarProjectsStatusId",
+      "file": "src/features/apps/SidebarTabs.tsx"
+    }
+  ],
+  "removed": [],
+  "routesAdded": [],
+  "tablesAdded": [],
+  "proven": {
+    "R1": [
+      "src/App.explorer.test.tsx",
+      "src/features/apps/Sidebar.tabs.test.tsx"
+    ],
+    "R3": [
+      "src/App.explorer.test.tsx",
+      "src/features/apps/Sidebar.tabs.test.tsx",
+      "src/features/explorer/ExplorerPanel.test.tsx"
+    ],
+    "R2": [
+      "src/App.explorer.test.tsx",
+      "src/App.shortcuts.test.tsx",
+      "src/features/apps/Sidebar.tabs.test.tsx",
+      "src/features/explorer/ExplorerPanel.test.tsx"
+    ],
+    "R4": [
+      "src/App.explorer.test.tsx",
+      "src/App.shortcuts.test.tsx",
+      "src/features/apps/Sidebar.tabs.test.tsx",
+      "src/features/explorer/ExplorerPanel.test.tsx",
+      "src/features/terminals/TerminalHost.shortcuts.test.tsx",
+      "src/shared/shortcuts.test.ts"
+    ],
+    "R5": [
+      "src/App.explorer.test.tsx",
+      "src/App.shortcuts.test.tsx",
+      "src/features/apps/Sidebar.tabs.test.tsx",
+      "src/features/explorer/ExplorerPanel.test.tsx"
+    ],
+    "R9": [
+      "src/App.explorer.test.tsx",
+      "src/App.shortcuts.test.tsx",
+      "src/features/command-palette/CommandPalette.test.tsx",
+      "src/features/explorer/ExplorerPanel.test.tsx",
+      "src/features/terminals/TerminalHost.shortcuts.test.tsx",
+      "src/shared/shortcuts.test.ts"
+    ],
+    "R13": [
+      "src/App.explorer.test.tsx",
+      "src/features/explorer/ExplorerPanel.test.tsx"
+    ],
+    "R6": [
+      "src/App.explorer.test.tsx",
+      "src/App.shortcuts.test.tsx",
+      "src/features/command-palette/CommandPalette.test.tsx",
+      "src/features/explorer/ExplorerPanel.test.tsx",
+      "src/shared/shortcuts.test.ts"
+    ],
+    "R10": [
+      "src/App.explorer.test.tsx",
+      "src/features/apps/Sidebar.tabs.test.tsx",
+      "src/features/explorer/ExplorerPanel.test.tsx"
+    ],
+    "R8": [
+      "src/App.explorer.test.tsx",
+      "src/App.shortcuts.test.tsx",
+      "src/features/command-palette/CommandPalette.test.tsx"
+    ],
+    "R7": [
+      "src/App.shortcuts.test.tsx",
+      "src/features/apps/Sidebar.tabs.test.tsx",
+      "src/features/command-palette/CommandPalette.test.tsx"
+    ],
+    "R11": [
+      "src/App.shortcuts.test.tsx"
+    ],
+    "R12": [
+      "src/App.shortcuts.test.tsx"
+    ]
+  },
+  "checks": [
+    {
+      "component": "AppSidebarTabState",
+      "path": "src/App.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "Sidebar",
+      "path": "src/features/apps/Sidebar.tsx",
+      "status": "confirmed"
+    },
+    {
+      "component": "SidebarTabs",
+      "path": "src/features/apps/SidebarTabs.tsx",
+      "status": "confirmed"
+    },
+    {
+      "component": "SidebarProjects",
+      "path": "src/features/apps/SidebarProjects.tsx",
+      "status": "confirmed"
+    },
+    {
+      "component": "ExplorerPanel",
+      "path": "src/features/explorer/ExplorerPanel.tsx",
+      "status": "confirmed"
+    },
+    {
+      "component": "AppShortcutRegistry",
+      "path": "src/shared/shortcuts.ts",
+      "status": "missing"
+    },
+    {
+      "component": "HelpDialog",
+      "path": "src/features/command-palette/CommandPalette.tsx",
+      "status": "confirmed"
+    }
+  ],
+  "unanticipated": 2,
+  "recordedAt": "2026-11-27T09:25:01.9059415+00:00"
+}

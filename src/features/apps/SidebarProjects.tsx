@@ -8,6 +8,14 @@ export function appRollup(app: AppDef, stateOf: (terminalId: string) => TermStat
   return rollup(app.terminals.filter(isExecutable).map((t) => stateOf(t.id)));
 }
 
+/**
+ * One roll-up over every app's executable terminals, using the same rollup() rules as the
+ * per-app dot (R7). Empty when no app has an executable terminal, which rolls up to grey.
+ */
+export function projectsRollup(apps: AppDef[], stateOf: (terminalId: string) => TermState): Rollup {
+  return rollup(apps.flatMap((app) => app.terminals.filter(isExecutable).map((t) => stateOf(t.id))));
+}
+
 interface Props {
   apps: AppDef[];
   selectedAppId: string | null;

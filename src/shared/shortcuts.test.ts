@@ -23,8 +23,23 @@ describe("app shortcut registry", () => {
       ["toggleApp", "F5"],
       ["commandPalette", "Ctrl+Shift+P"],
       ["toggleTheme", "Ctrl+Alt+T"],
+      ["showFiles", "Ctrl+Shift+E"],
     ]);
     expect(shortcutKeys("commandPalette")).toBe("Ctrl+Shift+P");
+  });
+
+  it("R9: Ctrl+Shift+E shows Files and leaves every existing shortcut meaning unchanged", () => {
+    expect(matchShortcut(key("e", { ctrlKey: true, shiftKey: true }))).toBe("showFiles");
+    expect(shortcutKeys("showFiles")).toBe("Ctrl+Shift+E");
+    expect(APP_SHORTCUTS.find((s) => s.id === "showFiles")?.label).toBe("Show Files");
+    // No existing shortcut moves, and a near miss is not claimed.
+    expect(matchShortcut(key("b", { ctrlKey: true }))).toBe("toggleSidebar");
+    expect(matchShortcut(key("F5"))).toBe("toggleApp");
+    expect(matchShortcut(key("p", { ctrlKey: true, shiftKey: true }))).toBe("commandPalette");
+    expect(matchShortcut(key("t", { ctrlKey: true, altKey: true }))).toBe("toggleTheme");
+    expect(matchShortcut(key("e", { ctrlKey: true }))).toBeNull();
+    expect(matchShortcut(key("e", { ctrlKey: true, shiftKey: true, altKey: true }))).toBeNull();
+    expect(matchShortcut(key("e", { shiftKey: true }))).toBeNull();
   });
 
   it("R6: every modifier combination of F5 still means the app toggle, never refresh", () => {
@@ -45,6 +60,7 @@ describe("app shortcut registry", () => {
       key("F5"),
       key("p", { ctrlKey: true, shiftKey: true }),
       key("t", { ctrlKey: true, altKey: true }),
+      key("e", { ctrlKey: true, shiftKey: true }),
     ]) {
       expect(isAppShortcut(e)).toBe(true);
     }

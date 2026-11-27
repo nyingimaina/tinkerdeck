@@ -2,7 +2,7 @@
   "Branch": "devteam/20261127-075126-projects-files-tabs-in-the-expanded",
   "Base": "master",
   "Commit": null,
-  "Left": null,
+  "Left": [],
   "MadeRepository": false,
   "Finished": false,
   "Merged": false,

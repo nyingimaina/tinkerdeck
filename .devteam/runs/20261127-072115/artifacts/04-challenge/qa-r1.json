@@ -1,0 +1,29 @@
+{
+  "findings": [
+    {
+      "cites": "R10",
+      "severity": "blocking",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "line": 212,
+      "evidence": "The only tab-switch scale proof is 'R2: switching tabs does not reconcile the 500-row Projects list', built from manyApps(50, 10) = 50 apps / 500 terminals, and it asserts only that stateOf is not re-read. No fixture uses the performance requirement's 300 apps / 3,000 terminals and nothing measures the 100 ms budget (no performance.now/Date.now around the switch), so a switch that took seconds at the stated size would still pass every test.",
+      "description": "The performance acceptance check for R10's tab switch - 300 apps and 3,000 terminals, panel update under 100 ms - has no test at that size and no timing assertion at all."
+    },
+    {
+      "cites": "R6",
+      "severity": "advisory",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "line": 369,
+      "evidence": "The long-name test only asserts the Up and Show hidden buttons are present and that the title attribute holds the full 'context / folder' text. It never asserts the truncation CSS (.context/.folder text-overflow: ellipsis, .action flex: none), so removing the ellipsis or letting the title grow would not fail any test.",
+      "description": "The edge case 'truncated without hiding the Up and Show hidden controls' is proven for the DOM controls but not for the layout that actually keeps them visible; a CSS-module assertion like the R2 strip tests would close it."
+    },
+    {
+      "cites": "R7",
+      "severity": "advisory",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "line": 430,
+      "evidence": "The amber case feeds t1=running and t2=stopping, which is already amber from the 'some up' branch, so the 'or stopping' clause is never exercised on its own. A projectsRollup that dropped stopping-only states would still pass this suite.",
+      "description": "The 'or stopping' half of the R7 amber rule has no independent test (e.g. all-stopping/stopped with no running terminal)."
+    }
+  ],
+  "verifications": []
+}

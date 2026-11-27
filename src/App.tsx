@@ -7,6 +7,7 @@ import { Banner } from "./features/apps/Banner";
 import { Dialog } from "./features/apps/Dialog";
 import { EmptyState } from "./features/apps/EmptyState";
 import { Sidebar } from "./features/apps/Sidebar";
+import type { SidebarTab } from "./features/apps/SidebarTabs";
 import { TopBar } from "./features/apps/TopBar";
 import { GitBar } from "./features/git/GitBar";
 import type { GitTab } from "./features/git/GitDrawer";
@@ -92,6 +93,9 @@ export function App() {
   const [shells, setShells] = useState<ShellInfo[]>([]);
   const [homeFolder, setHomeFolder] = useState<string | null>(null);
   const [paneCollapsed, setPaneCollapsed] = useState(readCollapsed);
+  // The chosen sidebar tab lasts for the running session only, so it is plain state: it starts on
+  // Projects every launch and is never read from or written to storage (R8).
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab>("projects");
   const [refreshKey, setRefreshKey] = useState(0);
   const [consoleNotice, setConsoleNotice] = useState<Record<string, string>>({});
   // Start all / F5 has nothing executable to start: say so briefly instead of looking broken (A5).
@@ -172,6 +176,21 @@ export function App() {
       return !c;
     });
 
+  // Show the Files tab, expanding the pane first when it is collapsed (R9). The tab itself is
+  // session-only, and only the existing collapsed flag is ever written (R8).
+  const showFilesTab = () => {
+    setSidebarTab("files");
+    setPaneCollapsed((collapsed) => {
+      if (!collapsed) return collapsed;
+      try {
+        localStorage.setItem(COLLAPSE_KEY, "0");
+      } catch {
+        /* per-viewer convenience only */
+      }
+      return false;
+    });
+  };
+
   // keyboard: the shared registry drives Ctrl+B, F5 (Start all / Stop all), Ctrl+Shift+P and
   // Ctrl+Alt+T (VS Code habits). F5 is always prevented, so it never reloads the webview (R6).
   useEffect(() => {
@@ -183,6 +202,7 @@ export function App() {
       else if (id === "toggleApp") toggleAppNow.current();
       else if (id === "commandPalette") setPaletteOpen(true);
       else if (id === "toggleTheme") void T.toggleKind();
+      else if (id === "showFiles") showFilesTab();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -452,6 +472,17 @@ export function App() {
   // resolved root, not the active path, is the trigger, so re-pointing a renamed tab to a new
   // path under the same root does not throw away the tree the user was browsing (R9).
   const explorerResetKey = `${view}|${L.selectedAppId ?? ""}|${explorer.root ?? ""}`;
+  // The Files header names the context whose folder is shown: the owning app's name, "Misc" for a
+  // loose file's folder, or "Home" for the home folder (R6). It is null when no root applies, so
+  // the header never invents one. The root selection rules in root.ts are untouched.
+  const filesContext =
+    explorer.source === "misc"
+      ? "Misc"
+      : explorer.source === "home"
+        ? "Home"
+        : explorer.source === "app"
+          ? (apps?.find((a) => a.id === explorer.appId)?.name ?? null)
+          : null;
 
   // The palette lists every app-level command the window offers, each with the shortcut that
   // also runs it or a visible note when it has none (R7). Commands that only exist while an app
@@ -459,6 +490,7 @@ export function App() {
   // rather than failing when chosen.
   const paletteActions: PaletteAction[] = [
     { id: "toggleSidebar", label: "Toggle sidebar", shortcut: shortcutKeys("toggleSidebar"), run: toggleSidebar },
+    { id: "showFiles", label: "Show Files", shortcut: shortcutKeys("showFiles"), run: showFilesTab },
     // Refresh has no keyboard shortcut any more: F5 is the app toggle (R6).
     { id: "refresh", label: "Refresh everything", run: refreshAll },
     { id: "toggleTheme", label: "Switch light/dark theme", shortcut: shortcutKeys("toggleTheme"), run: () => void T.toggleKind() },
@@ -605,6 +637,8 @@ export function App() {
             stateOf={L.stateOf}
             paneCollapsed={paneCollapsed}
             onTogglePane={toggleSidebar}
+            tab={sidebarTab}
+            onTabChange={setSidebarTab}
             onHome={apps.length > 0 ? () => setView("home") : undefined}
             homeActive={showHome}
             onSelectApp={openApp}
@@ -617,6 +651,8 @@ export function App() {
               <ExplorerPanel
                 root={explorer.root}
                 source={explorer.source}
+                context={filesContext}
+                active={sidebarTab === "files"}
                 resetKey={explorerResetKey}
                 onOpenFile={editor.openPath}
                 editor={editorBridge}

@@ -1,0 +1,4 @@
+{
+  "summary": "Consistent: the design matches R6-R10 (R8 as revised to session-only, no new storage key), declares scope inside the new feature/shared areas plus the app shell it must change for the shortcut and root context, and raises no contradiction with the blocking rules, checks or earlier accepted requirements.",
+  "conflicts": []
+}

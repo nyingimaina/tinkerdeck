@@ -1,0 +1,106 @@
+{
+  "summary": "This revision finishes the two-tab sidebar built in revision 1 without moving its structure: the same SidebarTabs strip, rail and Files panel stay where they are, and only the things the requirements still need are added. The active tab moves from Sidebar-local state into App so it can be restored from localStorage key 'td.sidebarTab', set by the one shared shortcut registry (Ctrl+Shift+E) and used to tell the ExplorerPanel whether it is the visible tab; Sidebar accepts an optional tab/onTabChange pair and falls back to its current local state when they are absent, so its existing standalone tests and any other caller keep working. App already builds the ExplorerPanel it passes to Sidebar and already holds the resolved explorerRoot (root, source, appId), so it derives the Files header context (the owning app's name, 'Misc', or 'Home') and passes it plus an active flag straight into that element - no cloneElement and no change to root.ts. The Files panel is still mounted on first use and kept afterwards, so a tab switch returns to the same folder, expanded levels (useExplorer's cache) and scroll offset; ExplorerPanel only saves and restores its scroll container's scrollTop across a hide/show. The Projects tab label and the rail's Projects icon each show one dot from a memoised projectsRollup() that reuses rollup() and isExecutable over every app's executable terminals. Scale and resource cost: one memoised pass over the executable terminals that are already rendered (recomputed only when apps or terminal state change), one memoised context string, O(1) scroll save/restore, no new explorer listing on a tab switch, no new polling, network calls, commands, permissions, CSP entries or dependencies, and a single small localStorage value read once at startup and written only when the user switches tab or collapses the pane; cached levels stay bounded by the existing MAX_CACHED_LEVELS cap.",
+  "impact": {
+    "touches": [
+      "src/App.tsx",
+      "src/App.test.tsx",
+      "src/App.layout.test.tsx",
+      "src/App.shortcuts.test.tsx",
+      "src/App.explorer.test.tsx",
+      "src/shared/shortcuts.ts",
+      "src/shared/shortcuts.test.ts",
+      "src/features/apps/Sidebar.tsx",
+      "src/features/apps/Sidebar.module.css",
+      "src/features/apps/SidebarProjects.tsx",
+      "src/features/apps/SidebarTabs.tsx",
+      "src/features/apps/SidebarTabs.module.css",
+      "src/features/apps/Sidebar.tabs.test.tsx",
+      "src/features/apps/Sidebar.explorer.test.tsx",
+      "src/features/apps/Sidebar.collapse.test.tsx",
+      "src/features/explorer/ExplorerPanel.tsx",
+      "src/features/explorer/ExplorerPanel.module.css",
+      "src/features/explorer/ExplorerPanel.test.tsx",
+      "src/features/command-palette/CommandPalette.tsx",
+      "src/features/command-palette/CommandPalette.test.tsx",
+      "src/features/terminals/TerminalHost.shortcuts.test.tsx"
+    ],
+    "reuses": [
+      "rollup(), isExecutable, dotKind, stateLabel and the Rollup type in src/state/model.ts, plus the existing appRollup() in SidebarProjects.tsx",
+      "StatusDot in src/features/terminals/StatusDot.tsx, including its existing .railDot placement in Sidebar.module.css",
+      "the existing jattac.libs.web.zest-tabs adapter in SidebarTabs.tsx (ZestTabItem.label already accepts a ReactNode)",
+      "useExplorer's per-folder cache, resetKey behaviour and MAX_CACHED_LEVELS cap in src/features/explorer/useExplorer.ts",
+      "the explorerRoot result (root, source, appId) from src/features/explorer/root.ts, whose selection rules are not changed",
+      "nameFromPath() for the current folder name already shown in the ExplorerPanel header",
+      "APP_SHORTCUTS, matchShortcut, shortcutKeys and isAppShortcut, and TerminalHost's existing isAppShortcut forwarding",
+      "the COLLAPSE_KEY/readCollapsed try-catch pattern in App.tsx for the new td.sidebarTab key",
+      "the palette's existing shortcut hint rendering (PaletteAction.shortcut) and the existing Sidebar rail/railOn styles"
+    ],
+    "adds": [
+      "the 'showFiles' shortcut id, its APP_SHORTCUTS entry ('Show Files', Ctrl+Shift+E) and its matchShortcut case",
+      "the 'td.sidebarTab' localStorage key ('projects' or 'files', default 'projects', unreadable values fall back to projects)",
+      "a projectsRollup(apps, stateOf) helper in SidebarProjects.tsx and a small roll-up dot on the Projects tab label and rail Projects button",
+      "a context label and an active prop on ExplorerPanel, fed by App; no new files, commands, permissions, CSP rules or dependencies"
+    ]
+  },
+  "scope": [
+    "src/App.tsx",
+    "src/App.test.tsx",
+    "src/App.layout.test.tsx",
+    "src/App.shortcuts.test.tsx",
+    "src/App.explorer.test.tsx",
+    "src/shared/shortcuts.ts",
+    "src/shared/shortcuts.test.ts",
+    "src/features/apps/Sidebar.tsx",
+    "src/features/apps/Sidebar.module.css",
+    "src/features/apps/SidebarProjects.tsx",
+    "src/features/apps/SidebarTabs.tsx",
+    "src/features/apps/SidebarTabs.module.css",
+    "src/features/apps/Sidebar.tabs.test.tsx",
+    "src/features/apps/Sidebar.explorer.test.tsx",
+    "src/features/apps/Sidebar.collapse.test.tsx",
+    "src/features/explorer/ExplorerPanel.tsx",
+    "src/features/explorer/ExplorerPanel.module.css",
+    "src/features/explorer/ExplorerPanel.test.tsx",
+    "src/features/command-palette/CommandPalette.tsx",
+    "src/features/command-palette/CommandPalette.test.tsx",
+    "src/features/terminals/TerminalHost.shortcuts.test.tsx"
+  ],
+  "components": [
+    {
+      "name": "AppSidebarTabState",
+      "path": "src/App.tsx",
+      "requirements": ["R6", "R8", "R9"]
+    },
+    {
+      "name": "Sidebar",
+      "path": "src/features/apps/Sidebar.tsx",
+      "requirements": ["R7", "R8", "R10"]
+    },
+    {
+      "name": "SidebarTabs",
+      "path": "src/features/apps/SidebarTabs.tsx",
+      "requirements": ["R7"]
+    },
+    {
+      "name": "SidebarProjects",
+      "path": "src/features/apps/SidebarProjects.tsx",
+      "requirements": ["R7"]
+    },
+    {
+      "name": "ExplorerPanel",
+      "path": "src/features/explorer/ExplorerPanel.tsx",
+      "requirements": ["R6", "R10"]
+    },
+    {
+      "name": "AppShortcutRegistry",
+      "path": "src/shared/shortcuts.ts",
+      "requirements": ["R9"]
+    },
+    {
+      "name": "HelpDialog",
+      "path": "src/features/command-palette/CommandPalette.tsx",
+      "requirements": ["R9"]
+    }
+  ],
+  "additions": []
+}

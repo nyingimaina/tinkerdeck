@@ -144,4 +144,23 @@ describe("CommandPalette", () => {
     expect(dialog).toHaveTextContent(/refresh now/);
     expect(dialog).not.toHaveTextContent("F5");
   });
+
+  it("R9: the help lists Show Files with Ctrl+Shift+E", () => {
+    render(
+      <HelpDialog
+        version="2.2.0"
+        autoCheck={false}
+        phase="idle"
+        upToDate={false}
+        available={null}
+        error={null}
+        onAutoCheck={vi.fn()}
+        onCheckNow={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    const dialog = screen.getByRole("dialog", { name: "Help" });
+    expect(dialog).toHaveTextContent("Show Files");
+    expect(dialog).toHaveTextContent("Ctrl+Shift+E");
+  });
 });

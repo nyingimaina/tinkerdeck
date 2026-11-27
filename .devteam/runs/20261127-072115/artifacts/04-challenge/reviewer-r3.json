@@ -1,0 +1,10 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "REV-1",
+      "status": "fixed",
+      "evidence": "Assistive technology now receives the Projects roll-up without changing any accessible name or role=img count. The visible StatusDot stays decorative (SidebarTabs.tsx:43-45; Sidebar.tsx:114-116), and the tab is wired to a visually hidden line via aria-describedby in the mount effect (SidebarTabs.tsx:73) whose span carries 'App status: {projectsRollup}' (SidebarTabs.tsx:103-105); the rail Projects button gets the same treatment with aria-describedby={railProjectsStatusId} (Sidebar.tsx:111) and its own hidden span (Sidebar.tsx:118-120). Sidebar.tabs.test.tsx 'REV-1 R7' tests assert toHaveAccessibleName('Projects') and toHaveAccessibleDescription('App status: red' / 'App status: grey') on both the tab and the rail button, and that getAllByRole('img', ...) still returns only the two per-app dots, so the tab/button names and status-image counts are unchanged. Ran npx vitest run on Sidebar.tabs/Sidebar.explorer/Sidebar.collapse (43 passed), ExplorerPanel (47 passed), App.explorer/App.shortcuts/CommandPalette/TerminalHost.shortcuts/shortcuts (98 passed); npm run lint (tsc --noEmit) is clean. The only whole-suite failures are the pre-existing App.test.tsx/App.version.test.tsx 2.3.0-vs-2.4.0 assertions and a pre-existing load-sensitive race in App.explorer.test.tsx's R9 rename test, which passes when that file runs alone."
+    }
+  ]
+}

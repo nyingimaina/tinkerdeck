@@ -1,9 +1,12 @@
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AppDef, TermState } from "../../state/model";
 import { StatusDot } from "../terminals/StatusDot";
-import { SidebarProjects, appRollup } from "./SidebarProjects";
+import { SidebarProjects, appRollup, projectsRollup } from "./SidebarProjects";
 import { SidebarTabs, sidebarPanelId, sidebarTabId, type SidebarTab } from "./SidebarTabs";
 import styles from "./Sidebar.module.css";
+
+/** Id of the visually hidden roll-up line the rail's Projects button describes itself with (R7, REV-1). */
+const railProjectsStatusId = "sidebar-rail-projects-status";
 
 interface Props {
   apps: AppDef[];
@@ -20,6 +23,9 @@ interface Props {
   onTogglePane?: () => void;
   /** The Files explorer, shown in the Files tab of the expanded pane. */
   explorer?: ReactNode;
+  /** The active tab when the app shell owns it (R8); without it the sidebar keeps its own. */
+  tab?: SidebarTab;
+  onTabChange?: (tab: SidebarTab) => void;
 }
 
 function ProjectsIcon() {
@@ -58,13 +64,24 @@ export function Sidebar({
   paneCollapsed,
   onTogglePane,
   explorer,
+  tab,
+  onTabChange,
 }: Props) {
-  // The tab belongs to the sidebar area, not the app shell, and is never derived from the view,
-  // the selected app or the active editor file (R1, R4). This revision does not persist it.
-  const [tab, setTab] = useState<SidebarTab>("projects");
+  // The active tab is owned by the app shell when it passes one, so a tab click, a rail icon and
+  // the Show Files shortcut all set the same value (R8). Without it (standalone tests) the
+  // sidebar keeps its own local tab exactly as before. It is never derived from the view, the
+  // selected app or the active editor file, and it is never persisted.
+  const [localTab, setLocalTab] = useState<SidebarTab>("projects");
+  const activeTab = tab ?? localTab;
   // The Files panel is mounted on first use and kept afterwards, so opening on Projects reads no
   // folder and coming back to Files keeps the expanded tree without a second listing (A1).
   const [filesMounted, setFilesMounted] = useState(false);
+  useEffect(() => {
+    if (activeTab === "files") setFilesMounted(true);
+  }, [activeTab]);
+  // One roll-up for the Projects label and the rail icon, recomputed only when the apps or their
+  // live terminal states change, never on a tab switch (R7).
+  const tabRollup = useMemo(() => projectsRollup(apps, stateOf), [apps, stateOf]);
   // The per-app fold state lives here, not in SidebarProjects, so the rail branch below does not
   // discard it when the pane is collapsed (USR-004: folding an app must survive collapse/expand).
   const [collapsedApps, setCollapsedApps] = useState<Record<string, boolean>>({});
@@ -74,7 +91,8 @@ export function Sidebar({
   );
 
   const chooseTab = (next: SidebarTab) => {
-    setTab(next);
+    if (tab === undefined) setLocalTab(next);
+    onTabChange?.(next);
     if (next === "files") setFilesMounted(true);
   };
 
@@ -90,10 +108,18 @@ export function Sidebar({
         <button onClick={onTogglePane} aria-label="Expand sidebar" title="Expand sidebar (Ctrl+B)">
           »
         </button>
-        <button onClick={() => expandOnto("projects")} aria-label="Projects" title="Projects" className={tab === "projects" ? styles.railOn : ""}>
+        <button onClick={() => expandOnto("projects")} aria-label="Projects" title="Projects" aria-describedby={railProjectsStatusId} className={activeTab === "projects" ? styles.railOn : ""}>
           <ProjectsIcon />
+          {/* The same one roll-up dot, decorative so the button's name stays "Projects" (R7). */}
+          <span aria-hidden="true">
+            <StatusDot rollup={tabRollup} className={styles.railDot} />
+          </span>
+          {/* The roll-up is announced through the button's description, not a second status image (REV-1). */}
+          <span id={railProjectsStatusId} className={styles.srOnly}>
+            App status: {tabRollup}
+          </span>
         </button>
-        <button onClick={() => expandOnto("files")} aria-label="Files" title="Files" className={tab === "files" ? styles.railOn : ""}>
+        <button onClick={() => expandOnto("files")} aria-label="Files" title="Files" className={activeTab === "files" ? styles.railOn : ""}>
           <FilesIcon />
         </button>
         {onHome && (
@@ -120,7 +146,7 @@ export function Sidebar({
   return (
     <nav className={styles.sidebar} aria-label="Apps">
       <div className={styles.topRow}>
-        <SidebarTabs active={tab} onChange={chooseTab} />
+        <SidebarTabs active={activeTab} onChange={chooseTab} projectsRollup={tabRollup} />
         {onTogglePane && (
           <button className={styles.collapseBtn} onClick={onTogglePane} aria-label="Collapse sidebar" title="Collapse sidebar (Ctrl+B)">
             «
@@ -133,7 +159,7 @@ export function Sidebar({
         role="tabpanel"
         aria-label="Projects"
         aria-labelledby={sidebarTabId("projects")}
-        hidden={tab !== "projects"}
+        hidden={activeTab !== "projects"}
       >
         <SidebarProjects
           apps={apps}
@@ -155,7 +181,7 @@ export function Sidebar({
           role="tabpanel"
           aria-label="Files"
           aria-labelledby={sidebarTabId("files")}
-          hidden={tab !== "files"}
+          hidden={activeTab !== "files"}
         >
           {explorer}
         </div>

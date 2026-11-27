@@ -61,3 +61,37 @@
   border-radius: calc(var(--radius) - 2px);
   box-shadow: inset 0 0 0 1px var(--border);
 }
+/* The label and its roll-up dot share one line: the text ellipsizes, the dot never does (R7). */
+.tabContent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+.labelText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tabDot {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+}
+/* The roll-up line for assistive technology: present for the tab's aria-describedby but never
+   visible, so the dot stays the only status shown while Files is open (R7, REV-1). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

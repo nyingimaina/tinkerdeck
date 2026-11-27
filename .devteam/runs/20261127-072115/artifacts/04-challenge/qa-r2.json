@@ -1,0 +1,10 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "QA-1",
+      "status": "fixed",
+      "evidence": "src/features/apps/Sidebar.tabs.test.tsx:267 adds 'R10: with 300 apps and 3,000 terminals, switching Projects -> Files -> Projects updates the panel in under 100 ms without remounting the loaded explorer'. It builds manyApps(300, 10) = 300 apps and 3,000 terminals, warms the Files panel, resolves the tab elements before timing, brackets the two fireEvent clicks with performance.now(), asserts elapsed < 100, and asserts the mounted explorer's listing/mount count stays at 1. I ran npx vitest run on this file (31 passed) and on all seven changed test files (176 passed), and npm run lint (tsc --noEmit) passed; a switch that took seconds at this size or remounted the explorer would now fail the test."
+    }
+  ]
+}

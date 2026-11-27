@@ -1,0 +1,13 @@
+{
+  "findings": [
+    {
+      "cites": "USR-006",
+      "severity": "blocking",
+      "file": "src/features/apps/SidebarTabs.tsx",
+      "line": 39,
+      "evidence": "The new Projects roll-up StatusDot is wrapped in <span aria-hidden=\"true\"> in the tab label (SidebarTabs.tsx:39-41) and again on the rail Projects button (Sidebar.tsx:110-113). StatusDot itself carries role=\"img\" aria-label/title \"App status: <rollup>\" (src/features/terminals/StatusDot.tsx:16-18), and for a rollup that label is the only non-colour carrier (the only glyph it renders is the greyTick tick, which rollup() never returns). R7's whole purpose is that this single dot is the only status shown while Files is open, yet because of aria-hidden assistive technology now gets nothing: a screen-reader user on the Files tab cannot be told that a terminal failed, while every existing per-app and per-terminal dot is exposed with a label (SidebarProjects.tsx:73 and :85). That is inconsistent with the app's own accessible-status pattern and with USR-006 section 5.6 (consistency) and 5.8 (assistive technology is a requirement).",
+      "description": "The one status indicator visible while Files is open is hidden from assistive technology, so the roll-up is conveyed to sighted users only; expose it without changing the tab/button names (e.g. reference the dot's label from the tab and rail button with aria-describedby, or render a visually hidden status line), keeping the accessible names exactly \"Projects\"/\"Files\" and the existing role=img counts intact."
+    }
+  ],
+  "verifications": []
+}

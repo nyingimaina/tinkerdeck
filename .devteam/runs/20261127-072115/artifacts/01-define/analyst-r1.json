@@ -1,0 +1,214 @@
+{
+  "summary": "This is revision 2 of 2 of a larger feature (R6 to R10). The left sidebar of Tinkerdeck gains two tabs. Projects keeps what the sidebar shows today (the Home row and each app with its terminals); Files shows the existing file-system explorer filling the panel, so users no longer scroll past every app to reach it. The collapsed rail gains Projects and Files icons that expand the pane straight onto that tab, the Files header now names the app (or Misc/Home) whose folder is shown, the Projects tab label carries one roll-up status dot so overall status stays visible while Files is open, the last tab is remembered across restarts, and Ctrl\u002BShift\u002BE jumps to Files. The explorer\u0027s root rules, file operations and the apps/terminals list are unchanged.",
+  "requirements": [
+    {
+      "id": "R6",
+      "text": "The Files header shows both the context the explorer is following and the current folder\u0027s name: the app\u0027s name for an app root, \u0027Misc\u0027 for a loose file\u0027s folder, or \u0027Home\u0027 for the user\u0027s home folder, together with the folder name it shows today.",
+      "acceptance": [
+        "When the explorer follows an app, the Files header shows the app name and the folder name.",
+        "When the explorer follows a loose (Misc) file\u0027s folder, the header shows \u0027Misc\u0027 and the folder name.",
+        "When the explorer follows the user\u0027s home folder, the header shows \u0027Home\u0027 and the folder name.",
+        "The way the root folder is chosen is unchanged."
+      ],
+      "rationale": "Once the projects are on another tab the user cannot see which app the files belong to, so the header must say it.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "A very long app name or folder name is truncated without hiding the Up and Show hidden controls, and the full text is available on hover.",
+        "At a drive root or the drive list, the header still names the context and keeps today\u0027s \u0027Drives\u0027 wording."
+      ],
+      "pitfalls": [
+        "Do not change the explorer\u0027s root selection rules to make the header easier to label.",
+        "Do not replace the folder name with only the app name; both must be visible."
+      ],
+      "rules": [
+        "USR-004",
+        "TAU-012",
+        "USR-002",
+        "USR-006"
+      ],
+      "facts": [
+        {
+          "subject": "Files header",
+          "attribute": "must show",
+          "op": "must",
+          "value": "the context name (app name, \u0027Misc\u0027 or \u0027Home\u0027) and the folder name",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "text": "The Projects tab label carries one status dot that rolls up all apps\u0027 executable terminals using the existing roll-up rules (red if any failed, green if all up, amber if some up or stopping, grey otherwise), and the rail\u0027s Projects icon shows the same dot where the existing rail style allows; the label still reads clearly with the dot.",
+      "acceptance": [
+        "With one app\u0027s executable terminal failed, the Projects tab label dot is red.",
+        "With all executable terminals up the dot is green; with some up or stopping it is amber; otherwise it is grey.",
+        "Non-executable terminals do not affect the dot.",
+        "The word Projects remains readable next to the dot."
+      ],
+      "rationale": "While Files is open the per-app and per-terminal dots are hidden, so a single roll-up dot keeps overall status visible without forcing a tab switch.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "No apps, or apps with no executable terminals, shows the existing empty roll-up colour (grey).",
+        "Exactly one roll-up dot is shown on the Projects tab label, not one dot per app.",
+        "The dot is present on the label when the mouse or keyboard selects either tab, and on the rail Projects icon when collapsed."
+      ],
+      "pitfalls": [
+        "Do not include non-executable terminals or interactive consoles in the roll-up.",
+        "Do not let the dot hide, overlap or push away the tab label.",
+        "Do not duplicate the roll-up logic; use the same helper the per-app dot uses."
+      ],
+      "rules": [
+        "USR-004",
+        "TAU-012",
+        "PERF-001",
+        "USR-006"
+      ],
+      "facts": [
+        {
+          "subject": "Projects tab label roll-up dot",
+          "attribute": "count",
+          "op": "equals",
+          "value": "1",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "roll-up dot inputs",
+          "attribute": "scope",
+          "op": "equals",
+          "value": "the executable terminals of all apps",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "Projects tab label roll-up dot",
+          "attribute": "colours",
+          "op": "one-of",
+          "value": "red, green, amber or grey",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "text": "The active sidebar tab is remembered across restarts in localStorage under the key \u0027td.sidebarTab\u0027 with the value \u0027projects\u0027 or \u0027files\u0027; when the key is missing, unreadable or holds any other value, the app starts on Projects, and expanding after a collapse shows the tab that was active before collapsing.",
+      "acceptance": [
+        "After switching to Files and restarting the app, it opens the sidebar on Files.",
+        "After switching to Projects and restarting, it opens on Projects.",
+        "With no saved value, or a saved value such as \u0027maybe\u0027, the app opens on Projects without an error.",
+        "The existing \u0027td.sidebarCollapsed\u0027 value is still saved and read as before."
+      ],
+      "rationale": "The collapsed state is already remembered in the same way, so losing the chosen tab on every restart would be inconsistent and annoying.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "A saved \u0027files\u0027 value while the pane is collapsed restores the collapsed rail at startup, and expanding shows Files.",
+        "Expanding with the Expand button or Ctrl\u002BB after collapsing shows the tab that was active before collapsing, not a reset to Projects.",
+        "When localStorage throws or is unavailable, the app still starts and shows Projects."
+      ],
+      "pitfalls": [
+        "Reading or writing the saved tab must never be able to break startup.",
+        "Do not drop the existing test assertion that only the expected sidebar keys are saved; widen it to allow the new key instead of removing the check."
+      ],
+      "rules": [
+        "USR-004",
+        "PERF-001"
+      ],
+      "facts": [
+        {
+          "subject": "sidebar tab storage key",
+          "attribute": "name",
+          "op": "equals",
+          "value": "td.sidebarTab",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "sidebar tab",
+          "attribute": "allowed values",
+          "op": "one-of",
+          "value": "projects or files",
+          "unit": "",
+          "scope": ""
+        },
+        {
+          "subject": "sidebar tab",
+          "attribute": "default",
+          "op": "equals",
+          "value": "projects",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R9",
+      "text": "Pressing Ctrl\u002BShift\u002BE shows the Files tab, expanding the sidebar first when it is collapsed; the shortcut is added to the single shared app-shortcut list so the command palette and help list it, and a focused terminal hands the combination to the app instead of the shell.",
+      "acceptance": [
+        "With the sidebar expanded on Projects, Ctrl\u002BShift\u002BE switches to Files.",
+        "With the sidebar collapsed, Ctrl\u002BShift\u002BE expands it on Files.",
+        "The command palette and help list a \u0027Show Files\u0027 entry with Ctrl\u002BShift\u002BE.",
+        "With a terminal focused, Ctrl\u002BShift\u002BE opens Files rather than sending the key to the shell."
+      ],
+      "rationale": "This matches the existing Ctrl\u002BShift\u002BP habit and gives keyboard users the same direct route to Files that the rail gives mouse users.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Pressing Ctrl\u002BShift\u002BE while already on Files changes nothing and causes no error.",
+        "No existing shortcut (Ctrl\u002BB, F5, Ctrl\u002BShift\u002BP, Ctrl\u002BAlt\u002BT) changes meaning."
+      ],
+      "pitfalls": [
+        "Do not add a second shortcut table; extend the one shared list so the palette and help stay in step.",
+        "Do not claim Ctrl\u002BShift\u002BE as an editor shortcut."
+      ],
+      "rules": [
+        "USR-004",
+        "TAU-012",
+        "PERF-001"
+      ],
+      "facts": [
+        {
+          "subject": "Files tab shortcut",
+          "attribute": "keys",
+          "op": "equals",
+          "value": "Ctrl\u002BShift\u002BE",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "text": "Switching away from the Files tab and back returns to the folder and expanded levels the user was viewing; a tab switch does not reset the explorer\u0027s navigation or scroll.",
+      "acceptance": [
+        "Expand a folder in Files, switch to Projects, then back to Files: the same folder is still expanded and the tree is not back at the top level.",
+        "Switching tabs does not close or reload any folder the user had open."
+      ],
+      "rationale": "A file explorer is used by navigating into folders; if every glance at Projects reset the tree, users would repeatedly re-find their place and the tab split would feel worse than the old scrolling sidebar.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "Switching tabs while a folder is still loading leaves that folder\u0027s loading state intact when returning.",
+        "A change that genuinely re-roots the explorer (different app, editor file or view) still resets it as it does today."
+      ],
+      "pitfalls": [
+        "Do not reset the explorer just because the Projects tab was shown.",
+        "Do not reload a folder that is already loaded simply to show Files again."
+      ],
+      "rules": [
+        "USR-004",
+        "PERF-001",
+        "USR-006"
+      ],
+      "facts": []
+    }
+  ],
+  "questions": [],
+  "coverage": [],
+  "assumptions": [],
+  "roles": [],
+  "outOfScope": [],
+  "nonFunctional": [],
+  "risks": [],
+  "tensions": [],
+  "glossary": []
+}

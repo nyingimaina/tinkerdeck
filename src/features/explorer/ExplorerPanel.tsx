@@ -4,7 +4,7 @@
 //
 // When the window supplies its editor bridge the panel also becomes a file manager: a wrapping
 // action toolbar, row selection, drag-and-drop onto folders, and the create/rename/delete prompts.
-import { memo, useCallback, useEffect, useRef, useState, type DragEvent } from "react";
+import { memo, useCallback, useEffect, useRef, useState, type DragEvent, type UIEvent } from "react";
 import type { ExplorerEntry } from "../../api/explorer";
 import { detectKind } from "../../state/fileKinds";
 import { nameFromPath } from "../../state/model";
@@ -19,6 +19,10 @@ export interface ExplorerPanelProps {
   root: string | null;
   /** "misc" and "home" roots offer Up; an "app" root is the top folder (R4, R5, R13). */
   source?: ExplorerRootSource;
+  /** Whose folder this is: an app's name, "Misc" or "Home"; null when no root applies (R6). */
+  context?: string | null;
+  /** False while the Files tab is hidden, so the scroll position is put back on return (R10). */
+  active?: boolean;
   /** Changes with the view, selected app and active tab, discarding temporary Up navigation. */
   resetKey?: string;
   /** Open a file through the editor's existing open path (R3). */
@@ -245,9 +249,31 @@ function FolderBody({
   return <EntryList level={level} nav={nav} actions={actions} onOpenFile={onOpenFile} />;
 }
 
-export function ExplorerPanel({ root, source = "none", resetKey, onOpenFile, editor }: ExplorerPanelProps) {
+export function ExplorerPanel({
+  root,
+  source = "none",
+  context = null,
+  active = true,
+  resetKey,
+  onOpenFile,
+  editor,
+}: ExplorerPanelProps) {
   const X = useExplorer({ root, source, resetKey });
   const [selected, setSelected] = useState<ExplorerEntry | null>(null);
+  // The tree's scroll is remembered while it is on screen and put back when Files returns, so a
+  // glance at Projects does not lose the place (R10). A genuine re-root starts at the top again.
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const scrollTop = useRef(0);
+  const rememberScroll = (e: UIEvent<HTMLDivElement>) => {
+    scrollTop.current = e.currentTarget.scrollTop;
+  };
+  useEffect(() => {
+    if (active && bodyRef.current) bodyRef.current.scrollTop = scrollTop.current;
+  }, [active]);
+  useEffect(() => {
+    scrollTop.current = 0;
+    if (bodyRef.current) bodyRef.current.scrollTop = 0;
+  }, [resetKey, root]);
   // A rename, move or delete makes the selected path point at nothing or at a different item, so
   // the selection is dropped rather than left to act on a stale path (REV-2).
   const clearSelection = useCallback(() => setSelected(null), []);
@@ -289,11 +315,25 @@ export function ExplorerPanel({ root, source = "none", resetKey, onOpenFile, edi
     toggleFolder: X.toggleFolder,
   };
 
+  // Today's folder wording, with the context that owns it in front when one applies (R6). Both
+  // parts ellipsize separately so a long context never hides the folder, and the full text is
+  // available on hover. When no context applies, only today's wording is shown.
+  const folderName = X.atDrives ? "Drives" : X.currentRoot ? nameFromPath(X.currentRoot) || X.currentRoot : "Files";
+  const fullTitle = context ? `${context} / ${X.atDrives ? "Drives" : X.currentRoot ?? "Files"}` : X.currentRoot ?? undefined;
+
   return (
     <section className={styles.panel} aria-label="Files">
       <header className={styles.header}>
-        <span className={styles.title} title={X.currentRoot ?? undefined}>
-          {X.atDrives ? "Drives" : X.currentRoot ? nameFromPath(X.currentRoot) || X.currentRoot : "Files"}
+        <span className={styles.title} title={fullTitle}>
+          {context ? (
+            <>
+              <span className={styles.context}>{context}</span>
+              <span className={styles.separator} aria-hidden="true">
+                /
+              </span>
+            </>
+          ) : null}
+          <span className={styles.folder}>{folderName}</span>
         </span>
         {X.canGoUp && (
           <button type="button" className={styles.action} onClick={X.up} title="Go up one folder (to the drives at the top)">
@@ -371,7 +411,7 @@ export function ExplorerPanel({ root, source = "none", resetKey, onOpenFile, edi
       )}
 
       {X.atDrives ? (
-        <div className={styles.body}>
+        <div className={styles.body} ref={bodyRef} onScroll={rememberScroll}>
           {X.drivesLoading && (
             <p className={styles.status} role="status">
               Loading…
@@ -393,7 +433,7 @@ export function ExplorerPanel({ root, source = "none", resetKey, onOpenFile, edi
       ) : X.currentRoot === null ? (
         <p className={styles.hint}>Open an app or a file to browse its folder.</p>
       ) : (
-        <div className={styles.body}>
+        <div className={styles.body} ref={bodyRef} onScroll={rememberScroll}>
           <EntryList level={X.rootLevel} nav={nav} actions={actions} onOpenFile={onOpenFile} />
         </div>
       )}

@@ -1,0 +1,818 @@
+{
+  "runId": "20261127-072115",
+  "options": {
+    "browser": "end",
+    "visible": false,
+    "document": false,
+    "referenceFolders": [],
+    "grantedFolders": []
+  },
+  "browser": {
+    "ran": false,
+    "passed": false,
+    "visible": false,
+    "document": false,
+    "seconds": 0,
+    "treeHash": "9FDF6C318E43C1B892745F0A0712EFEFCFCB56F55B7FA508AA45FD49F8FFB995",
+    "reason": "this stack has no browser journeys",
+    "output": ""
+  },
+  "isVerification": false,
+  "stageSeconds": {
+    "define": 290.8096673,
+    "design": 1919.4635785,
+    "build": 2362.5350038,
+    "challenge": 2361.362428
+  },
+  "timeCapExtensions": {},
+  "stageClockStart": {
+    "design": 858.2027716,
+    "define": 0.0139069,
+    "build": 1858.4624771000001,
+    "challenge": 1380.5845995,
+    "prove": 0
+  },
+  "featureRequest": "This is revision 2 of 2 of a larger feature. Build only this revision.\r\n\r\nThe whole feature, as the person asked for it:\r\n# Projects | Files tabs in the expanded sidebar (and 5 more)\r\n\r\nThis request comes from a conversation with the developer about their app.\r\nAnything marked suspected or not checked is a guess: confirm it in the code before building on it.\r\n\r\n## What this is about\r\nThe Files explorer sits at the bottom of the one scrolling sidebar, after every app and its terminals. The more apps someone has, the further down they must scroll to find it, and it never shows when the sidebar is collapsed to the rail. The developer wants two tabs at the top of the sidebar: Projects (Home plus the apps and terminals) and Files (the explorer). The rail gets a Projects icon and a Files icon that expand the pane onto that tab. Two small additions keep users from losing context once the lists are on separate tabs: the Files header names the app it is showing, and the Projects tab label shows a rollup status dot.\r\n\r\n## What to build or fix\r\n\r\n### 1. Projects | Files tabs in the expanded sidebar (confirmed)\r\nAdd a two-tab strip at the top of the expanded sidebar, below or beside the existing collapse button (\u00AB). The Projects tab holds what the sidebar shows today: the Home row and each app with its terminals. The Files tab holds only the explorer (the \u0060explorer\u0060 ReactNode prop), filling the sidebar height, so nobody has to scroll past the apps to reach it. Today the explorer is rendered after the apps at Sidebar.tsx:114 inside the single scrolling nav (.sidebar overflow-y: auto, Sidebar.module.css:1-8; .explorerSlot at Sidebar.module.css:131-136). Only the active tab\u0027s content is shown. Make the tabs accessible (role=tablist/tab/tabpanel, aria-selected). Picking an app, a terminal, Home or a file must never switch tabs by itself; the tab only changes when the user picks one (tab click, rail icon, or shortcut). Not included: a split view or a draggable divider.\r\n\r\nEvidence:\r\n- src/features/apps/Sidebar.tsx:79-114 (apps rendered first, explorer last at line 114)\r\n- src/features/apps/Sidebar.module.css:1-8 (.sidebar overflow-y: auto)\r\n- src/features/apps/Sidebar.module.css:131-136 (.explorerSlot)\r\n\r\n### 2. Rail gets Projects and Files icons (confirmed)\r\nIn the collapsed rail (Sidebar.tsx:40-64), keep Expand (\u00BB), Home and the app initials with their status dots, and add two icons: Projects and Files. Clicking either one expands the pane (same effect as onTogglePane / Ctrl\u002BB) and shows that tab. Show which tab is active in the rail, for example with the existing railOn style. Give both icons aria-labels and titles. Update the prop comment at Sidebar.tsx:19 (\u0027never in the rail\u0027), which stops being true. Sidebar.explorer.test.tsx:52 covers the explorer in the collapsed rail and must be updated to the new behaviour.\r\n\r\nEvidence:\r\n- src/features/apps/Sidebar.tsx:40-64 (rail has only Expand, Home, app initials)\r\n- src/features/apps/Sidebar.tsx:19 (comment: explorer never in the rail)\r\n- src/features/apps/Sidebar.explorer.test.tsx:52\r\n- Developer: \u0027rail gets Projects and Files icons; clicking one expands to that tab\u0027\r\n\r\n### 3. Files header names whose files are shown (confirmed)\r\nThe explorer root follows context (root.ts:68-87): the selected app, the app that owns the active editor tab, a Misc file\u0027s folder, or Home. The panel header shows only the folder name (ExplorerPanel.tsx:295-297). Once the apps are on another tab, users can\u0027t see which app the files belong to. Make the Files header show the app\u0027s name, or \u0027Misc\u0027 or \u0027Home\u0027, as well as the folder name. Do not change how the root is chosen; root.ts logic stays as it is.\r\n\r\nEvidence:\r\n- src/features/explorer/root.ts:68-87\r\n- src/features/explorer/ExplorerPanel.tsx:295-297\r\n\r\n### 4. Rollup status dot on the Projects tab label (confirmed)\r\nWhile Files is open, the app and terminal status dots are hidden. Show one StatusDot on the Projects tab label (and its rail icon, if that fits) that rolls up all apps. Reuse the existing helpers: rollup() in src/state/model.ts:135-142 (red if any failed, green if all up, amber if some up or stopping, grey otherwise) applied to the executable terminals of all apps, the same filter the per-app dot uses (Sidebar.tsx:38, \u0060app.terminals.filter(isExecutable)\u0060). The tab label must still read clearly with the dot. This was proposed by the assistant and accepted as part of the build, but it hasn\u0027t been tried with users yet.\r\n\r\nEvidence:\r\n- src/features/apps/Sidebar.tsx:38 (appRollup using rollup \u002B isExecutable)\r\n- src/features/apps/Sidebar.tsx:95 (per-app StatusDot)\r\n- src/state/model.ts:135-142 (rollup)\r\n\r\n### 5. Remember the last tab across restarts (confirmed)\r\nSave the active tab in localStorage next to the collapsed state, which uses the key \u0027td.sidebarCollapsed\u0027 (App.tsx:64-71 COLLAPSE_KEY/readCollapsed, App.tsx:94 useState). Use a new key in the same style, e.g. \u0027td.sidebarTab\u0027 with \u0027projects\u0027 or \u0027files\u0027, default \u0027projects\u0027, and read it in a try/catch like readCollapsed. Existing tests say td.sidebarCollapsed is the only key saved (App.test.tsx:499, App.layout.test.tsx:349). Update them to allow the new key; do not drop the check.\r\n\r\nEvidence:\r\n- src/App.tsx:64-71\r\n- src/App.tsx:94\r\n- src/App.test.tsx:499\r\n- src/App.layout.test.tsx:349\r\n\r\n### 6. Ctrl\u002BShift\u002BE opens the Files tab (confirmed)\r\nAdd a keyboard shortcut, Ctrl\u002BShift\u002BE, that shows the Files tab, expanding the pane first if it is collapsed. App shortcuts live in one shared list, src/shared/shortcuts.ts: add an id (e.g. \u0027showFiles\u0027) to AppShortcutId, an entry to APP_SHORTCUTS (label like \u0027Show Files\u0027, keys \u0027Ctrl\u002BShift\u002BE\u0027), and a case in matchShortcut (ctrl \u0026\u0026 shift \u0026\u0026 !alt \u0026\u0026 key \u0027e\u0027). Because TerminalHost.tsx:77 passes any isAppShortcut key to the window, a focused terminal will then give the key to the app instead of the shell. That is intended, and it matches how Ctrl\u002BShift\u002BP works. Handle the new id where App handles the other shortcut ids. Ctrl\u002BShift\u002BE is not used today: matchShortcut only matches Ctrl\u002BB, F5, Ctrl\u002BShift\u002BP and Ctrl\u002BAlt\u002BT. The palette and help list may show the new entry automatically from APP_SHORTCUTS. Check src/shared/shortcuts.test.ts, which may need a new case.\r\n\r\nEvidence:\r\n- src/shared/shortcuts.ts:1 (AppShortcutId)\r\n- src/shared/shortcuts.ts:11-16 (APP_SHORTCUTS)\r\n- src/shared/shortcuts.ts:36-43 (matchShortcut)\r\n- src/features/terminals/TerminalHost.tsx:77 (isAppShortcut bubbles to window)\r\n\r\n## Not part of this\r\n- A split layout (projects on top, Files below) with a draggable or resizable divider: discussed and rejected in favour of tabs.\r\n- Any change to how the explorer picks its root folder (src/features/explorer/root.ts stays as it is).\r\n- Switching tabs automatically when an app, terminal or file is selected: explicitly not wanted.\r\n\r\n## Not settled yet (do not treat as fact)\r\n- Whether the rollup dot on the Projects tab is useful in practice has not been tried with users; build it as described.\r\n- Exact icon glyphs for the Projects and Files rail buttons and exact tab styling were not specified; follow the existing rail and sidebar styles.\r\n\r\n## Requirements agreed in the conversation\r\n\r\nThe developer and the assistant already agreed these while talking. Build on them; do not ask again what they settle.\r\n\r\n- **R1**: The left sidebar has two tabs: Projects, which shows the existing apps and their terminals, and Files, which shows the file system explorer.\r\n  - Done when: Selecting the Projects tab shows the apps and terminals list and no file explorer.\r\n  - Done when: Selecting the Files tab shows the file system explorer and not the apps and terminals list.\r\n- **R2**: The Files tab can be reached without scrolling vertically through the project list, no matter how many apps or terminals are listed.\r\n  - Done when: With enough apps and terminals to overflow the sidebar, the Files tab is still visible and selectable without scrolling in the sidebar.\r\n- **R3**: The collapsed sidebar rail shows a Projects icon and a Files icon alongside Expand, Home and the app initials; clicking the Projects icon expands the sidebar and opens the Projects tab, and clicking the Files icon expands the sidebar and opens the Files tab.\r\n  - Done when: From the collapsed rail, clicking the Projects icon expands the sidebar and shows the Projects tab.\r\n  - Done when: From the collapsed rail, clicking the Files icon expands the sidebar and shows the Files tab.\r\n  - Done when: The collapsed rail still shows Expand, Home and the app initials as well as the two new icons.\r\n\r\nNot part of this: Changing which root folder the file system explorer shows; Adding, renaming, moving or deleting files from the sidebar; Redesigning the apps-and-terminals list itself\r\n\r\n\u003C!--devteam-requirements:eyJzdW1tYXJ5IjoiVGhlIGRldmVsb3BlciB3YW50cyB0aGUgbGVmdCBzaWRlYmFyIHNwbGl0IGludG8gdHdvIHRhYnM6IFByb2plY3RzLCBzaG93aW5nIHRoZSBleGlzdGluZyBhcHBzIGFuZCB0aGVpciB0ZXJtaW5hbHMsIGFuZCBGaWxlcywgc2hvd2luZyB0aGUgZmlsZSBzeXN0ZW0gZXhwbG9yZXIsIGFuZCB3YW50cyB0aGUgY29sbGFwc2VkIHJhaWwgdG8gZ2FpbiBQcm9qZWN0cyBhbmQgRmlsZXMgaWNvbnMgdGhhdCBleHBhbmQgdGhlIHNpZGViYXIgb24gdGhlIGNob3NlbiB0YWIuIFRoZSByZWFzb24gaXMgdGhhdCB0aGUgZXhwbG9yZXIgY3VycmVudGx5IHNpdHMgYXQgdGhlIGJvdHRvbSBvZiB0aGUgc2luZ2xlIHNjcm9sbGluZyBzaWRlYmFyLCBzbyB1c2VycyBtdXN0IHNjcm9sbCBwYXN0IGV2ZXJ5IGFwcCBhbmQgdGVybWluYWwganVzdCB0byBkaXNjb3ZlciBhbmQgdXNlIGl0LiBUaGUgY2hhbmdlIGlzIGEgc2lkZWJhciBsYXlvdXQgY2hhbmdlOyBpdCBkb2VzIG5vdCBjaGFuZ2Ugd2hhdCB0aGUgZXhwbG9yZXIgc2hvd3Mgb3IgaG93IHByb2plY3RzIGFyZSBtYW5hZ2VkLiIsInJlcXVpcmVtZW50cyI6W3siaWQiOiJSMSIsInRleHQiOiJUaGUgbGVmdCBzaWRlYmFyIGhhcyB0d28gdGFiczogUHJvamVjdHMsIHdoaWNoIHNob3dzIHRoZSBleGlzdGluZyBhcHBzIGFuZCB0aGVpciB0ZXJtaW5hbHMsIGFuZCBGaWxlcywgd2hpY2ggc2hvd3MgdGhlIGZpbGUgc3lzdGVtIGV4cGxvcmVyLiIsImFjY2VwdGFuY2UiOlsiU2VsZWN0aW5nIHRoZSBQcm9qZWN0cyB0YWIgc2hvd3MgdGhlIGFwcHMgYW5kIHRlcm1pbmFscyBsaXN0IGFuZCBubyBmaWxlIGV4cGxvcmVyLiIsIlNlbGVjdGluZyB0aGUgRmlsZXMgdGFiIHNob3dzIHRoZSBmaWxlIHN5c3RlbSBleHBsb3JlciBhbmQgbm90IHRoZSBhcHBzIGFuZCB0ZXJtaW5hbHMgbGlzdC4iXSwicmF0aW9uYWxlIjoiVGhlIGRldmVsb3BlciBzYXlzIGhhdmluZyB0aGUgZmlsZSBleHBsb3JlciBhdCB0aGUgYm90dG9tIG9mIHRoZSBzaW5nbGUgc2Nyb2xsaW5nIHRhYiBpcyBwb29yIFVJL1VYIGJlY2F1c2UgdXNlcnMgbXVzdCBzY3JvbGwgdmVydGljYWxseSBqdXN0IHRvIGRpc2NvdmVyIGFuZCB1c2UgaXQ7IGdpdmluZyB0aGUgZXhwbG9yZXIgaXRzIG93biB0YWIgbWFrZXMgaXQgYSBkaXJlY3QgZGVzdGluYXRpb24uIiwiZGVyaXZlZEZyb20iOiIiLCJlZGdlQ2FzZXMiOlsiQSBzaWRlYmFyIHdpdGggbm8gYXBwcyBzdGlsbCBzaG93cyBib3RoIHRoZSBQcm9qZWN0cyBhbmQgRmlsZXMgdGFicy4iLCJUaGUgRmlsZXMgdGFiIHN0aWxsIG9wZW5zIHRoZSBleHBsb3JlciB3aGVuIG5vIGFwcCBpcyBzZWxlY3RlZCwgdXNpbmcgdGhlIHJvb3QgdGhlIGV4cGxvcmVyIGFscmVhZHkgY2hvb3NlcyAodGhlIGFjdGl2ZSBlZGl0b3JcdTAwMjdzIGFwcCwgYSBNaXNjIGZpbGVcdTAwMjdzIGZvbGRlciwgb3IgSG9tZSkuIl0sInBpdGZhbGxzIjpbIlRoZSBleHBsb3JlciBtdXN0IG5vdCByZW1haW4gcmVuZGVyZWQgYmVsb3cgdGhlIGxhc3QgYXBwIG9yIHRlcm1pbmFsIGluc2lkZSB0aGUgUHJvamVjdHMgdGFiOyB0aGF0IGlzIHRoZSBwbGFjZW1lbnQgdGhlIGRldmVsb3BlciB3YW50cyB0byByZW1vdmUuIl0sInJ1bGVzIjpbXSwiZmFjdHMiOltdfSx7ImlkIjoiUjIiLCJ0ZXh0IjoiVGhlIEZpbGVzIHRhYiBjYW4gYmUgcmVhY2hlZCB3aXRob3V0IHNjcm9sbGluZyB2ZXJ0aWNhbGx5IHRocm91Z2ggdGhlIHByb2plY3QgbGlzdCwgbm8gbWF0dGVyIGhvdyBtYW55IGFwcHMgb3IgdGVybWluYWxzIGFyZSBsaXN0ZWQuIiwiYWNjZXB0YW5jZSI6WyJXaXRoIGVub3VnaCBhcHBzIGFuZCB0ZXJtaW5hbHMgdG8gb3ZlcmZsb3cgdGhlIHNpZGViYXIsIHRoZSBGaWxlcyB0YWIgaXMgc3RpbGwgdmlzaWJsZSBhbmQgc2VsZWN0YWJsZSB3aXRob3V0IHNjcm9sbGluZyBpbiB0aGUgc2lkZWJhci4iXSwicmF0aW9uYWxlIjoiVGhlIGRldmVsb3Blclx1MDAyN3MgY29tcGxhaW50IGlzIGRpc2NvdmVyYWJpbGl0eTogdGhlIGV4cGxvcmVyIGN1cnJlbnRseSBtb3ZlcyBmdXJ0aGVyIGRvd24gYXMgYXBwcyBhcmUgYWRkZWQsIHNvIHVzZXJzIGhhdmUgdG8gc2Nyb2xsIHRvIGZpbmQgaXQuIiwiZGVyaXZlZEZyb20iOiIiLCJlZGdlQ2FzZXMiOlsiV2l0aCBvbmx5IG9uZSBhcHAgYW5kIG5vIHRlcm1pbmFscywgdGhlIEZpbGVzIHRhYiBpcyBpbiB0aGUgc2FtZSBwbGFjZSBhcyB3aGVuIHRoZSBsaXN0IGlzIGxvbmcuIl0sInBpdGZhbGxzIjpbIlRoZSB0YWIgc3RyaXAgbXVzdCBub3Qgc2Nyb2xsIGF3YXkgd2l0aCB0aGUgcHJvamVjdCBsaXN0LiJdLCJydWxlcyI6W10sImZhY3RzIjpbXX0seyJpZCI6IlIzIiwidGV4dCI6IlRoZSBjb2xsYXBzZWQgc2lkZWJhciByYWlsIHNob3dzIGEgUHJvamVjdHMgaWNvbiBhbmQgYSBGaWxlcyBpY29uIGFsb25nc2lkZSBFeHBhbmQsIEhvbWUgYW5kIHRoZSBhcHAgaW5pdGlhbHM7IGNsaWNraW5nIHRoZSBQcm9qZWN0cyBpY29uIGV4cGFuZHMgdGhlIHNpZGViYXIgYW5kIG9wZW5zIHRoZSBQcm9qZWN0cyB0YWIsIGFuZCBjbGlja2luZyB0aGUgRmlsZXMgaWNvbiBleHBhbmRzIHRoZSBzaWRlYmFyIGFuZCBvcGVucyB0aGUgRmlsZXMgdGFiLiIsImFjY2VwdGFuY2UiOlsiRnJvbSB0aGUgY29sbGFwc2VkIHJhaWwsIGNsaWNraW5nIHRoZSBQcm9qZWN0cyBpY29uIGV4cGFuZHMgdGhlIHNpZGViYXIgYW5kIHNob3dzIHRoZSBQcm9qZWN0cyB0YWIuIiwiRnJvbSB0aGUgY29sbGFwc2VkIHJhaWwsIGNsaWNraW5nIHRoZSBGaWxlcyBpY29uIGV4cGFuZHMgdGhlIHNpZGViYXIgYW5kIHNob3dzIHRoZSBGaWxlcyB0YWIuIiwiVGhlIGNvbGxhcHNlZCByYWlsIHN0aWxsIHNob3dzIEV4cGFuZCwgSG9tZSBhbmQgdGhlIGFwcCBpbml0aWFscyBhcyB3ZWxsIGFzIHRoZSB0d28gbmV3IGljb25zLiJdLCJyYXRpb25hbGUiOiJUaGUgZGV2ZWxvcGVyIGFncmVlZCB0aGUgcmFpbCBnZXRzIFByb2plY3RzIGFuZCBGaWxlcyBpY29ucyB0aGF0IGV4cGFuZCB0byB0aGUgY2hvc2VuIHRhYiwgd2hpY2ggY2xvc2VzIHRoZSBlYXJsaWVyIGdhcCB3aGVyZSB0aGUgY29sbGFwc2VkIHJhaWwgaGFkIG5vIHdheSBpbnRvIEZpbGVzLiIsImRlcml2ZWRGcm9tIjoiIiwiZWRnZUNhc2VzIjpbIlRoZSByYWlsIHNob3dzIGJvdGggaWNvbnMgZXZlbiB3aGVuIHRoZXJlIGFyZSBubyBhcHBzLiIsIkNsaWNraW5nIGEgcmFpbCBpY29uIGV4cGFuZHMgdGhlIHNpZGViYXIgYW5kIHNlbGVjdHMgdGhlIHRhYiBpbiBvbmUgYWN0aW9uLCBub3Qgb25lIHdpdGhvdXQgdGhlIG90aGVyLiJdLCJwaXRmYWxscyI6WyJUaGUgbmV3IHJhaWwgaWNvbnMgbXVzdCBub3QgcmVwbGFjZSBFeHBhbmQsIEhvbWUgb3IgdGhlIGFwcCBpbml0aWFscy4iLCJUaGUgcmFpbCBtdXN0IG5vdCBleHBhbmQgdG8gYSB0YWIgb3RoZXIgdGhhbiB0aGUgaWNvbiB0aGF0IHdhcyBjbGlja2VkLiJdLCJydWxlcyI6W10sImZhY3RzIjpbXX1dLCJxdWVzdGlvbnMiOltdLCJjb3ZlcmFnZSI6W3sidG9waWMiOiJ1c2VycyIsInN0YXR1cyI6Im9wZW4iLCJub3RlIjoiVGhlIGRldmVsb3BlciBkaWQgbm90IHNheSB3aG8gdXNlcyB0aGUgc2lkZWJhcjsgdGhlIGNoYW5nZSB0YXJnZXRzIHRoZSBzYW1lIHBlcnNvbiB3aG8gYWxyZWFkeSBicm93c2VzIHByb2plY3RzIGFuZCBmaWxlcy4ifSx7InRvcGljIjoiZGF0YSIsInN0YXR1cyI6Im5vdC1hcHBsaWNhYmxlIiwibm90ZSI6IlRoZSBhZ3JlZWQgY2hhbmdlIG9ubHkgcmVvcmdhbmlzZXMgZXhpc3Rpbmcgc2lkZWJhciBjb250ZW50OyBpdCBhZGRzIG5vIG5ldyBzdG9yZWQgcmVjb3JkcyBvciBmaWVsZHMuIn0seyJ0b3BpYyI6InBlcm1pc3Npb25zIiwic3RhdHVzIjoibm90LWFwcGxpY2FibGUiLCJub3RlIjoiVGhlIHRhYnMgZXhwb3NlIHRoZSBzYW1lIHByb2plY3RzIGFuZCBmaWxlcyB0aGUgdXNlciBjYW4gYWxyZWFkeSBhY2Nlc3M7IG5vIG5ldyBzaGFyaW5nIG9yIGFjY2VzcyBydWxlcyB3ZXJlIGRpc2N1c3NlZC4ifSx7InRvcGljIjoidmFsaWRhdGlvbiIsInN0YXR1cyI6Im5vdC1hcHBsaWNhYmxlIiwibm90ZSI6IlRoZSBjaGFuZ2UgaW50cm9kdWNlcyBubyBkYXRhIGVudHJ5LCBzbyB0aGVyZSBpcyBubyBpbnZhbGlkIGlucHV0IHRvIHZhbGlkYXRlLiJ9LHsidG9waWMiOiJzdGF0ZXMiLCJzdGF0dXMiOiJvcGVuIiwibm90ZSI6IlRoZSBkZXZlbG9wZXIgc2V0dGxlZCBob3cgdGhlIGNvbGxhcHNlZCByYWlsIHJlYWNoZXMgRmlsZXMgYnkgZ2l2aW5nIGl0IFByb2plY3RzIGFuZCBGaWxlcyBpY29ucy4gU3RpbGwgb3Blbjogd2hhdCB0aGUgRmlsZXMgdGFiIHNob3dzIHdpdGggbm8gc2VsZWN0ZWQgYXBwIG9yIGZvbGRlciwgaW4gYW4gZW1wdHkgZm9sZGVyLCBvciB3aGlsZSBsb2FkaW5nLiJ9LHsidG9waWMiOiJkdXBsaWNhdGVzIiwic3RhdHVzIjoibm90LWFwcGxpY2FibGUiLCJub3RlIjoiTm8gcmVjb3JkcyBhcmUgY3JlYXRlZCwgc28gZG91YmxlIHN1Ym1pdHMgYW5kIGR1cGxpY2F0ZXMgZG8gbm90IGFwcGx5LiJ9LHsidG9waWMiOiJ2b2x1bWUiLCJzdGF0dXMiOiJvcGVuIiwibm90ZSI6Ik5vIGV4cGVjdGF0aW9uIHlldCBmb3IgaG93IG1hbnkgYXBwcywgdGVybWluYWxzIG9yIGZvbGRlciBlbnRyaWVzIHRoZSB0YWJzIG11c3QgaGFuZGxlLiJ9LHsidG9waWMiOiJkZWxldGlvbiIsInN0YXR1cyI6Im5vdC1hcHBsaWNhYmxlIiwibm90ZSI6Ik5vdGhpbmcgaXMgZGVsZXRlZCBieSB0aGlzIGNoYW5nZS4ifSx7InRvcGljIjoicHJpdmFjeSIsInN0YXR1cyI6Im5vdC1hcHBsaWNhYmxlIiwibm90ZSI6IlRoZSBleHBsb3JlciBzaG93cyB0aGUgc2FtZSBmaWxlcyB0aGF0IGFyZSBhbHJlYWR5IHZpc2libGUgdG9kYXk7IG5vIG5ldyBwZXJzb25hbCBvciBzZW5zaXRpdmUgZGF0YSBpcyBpbnRyb2R1Y2VkLiJ9LHsidG9waWMiOiJxdWFsaXR5Iiwic3RhdHVzIjoib3BlbiIsIm5vdGUiOiJBY2Nlc3NpYmlsaXR5LCBrZXlib2FyZCBzaG9ydGN1dHMgKGEgQ3RybFx1MDAyQlNoaWZ0XHUwMDJCRSBzaG9ydGN1dCB3YXMgcHJvcG9zZWQgYnV0IG5vdCBhZ3JlZWQpIGFuZCBwZXJmb3JtYW5jZSBvZiB0aGUgdGFiIHN0cmlwIHdlcmUgbm90IGFncmVlZCBieSB0aGUgZGV2ZWxvcGVyLiJ9XSwiYXNzdW1wdGlvbnMiOlsiVGhlIFByb2plY3RzIHRhYiByZXVzZXMgdGhlIGV4aXN0aW5nIGFwcHMtYW5kLXRlcm1pbmFscyBsaXN0IHVuY2hhbmdlZCwgYW5kIHRoZSBGaWxlcyB0YWIgcmV1c2VzIHRoZSBleGlzdGluZyBmaWxlIHN5c3RlbSBleHBsb3JlciB1bmNoYW5nZWQuIiwiVGhlIHRhYiBzdHJpcCBzaXRzIGF0IHRoZSB0b3Agb2YgdGhlIHNpZGViYXIgYW5kIHN0YXlzIGZpeGVkIHdoaWxlIHRoZSBzZWxlY3RlZCB0YWJcdTAwMjdzIGNvbnRlbnQgc2Nyb2xscy4iXSwicm9sZXMiOlsiUGVyc29uIHVzaW5nIHRoZSBhcHA6IHN3aXRjaGVzIGJldHdlZW4gdGhlIFByb2plY3RzIHRhYiBhbmQgdGhlIEZpbGVzIHRhYiBpbiB0aGUgbGVmdCBzaWRlYmFyIHRvIGJyb3dzZSBhcHBzLCB0ZXJtaW5hbHMgYW5kIGZpbGVzLCBhbmQgY2FuIGV4cGFuZCB0aGUgY29sbGFwc2VkIHJhaWwgZGlyZWN0bHkgb250byBlaXRoZXIgdGFiLiJdLCJvdXRPZlNjb3BlIjpbIkNoYW5naW5nIHdoaWNoIHJvb3QgZm9sZGVyIHRoZSBmaWxlIHN5c3RlbSBleHBsb3JlciBzaG93cyIsIkFkZGluZywgcmVuYW1pbmcsIG1vdmluZyBvciBkZWxldGluZyBmaWxlcyBmcm9tIHRoZSBzaWRlYmFyIiwiUmVkZXNpZ25pbmcgdGhlIGFwcHMtYW5kLXRlcm1pbmFscyBsaXN0IGl0c2VsZiJdLCJub25GdW5jdGlvbmFsIjpbXSwicmlza3MiOlsiV2hpbGUgdGhlIEZpbGVzIHRhYiBpcyBvcGVuLCB0aGUgcHJvamVjdCBsaXN0IGFuZCBpdHMgYXBwIGFuZCB0ZXJtaW5hbCBzdGF0dXMgZG90cyBhcmUgb3V0IG9mIHNpZ2h0LCBzbyB1c2VycyBsb3NlIHN0YXR1cyBhdCBhIGdsYW5jZS4iLCJUaGUgZXhwbG9yZXIgZm9sbG93cyB0aGUgc2VsZWN0ZWQgYXBwIG9yIHRoZSBhcHAgb3duaW5nIHRoZSBhY3RpdmUgZWRpdG9yIHRhYjsgd2l0aCBwcm9qZWN0cyBoaWRkZW4sIHVzZXJzIG1heSBub3QgYmUgYWJsZSB0byB0ZWxsIHdoaWNoIGFwcFx1MDAyN3MgZm9sZGVyIHRoZXkgYXJlIGJyb3dzaW5nLiJdLCJ0ZW5zaW9ucyI6W10sImdsb3NzYXJ5IjpbIlByb2plY3RzIHRhYjogdGhlIHNpZGViYXIgdGFiIGxpc3RpbmcgdGhlIGFwcHMgYW5kIHRoZWlyIHRlcm1pbmFscy4iLCJGaWxlcyB0YWI6IHRoZSBzaWRlYmFyIHRhYiBob3N0aW5nIHRoZSBmaWxlIHN5c3RlbSBleHBsb3Jlci4iLCJGaWxlIHN5c3RlbSBleHBsb3JlcjogdGhlIHRyZWUgb2YgZm9sZGVycyBhbmQgZmlsZXMgcm9vdGVkIGF0IHRoZSBzZWxlY3RlZCBhcHAsIHRoZSBhcHAgb3duaW5nIHRoZSBhY3RpdmUgZWRpdG9yIHRhYiwgYSBNaXNjIGZpbGVcdTAwMjdzIGZvbGRlciwgb3IgSG9tZS4iLCJDb2xsYXBzZWQgcmFpbDogdGhlIG5hcnJvdyBzaWRlYmFyIHN0YXRlIHNob3dpbmcgRXhwYW5kLCBIb21lLCB0aGUgYXBwIGluaXRpYWxzLCBhbmQgdGhlIFByb2plY3RzIGFuZCBGaWxlcyBpY29ucy4iXX0=--\u003E\r\n\r\nThese parts are already built and committed on this branch (use them, do not rebuild them):\r\n- Revision 1: R1 to R5 (commit 3eddd42)\r\n\r\nThis revision builds exactly these requirements (R6 to R10):\r\n- R6: The Files header shows both the context the explorer is following and the current folder\u0027s name: the app\u0027s name for an app root, \u0027Misc\u0027 for a loose file\u0027s folder, or \u0027Home\u0027 for the user\u0027s home folder, together with the folder name it shows today.\r\n- R7: The Projects tab label carries one status dot that rolls up all apps\u0027 executable terminals using the existing roll-up rules (red if any failed, green if all up, amber if some up or stopping, grey otherwise), and the rail\u0027s Projects icon shows the same dot where the existing rail style allows; the label still reads clearly with the dot.\r\n- R8: The active sidebar tab is remembered across restarts in localStorage under the key \u0027td.sidebarTab\u0027 with the value \u0027projects\u0027 or \u0027files\u0027; when the key is missing, unreadable or holds any other value, the app starts on Projects, and expanding after a collapse shows the tab that was active before collapsing.\r\n- R9: Pressing Ctrl\u002BShift\u002BE shows the Files tab, expanding the sidebar first when it is collapsed; the shortcut is added to the single shared app-shortcut list so the command palette and help list it, and a focused terminal hands the combination to the app instead of the shell.\r\n- R10: Switching away from the Files tab and back returns to the folder and expanded levels the user was viewing; a tab switch does not reset the explorer\u0027s navigation or scroll.",
+  "packId": "tauri-desktop-app",
+  "status": "running",
+  "currentStage": "prove",
+  "stages": {
+    "define": "done",
+    "design": "done",
+    "build": "done",
+    "challenge": "done",
+    "prove": "running"
+  },
+  "defineRound": 3,
+  "designRound": 3,
+  "buildRound": 3,
+  "slicesDone": 0,
+  "sliceReports": [],
+  "revisionsUsed": 2,
+  "requirementKickbacks": 0,
+  "planReviewRounds": 1,
+  "planConflictHashes": [
+    "AF195F20FC654FB4",
+    "69BD9DEF70D28CFA"
+  ],
+  "sizeApproved": false,
+  "lastPlanConflicts": [],
+  "planRounds": [
+    {
+      "number": 1,
+      "at": "2026-11-27T07:32:09.2339255+00:00",
+      "outcome": "conflicts",
+      "conflicts": [
+        {
+          "requirement": "R6",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design says it touches src/features/apps/Sidebar.tsx:, which its own scope does not allow.",
+          "evidence": "its impact (touches) names src/features/apps/Sidebar.tsx:; the scope is src/App.tsx, src/App.test.tsx, src/App.layout.test.tsx, src/App.shortcuts.test.tsx, src/App.explorer.test.tsx, src/shared/shortcuts.ts, src/shared/shortcuts.test.ts, src/features/apps/Sidebar.tsx, src/features/apps/Sidebar.module.css, src/features/apps/SidebarProjects.tsx, src/features/apps/SidebarTabs.tsx, src/features/apps/SidebarTabs.module.css, src/features/apps/Sidebar.tabs.test.tsx, src/features/apps/Sidebar.explorer.test.tsx, src/features/apps/Sidebar.collapse.test.tsx, src/features/explorer/ExplorerPanel.tsx, src/features/explorer/ExplorerPanel.module.css, src/features/explorer/ExplorerPanel.test.tsx, src/features/command-palette/CommandPalette.tsx, src/features/command-palette/CommandPalette.test.tsx, src/features/terminals/TerminalHost.shortcuts.test.tsx."
+        },
+        {
+          "requirement": "R6",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design says it touches src/features/apps/SidebarTabs.tsx:, which its own scope does not allow.",
+          "evidence": "its impact (touches) names src/features/apps/SidebarTabs.tsx:; the scope is src/App.tsx, src/App.test.tsx, src/App.layout.test.tsx, src/App.shortcuts.test.tsx, src/App.explorer.test.tsx, src/shared/shortcuts.ts, src/shared/shortcuts.test.ts, src/features/apps/Sidebar.tsx, src/features/apps/Sidebar.module.css, src/features/apps/SidebarProjects.tsx, src/features/apps/SidebarTabs.tsx, src/features/apps/SidebarTabs.module.css, src/features/apps/Sidebar.tabs.test.tsx, src/features/apps/Sidebar.explorer.test.tsx, src/features/apps/Sidebar.collapse.test.tsx, src/features/explorer/ExplorerPanel.tsx, src/features/explorer/ExplorerPanel.module.css, src/features/explorer/ExplorerPanel.test.tsx, src/features/command-palette/CommandPalette.tsx, src/features/command-palette/CommandPalette.test.tsx, src/features/terminals/TerminalHost.shortcuts.test.tsx."
+        },
+        {
+          "requirement": "R6",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design says it touches src/features/apps/SidebarProjects.tsx:, which its own scope does not allow.",
+          "evidence": "its impact (touches) names src/features/apps/SidebarProjects.tsx:; the scope is src/App.tsx, src/App.test.tsx, src/App.layout.test.tsx, src/App.shortcuts.test.tsx, src/App.explorer.test.tsx, src/shared/shortcuts.ts, src/shared/shortcuts.test.ts, src/features/apps/Sidebar.tsx, src/features/apps/Sidebar.module.css, src/features/apps/SidebarProjects.tsx, src/features/apps/SidebarTabs.tsx, src/features/apps/SidebarTabs.module.css, src/features/apps/Sidebar.tabs.test.tsx, src/features/apps/Sidebar.explorer.test.tsx, src/features/apps/Sidebar.collapse.test.tsx, src/features/explorer/ExplorerPanel.tsx, src/features/explorer/ExplorerPanel.module.css, src/features/explorer/ExplorerPanel.test.tsx, src/features/command-palette/CommandPalette.tsx, src/features/command-palette/CommandPalette.test.tsx, src/features/terminals/TerminalHost.shortcuts.test.tsx."
+        },
+        {
+          "requirement": "R6",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design says it touches src/features/explorer/ExplorerPanel.tsx:, which its own scope does not allow.",
+          "evidence": "its impact (touches) names src/features/explorer/ExplorerPanel.tsx:; the scope is src/App.tsx, src/App.test.tsx, src/App.layout.test.tsx, src/App.shortcuts.test.tsx, src/App.explorer.test.tsx, src/shared/shortcuts.ts, src/shared/shortcuts.test.ts, src/features/apps/Sidebar.tsx, src/features/apps/Sidebar.module.css, src/features/apps/SidebarProjects.tsx, src/features/apps/SidebarTabs.tsx, src/features/apps/SidebarTabs.module.css, src/features/apps/Sidebar.tabs.test.tsx, src/features/apps/Sidebar.explorer.test.tsx, src/features/apps/Sidebar.collapse.test.tsx, src/features/explorer/ExplorerPanel.tsx, src/features/explorer/ExplorerPanel.module.css, src/features/explorer/ExplorerPanel.test.tsx, src/features/command-palette/CommandPalette.tsx, src/features/command-palette/CommandPalette.test.tsx, src/features/terminals/TerminalHost.shortcuts.test.tsx."
+        },
+        {
+          "requirement": "R6",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design says it touches src/App.tsx:, which its own scope does not allow.",
+          "evidence": "its impact (touches) names src/App.tsx:; the scope is src/App.tsx, src/App.test.tsx, src/App.layout.test.tsx, src/App.shortcuts.test.tsx, src/App.explorer.test.tsx, src/shared/shortcuts.ts, src/shared/shortcuts.test.ts, src/features/apps/Sidebar.tsx, src/features/apps/Sidebar.module.css, src/features/apps/SidebarProjects.tsx, src/features/apps/SidebarTabs.tsx, src/features/apps/SidebarTabs.module.css, src/features/apps/Sidebar.tabs.test.tsx, src/features/apps/Sidebar.explorer.test.tsx, src/features/apps/Sidebar.collapse.test.tsx, src/features/explorer/ExplorerPanel.tsx, src/features/explorer/ExplorerPanel.module.css, src/features/explorer/ExplorerPanel.test.tsx, src/features/command-palette/CommandPalette.tsx, src/features/command-palette/CommandPalette.test.tsx, src/features/terminals/TerminalHost.shortcuts.test.tsx."
+        },
+        {
+          "requirement": "R6",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design says it touches src/shared/shortcuts.ts:, which its own scope does not allow.",
+          "evidence": "its impact (touches) names src/shared/shortcuts.ts:; the scope is src/App.tsx, src/App.test.tsx, src/App.layout.test.tsx, src/App.shortcuts.test.tsx, src/App.explorer.test.tsx, src/shared/shortcuts.ts, src/shared/shortcuts.test.ts, src/features/apps/Sidebar.tsx, src/features/apps/Sidebar.module.css, src/features/apps/SidebarProjects.tsx, src/features/apps/SidebarTabs.tsx, src/features/apps/SidebarTabs.module.css, src/features/apps/Sidebar.tabs.test.tsx, src/features/apps/Sidebar.explorer.test.tsx, src/features/apps/Sidebar.collapse.test.tsx, src/features/explorer/ExplorerPanel.tsx, src/features/explorer/ExplorerPanel.module.css, src/features/explorer/ExplorerPanel.test.tsx, src/features/command-palette/CommandPalette.tsx, src/features/command-palette/CommandPalette.test.tsx, src/features/terminals/TerminalHost.shortcuts.test.tsx."
+        },
+        {
+          "requirement": "R6",
+          "against": "design",
+          "kind": "scope",
+          "owner": "design",
+          "why": "The design says it touches src/features/command-palette/CommandPalette.tsx:, which its own scope does not allow.",
+          "evidence": "its impact (touches) names src/features/command-palette/CommandPalette.tsx:; the scope is src/App.tsx, src/App.test.tsx, src/App.layout.test.tsx, src/App.shortcuts.test.tsx, src/App.explorer.test.tsx, src/shared/shortcuts.ts, src/shared/shortcuts.test.ts, src/features/apps/Sidebar.tsx, src/features/apps/Sidebar.module.css, src/features/apps/SidebarProjects.tsx, src/features/apps/SidebarTabs.tsx, src/features/apps/SidebarTabs.module.css, src/features/apps/Sidebar.tabs.test.tsx, src/features/apps/Sidebar.explorer.test.tsx, src/features/apps/Sidebar.collapse.test.tsx, src/features/explorer/ExplorerPanel.tsx, src/features/explorer/ExplorerPanel.module.css, src/features/explorer/ExplorerPanel.test.tsx, src/features/command-palette/CommandPalette.tsx, src/features/command-palette/CommandPalette.test.tsx, src/features/terminals/TerminalHost.shortcuts.test.tsx."
+        }
+      ],
+      "resolution": "Sent back to the architect, who revised the design to settle it."
+    },
+    {
+      "number": 2,
+      "at": "2026-11-27T07:39:24.3474969+00:00",
+      "outcome": "conflicts",
+      "conflicts": [
+        {
+          "requirement": "R8",
+          "against": "20261125-202512:A2",
+          "kind": "regression",
+          "owner": "requirements",
+          "why": "R8 (and the design\u0027s \u0027td.sidebarTab\u0027 addition) writes a new window-layout key to localStorage, while the earlier accepted requirement A2 promises that no new layout key is written and that td.sidebarCollapsed is the only saved layout value; both cannot be true, and the builder has no rule for whether to add and persist the new key.",
+          "evidence": "R8: \u0022The active sidebar tab is remembered across restarts in localStorage under the key \u0027td.sidebarTab\u0027 with the value \u0027projects\u0027 or \u0027files\u0027\u0022. Design adds: \u0022the \u0027td.sidebarTab\u0027 localStorage key (\u0027projects\u0027 or \u0027files\u0027, default \u0027projects\u0027, unreadable values fall back to projects)\u0022. 20261125-202512:A2: \u0022No new layout key or per-app layout field is written; the only saved layout value is the existing td.sidebarCollapsed flag.\u0022"
+        }
+      ],
+      "resolution": "You chose: Change the requirement to fit The next check found the plan consistent."
+    },
+    {
+      "number": 3,
+      "at": "2026-11-27T08:05:49.1653952+00:00",
+      "outcome": "consistent",
+      "conflicts": [],
+      "resolution": ""
+    }
+  ],
+  "planCheck": "consistent",
+  "planWaivedRules": [],
+  "setAsideRequirements": [],
+  "reusedChecks": {
+    "tauri-versions": "20261127-045127|2026-11-27T07:21:10.1607553\u002B00:00",
+    "tauri-web-typecheck": "20261127-045127|2026-11-27T07:21:10.1607553\u002B00:00",
+    "tauri-rust-format": "20261127-045127|2026-11-27T07:21:10.1607553\u002B00:00",
+    "tauri-web-build": "20261127-045127|2026-11-27T07:21:10.1607553\u002B00:00",
+    "tauri-rust-lints": "20261127-045127|2026-11-27T07:21:10.1607553\u002B00:00",
+    "tauri-rust-build": "20261127-045127|2026-11-27T07:21:10.1607553\u002B00:00"
+  },
+  "tensionPair": [],
+  "tensionDiagnoses": {},
+  "specialists": [],
+  "specialistsDone": [],
+  "specialistCallbacks": 0,
+  "specialistHashes": {},
+  "ran": [
+    "define",
+    "design",
+    "build",
+    "challenge",
+    "prove"
+  ],
+  "accepted": {
+    "define/analyst": "artifacts/01-define/analyst-r2.json",
+    "design/architect": "artifacts/02-design/architect-r3.json",
+    "design/planchecker": "artifacts/02-design/planchecker-r3.json",
+    "build/developer": "artifacts/03-build/developer-r3.json",
+    "challenge/security": "artifacts/04-challenge/security-r3.json",
+    "challenge/qa": "artifacts/04-challenge/qa-r2.json",
+    "challenge/reviewer": "artifacts/04-challenge/reviewer-r3.json"
+  },
+  "extraRounds": 1,
+  "queueIds": [
+    "QA-1",
+    "REV-1"
+  ],
+  "focusFindingId": "REV-1",
+  "itemShift": 1,
+  "passStamps": {
+    "src/App.explorer.test.tsx": "46881:639313649031004967",
+    "src/App.shortcuts.test.tsx": "34911:639313643504432120",
+    "src/App.tsx": "41335:639313646372471439",
+    "src/features/apps/Sidebar.module.css": "3322:639313669915186462",
+    "src/features/apps/Sidebar.tabs.test.tsx": "26718:639313670018201034",
+    "src/features/apps/Sidebar.tsx": "7382:639313669865810348",
+    "src/features/apps/SidebarProjects.tsx": "3579:639313640078016591",
+    "src/features/apps/SidebarTabs.module.css": "2243:639313669719297726",
+    "src/features/apps/SidebarTabs.tsx": "4706:639313669640909877",
+    "src/features/command-palette/CommandPalette.test.tsx": "6553:639313642104961841",
+    "src/features/command-palette/CommandPalette.tsx": "11521:639313640018564126",
+    "src/features/explorer/ExplorerPanel.module.css": "4023:639313641082431440",
+    "src/features/explorer/ExplorerPanel.test.tsx": "36703:639313645492889736",
+    "src/features/explorer/ExplorerPanel.tsx": "15133:639313640997124390",
+    "src/features/terminals/TerminalHost.shortcuts.test.tsx": "3857:639313642042265705",
+    "src/shared/shortcuts.test.ts": "3653:639313641979161251",
+    "src/shared/shortcuts.ts": "2323:639313639946164804"
+  },
+  "scopeRestored": [],
+  "configStamp": "639312730475640621",
+  "scopePush": false,
+  "acceptCut": false,
+  "hostStamps": {
+    "REV-1": "3908:639313649895717543",
+    "QA-1": "23184:639313644582640569"
+  },
+  "verifying": [],
+  "settled": 0,
+  "confirmedSettles": 0,
+  "falseSettles": 0,
+  "preflightCalls": 0,
+  "groupRiders": [],
+  "groupHits": 0,
+  "groupMisses": 0,
+  "fullChecksRequired": [],
+  "scopedChecks": [],
+  "scopedFiles": 0,
+  "provedChecks": [],
+  "buildRanSincePass": false,
+  "fixFiles": {
+    "QA-1": [
+      "src/features/apps/Sidebar.tabs.test.tsx"
+    ],
+    "REV-1": [
+      "src/features/apps/Sidebar.module.css",
+      "src/features/apps/Sidebar.tabs.test.tsx",
+      "src/features/apps/Sidebar.tsx",
+      "src/features/apps/SidebarTabs.module.css",
+      "src/features/apps/SidebarTabs.tsx"
+    ]
+  },
+  "acceptedByYou": [],
+  "appAcceptsLoaded": true,
+  "claimedBuilt": [],
+  "confirmedBuilt": 0,
+  "builtWrong": 0,
+  "canaryPasses": 1,
+  "parked": [],
+  "reviewPasses": 3,
+  "costUsd": 0.39125505000000005,
+  "budgetUsd": 10,
+  "agentCalls": 16,
+  "modelCalls": {
+    "opencode-go/deepseek-v4.1-flash": 15
+  },
+  "startedAt": "2026-11-27T07:21:15.7211511+00:00",
+  "updatedAt": "2026-11-27T09:25:00.955508+00:00",
+  "findings": [
+    {
+      "id": "REV-1",
+      "source": "reviewer",
+      "cites": "USR-006",
+      "severity": "blocking",
+      "description": "The one status indicator visible while Files is open is hidden from assistive technology, so the roll-up is conveyed to sighted users only; expose it without changing the tab/button names (e.g. reference the dot\u0027s label from the tab and rail button with aria-describedby, or render a visually hidden status line), keeping the accessible names exactly \u0022Projects\u0022/\u0022Files\u0022 and the existing role=img counts intact.",
+      "file": "src/features/apps/SidebarTabs.tsx",
+      "line": 39,
+      "evidence": "The new Projects roll-up StatusDot is wrapped in \u003Cspan aria-hidden=\u0022true\u0022\u003E in the tab label (SidebarTabs.tsx:39-41) and again on the rail Projects button (Sidebar.tsx:110-113). StatusDot itself carries role=\u0022img\u0022 aria-label/title \u0022App status: \u003Crollup\u003E\u0022 (src/features/terminals/StatusDot.tsx:16-18), and for a rollup that label is the only non-colour carrier (the only glyph it renders is the greyTick tick, which rollup() never returns). R7\u0027s whole purpose is that this single dot is the only status shown while Files is open, yet because of aria-hidden assistive technology now gets nothing: a screen-reader user on the Files tab cannot be told that a terminal failed, while every existing per-app and per-terminal dot is exposed with a label (SidebarProjects.tsx:73 and :85). That is inconsistent with the app\u0027s own accessible-status pattern and with USR-006 section 5.6 (consistency) and 5.8 (assistive technology is a requirement).",
+      "status": "fixed",
+      "raisedRound": 1,
+      "fixedRound": 3,
+      "note": "Assistive technology now receives the Projects roll-up without changing any accessible name or role=img count. The visible StatusDot stays decorative (SidebarTabs.tsx:43-45; Sidebar.tsx:114-116), and the tab is wired to a visually hidden line via aria-describedby in the mount effect (SidebarTabs.tsx:73) whose span carries \u0027App status: {projectsRollup}\u0027 (SidebarTabs.tsx:103-105); the rail Projects button gets the same treatment with aria-describedby={railProjectsStatusId} (Sidebar.tsx:111) and its own hidden span (Sidebar.tsx:118-120). Sidebar.tabs.test.tsx \u0027REV-1 R7\u0027 tests assert toHaveAccessibleName(\u0027Projects\u0027) and toHaveAccessibleDescription(\u0027App status: red\u0027 / \u0027App status: grey\u0027) on both the tab and the rail button, and that getAllByRole(\u0027img\u0027, ...) still returns only the two per-app dots, so the tab/button names and status-image counts are unchanged. Ran npx vitest run on Sidebar.tabs/Sidebar.explorer/Sidebar.collapse (43 passed), ExplorerPanel (47 passed), App.explorer/App.shortcuts/CommandPalette/TerminalHost.shortcuts/shortcuts (98 passed); npm run lint (tsc --noEmit) is clean. The only whole-suite failures are the pre-existing App.test.tsx/App.version.test.tsx 2.3.0-vs-2.4.0 assertions and a pre-existing load-sensitive race in App.explorer.test.tsx\u0027s R9 rename test, which passes when that file runs alone.",
+      "repeats": 0
+    },
+    {
+      "id": "QA-1",
+      "source": "qa",
+      "cites": "R10",
+      "severity": "blocking",
+      "description": "The performance acceptance check for R10\u0027s tab switch - 300 apps and 3,000 terminals, panel update under 100 ms - has no test at that size and no timing assertion at all.",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "line": 212,
+      "evidence": "The only tab-switch scale proof is \u0027R2: switching tabs does not reconcile the 500-row Projects list\u0027, built from manyApps(50, 10) = 50 apps / 500 terminals, and it asserts only that stateOf is not re-read. No fixture uses the performance requirement\u0027s 300 apps / 3,000 terminals and nothing measures the 100 ms budget (no performance.now/Date.now around the switch), so a switch that took seconds at the stated size would still pass every test.",
+      "status": "fixed",
+      "raisedRound": 1,
+      "fixedRound": 2,
+      "note": "src/features/apps/Sidebar.tabs.test.tsx:267 adds \u0027R10: with 300 apps and 3,000 terminals, switching Projects -\u003E Files -\u003E Projects updates the panel in under 100 ms without remounting the loaded explorer\u0027. It builds manyApps(300, 10) = 300 apps and 3,000 terminals, warms the Files panel, resolves the tab elements before timing, brackets the two fireEvent clicks with performance.now(), asserts elapsed \u003C 100, and asserts the mounted explorer\u0027s listing/mount count stays at 1. I ran npx vitest run on this file (31 passed) and on all seven changed test files (176 passed), and npm run lint (tsc --noEmit) passed; a switch that took seconds at this size or remounted the explorer would now fail the test.",
+      "repeats": 0
+    },
+    {
+      "id": "QA-2",
+      "source": "qa",
+      "cites": "R6",
+      "severity": "advisory",
+      "description": "The edge case \u0027truncated without hiding the Up and Show hidden controls\u0027 is proven for the DOM controls but not for the layout that actually keeps them visible; a CSS-module assertion like the R2 strip tests would close it.",
+      "file": "src/features/explorer/ExplorerPanel.test.tsx",
+      "line": 369,
+      "evidence": "The long-name test only asserts the Up and Show hidden buttons are present and that the title attribute holds the full \u0027context / folder\u0027 text. It never asserts the truncation CSS (.context/.folder text-overflow: ellipsis, .action flex: none), so removing the ellipsis or letting the title grow would not fail any test.",
+      "status": "advisory",
+      "raisedRound": 1,
+      "repeats": 0
+    },
+    {
+      "id": "QA-3",
+      "source": "qa",
+      "cites": "R7",
+      "severity": "advisory",
+      "description": "The \u0027or stopping\u0027 half of the R7 amber rule has no independent test (e.g. all-stopping/stopped with no running terminal).",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "line": 430,
+      "evidence": "The amber case feeds t1=running and t2=stopping, which is already amber from the \u0027some up\u0027 branch, so the \u0027or stopping\u0027 clause is never exercised on its own. A projectsRollup that dropped stopping-only states would still pass this suite.",
+      "status": "advisory",
+      "raisedRound": 1,
+      "repeats": 0
+    },
+    {
+      "id": "CHK-tauri-web-tests",
+      "source": "check:tauri-web-tests",
+      "cites": "TAU-011",
+      "severity": "advisory",
+      "description": "Check \u0027Window: tests, with coverage\u0027 is failing.",
+      "file": "",
+      "evidence": "\u2026\n  @media (min-width: 768px) {\r\n    .ZestTabs-module_tabItem__Dlj4s {\r\n      padding: 6px 20px;\r\n    }\r\n\r\n    .ZestTabs-module_scrollArrowLeft__OWxCj,\r\n    .ZestTabs-module_scrollArrowRight__wFiOJ {\r\n      width: 28px;\r\n    }\r\n  }\r\n}\r\n\r\n\r\nstderr | src/features/apps/EditPane.executable.test.tsx \u003E the terminal executable flag (R11) \u003E R11: a non-executable terminal keeps its name, command and remove controls\r\nWarning: An update to EditPane inside a test was not wrapped in act(...).\r\n\r\nWhen testing, code that causes React state updates should be wrapped into act(...):\r\n\r\nact(() =\u003E {\r\n  /* fire events that update state */\r\n});\r\n/* assert on the output */\r\n\r\nThis ensures that you\u0027re testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\r\n    at EditPane (D:\\work\\nyingi\\code\\systems\\lite-commander\\src\\features\\apps\\EditPane.tsx:21:21)\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF Failed Tests 2 \u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\r\n\r\n FAIL  src/App.test.tsx \u003E App \u003E R2: the persistent footer is visible on Home, the app view and the separate editor view\r\nError: expect(element).toHaveTextContent()\r\n\r\nExpected element to have text content:\r\n  v2.3.0\r\nReceived:\r\n  Tinkerdeck\u00ABSidebarv2.4.0\r\n \u276F src/App.test.tsx:376:65\r\n    374|     render(\u003CApp /\u003E);\r\n    375|     await screen.findByRole(\u0022heading\u0022, { name: \u0022Home\u0022, level: 2 });\r\n    376|     expect(screen.getByRole(\u0022contentinfo\u0022, { name: \u0022Status\u0022 })).toHave\u2026\r\n       |                                                                 ^\r\n    377| \r\n    378|     await openApp();\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF[1/2]\u23AF\r\n\r\n FAIL  src/App.version.test.tsx \u003E the app version \u003E the shipped version is one number: package.json, package-lock.json, Cargo.toml, Cargo.lock and tauri.conf.json all say 2.3.0\r\nAssertionError: expected \u00272.4.0\u0027 to be \u00272.3.0\u0027 // Object.is equality\r\n\r\nExpected: \u00222.3.0\u0022\r\nReceived: \u00222.4.0\u0022\r\n\r\n \u276F src/App.version.test.tsx:15:21\r\n     13|   it(\u0022the shipped version is one number: package.json, package-lock.js\u2026\r\n     14|     const version = (JSON.parse(file(\u0022package.json\u0022)) as { version: st\u2026\r\n     15|     expect(version).toBe(\u00222.3.0\u0022);\r\n       |                     ^\r\n     16| \r\n     17|     const lock = JSON.parse(file(\u0022package-lock.json\u0022)) as { version: s\u2026\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF[2/2]\u23AF",
+      "status": "advisory",
+      "raisedRound": 1,
+      "note": "It was already failing before this run started, so it does not block this feature.",
+      "repeats": 0
+    },
+    {
+      "id": "SCOPE",
+      "source": "engine",
+      "cites": "SCOPE-001",
+      "severity": "advisory",
+      "description": "Files outside the design\u0027s declared scope were changed.",
+      "file": "",
+      "evidence": "Accepted into the scope:\nsrc/features/apps/Sidebar.module.css",
+      "status": "advisory",
+      "raisedRound": 3,
+      "note": "Scope growth is advisory in this project, so the files were accepted into the scope. They are listed in the proof report.",
+      "repeats": 0
+    }
+  ],
+  "lastChecks": [
+    {
+      "id": "no-secrets",
+      "name": "No secrets in code",
+      "passed": true,
+      "seconds": 0.2517933,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "SEC-001"
+      ]
+    },
+    {
+      "id": "no-debug-leftovers",
+      "name": "No debugging leftovers",
+      "passed": true,
+      "seconds": 0.0866997,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "QUAL-001"
+      ]
+    },
+    {
+      "id": "tauri-no-invoke-in-features",
+      "name": "Screens ask the core through src/api only",
+      "passed": true,
+      "seconds": 0.0695599,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-002"
+      ]
+    },
+    {
+      "id": "tauri-no-panics",
+      "name": "The Rust core does not panic",
+      "passed": true,
+      "seconds": 0.0487,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-006"
+      ]
+    },
+    {
+      "id": "tauri-csp-set",
+      "name": "The window has a content security policy",
+      "passed": true,
+      "seconds": 0.0463938,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-004"
+      ]
+    },
+    {
+      "id": "tauri-least-privilege",
+      "name": "Permissions are small and specific",
+      "passed": true,
+      "seconds": 0.0514779,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-005"
+      ]
+    },
+    {
+      "id": "tauri-no-signing-key",
+      "name": "No signing keys in the project",
+      "passed": true,
+      "seconds": 0.0887294,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-009"
+      ]
+    },
+    {
+      "id": "tauri-versions",
+      "name": "One version number everywhere",
+      "passed": true,
+      "seconds": 0.2575437,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "Version 2.4.0 everywhere.",
+      "rules": [
+        "TAU-013"
+      ]
+    },
+    {
+      "id": "tauri-web-typecheck",
+      "name": "Window: type check",
+      "passed": true,
+      "seconds": 8.6558852,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "\u003E tinkerdeck@2.4.0 lint\r\n\u003E tsc --noEmit",
+      "rules": []
+    },
+    {
+      "id": "tauri-rust-format",
+      "name": "Core: formatting",
+      "passed": true,
+      "seconds": 1.1734016,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No new unformatted files (29 old one(s) are in the baseline and are not judged).",
+      "rules": [
+        "TAU-001"
+      ]
+    },
+    {
+      "id": "tauri-web-build",
+      "name": "Window: build",
+      "passed": true,
+      "seconds": 19.9980388,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "\u2026\ndist/assets/ecl-Cabwm37j.js                5.13 kB \u2502 gzip:   2.31 kB\r\ndist/assets/crystal-SjHAIU92.js            5.13 kB \u2502 gzip:   2.07 kB\r\ndist/assets/ruby-BK5aLJev.js               5.21 kB \u2502 gzip:   2.16 kB\r\ndist/assets/julia-DuME0IfC.js              5.39 kB \u2502 gzip:   2.14 kB\r\ndist/assets/vbscript-BuJXcnF6.js           5.82 kB \u2502 gzip:   2.57 kB\r\ndist/assets/mirc-CjQqDB4T.js               5.92 kB \u2502 gzip:   2.68 kB\r\ndist/assets/cobol-CWcv1MsR.js              6.20 kB \u2502 gzip:   2.96 kB\r\ndist/assets/scheme-C41bIUwD.js             6.37 kB \u2502 gzip:   2.39 kB\r\ndist/assets/python-BuPzkPfP.js             6.48 kB \u2502 gzip:   2.73 kB\r\ndist/assets/xquery-CQfU5ijd.js             6.62 kB \u2502 gzip:   2.56 kB\r\ndist/assets/pug-DukmZTjD.js                6.67 kB \u2502 gzip:   1.94 kB\r\ndist/assets/textile-CnDTJFAw.js            6.80 kB \u2502 gzip:   2.44 kB\r\ndist/assets/nsis-LY0VT_u5.js               7.06 kB \u2502 gzip:   3.08 kB\r\ndist/assets/nginx-DdIZxoE0.js              7.34 kB \u2502 gzip:   2.72 kB\r\ndist/assets/powershell-CFHJl5sT.js         7.77 kB \u2502 gzip:   3.33 kB\r\ndist/assets/haxe-H-WmDvRZ.js               7.89 kB \u2502 gzip:   2.95 kB\r\ndist/assets/gherkin-heZmZLOM.js            7.96 kB \u2502 gzip:   5.09 kB\r\ndist/assets/erlang-BNw1qcRV.js             8.07 kB \u2502 gzip:   2.89 kB\r\ndist/assets/verilog-C6RDOZhf.js            8.24 kB \u2502 gzip:   3.52 kB\r\ndist/assets/index-CSMgu3Uf.js              8.35 kB \u2502 gzip:   3.61 kB\r\ndist/assets/sas-B4kiWyti.js                9.33 kB \u2502 gzip:   4.11 kB\r\ndist/assets/perl-CdXCOZ3F.js               9.75 kB \u2502 gzip:   3.46 kB\r\ndist/assets/EditPane-On6Y7AWW.js          10.52 kB \u2502 gzip:   3.83 kB\r\ndist/assets/clojure-BMjYHr_A.js           10.82 kB \u2502 gzip:   3.99 kB\r\ndist/assets/idl-BEugSyMb.js               11.63 kB \u2502 gzip:   4.52 kB\r\ndist/assets/dist-DfUJp5J1.js              12.74 kB \u2502 gzip:   5.62 kB\r\ndist/assets/dist-B43QIq4_.js              14.70 kB \u2502 gzip:   5.96 kB\r\ndist/assets/dist-D5OzJLBM.js              16.34 kB \u2502 gzip:   7.46 kB\r\ndist/assets/javascript-qCveANmP.js        17.08 kB \u2502 gzip:   5.75 kB\r\ndist/assets/dist-Bxx671dj.js              20.98 kB \u2502 gzip:   9.38 kB\r\ndist/assets/dist-BhJGODZG.js              22.01 kB \u2502 gzip:  10.16 kB\r\ndist/assets/clike-B9uivgTg.js             22.30 kB \u2502 gzip:   7.86 kB\r\ndist/assets/dist-D54xR9Zk.js              23.09 kB \u2502 gzip:  10.40 kB\r\ndist/assets/stylus-B533Al4x.js            25.80 kB \u2502 gzip:   8.60 kB\r\ndist/assets/index-B_SgkXKk.js             26.94 kB \u2502 gzip:   8.91 kB\r\ndist/assets/css-BnMrqG3P.js               27.13 kB \u2502 gzip:   8.47 kB\r\ndist/assets/dist-wMphyXWa.js              28.28 kB \u2502 gzip:  12.84 kB\r\ndist/assets/dist-myhAYVLq.js              28.79 kB \u2502 gzip:  11.71 kB\r\ndist/assets/dist-D8H09_qq.js              30.85 kB \u2502 gzip:  12.67 kB\r\ndist/assets/purify.es-BKvm9NlY.js         31.55 kB \u2502 gzip:  12.23 kB\r\ndist/assets/dist-Cr2IGYok.js              32.36 kB \u2502 gzip:  13.08 kB\r\ndist/assets/sql-D0XecflT.js               37.05 kB \u2502 gzip:  10.94 kB\r\ndist/assets/dist-j8gTfLWx.js              45.12 kB \u2502 gzip:  15.64 kB\r\ndist/assets/dist-mrcN5pjP.js              45.17 kB \u2502 gzip:  19.18 kB\r\ndist/assets/dist-Cha-pxUJ.js              50.40 kB \u2502 gzip:  19.95 kB\r\ndist/assets/marked.esm-CG1o1NHW.js        55.11 kB \u2502 gzip:  16.76 kB\r\ndist/assets/CommandPalette-mgqOpKLu.js    56.71 kB \u2502 gzip:  19.64 kB\r\ndist/assets/dist-CJHwsGgo.js              83.73 kB \u2502 gzip:  30.37 kB\r\ndist/assets/dist-BzhUwidK.js              87.04 kB \u2502 gzip:  34.51 kB\r\ndist/assets/dist-BiVsIosw.js              98.32 kB \u2502 gzip:  28.59 kB\r\ndist/assets/dist-CUPtjl9u.js             103.95 kB \u2502 gzip:  34.39 kB\r\ndist/assets/CodeSurface-Do7k5WCX.js      364.45 kB \u2502 gzip: 117.40 kB\r\ndist/assets/index-BK4mj2Wd.js            717.44 kB \u2502 gzip: 214.86 kB\r\n\u2713 built in 10.80s\r\n\n\r\n(!) Some chunks are larger than 500 kB after minification. Consider:\r\n- Using dynamic import() to code-split the application\r\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\r\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.",
+      "rules": []
+    },
+    {
+      "id": "tauri-rust-lints",
+      "name": "Core: lints (clippy, warnings are errors)",
+      "passed": true,
+      "seconds": 2.8073152,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No clippy issues.",
+      "rules": [
+        "TAU-001"
+      ]
+    },
+    {
+      "id": "tauri-rust-build",
+      "name": "Core: the app compiles",
+      "passed": true,
+      "seconds": 1.6641061,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "Finished \u0060dev\u0060 profile [unoptimized \u002B debuginfo] target(s) in 1.29s",
+      "rules": []
+    },
+    {
+      "id": "tauri-web-tests",
+      "name": "Window: tests, with coverage",
+      "passed": false,
+      "seconds": 45.5357214,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "\u2026\n  @media (min-width: 768px) {\r\n    .ZestTabs-module_tabItem__Dlj4s {\r\n      padding: 6px 20px;\r\n    }\r\n\r\n    .ZestTabs-module_scrollArrowLeft__OWxCj,\r\n    .ZestTabs-module_scrollArrowRight__wFiOJ {\r\n      width: 28px;\r\n    }\r\n  }\r\n}\r\n\r\n\r\nstderr | src/features/apps/EditPane.executable.test.tsx \u003E the terminal executable flag (R11) \u003E R11: a non-executable terminal keeps its name, command and remove controls\r\nWarning: An update to EditPane inside a test was not wrapped in act(...).\r\n\r\nWhen testing, code that causes React state updates should be wrapped into act(...):\r\n\r\nact(() =\u003E {\r\n  /* fire events that update state */\r\n});\r\n/* assert on the output */\r\n\r\nThis ensures that you\u0027re testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\r\n    at EditPane (D:\\work\\nyingi\\code\\systems\\lite-commander\\src\\features\\apps\\EditPane.tsx:21:21)\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF Failed Tests 2 \u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\r\n\r\n FAIL  src/App.test.tsx \u003E App \u003E R2: the persistent footer is visible on Home, the app view and the separate editor view\r\nError: expect(element).toHaveTextContent()\r\n\r\nExpected element to have text content:\r\n  v2.3.0\r\nReceived:\r\n  Tinkerdeck\u00ABSidebarv2.4.0\r\n \u276F src/App.test.tsx:376:65\r\n    374|     render(\u003CApp /\u003E);\r\n    375|     await screen.findByRole(\u0022heading\u0022, { name: \u0022Home\u0022, level: 2 });\r\n    376|     expect(screen.getByRole(\u0022contentinfo\u0022, { name: \u0022Status\u0022 })).toHave\u2026\r\n       |                                                                 ^\r\n    377| \r\n    378|     await openApp();\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF[1/2]\u23AF\r\n\r\n FAIL  src/App.version.test.tsx \u003E the app version \u003E the shipped version is one number: package.json, package-lock.json, Cargo.toml, Cargo.lock and tauri.conf.json all say 2.3.0\r\nAssertionError: expected \u00272.4.0\u0027 to be \u00272.3.0\u0027 // Object.is equality\r\n\r\nExpected: \u00222.3.0\u0022\r\nReceived: \u00222.4.0\u0022\r\n\r\n \u276F src/App.version.test.tsx:15:21\r\n     13|   it(\u0022the shipped version is one number: package.json, package-lock.js\u2026\r\n     14|     const version = (JSON.parse(file(\u0022package.json\u0022)) as { version: st\u2026\r\n     15|     expect(version).toBe(\u00222.3.0\u0022);\r\n       |                     ^\r\n     16| \r\n     17|     const lock = JSON.parse(file(\u0022package-lock.json\u0022)) as { version: s\u2026\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF[2/2]\u23AF",
+      "rules": [
+        "TAU-011"
+      ]
+    },
+    {
+      "id": "tauri-rust-tests",
+      "name": "Core: tests",
+      "passed": true,
+      "seconds": 65.7708836,
+      "notRun": false,
+      "flaky": true,
+      "partial": false,
+      "tier": "full",
+      "output": "This check is flaky: it failed on the first try and passed on the second. Treated as passed; the first failure was:\n\u2026\ntest runtime::tests::exit_zero_with_stop_command_is_detached_and_stop_runs_the_command ... ok\r\ntest update::tests::a_download_that_does_not_match_is_discarded_and_nothing_is_kept ... ok\r\ntest update::tests::a_release_published_hours_after_the_last_check_is_found_without_a_restart ... ok\r\ntest update::tests::a_valid_manifest_is_accepted_and_the_checksum_normalised ... ok\r\ntest update::tests::auto_checks_are_rate_limited_and_respect_the_setting ... ok\r\ntest update::tests::download_refuses_urls_outside_the_allowed_prefixes_before_any_request ... ok\r\ntest update::tests::a_manifest_changed_after_signing_or_signed_by_someone_else_is_refused ... ok\r\ntest update::tests::a_newer_signed_release_is_found ... ok\r\ntest update::tests::installers_listed_under_the_old_project_name_are_still_accepted ... ok\r\ntest update::tests::manifests_that_could_lead_somewhere_else_are_refused ... ok\r\ntest update::tests::an_oversized_manifest_is_refused ... ok\r\ntest runtime::tests::t4_unknown_command_is_nonzero_and_error_visible ... ok\r\ntest update::tests::redirects_are_followed_like_github_release_downloads ... ok\r\ntest update::tests::the_embedded_public_key_is_a_valid_ed25519_key ... ok\r\ntest update::tests::the_installer_runs_silently_closes_the_app_and_asks_to_relaunch ... ok\r\ntest update::tests::the_official_base_and_prefix_point_at_this_projects_releases ... ok\r\ntest update::tests::verify_file_catches_truncation_and_corruption ... ok\r\ntest update::tests::the_cache_holds_the_latest_found_update ... ok\r\ntest update::tests::versions_parse_and_compare ... ok\r\ntest update::tests::download_verifies_reports_progress_and_leaves_one_clean_file ... ok\r\ntest update::tests::signatures_verify_only_for_the_right_key_and_the_exact_bytes ... ok\r\ntest themes::tests::there_is_a_limit_on_how_much_can_be_stored ... ok\r\ntest runtime::tests::git_bash_runs_commands_in_the_project_folder_with_real_exit_codes ... ok\r\ntest runtime::tests::stopping_a_git_bash_terminal_kills_its_whole_tree ... ok\r\ntest runtime::tests::the_terminal_shell_overrides_the_default_and_a_missing_shell_fails_clearly ... ok\r\ntest git::tests::pull_never_merges_when_branches_diverged_and_changes_nothing ... ok\r\ntest git::tests::push_is_rejected_when_behind_with_a_helpful_message_and_never_forces ... ok\r\ntest git::tests::sync_on_a_branch_without_upstream_just_pushes_it ... ok\r\ntest runtime::tests::t7_double_start_runs_one_process ... ok\r\ntest git::tests::fetch_then_pull_brings_a_teammates_commit ... ok\r\ntest update::tests::missing_and_unreachable_servers_give_plain_messages ... ok\r\ntest git::tests::sync_stops_at_the_pull_when_diverged ... ok\r\ntest git::tests::sync_pulls_then_pushes ... ok\r\n\r\nfailures:\r\n\r\n---- engine::tests::up_with_wait_stops_early_and_explains_when_a_terminal_fails stdout ----\r\n\r\nthread \u0027engine::tests::up_with_wait_stops_early_and_explains_when_a_terminal_fails\u0027 (8488) panicked at src\\engine.rs:904:9:\r\nassertion \u0060left == right\u0060 failed: {\u0022elapsed_ms\u0022:2091,\u0022ready\u0022:true,\u0022terminals\u0022:[{\u0022name\u0022:\u0022db\u0022,\u0022ready\u0022:true,\u0022state\u0022:\u0022running\u0022},{\u0022name\u0022:\u0022api\u0022,\u0022ready\u0022:true,\u0022state\u0022:\u0022running\u0022}]}\r\n  left: (Some(true), None)\r\n right: (Some(false), Some(\u0022api\u0022))\r\nnote: run with \u0060RUST_BACKTRACE=1\u0060 environment variable to display a backtrace\r\n\r\n---- engine::tests::up_with_wait_times_out_and_names_who_is_not_ready stdout ----\r\n\r\nthread \u0027engine::tests::up_with_wait_times_out_and_names_who_is_not_ready\u0027 (39328) panicked at src\\engine.rs:931:52:\r\ncalled \u0060Option::unwrap()\u0060 on a \u0060None\u0060 value\r\n\r\n\r\nfailures:\r\n    engine::tests::up_with_wait_stops_early_and_explains_when_a_terminal_fails\r\n    engine::tests::up_with_wait_times_out_and_names_who_is_not_ready\r\n\r\ntest result: FAILED. 269 passed; 2 failed; 1 ignored; 0 measured; 0 filtered out; finished in 28.69s\r\n\r\n\n    Finished \u0060test\u0060 profile [unoptimized \u002B debuginfo] target(s) in 1.74s\r\n     Running unittests src\\lib.rs (src-tauri\\target\\debug\\build\\tinkerdeck/24e97c6b89d69b74\\out\\tinkerdeck_lib-24e97c6b89d69b74.exe)\r\nerror: test failed, to rerun pass \u0060--lib\u0060\n\n\u2026\ntest r2_an_empty_folder_lists_no_children_without_error ... ok\r\ntest r2_lists_one_level_and_tells_folders_from_files ... ok\r\ntest r2_other_dot_named_entries_are_listed_normally ... ok\r\ntest r2_show_hidden_reveals_the_four_names_and_can_hide_them_again ... ok\r\ntest a1_folders_come_first_then_files_sorted_by_name ... ok\r\ntest r2_hides_the_four_noisy_names_by_default_at_any_depth ... ok\r\ntest a1_scanning_stops_at_the_scan_limit ... ok\r\ntest r2_listing_a_level_never_opens_its_child_folders ... ok\r\ntest a1_a_large_level_is_capped_with_total_and_truncated ... ok\r\n\r\ntest result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.35s\r\n\r\n\r\nrunning 17 tests\r\ntest r9_a_move_between_drives_is_refused ... ok\r\ntest r9_create_refuses_empty_whitespace_and_windows_invalid_names ... ok\r\ntest r9_create_makes_a_new_file_and_a_new_folder ... ok\r\ntest r9_rename_of_a_missing_item_reports_it_is_gone ... ok\r\ntest r9_deleting_the_same_item_twice_reports_it_is_already_gone ... ok\r\ntest r9_delete_is_refused_when_the_recycle_bin_cannot_take_the_item ... ok\r\ntest r9_move_onto_the_folder_it_is_already_in_changes_nothing ... ok\r\ntest r9_delete_hands_the_item_to_the_recycle_bin_and_never_removes_it_itself ... ok\r\ntest r9_rename_refuses_an_invalid_name_and_changes_nothing ... ok\r\ntest r9_move_refuses_a_destination_that_is_not_a_folder ... ok\r\ntest r9_create_refuses_a_name_clash_and_leaves_the_existing_file_untouched ... ok\r\ntest r9_rename_refuses_a_clash_and_leaves_both_items_untouched ... ok\r\ntest r9_move_refuses_to_put_a_folder_inside_itself_or_a_descendant ... ok\r\ntest r9_rename_renames_a_file_and_a_folder ... ok\r\ntest r9_move_moves_a_file_and_a_folder_into_another_folder ... ok\r\ntest r9_move_refuses_a_name_clash_in_the_destination ... ok\r\ntest r9_delete_uses_the_real_recycle_bin ... ok\r\n\r\ntest result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.89s\r\n\r\n\r\nrunning 6 tests\r\ntest r11_the_flag_is_saved_so_it_survives_a_restart ... ok\r\ntest r11_a_saved_terminal_without_the_flag_loads_as_executable ... ok\r\ntest r11_when_every_terminal_is_non_executable_the_bulk_action_has_nothing_to_do ... ok\r\ntest r11_start_all_and_stop_all_skip_non_executable_terminals ... ok\r\ntest r11_stop_all_command_stops_executable_terminals_and_leaves_a_hand_started_non_executable_one_running ... ok\r\ntest r11_start_all_command_starts_executable_terminals_and_skips_non_executable_ones ... ok\r\n\r\ntest result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.79s\r\n\r\n\r\nrunning 0 tests\r\n\r\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\r\n\r\n\n    Finished \u0060test\u0060 profile [unoptimized \u002B debuginfo] target(s) in 1.47s\r\n     Running unittests src\\lib.rs (src-tauri\\target\\debug\\build\\tinkerdeck/24e97c6b89d69b74\\out\\tinkerdeck_lib-24e97c6b89d69b74.exe)\r\n     Running unittests src\\bin\\tdk\\main.rs (src-tauri\\target\\debug\\build\\tinkerdeck/82fe821036e5202c\\out\\tdk-82fe821036e5202c.exe)\r\n     Running unittests src\\main.rs (src-tauri\\target\\debug\\build\\tinkerdeck/d2fcbdba4ac7e37b\\out\\tinkerdeck-d2fcbdba4ac7e37b.exe)\r\n     Running tests\\editor_repath.rs (src-tauri\\target\\debug\\build\\tinkerdeck/dd94e16d5fd199c3\\out\\editor_repath-dd94e16d5fd199c3.exe)\r\n     Running tests\\explorer.rs (src-tauri\\target\\debug\\build\\tinkerdeck/27f69b6879aa959d\\out\\explorer-27f69b6879aa959d.exe)\r\n     Running tests\\explorer_ops.rs (src-tauri\\target\\debug\\build\\tinkerdeck/e845c804fdace2d5\\out\\explorer_ops-e845c804fdace2d5.exe)\r\n     Running tests\\terminal_executable.rs (src-tauri\\target\\debug\\build\\tinkerdeck/eec7c57584ff79d7\\out\\terminal_executable-eec7c57584ff79d7.exe)\r\n   Doc-tests tinkerdeck_lib",
+      "rules": [
+        "TAU-011"
+      ]
+    }
+  ],
+  "fullGreenHash": "9FDF6C318E43C1B892745F0A0712EFEFCFCB56F55B7FA508AA45FD49F8FFB995",
+  "baseline": [
+    {
+      "id": "no-secrets",
+      "name": "No secrets in code",
+      "passed": true,
+      "seconds": 0.6728514,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "SEC-001"
+      ]
+    },
+    {
+      "id": "no-debug-leftovers",
+      "name": "No debugging leftovers",
+      "passed": true,
+      "seconds": 0.1486824,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "QUAL-001"
+      ]
+    },
+    {
+      "id": "tauri-no-invoke-in-features",
+      "name": "Screens ask the core through src/api only",
+      "passed": true,
+      "seconds": 0.2050962,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-002"
+      ]
+    },
+    {
+      "id": "tauri-no-panics",
+      "name": "The Rust core does not panic",
+      "passed": true,
+      "seconds": 0.11559,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-006"
+      ]
+    },
+    {
+      "id": "tauri-csp-set",
+      "name": "The window has a content security policy",
+      "passed": true,
+      "seconds": 0.1205165,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-004"
+      ]
+    },
+    {
+      "id": "tauri-least-privilege",
+      "name": "Permissions are small and specific",
+      "passed": true,
+      "seconds": 0.0979909,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-005"
+      ]
+    },
+    {
+      "id": "tauri-no-signing-key",
+      "name": "No signing keys in the project",
+      "passed": true,
+      "seconds": 0.1973666,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "No forbidden pattern found.",
+      "rules": [
+        "TAU-009"
+      ]
+    },
+    {
+      "id": "tauri-versions",
+      "name": "One version number everywhere",
+      "passed": true,
+      "seconds": 0,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "Not run again: the files this check looks at are unchanged since it last passed.",
+      "rules": [
+        "TAU-013"
+      ]
+    },
+    {
+      "id": "tauri-web-typecheck",
+      "name": "Window: type check",
+      "passed": true,
+      "seconds": 0,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "Not run again: the files this check looks at are unchanged since it last passed.",
+      "rules": []
+    },
+    {
+      "id": "tauri-rust-format",
+      "name": "Core: formatting",
+      "passed": true,
+      "seconds": 0,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "fast",
+      "output": "Not run again: the files this check looks at are unchanged since it last passed.",
+      "rules": [
+        "TAU-001"
+      ]
+    },
+    {
+      "id": "tauri-web-tests",
+      "name": "Window: tests, with coverage",
+      "passed": false,
+      "seconds": 82.676106,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "Failed twice in a row, so this is not a one-off.\n\u2026\n  @media (min-width: 768px) {\r\n    .ZestTabs-module_tabItem__Dlj4s {\r\n      padding: 6px 20px;\r\n    }\r\n\r\n    .ZestTabs-module_scrollArrowLeft__OWxCj,\r\n    .ZestTabs-module_scrollArrowRight__wFiOJ {\r\n      width: 28px;\r\n    }\r\n  }\r\n}\r\n\r\n\r\nstderr | src/features/apps/EditPane.executable.test.tsx \u003E the terminal executable flag (R11) \u003E R11: a non-executable terminal keeps its name, command and remove controls\r\nWarning: An update to EditPane inside a test was not wrapped in act(...).\r\n\r\nWhen testing, code that causes React state updates should be wrapped into act(...):\r\n\r\nact(() =\u003E {\r\n  /* fire events that update state */\r\n});\r\n/* assert on the output */\r\n\r\nThis ensures that you\u0027re testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act\r\n    at EditPane (D:\\work\\nyingi\\code\\systems\\lite-commander\\src\\features\\apps\\EditPane.tsx:21:21)\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF Failed Tests 2 \u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\r\n\r\n FAIL  src/App.test.tsx \u003E App \u003E R2: the persistent footer is visible on Home, the app view and the separate editor view\r\nError: expect(element).toHaveTextContent()\r\n\r\nExpected element to have text content:\r\n  v2.3.0\r\nReceived:\r\n  Tinkerdeck\u00ABSidebarv2.4.0\r\n \u276F src/App.test.tsx:376:65\r\n    374|     render(\u003CApp /\u003E);\r\n    375|     await screen.findByRole(\u0022heading\u0022, { name: \u0022Home\u0022, level: 2 });\r\n    376|     expect(screen.getByRole(\u0022contentinfo\u0022, { name: \u0022Status\u0022 })).toHave\u2026\r\n       |                                                                 ^\r\n    377| \r\n    378|     await openApp();\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF[1/2]\u23AF\r\n\r\n FAIL  src/App.version.test.tsx \u003E the app version \u003E the shipped version is one number: package.json, package-lock.json, Cargo.toml, Cargo.lock and tauri.conf.json all say 2.3.0\r\nAssertionError: expected \u00272.4.0\u0027 to be \u00272.3.0\u0027 // Object.is equality\r\n\r\nExpected: \u00222.3.0\u0022\r\nReceived: \u00222.4.0\u0022\r\n\r\n \u276F src/App.version.test.tsx:15:21\r\n     13|   it(\u0022the shipped version is one number: package.json, package-lock.js\u2026\r\n     14|     const version = (JSON.parse(file(\u0022package.json\u0022)) as { version: st\u2026\r\n     15|     expect(version).toBe(\u00222.3.0\u0022);\r\n       |                     ^\r\n     16| \r\n     17|     const lock = JSON.parse(file(\u0022package-lock.json\u0022)) as { version: s\u2026\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF[2/2]\u23AF",
+      "rules": [
+        "TAU-011"
+      ]
+    },
+    {
+      "id": "tauri-web-build",
+      "name": "Window: build",
+      "passed": true,
+      "seconds": 0,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "Not run again: the files this check looks at are unchanged since it last passed.",
+      "rules": []
+    },
+    {
+      "id": "tauri-rust-lints",
+      "name": "Core: lints (clippy, warnings are errors)",
+      "passed": true,
+      "seconds": 0,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "Not run again: the files this check looks at are unchanged since it last passed.",
+      "rules": [
+        "TAU-001"
+      ]
+    },
+    {
+      "id": "tauri-rust-tests",
+      "name": "Core: tests",
+      "passed": true,
+      "seconds": 84.33285380000001,
+      "notRun": false,
+      "flaky": true,
+      "partial": false,
+      "tier": "full",
+      "output": "This check is flaky: it failed on the first try and passed on the second. Treated as passed; the first failure was:\n\u2026\ntest themes::tests::a_choice_with_no_imports_is_fine ... ok\r\ntest themes::tests::a_damaged_file_starts_fresh_and_is_kept_aside ... ok\r\ntest runtime::tests::t3_exit_code_is_reported ... ok\r\ntest themes::tests::nonsense_is_refused_and_the_old_file_is_kept ... ok\r\ntest themes::tests::nothing_saved_means_the_defaults ... ok\r\ntest themes::tests::the_chosen_theme_and_imported_themes_survive_a_restart ... ok\r\ntest update::tests::a_download_that_does_not_match_is_discarded_and_nothing_is_kept ... ok\r\ntest update::tests::a_release_published_hours_after_the_last_check_is_found_without_a_restart ... ok\r\ntest update::tests::a_valid_manifest_is_accepted_and_the_checksum_normalised ... ok\r\ntest update::tests::a_manifest_changed_after_signing_or_signed_by_someone_else_is_refused ... ok\r\ntest update::tests::auto_checks_are_rate_limited_and_respect_the_setting ... ok\r\ntest update::tests::download_refuses_urls_outside_the_allowed_prefixes_before_any_request ... ok\r\ntest update::tests::a_newer_signed_release_is_found ... ok\r\ntest update::tests::installers_listed_under_the_old_project_name_are_still_accepted ... ok\r\ntest update::tests::an_oversized_manifest_is_refused ... ok\r\ntest update::tests::manifests_that_could_lead_somewhere_else_are_refused ... ok\r\ntest update::tests::download_verifies_reports_progress_and_leaves_one_clean_file ... ok\r\ntest update::tests::redirects_are_followed_like_github_release_downloads ... ok\r\ntest update::tests::the_cache_holds_the_latest_found_update ... ok\r\ntest update::tests::the_embedded_public_key_is_a_valid_ed25519_key ... ok\r\ntest update::tests::the_installer_runs_silently_closes_the_app_and_asks_to_relaunch ... ok\r\ntest update::tests::the_official_base_and_prefix_point_at_this_projects_releases ... ok\r\ntest git::tests::pull_never_merges_when_branches_diverged_and_changes_nothing ... ok\r\ntest update::tests::versions_parse_and_compare ... ok\r\ntest update::tests::verify_file_catches_truncation_and_corruption ... ok\r\ntest update::tests::signatures_verify_only_for_the_right_key_and_the_exact_bytes ... ok\r\ntest themes::tests::there_is_a_limit_on_how_much_can_be_stored ... ok\r\ntest runtime::tests::t4_unknown_command_is_nonzero_and_error_visible ... ok\r\ntest runtime::tests::stopping_a_git_bash_terminal_kills_its_whole_tree ... ok\r\ntest runtime::tests::empty_command_opens_interactive_shell_that_accepts_input ... ok\r\ntest runtime::tests::git_bash_runs_commands_in_the_project_folder_with_real_exit_codes ... ok\r\ntest runtime::tests::t7_double_start_runs_one_process ... ok\r\ntest runtime::tests::the_terminal_shell_overrides_the_default_and_a_missing_shell_fails_clearly ... ok\r\ntest git::tests::sync_on_a_branch_without_upstream_just_pushes_it ... ok\r\ntest git::tests::fetch_then_pull_brings_a_teammates_commit ... ok\r\ntest git::tests::push_is_rejected_when_behind_with_a_helpful_message_and_never_forces ... ok\r\ntest update::tests::missing_and_unreachable_servers_give_plain_messages ... ok\r\ntest git::tests::sync_pulls_then_pushes ... ok\r\ntest git::tests::sync_stops_at_the_pull_when_diverged ... ok\r\n\r\nfailures:\r\n\r\n---- engine::tests::up_with_wait_stops_early_and_explains_when_a_terminal_fails stdout ----\r\n\r\nthread \u0027engine::tests::up_with_wait_stops_early_and_explains_when_a_terminal_fails\u0027 (44892) panicked at src\\engine.rs:904:9:\r\nassertion \u0060left == right\u0060 failed: {\u0022elapsed_ms\u0022:2083,\u0022ready\u0022:true,\u0022terminals\u0022:[{\u0022name\u0022:\u0022db\u0022,\u0022ready\u0022:true,\u0022state\u0022:\u0022running\u0022},{\u0022name\u0022:\u0022api\u0022,\u0022ready\u0022:true,\u0022state\u0022:\u0022running\u0022}]}\r\n  left: (Some(true), None)\r\n right: (Some(false), Some(\u0022api\u0022))\r\nnote: run with \u0060RUST_BACKTRACE=1\u0060 environment variable to display a backtrace\r\n\r\n\r\nfailures:\r\n    engine::tests::up_with_wait_stops_early_and_explains_when_a_terminal_fails\r\n\r\ntest result: FAILED. 270 passed; 1 failed; 1 ignored; 0 measured; 0 filtered out; finished in 29.00s\r\n\r\n\n    Finished \u0060test\u0060 profile [unoptimized \u002B debuginfo] target(s) in 10.15s\r\n     Running unittests src\\lib.rs (src-tauri\\target\\debug\\build\\tinkerdeck/24e97c6b89d69b74\\out\\tinkerdeck_lib-24e97c6b89d69b74.exe)\r\nerror: test failed, to rerun pass \u0060--lib\u0060\n\n\u2026\ntest r2_an_unreadable_folder_is_locked_and_does_not_raise ... ok\r\ntest r2_other_dot_named_entries_are_listed_normally ... ok\r\ntest r2_lists_one_level_and_tells_folders_from_files ... ok\r\ntest r2_show_hidden_reveals_the_four_names_and_can_hide_them_again ... ok\r\ntest a1_folders_come_first_then_files_sorted_by_name ... ok\r\ntest a1_scanning_stops_at_the_scan_limit ... ok\r\ntest r2_hides_the_four_noisy_names_by_default_at_any_depth ... ok\r\ntest r2_listing_a_level_never_opens_its_child_folders ... ok\r\ntest a1_a_large_level_is_capped_with_total_and_truncated ... ok\r\n\r\ntest result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.13s\r\n\r\n\r\nrunning 17 tests\r\ntest r9_a_move_between_drives_is_refused ... ok\r\ntest r9_rename_of_a_missing_item_reports_it_is_gone ... ok\r\ntest r9_create_refuses_empty_whitespace_and_windows_invalid_names ... ok\r\ntest r9_move_onto_the_folder_it_is_already_in_changes_nothing ... ok\r\ntest r9_deleting_the_same_item_twice_reports_it_is_already_gone ... ok\r\ntest r9_create_makes_a_new_file_and_a_new_folder ... ok\r\ntest r9_delete_is_refused_when_the_recycle_bin_cannot_take_the_item ... ok\r\ntest r9_delete_hands_the_item_to_the_recycle_bin_and_never_removes_it_itself ... ok\r\ntest r9_rename_refuses_an_invalid_name_and_changes_nothing ... ok\r\ntest r9_move_refuses_to_put_a_folder_inside_itself_or_a_descendant ... ok\r\ntest r9_move_refuses_a_destination_that_is_not_a_folder ... ok\r\ntest r9_rename_refuses_a_clash_and_leaves_both_items_untouched ... ok\r\ntest r9_rename_renames_a_file_and_a_folder ... ok\r\ntest r9_move_moves_a_file_and_a_folder_into_another_folder ... ok\r\ntest r9_move_refuses_a_name_clash_in_the_destination ... ok\r\ntest r9_create_refuses_a_name_clash_and_leaves_the_existing_file_untouched ... ok\r\ntest r9_delete_uses_the_real_recycle_bin ... ok\r\n\r\ntest result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.54s\r\n\r\n\r\nrunning 6 tests\r\ntest r11_when_every_terminal_is_non_executable_the_bulk_action_has_nothing_to_do ... ok\r\ntest r11_start_all_and_stop_all_skip_non_executable_terminals ... ok\r\ntest r11_the_flag_is_saved_so_it_survives_a_restart ... ok\r\ntest r11_a_saved_terminal_without_the_flag_loads_as_executable ... ok\r\ntest r11_stop_all_command_stops_executable_terminals_and_leaves_a_hand_started_non_executable_one_running ... ok\r\ntest r11_start_all_command_starts_executable_terminals_and_skips_non_executable_ones ... ok\r\n\r\ntest result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.79s\r\n\r\n\r\nrunning 0 tests\r\n\r\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\r\n\r\n\n    Finished \u0060test\u0060 profile [unoptimized \u002B debuginfo] target(s) in 5.11s\r\n     Running unittests src\\lib.rs (src-tauri\\target\\debug\\build\\tinkerdeck/24e97c6b89d69b74\\out\\tinkerdeck_lib-24e97c6b89d69b74.exe)\r\n     Running unittests src\\bin\\tdk\\main.rs (src-tauri\\target\\debug\\build\\tinkerdeck/82fe821036e5202c\\out\\tdk-82fe821036e5202c.exe)\r\n     Running unittests src\\main.rs (src-tauri\\target\\debug\\build\\tinkerdeck/d2fcbdba4ac7e37b\\out\\tinkerdeck-d2fcbdba4ac7e37b.exe)\r\n     Running tests\\editor_repath.rs (src-tauri\\target\\debug\\build\\tinkerdeck/dd94e16d5fd199c3\\out\\editor_repath-dd94e16d5fd199c3.exe)\r\n     Running tests\\explorer.rs (src-tauri\\target\\debug\\build\\tinkerdeck/27f69b6879aa959d\\out\\explorer-27f69b6879aa959d.exe)\r\n     Running tests\\explorer_ops.rs (src-tauri\\target\\debug\\build\\tinkerdeck/e845c804fdace2d5\\out\\explorer_ops-e845c804fdace2d5.exe)\r\n     Running tests\\terminal_executable.rs (src-tauri\\target\\debug\\build\\tinkerdeck/eec7c57584ff79d7\\out\\terminal_executable-eec7c57584ff79d7.exe)\r\n   Doc-tests tinkerdeck_lib",
+      "rules": [
+        "TAU-011"
+      ]
+    },
+    {
+      "id": "tauri-rust-build",
+      "name": "Core: the app compiles",
+      "passed": true,
+      "seconds": 0,
+      "notRun": false,
+      "flaky": false,
+      "partial": false,
+      "tier": "full",
+      "output": "Not run again: the files this check looks at are unchanged since it last passed.",
+      "rules": []
+    }
+  ],
+  "checkPassedOn": {
+    "tauri-versions": "9AF9A6658D6D6BEF9ED82588E74DE98B0DCC16374C7EC96A6AA09D066386CC53",
+    "tauri-web-typecheck": "9DAB4D363D147F035E16FE84FBEE005E2C7B1DFE8BBE63CFB743C46ECA888C14",
+    "tauri-rust-format": "CEA7E135E61B699859C8AE929647E2BF8CB7DC542EA9D15038E7522191482229",
+    "tauri-web-build": "57C61B358A46E07B36B06ECBA08F9E64F28523DD415D6BE89317AEBBC6FE055E",
+    "tauri-rust-lints": "830553FD9F1E355551402FB16E3184B9743765CFF629F527ABE3C8F072689891",
+    "tauri-rust-build": "504594C6891E6D1DAD40438405B149B3DE811FD0F3911B3E6C675185B595B13A",
+    "tauri-rust-tests": "6E30E3E0B75233E7E59EA2ECE0F2D619ED3A461160164D8DE9A09532E1133FAE"
+  },
+  "checkFailedOn": {
+    "tauri-web-tests": "59E18DA476B98B1A94554ECFECA9025EC4BD8FE5415092D106D4DBEE7DE3249D"
+  },
+  "generatedByChecks": [],
+  "ignoredPaths": [],
+  "acceptedGaps": [],
+  "convertedFindings": [],
+  "scopeExtensions": [
+    "src/features/apps/Sidebar.module.css"
+  ],
+  "rulings": [],
+  "shortcuts": 0,
+  "routeHistory": [],
+  "amendments": [],
+  "scopeSeen": {},
+  "scopeRequestsMade": 0,
+  "skippedFolders": [],
+  "skippedFiles": [],
+  "skippedWhy": [],
+  "blockerRepeats": 0,
+  "pendingAdditionIds": [],
+  "acceptedAdditions": [],
+  "designSeeded": false,
+  "preflightAnswered": false,
+  "analystQuestions": 0,
+  "analysisClosed": true,
+  "youDecided": 0,
+  "requirementsApproved": true,
+  "seriesProposed": true,
+  "seriesDeclined": false,
+  "seriesId": "f205422c",
+  "revisionNumber": 2,
+  "title": "The Files header shows both the context the explorer is following and the\u2026 (and 4 more)",
+  "subtitle": "Revision 2 of 2 \u00B7 part of: Projects | Files tabs in the expanded sidebar (and 5 more)",
+  "seriesBoundaryAnswered": false,
+  "signOffRounds": 1,
+  "changedFiles": [
+    "src/App.explorer.test.tsx",
+    "src/App.shortcuts.test.tsx",
+    "src/App.tsx",
+    "src/features/apps/Sidebar.module.css",
+    "src/features/apps/Sidebar.tabs.test.tsx",
+    "src/features/apps/Sidebar.tsx",
+    "src/features/apps/SidebarProjects.tsx",
+    "src/features/apps/SidebarTabs.module.css",
+    "src/features/apps/SidebarTabs.tsx",
+    "src/features/command-palette/CommandPalette.test.tsx",
+    "src/features/command-palette/CommandPalette.tsx",
+    "src/features/explorer/ExplorerPanel.module.css",
+    "src/features/explorer/ExplorerPanel.test.tsx",
+    "src/features/explorer/ExplorerPanel.tsx",
+    "src/features/terminals/TerminalHost.shortcuts.test.tsx",
+    "src/shared/shortcuts.test.ts",
+    "src/shared/shortcuts.ts"
+  ]
+}

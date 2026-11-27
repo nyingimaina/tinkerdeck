@@ -54,5 +54,13 @@
     "snippet": "The expanded left sidebar shows two tabs, Projects and Files, and only the\u2026 (and 4 more)",
     "costUsd": 0.48168680999999997,
     "final": true
+  },
+  {
+    "id": "20261127-072115",
+    "startedAt": "2026-11-27T07:21:15.7211511+00:00",
+    "status": "Running",
+    "snippet": "The Files header shows both the context the explorer is following and the\u2026 (and 4 more)",
+    "costUsd": 0.39125505000000005,
+    "final": false
   }
 ]

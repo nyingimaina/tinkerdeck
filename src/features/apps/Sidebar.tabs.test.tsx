@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 // @ts-expect-error node:path is available test-time only
 import { join } from "node:path";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect, useState, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -263,6 +263,53 @@ describe("the fixed tab strip (R2)", () => {
   });
 });
 
+describe("the tab switch at the performance budget (R10)", () => {
+  it("R10: with 300 apps and 3,000 terminals, switching Projects -> Files -> Projects updates the panel in under 100 ms without remounting the loaded explorer", () => {
+    const list = manyApps(300, 10);
+    const listings = { count: 0 };
+    // Stands in for the mounted explorer: a listing happens on mount, so any remount would count.
+    function CountingExplorer() {
+      useEffect(() => {
+        listings.count += 1;
+      }, []);
+      return <section aria-label="Files">explorer tree</section>;
+    }
+
+    render(
+      <Sidebar
+        apps={list}
+        selectedAppId="a0"
+        selectedTerminalId="t0-0"
+        stateOf={stateOf}
+        onSelectApp={vi.fn()}
+        onSelectTerminal={vi.fn()}
+        onHome={vi.fn()}
+        explorer={<CountingExplorer />}
+      />,
+    );
+
+    // Open Files once so the measurement covers an already mounted, already loaded explorer.
+    fireEvent.click(tab("Files"));
+    fireEvent.click(tab("Projects"));
+    const listingsBefore = listings.count;
+    expect(listingsBefore).toBe(1);
+
+    // Resolve the tab elements up front so the timer measures the switch, not the DOM queries.
+    const filesTab = tab("Files");
+    const projectsTab = tab("Projects");
+    const started = performance.now();
+    fireEvent.click(filesTab);
+    fireEvent.click(projectsTab);
+    const elapsed = performance.now() - started;
+
+    expect(tab("Projects")).toHaveAttribute("aria-selected", "true");
+    expect(filesRegion()).toBeNull();
+    expect(elapsed).toBeLessThan(100);
+    // The mounted explorer keeps its loaded levels: coming back lists nothing again.
+    expect(listings.count).toBe(listingsBefore);
+  });
+});
+
 describe("the tab strip for keyboard and screen readers (R5)", () => {
   it("R5: it exposes a named tab list with two labelled tabs, a tab panel and the selected tab", () => {
     renderSidebar();
@@ -406,6 +453,133 @@ describe("the rail tab icons (R3)", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Expand sidebar" }));
     expect(tab("Files")).toHaveAttribute("aria-selected", "true");
+  });
+});
+
+describe("the Projects roll-up dot (R7)", () => {
+  const states = (map: Record<string, TermState>) => (id: string): TermState => map[id] ?? { kind: "stopped" };
+  const mount = (stateOf: (id: string) => TermState, list = apps) =>
+    render(
+      <Sidebar
+        apps={list}
+        selectedAppId="a1"
+        selectedTerminalId="t1"
+        stateOf={stateOf}
+        homeActive={false}
+        onSelectApp={vi.fn()}
+        onSelectTerminal={vi.fn()}
+        onHome={vi.fn()}
+        explorer={<section aria-label="Files">explorer tree</section>}
+      />,
+    );
+  const tabDot = () => tab("Projects").querySelector("[data-kind]");
+
+  it("R7: the Projects label carries exactly one roll-up dot, coloured by the existing rules", () => {
+    let view = mount(states({ t1: { kind: "failedToStart", reason: "boom" }, t2: { kind: "running" } }));
+    expect(tab("Projects").querySelectorAll("[data-kind]")).toHaveLength(1);
+    expect(tabDot()).toHaveAttribute("data-kind", "red");
+    view.unmount();
+
+    view = mount(states({ t1: { kind: "running" }, t2: { kind: "running" } }));
+    expect(tabDot()).toHaveAttribute("data-kind", "green");
+    view.unmount();
+
+    view = mount(states({ t1: { kind: "running" }, t2: { kind: "stopping" } }));
+    expect(tabDot()).toHaveAttribute("data-kind", "amber");
+    view.unmount();
+
+    view = mount(states({}));
+    expect(tabDot()).toHaveAttribute("data-kind", "grey");
+    view.unmount();
+  });
+
+  it("R7: non-executable terminals are excluded and no executable terminals shows grey", () => {
+    const mixed: AppDef[] = [
+      { id: "a1", name: "Qonsol", root: "E:\\q", terminals: [{ id: "t1", name: "api", cwd: ".", command: "", env: {} }] },
+      {
+        id: "a2",
+        name: "pdfer",
+        root: "E:\\p",
+        terminals: [{ id: "t2", name: "web", cwd: ".", command: "", env: {}, executable: false }],
+      },
+    ];
+    let view = mount(states({ t1: { kind: "running" }, t2: { kind: "failedToStart", reason: "boom" } }), mixed);
+    expect(tabDot()).toHaveAttribute("data-kind", "green");
+    view.unmount();
+
+    view = mount(states({}), [{ id: "a1", name: "Qonsol", root: "E:\\q", terminals: [] }]);
+    expect(tabDot()).toHaveAttribute("data-kind", "grey");
+    view.unmount();
+
+    view = mount(states({}), []);
+    expect(tabDot()).toHaveAttribute("data-kind", "grey");
+  });
+
+  it("R7: the dot is also on the rail Projects icon and keeps the button names intact", () => {
+    render(
+      <Sidebar
+        apps={apps}
+        selectedAppId="a1"
+        selectedTerminalId="t1"
+        stateOf={states({ t1: { kind: "running" }, t2: { kind: "running" } })}
+        homeActive={false}
+        onSelectApp={vi.fn()}
+        onSelectTerminal={vi.fn()}
+        onHome={vi.fn()}
+        paneCollapsed
+        onTogglePane={vi.fn()}
+      />,
+    );
+    const railProjects = screen.getByRole("button", { name: "Projects" });
+    const dots = railProjects.querySelectorAll("[data-kind]");
+    expect(dots).toHaveLength(1);
+    expect(dots[0]).toHaveAttribute("data-kind", "green");
+    expect(railProjects).toHaveAccessibleName("Projects");
+    expect(screen.getByRole("button", { name: "Files" }).querySelector("[data-kind]")).toBeNull();
+  });
+
+  it("R7: the label dot is there when Files is selected and the tab is still named Projects", async () => {
+    mount(states({ t1: { kind: "running" }, t2: { kind: "running" } }));
+    await userEvent.click(tab("Files"));
+    expect(tab("Files")).toHaveAttribute("aria-selected", "true");
+    expect(tabDot()).toHaveAttribute("data-kind", "green");
+    expect(tab("Projects")).toHaveAccessibleName("Projects");
+  });
+
+  it("REV-1 R7: assistive technology gets the roll-up from the Projects tab's description, keeping its name and the img count", () => {
+    let view = mount(states({ t1: { kind: "failedToStart", reason: "boom" }, t2: { kind: "running" } }));
+    expect(tab("Projects")).toHaveAccessibleName("Projects");
+    // The same label the dot carries is now announced even though the dot stays decorative.
+    expect(tab("Projects")).toHaveAccessibleDescription("App status: red");
+    view.unmount();
+
+    view = mount(states({}));
+    expect(tab("Projects")).toHaveAccessibleDescription("App status: grey");
+    // Only the two per-app dots are role=img; the tab's own dot adds no duplicate status image.
+    expect(screen.getAllByRole("img", { name: "App status: grey" })).toHaveLength(2);
+    view.unmount();
+  });
+
+  it("REV-1 R7: the rail Projects button describes the same roll-up without changing its name or dot count", () => {
+    render(
+      <Sidebar
+        apps={apps}
+        selectedAppId="a1"
+        selectedTerminalId="t1"
+        stateOf={states({ t1: { kind: "failedToStart", reason: "boom" }, t2: { kind: "running" } })}
+        homeActive={false}
+        onSelectApp={vi.fn()}
+        onSelectTerminal={vi.fn()}
+        onHome={vi.fn()}
+        paneCollapsed
+        onTogglePane={vi.fn()}
+      />,
+    );
+    const railProjects = screen.getByRole("button", { name: "Projects" });
+    expect(railProjects).toHaveAccessibleDescription("App status: red");
+    expect(railProjects.querySelectorAll("[data-kind]")).toHaveLength(1);
+    // The per-app dots only: the roll-up is text, not a second status image.
+    expect(screen.getAllByRole("img", { name: /^App status: / })).toHaveLength(2);
   });
 });
 

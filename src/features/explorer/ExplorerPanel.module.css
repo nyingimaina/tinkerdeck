@@ -14,14 +14,33 @@
 .title {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   color: var(--muted);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+/* Context and folder truncate on their own, so a long name never pushes away the other (R6). */
+.context,
+.folder {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.context {
+  flex: 0 1 auto;
+}
+.separator {
+  flex: none;
+  opacity: 0.7;
+}
+.folder {
+  flex: 0 1 auto;
 }
 .action {
   flex: none;

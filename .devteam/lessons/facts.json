@@ -139,854 +139,6 @@
       ]
     },
     {
-      "text": "\u0060selectTerminal(appId, \u0022\u0022)\u0060 clears the per-app choice, so \u0060selectedTerminalId\u0060 falls back to the app\u0027s first terminal or null (console hidden).",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/state/useLauncher.ts",
-          "hash": "5f3d9df6c1739be96704"
-        }
-      ],
-      "at": "2026-11-26T04:17:22.8755584+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "the footer always shows name\u002Bversion; the sidebar toggle renders only when \u0060onToggleSidebar\u0060 is passed and reads \u0060sidebarCollapsed\u0060 via \u0060aria-pressed\u0060.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/apps/AppFooter.tsx",
-          "hash": "580a2f45781684ca1800"
-        }
-      ],
-      "at": "2026-11-26T04:17:22.891798+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "still the in-house list (PaletteAction = id/label/shortcut?/run); the cmdk swap and No shortcut/disabled notes are not built yet.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/command-palette/CommandPalette.tsx",
-          "hash": "11dffeedbc82ac75969b"
-        }
-      ],
-      "at": "2026-11-26T04:17:22.9088746+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "palette actions are built just before \u0060return\u0060; app-only commands are gated by \u0060view === \u0022app\u0022 \u0026\u0026 app\u0060; \u0060gitToolsOpen\u0060 is controlled state shared with GitBar; openApp and resetLayout both set it false and openApp selects the app\u0027s first terminal.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "9618842c831fa7d65303"
-        }
-      ],
-      "at": "2026-11-26T04:32:42.175115+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "cmdk 1.1.1 \u0060Command\u0060 with \u0060shouldFilter={false}\u0060 keeps the old includes() name filter; each \u0060Command.Item asChild\u0060 wraps a real \u0060\u003Cbutton role=\u0022button\u0022\u003E\u0060; undefined shortcut renders the \u0022No shortcut\u0022 note and \u0060disabled\u0060\u002B\u0060disabledReason\u0060 render a disabled row.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/command-palette/CommandPalette.tsx",
-          "hash": "22a39e076dd0a500015a"
-        }
-      ],
-      "at": "2026-11-26T04:32:42.1916854+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "optional \u0060onHide\u0060 renders the Hide console control; \u0060hideDisabledReason\u0060 disables it and shows the reason (only-workspace case).",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/terminals/ConsoleNav.tsx",
-          "hash": "2e96994ab32caffed990"
-        }
-      ],
-      "at": "2026-11-26T04:32:42.2081733+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "optional controlled \u0060open\u0060/\u0060onOpenChange\u0060; uncontrolled callers keep the internal state and \u0060collapsible defaultCollapsed\u0060 behaviour.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/git/GitBar.tsx",
-          "hash": "ee093cb5b55c79cf8956"
-        }
-      ],
-      "at": "2026-11-26T04:32:42.2201819+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "existing ResizeObserver/IntersectionObserver/scrollIntoView shims were enough for cmdk; no new shim was required.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/test/setup.ts",
-          "hash": "057185a9cc4da0f79907"
-        }
-      ],
-      "at": "2026-11-26T04:32:42.2351499+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "revision-2 sections 11-16 use C/P/H/L/K row labels so they do not match the S/P/D/B inventory regex tested in App.test.tsx.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "docs/ui-tidy-up-plan.md",
-          "hash": "53dae51b68fa01880757"
-        }
-      ],
-      "at": "2026-11-26T04:49:55.4398577+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "the R10 test reads package.json via import.meta.glob(\u0022../package.json\u0022, ?raw) and asserts a [cmdk-root] element plus cmdk 1.1.1.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.test.tsx",
-          "hash": "7f2997e72e9a5eb386e4"
-        }
-      ],
-      "at": "2026-11-26T04:49:55.454625+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "cmdk Command shouldFilter={false}; filtering stays includes() on the label, \u0022No commands match.\u0022 is rendered outside Command.List.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/command-palette/CommandPalette.tsx",
-          "hash": "22a39e076dd0a500015a"
-        }
-      ],
-      "at": "2026-11-26T04:49:55.4687374+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "openApp sets gitToolsOpen=false, gitTab=null and selects the app\u0027s first terminal (or \u0022\u0022) so each app opens calm; resetLayout writes td.sidebarCollapsed=\u00220\u0022.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "9618842c831fa7d65303"
-        }
-      ],
-      "at": "2026-11-26T04:49:55.4848054+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "the palette focus assertion must be wrapped in waitFor; the lazy chunk focus effect can land a tick after findByRole in a loaded suite.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.shortcuts.test.tsx",
-          "hash": "a3495e3e9c101b5d2593"
-        }
-      ],
-      "at": "2026-11-26T04:49:55.5011838+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "layout persistence is only the existing td.sidebarCollapsed key (\u00220\u0022/\u00221\u0022) read/written inside try/catch; palette labels are static literals, no user/terminal data.",
-      "role": "security",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "9618842c831fa7d65303"
-        }
-      ],
-      "at": "2026-11-26T04:56:59.6238175+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "action labels and disabled reasons render as React text inside real buttons; the query lives in component state only (never stored or sent); no dangerouslySetInnerHTML.",
-      "role": "security",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/command-palette/CommandPalette.tsx",
-          "hash": "22a39e076dd0a500015a"
-        }
-      ],
-      "at": "2026-11-26T04:56:59.6420868+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "cmdk 1.1.1 plus every added @radix-ui/react-* / transitive is MIT, resolved from registry.npmjs.org with integrity hashes, and has no install scripts.",
-      "role": "security",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "package-lock.json",
-          "hash": "506a6a507dbd305eb061"
-        }
-      ],
-      "at": "2026-11-26T04:56:59.6624639+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "unchanged; windows [\u0022main\u0022], permissions core:default \u002B dialog:allow-open, no new command or remote surface.",
-      "role": "security",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src-tauri/capabilities/default.json",
-          "hash": "fb46fc757d2d09e4b9e8"
-        }
-      ],
-      "at": "2026-11-26T04:56:59.6790775+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "commit-message draft is \u0060useState\u0060 local (line 13); App unmounts GitDrawer when gitTab is null (App.tsx:604/606), so closing the git drawer loses a typed commit message.",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/git/ChangesView.tsx",
-          "hash": "fd8d524ec64e697c9c8a"
-        }
-      ],
-      "at": "2026-11-26T05:01:43.9949256+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "palette adds \u0022Show/Hide git tools\u0022 (~376) and \u0022Close git drawer\u0022 (~382) plus \u0022Open console\u0022 (~385); only \u0022Hide console\u0022 is exercised by tests.",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "9618842c831fa7d65303"
-        }
-      ],
-      "at": "2026-11-26T05:01:44.0153181+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "the only persisted layout is \u0060td.sidebarCollapsed\u0060; transient dialogs/banners are React state and are never read at startup, but no restart test asserts they stay closed.",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "9618842c831fa7d65303"
-        }
-      ],
-      "at": "2026-11-26T05:01:44.0318545+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "section 15 (K1-K5) records the R10 package/in-house decisions and the jattac overflow-menu fallback; only cmdk is asserted by a test (App.test.tsx:392).",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "docs/ui-tidy-up-plan.md",
-          "hash": "53dae51b68fa01880757"
-        }
-      ],
-      "at": "2026-11-26T05:01:44.0512655+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "window keydown handles only s/n/o/w and returns otherwise, so Ctrl\u002BB reaches the App handler; no test asserts footer/Ctrl\u002BB while the editor is focused.",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/editor/EditorView.tsx",
-          "hash": "7c939f62933f153bf167"
-        }
-      ],
-      "at": "2026-11-26T05:01:44.0680583+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "the git drawer stays mounted once opened (gitTabKept) inside a div hidden when gitTab is null, so a typed commit message survives hide/reopen; openApp resets gitTabKept to null.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "b679ead6495bc6d4ca2f"
-        }
-      ],
-      "at": "2026-11-26T05:14:18.0711028+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "commit-message draft stays in \u0060useState\u0060 (line 13), but App keeps GitDrawer mounted via gitTabKept inside \u0060\u003Cdiv hidden={gitTab === null}\u003E\u0060 (App.tsx:613-619) so a draft survives close/reopen; App.layout.test.tsx:140 covers it.",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/git/ChangesView.tsx",
-          "hash": "fd8d524ec64e697c9c8a"
-        }
-      ],
-      "at": "2026-11-26T05:22:20.6780137+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "the chip\u0027s accessible name is \u0022Show git tools\u0022/\u0022Hide git tools\u0022 (line 90); clicking those in tests hits the chip, not the palette.",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/git/GitBar.tsx",
-          "hash": "ee093cb5b55c79cf8956"
-        }
-      ],
-      "at": "2026-11-26T05:22:20.6965156+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "palette pushes \u0022Show/Hide git tools\u0022 (~386) and \u0022Close git drawer\u0022 (391) plus \u0022Open console\u0022 (394); only \u0022Hide console\u0022/\u0022Open console\u0022 are queried inside the palette in tests.",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "b679ead6495bc6d4ca2f"
-        }
-      ],
-      "at": "2026-11-26T05:22:20.7129133+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "the only persisted layout is \u0060td.sidebarCollapsed\u0060; transient dialogs/banners are React state and never read at startup, but no restart test asserts they stay closed.",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "b679ead6495bc6d4ca2f"
-        }
-      ],
-      "at": "2026-11-26T05:22:20.7296572+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "section 15 (K1-K5, lines 336-345) records the R10 package/in-house decisions and the jattac overflow-menu fallback; only cmdk 1.1.1 \u002B [cmdk-root] are asserted (App.test.tsx:392).",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "docs/ui-tidy-up-plan.md",
-          "hash": "53dae51b68fa01880757"
-        }
-      ],
-      "at": "2026-11-26T05:22:20.7477544+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "consoles are React state only (session-only), so unmount/remount drops them and no console is restarted; openApp reselects the first terminal.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/state/useLauncher.ts",
-          "hash": "5f3d9df6c1739be96704"
-        }
-      ],
-      "at": "2026-11-26T05:34:50.9420747+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "the added R10 test reads docs/ui-tidy-up-plan.md section 15 by slicing at \u0027## 15. Package decisions\u0027 and parsing the | K1 |..| K5 | rows (cells: id, block, decision, licence, react, initial-view).",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.test.tsx",
-          "hash": "2ea8c7165bc781d27e81"
-        }
-      ],
-      "at": "2026-11-26T05:40:30.426111+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "openApp(id, list = apps) clears gitTab/gitTabKept/gitToolsOpen and selects the list\u0027s first terminal (or \u0022\u0022) so each app opens calm; handleSave routes a new app through openApp(saved.id, next); resetLayout writes td.sidebarCollapsed=\u00220\u0022.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "5b6610fc00e4bb5fc71b"
-        }
-      ],
-      "at": "2026-11-26T05:51:29.2214727+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "closes on Escape (39-48) and choose() (55-59) by unmounting; it never saves/restores document.activeElement, so focus falls to BODY after Escape (verified with a jsdom probe).",
-      "role": "reviewer",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/command-palette/CommandPalette.tsx",
-          "hash": "22a39e076dd0a500015a"
-        }
-      ],
-      "at": "2026-11-26T06:08:20.0907017+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "Command.List gets aria-label=\u0022Commands\u0022 but cmdk reads its \u0060label\u0060 prop (default \u0022Suggestions\u0022); Command.Item asChild \u002B the child role=\u0022button\u0022 overrides cmdk\u0027s role=\u0022option\u0022, so the listbox contains role=button children with aria-selected.",
-      "role": "reviewer",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/command-palette/CommandPalette.tsx",
-          "hash": "22a39e076dd0a500015a"
-        }
-      ],
-      "at": "2026-11-26T06:08:20.1093096+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "handleSave routes a new app through openApp(saved.id, next) (line 289); openApp (238-249) clears gitTab/gitTabKept, resets gitToolsOpen and selects the app\u0027s first terminal, so REV-1 is fixed.",
-      "role": "reviewer",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "5b6610fc00e4bb5fc71b"
-        }
-      ],
-      "at": "2026-11-26T06:08:20.1285749+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "controlled mode is \u0060open !== undefined\u0060; the chip calls onOpenChange and the parent owns the state (openApp/ResetLayout set it false).",
-      "role": "reviewer",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/git/GitBar.tsx",
-          "hash": "ee093cb5b55c79cf8956"
-        }
-      ],
-      "at": "2026-11-26T06:08:20.1455514+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "cmdk Command.List ignores \u0060aria-label\u0060 (uses its \u0060label\u0060 prop, default \u0022Suggestions\u0022); Command.Item asChild \u002B the child\u0027s role=\u0022button\u0022 overrides cmdk\u0027s role=\u0022option\u0022, so the DOM is \u003Cdiv role=\u0022listbox\u0022 aria-label=\u0022Suggestions\u0022\u003E with \u003Cbutton role=\u0022button\u0022 aria-selected\u003E children (verified by DOM dum\u2026",
-      "role": "reviewer",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/command-palette/CommandPalette.tsx",
-          "hash": "b2aabaa1a9a88c318c93"
-        }
-      ],
-      "at": "2026-11-26T06:33:57.2673388+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "hideConsole selects the app\u0027s first terminal; TerminalHost.tsx focuses the xterm when it becomes visible, so hiding the console hands focus to the terminal rather than leaving it on body.",
-      "role": "reviewer",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "7d48b95a1917a16feaf0"
-        }
-      ],
-      "at": "2026-11-26T06:33:57.2871631+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "ownerOf() returns the deepest app whose normalized root (lowercased, forward slashes) contains the path, else null; unowned tabs group under \u0022Misc\u0022 (lines 9-42).",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/state/editorGroups.ts",
-          "hash": "d0dffe47b76f150f1185"
-        }
-      ],
-      "at": "2026-11-26T08:01:29.2929442+00:00",
-      "runs": [
-        "20261126-075013"
-      ]
-    },
-    {
-      "text": "APP_SHORTCUTS maps \u0022refresh\u0022 to F5 (line 13); matchShortcut returns \u0022refresh\u0022 for any F5 regardless of modifiers (line 39); isAppShortcut makes terminals hand F5 to the window.",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/shared/shortcuts.ts",
-          "hash": "39006730b87a0efc7b05"
-        }
-      ],
-      "at": "2026-11-26T08:01:29.3123472+00:00",
-      "runs": [
-        "20261126-075013"
-      ]
-    },
-    {
-      "text": "shared .dialog width is min(460px, 92vw) (line 10); backdrop is a fixed full-screen grid.",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/apps/Dialog.module.css",
-          "hash": "2546c464e3a6c23d9317"
-        }
-      ],
-      "at": "2026-11-26T08:01:29.326963+00:00",
-      "runs": [
-        "20261126-075013"
-      ]
-    },
-    {
-      "text": "theme finder .finder requests width min(640px, 80vw), max-height 62vh, min-height 320px (lines 97-104), wider than the 460px shared dialog, so rows overflow.",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/themes/Themes.module.css",
-          "hash": "616faf2f2fb3e451cf44"
-        }
-      ],
-      "at": "2026-11-26T08:01:29.3438417+00:00",
-      "runs": [
-        "20261126-075013"
-      ]
-    },
-    {
-      "text": "TerminalDef (lines 12-25) has no executable flag today; AppDef.root exists (lines 27-31).",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/state/model.ts",
-          "hash": "176717253e5f01a3a6aa"
-        }
-      ],
-      "at": "2026-11-26T08:01:29.360287+00:00",
-      "runs": [
-        "20261126-075013"
-      ]
-    },
-    {
-      "text": "start_all (131-141) starts every terminal; stop_all (154-165) stops every terminal; no executable filter or skip.",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src-tauri/src/commands.rs",
-          "hash": "83f80adf2ef7a7b7bd31"
-        }
-      ],
-      "at": "2026-11-26T08:11:49.0065139+00:00",
-      "runs": [
-        "20261126-075013"
-      ]
-    },
-    {
-      "text": "the \u0027up\u0027 action (233-246) starts every terminal and wait_until_ready counts all of them; no executable filter.",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src-tauri/src/engine.rs",
-          "hash": "61aa9958f37545a41f60"
-        }
-      ],
-      "at": "2026-11-26T08:11:49.0238133+00:00",
-      "runs": [
-        "20261126-075013"
-      ]
-    },
-    {
-      "text": "TerminalDef (11-31) has no executable field; structs are serde camelCase with field-level #[serde(default)].",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src-tauri/src/model.rs",
-          "hash": "b7bf600d9a49d61df26d"
-        }
-      ],
-      "at": "2026-11-26T08:11:49.0396511+00:00",
-      "runs": [
-        "20261126-075013"
-      ]
-    },
-    {
-      "text": "appButton (135-137) uses isUp over all states and rollup (126-133) counts all states; canStart/canStop at 81-82.",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/state/model.ts",
-          "hash": "176717253e5f01a3a6aa"
-        }
-      ],
-      "at": "2026-11-26T08:11:49.0526977+00:00",
-      "runs": [
-        "20261126-075013"
-      ]
-    },
-    {
-      "text": "ownerOf (9-23) returns the deepest app root containing the path; groupTabs puts unowned paths under MISC.",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/state/editorGroups.ts",
-          "hash": "d0dffe47b76f150f1185"
-        }
-      ],
-      "at": "2026-11-26T08:11:49.0683357+00:00",
-      "runs": [
-        "20261126-075013"
-      ]
-    },
-    {
-      "text": "view is home|app|editor (70); global key handler (143-156) has empty deps, calls preventDefault for every matched key, and F5 runs refreshAll today.",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "6139a0820e78a767cebc"
-        }
-      ],
-      "at": "2026-11-26T08:11:49.0847076+00:00",
-      "runs": [
-        "20261126-075013"
-      ]
-    },
-    {
-      "text": "APP_SHORTCUTS lists refresh as F5 (13); matchShortcut treats any F5 as refresh (39); isAppShortcut (49-51) hands it back from a terminal.",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/shared/shortcuts.ts",
-          "hash": "39006730b87a0efc7b05"
-        }
-      ],
-      "at": "2026-11-26T08:11:49.100005+00:00",
-      "runs": [
-        "20261126-075013"
-      ]
-    },
-    {
-      "text": "editorApi.pickOpenPaths wraps dialog open({multiple:true}); editorApi.open uses editor_open_any.",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/api/editor.ts",
-          "hash": "20e6498dba87c88ad928"
-        }
-      ],
-      "at": "2026-11-26T08:11:49.1170237+00:00",
-      "runs": [
-        "20261126-075013"
-      ]
-    },
-    {
-      "text": "pickFolder (77-80) wraps dialog open({directory:true,multiple:false}).",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/api/tauri.ts",
-          "hash": "4d08f18437846ee67572"
-        }
-      ],
-      "at": "2026-11-26T08:11:49.1391143+00:00",
-      "runs": [
-        "20261126-075013"
-      ]
-    },
-    {
-      "text": "open_any (422-448) and open_path (199-220) already reuse the existing entry when same_path matches, so opening an already-open file returns its old id.",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src-tauri/src/editor.rs",
-          "hash": "f7e6e5f1bab6a39659f4"
-        }
-      ],
-      "at": "2026-11-26T08:11:49.1644387+00:00",
-      "runs": [
-        "20261126-075013"
-      ]
-    },
-    {
-      "text": ".dialog width is min(460px, 92vw) (line 10).",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/apps/Dialog.module.css",
-          "hash": "2546c464e3a6c23d9317"
-        }
-      ],
-      "at": "2026-11-26T08:11:49.1946504+00:00",
-      "runs": [
-        "20261126-075013"
-      ]
-    },
-    {
       "text": ".finder width is min(640px, 80vw) and max-height 62vh (97-104).",
       "role": "analyst",
       "stage": "Define",
@@ -2274,13 +1426,14 @@
       "anchors": [
         {
           "path": "src/features/explorer/ExplorerPanel.tsx",
-          "hash": "997f93b8878714fbd1a1"
+          "hash": "3f2f94726c3a4286b782"
         }
       ],
-      "at": "2026-11-26T16:58:34.6308661+00:00",
+      "at": "2026-11-27T07:36:42.1718104+00:00",
       "runs": [
         "20261126-115005",
-        "20261126-163957"
+        "20261126-163957",
+        "20261127-072115"
       ]
     },
     {
@@ -4667,13 +3820,14 @@
       "anchors": [
         {
           "path": "src/features/apps/Sidebar.tsx",
-          "hash": "ec54f339f5309413b35d"
+          "hash": "58aeeb93dd54fcc25270"
         }
       ],
-      "at": "2026-11-27T05:21:05.7269385+00:00",
+      "at": "2026-11-27T07:36:42.111226+00:00",
       "runs": [
         "20261126-163957",
-        "20261127-045127"
+        "20261127-045127",
+        "20261127-072115"
       ]
     },
     {
@@ -6418,6 +5572,854 @@
       "at": "2026-11-27T07:20:33.1913772+00:00",
       "runs": [
         "20261127-045127"
+      ]
+    },
+    {
+      "text": "COLLAPSE_KEY \u0022td.sidebarCollapsed\u0022/readCollapsed at 64-71; paneCollapsed at 94; keydown effect at 177-190 dispatches matchShortcut ids; Sidebar rendered at 600-625 with ExplorerPanel as explorer prop; explorerRoot result has source/appId.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "68056cdc3c79d8728703"
+        }
+      ],
+      "at": "2026-11-27T07:32:03.7085367+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "revision 1 keeps tab \u002B filesMounted locally; rail buttons call expandOnto(tab) then onTogglePane; SidebarTabs in .topRow; explorer rendered only in .filesPanel when filesMounted.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "58aeeb93dd54fcc25270"
+        }
+      ],
+      "at": "2026-11-27T07:32:03.7499348+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "adapter over jattac.libs.web.zest-tabs; ZestTabItem.label accepts ReactNode; effect wires aria ids via data-value.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarTabs.tsx",
+          "hash": "e31163d8c464e1fb64a0"
+        }
+      ],
+      "at": "2026-11-27T07:32:03.7696267+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "appRollup(app,stateOf)=rollup(app.terminals.filter(isExecutable).map(stateOf)); per-app dot at 65.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarProjects.tsx",
+          "hash": "f3df0dc0acbfb8596e9c"
+        }
+      ],
+      "at": "2026-11-27T07:32:03.7961353+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": ".rail button position:relative; .railDot absolute right/bottom; .filesPanel[hidden]{display:none}; .panel overflow-y:auto.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.module.css",
+          "hash": "53a8c706e185a55a2c15"
+        }
+      ],
+      "at": "2026-11-27T07:32:03.8177254+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "header 293-312 (title = Drives or nameFromPath(currentRoot) or Files); scroll container is .body (module css 44-49); root selection untouched here.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "3f2f94726c3a4286b782"
+        }
+      ],
+      "at": "2026-11-27T07:32:03.8439215+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "reset only when resetSignature (resetKey\u002Broot) changes at 152-162; tab switching is not part of it, so mounted explorer keeps expanded/cached levels.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/useExplorer.ts",
+          "hash": "2cfad34f4b6b2033d3cf"
+        }
+      ],
+      "at": "2026-11-27T07:32:03.8687111+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": ".panel flex column min-height:0; .header flex; .title flex:1 ellipsis; .body overflow-y:auto.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.module.css",
+          "hash": "9c36043c5ae542e6d118"
+        }
+      ],
+      "at": "2026-11-27T07:32:03.8991827+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "one AppShortcutId union \u002B APP_SHORTCUTS list \u002B matchShortcut conditions; isAppShortcut forwards any match to the window.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/shared/shortcuts.ts",
+          "hash": "e0bcacee8c4456435045"
+        }
+      ],
+      "at": "2026-11-27T07:32:03.9462065+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "line 77 uses isAppShortcut to hand a key to the window instead of the shell; TerminalHost.shortcuts.test.tsx lists the forwarded keys.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/terminals/TerminalHost.tsx",
+          "hash": "47d6eb8b00a9fbca78f2"
+        }
+      ],
+      "at": "2026-11-27T07:32:03.9850438+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "HelpDialog at 254-287 hardcodes \u003Cli\u003E help text and does not render APP_SHORTCUTS; palette actions come from App.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "7221b343ee9b9a06a875"
+        }
+      ],
+      "at": "2026-11-27T07:32:04.0071867+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "The design puts AppSidebarTabState at src/App.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "68056cdc3c79d8728703"
+        }
+      ],
+      "at": "2026-11-27T07:36:42.0777511+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "The design puts SidebarTabs at src/features/apps/SidebarTabs.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarTabs.tsx",
+          "hash": "e31163d8c464e1fb64a0"
+        }
+      ],
+      "at": "2026-11-27T07:36:42.1156122+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "The design puts SidebarProjects at src/features/apps/SidebarProjects.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarProjects.tsx",
+          "hash": "f3df0dc0acbfb8596e9c"
+        }
+      ],
+      "at": "2026-11-27T07:36:42.1350544+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "The design puts AppShortcutRegistry at src/shared/shortcuts.ts.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/shared/shortcuts.ts",
+          "hash": "e0bcacee8c4456435045"
+        }
+      ],
+      "at": "2026-11-27T07:36:42.1750102+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "The design puts HelpDialog at src/features/command-palette/CommandPalette.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "7221b343ee9b9a06a875"
+        }
+      ],
+      "at": "2026-11-27T07:36:42.1997483+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "keydown effect at 177-190 dispatches by matchShortcut with an empty dep list; paneCollapsed is useState(readCollapsed) at 94; Sidebar rendered once at 600-625 so Sidebar-local state survives collapse/expand.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "68056cdc3c79d8728703"
+        }
+      ],
+      "at": "2026-11-27T07:58:10.8784026+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "tab is local useState at 64 and filesMounted at 67; rail early-return at 87 with railOn at 93/96; expanded panels toggle the hidden attr at 136/158 so the mounted explorer stays alive.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "58aeeb93dd54fcc25270"
+        }
+      ],
+      "at": "2026-11-27T07:58:10.9060922+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "header at 294-312 (title shows nameFromPath or Drives/Files); the scrolling container is .body (ExplorerPanel.module.css:44-49), and root===null shows the hint at 394.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "3f2f94726c3a4286b782"
+        }
+      ],
+      "at": "2026-11-27T07:58:10.9315091+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "appRollup at 7 reuses rollup \u002B isExecutable; SidebarProjects is memoised, so rollup work must not be added inside it per render.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarProjects.tsx",
+          "hash": "f3df0dc0acbfb8596e9c"
+        }
+      ],
+      "at": "2026-11-27T07:58:10.9543268+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "stateOf is useCallback([states]) at 182, so a useMemo on [apps, stateOf] survives tab switches.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/useLauncher.ts",
+          "hash": "5f3d9df6c1739be96704"
+        }
+      ],
+      "at": "2026-11-27T07:58:10.9762417+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "ZestTabItem.label is ReactNode; stripRef effect wires aria-label and tab/panel ids; it renders no dot today.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarTabs.tsx",
+          "hash": "e31163d8c464e1fb64a0"
+        }
+      ],
+      "at": "2026-11-27T07:58:10.9952777+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "HelpDialog at 254 is static text and a test (CommandPalette.test.tsx:145) forbids \u0022F5\u0022 there; the palette actions come from App.tsx, so add showFiles in App.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/command-palette/CommandPalette.tsx",
+          "hash": "7221b343ee9b9a06a875"
+        }
+      ],
+      "at": "2026-11-27T07:58:11.0513309+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "sidebarTab is session-only useState(\u0022projects\u0022); showFilesTab sets it and expands a collapsed pane; no tab key is read or written.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "f0c49b0f384e9c71bf7a"
+        }
+      ],
+      "at": "2026-11-27T08:31:05.9542639+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "filesContext is a plain ternary (not useMemo) because it sits after the loading early return where hooks are illegal.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "f0c49b0f384e9c71bf7a"
+        }
+      ],
+      "at": "2026-11-27T08:31:05.9883995+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "tab/onTabChange are optional props; without them the sidebar keeps local state (standalone tests); filesMounted is set by an effect when the active tab is files.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "9822ba2cc1a49ec7cd62"
+        }
+      ],
+      "at": "2026-11-27T08:31:06.0099972+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "accepts projectsRollup and renders one aria-hidden StatusDot beside the Projects label text.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarTabs.tsx",
+          "hash": "1ecf205e8b6685ddb9df"
+        }
+      ],
+      "at": "2026-11-27T08:31:06.0300393+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "projectsRollup() reuses rollup()/isExecutable over every app\u0027s executable terminals.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarProjects.tsx",
+          "hash": "1a757297f1e6a1eacf5b"
+        }
+      ],
+      "at": "2026-11-27T08:31:06.0507355+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "context and active props; active toggles restore body.scrollTop, resetKey/root change resets it to 0.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "e6ad93771a1ec1797a9a"
+        }
+      ],
+      "at": "2026-11-27T08:31:06.0680353+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "header title shows context/folder separately and full context \u002B path in the title attribute.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "e6ad93771a1ec1797a9a"
+        }
+      ],
+      "at": "2026-11-27T08:31:06.0871104+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "showFiles is Ctrl\u002BShift\u002BE in the one APP_SHORTCUTS list; TerminalHost already forwards it.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/shared/shortcuts.ts",
+          "hash": "d65f883d00e011852f32"
+        }
+      ],
+      "at": "2026-11-27T08:31:06.1066087+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "one registry; Ctrl\u002BB requires !shiftKey, Ctrl\u002BShift\u002BE matched separately, and isAppShortcut(matchShortcut) is what TerminalHost forwards.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/shared/shortcuts.ts",
+          "hash": "d65f883d00e011852f32"
+        }
+      ],
+      "at": "2026-11-27T08:37:55.6768646+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "session sidebarTab is plain useState(\u0027projects\u0027); showFilesTab writes only COLLAPSE_KEY (td.sidebarCollapsed) inside the existing setPaneCollapsed updater pattern.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "f0c49b0f384e9c71bf7a"
+        }
+      ],
+      "at": "2026-11-27T08:37:55.6949551+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "ExplorerPanel is mounted lazily via filesMounted (effect on activeTab===\u0027files\u0027), so the only explorer instance lives inside the sidebar Files panel.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "9822ba2cc1a49ec7cd62"
+        }
+      ],
+      "at": "2026-11-27T08:37:55.7138591+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "Projects label dot is aria-hidden inside ZestTabItem.label; tab names stay \u0022Projects\u0022/\u0022Files\u0022.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarTabs.tsx",
+          "hash": "1ecf205e8b6685ddb9df"
+        }
+      ],
+      "at": "2026-11-27T08:41:58.4435003+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "projectsRollup(apps, stateOf) is the single roll-up helper used by the tab label and rail icon.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarProjects.tsx",
+          "hash": "1a757297f1e6a1eacf5b"
+        }
+      ],
+      "at": "2026-11-27T08:41:58.4582292+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "filesMounted keeps the Files panel mounted after first use; the explorer is not rendered in the collapsed rail.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "9822ba2cc1a49ec7cd62"
+        }
+      ],
+      "at": "2026-11-27T08:41:58.4758981+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "context prop comes from App; folderName is Drives/D: style/Files; scroll is saved on scroll and restored when active.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "e6ad93771a1ec1797a9a"
+        }
+      ],
+      "at": "2026-11-27T08:41:58.4978195+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "sidebarTab is session useState(\u0022projects\u0022); showFilesTab selects files and expands, writing only td.sidebarCollapsed.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "f0c49b0f384e9c71bf7a"
+        }
+      ],
+      "at": "2026-11-27T08:41:58.5168325+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "showFiles is Ctrl\u002BShift\u002BE in APP_SHORTCUTS; matchShortcut order puts Ctrl\u002BShift\u002BE after other chords.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/shared/shortcuts.ts",
+          "hash": "d65f883d00e011852f32"
+        }
+      ],
+      "at": "2026-11-27T08:41:58.5384993+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "tab-switch scale test uses manyApps(50, 10) = 500 terminals, not the 300/3000 performance fixture.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tabs.test.tsx",
+          "hash": "d4424663cd289a50e9ca"
+        }
+      ],
+      "at": "2026-11-27T08:41:58.5632177+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "the Projects label\u0027s roll-up dot sits in a span[aria-hidden], so the tab/button names stay \u0022Projects\u0022 and StatusDot\u0027s role=img \u0022App status: \u003Crollup\u003E\u0022 label is not exposed to AT (same wrapper on the rail at Sidebar.tsx:110-113).",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarTabs.tsx",
+          "hash": "1ecf205e8b6685ddb9df"
+        }
+      ],
+      "at": "2026-11-27T08:48:19.7571093+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "new scroll handling = onScroll -\u003E scrollTop ref, restore effect on [active], reset effect on [resetKey, root]; the same bodyRef is used by both the drives branch and the tree branch.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "e6ad93771a1ec1797a9a"
+        }
+      ],
+      "at": "2026-11-27T08:48:19.7714713+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "sidebarTab is a session-only useState(\u0022projects\u0022); showFilesTab sets the tab and clears the collapsed flag (writing only td.sidebarCollapsed); filesContext comes from explorer.source (\u0022misc\u0022-\u003EMisc, \u0022home\u0022-\u003EHome, \u0022app\u0022-\u003Eapps.find name, else null).",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "f0c49b0f384e9c71bf7a"
+        }
+      ],
+      "at": "2026-11-27T08:48:19.8112911+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "projectsRollup() = rollup(all apps\u0027 isExecutable terminals) and is memoised in Sidebar on [apps, stateOf]; second dot is rendered on the rail Projects button with the same rollup.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarProjects.tsx",
+          "hash": "1a757297f1e6a1eacf5b"
+        }
+      ],
+      "at": "2026-11-27T08:48:19.8532399+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "R10 perf test resolves tab elements before performance.now() so getByRole over 3,300 rows is not timed; fireEvent.click flushes React synchronously in jsdom.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tabs.test.tsx",
+          "hash": "3974524eba4d1447cc46"
+        }
+      ],
+      "at": "2026-11-27T08:53:32.0196702+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "\u0022the tab switch at the performance budget (R10)\u0022 uses manyApps(300, 10) = 3,000 terminals, times two fireEvent clicks with performance.now() and asserts \u003C100 ms plus one explorer mount; 31 tests pass.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tabs.test.tsx",
+          "hash": "3974524eba4d1447cc46"
+        }
+      ],
+      "at": "2026-11-27T08:59:57.8221804+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "the Projects panel stays mounted with hidden={activeTab!==\u0022projects\u0022}, so a tab switch only toggles hidden/filesMounted rather than re-rendering the app list.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "9822ba2cc1a49ec7cd62"
+        }
+      ],
+      "at": "2026-11-27T08:59:57.8363163+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "Projects roll-up is announced via aria-describedby=\u0022sidebar-projects-status\u0022 pointing at a visually hidden line; the visible StatusDot stays aria-hidden so tab names and role=img counts are unchanged.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarTabs.tsx",
+          "hash": "f13816a703f965fb11b5"
+        }
+      ],
+      "at": "2026-11-27T09:08:06.0534835+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "rail Projects button announces the same roll-up via aria-describedby=\u0022sidebar-rail-projects-status\u0022 (hidden text inside the button), keeping aria-label \u0022Projects\u0022 and one decorative dot.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "09af68e00b21ae82ef5c"
+        }
+      ],
+      "at": "2026-11-27T09:08:06.0692723+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "header context, folder and title attribute are built from app name / existing root and rendered as React text (escaped); no HTML injection, no new path or IPC.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "e6ad93771a1ec1797a9a"
+        }
+      ],
+      "at": "2026-11-27T09:13:11.3903038+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "the Projects tab and rail Projects button expose the roll-up via aria-describedby pointing at a visually hidden \u0027App status: \u003Crollup\u003E\u0027 line; the visible StatusDot stays aria-hidden so tab/button names and role=img counts are unchanged (REV-1 fixed).",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarTabs.tsx",
+          "hash": "f13816a703f965fb11b5"
+        }
+      ],
+      "at": "2026-11-27T09:24:52.530357+00:00",
+      "runs": [
+        "20261127-072115"
+      ]
+    },
+    {
+      "text": "the R9 rename reopen test is flaky only under whole-suite parallel load (passes alone); it reads getByTitle immediately after the Files region appears with no waitFor, a pre-existing race not changed by R6-R10.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.explorer.test.tsx",
+          "hash": "d9efb05885413f80b2f2"
+        }
+      ],
+      "at": "2026-11-27T09:24:52.5595688+00:00",
+      "runs": [
+        "20261127-072115"
       ]
     }
   ]

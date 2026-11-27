@@ -343,6 +343,146 @@ describe("ExplorerPanel", () => {
   });
 });
 
+describe("the Files header names the context (R6)", () => {
+  const filesRegion = () => screen.getByRole("region", { name: "Files" });
+
+  it("R6: shows the owning app's name together with today's folder name", async () => {
+    renderPanel({ context: "Qonsol" });
+    await flush();
+    expect(within(filesRegion()).getByText("Qonsol")).toBeInTheDocument();
+    expect(within(filesRegion()).getByText("proj")).toBeInTheDocument();
+  });
+
+  it("R6: shows Misc for a loose file's folder and Home for the home folder", async () => {
+    let view = renderPanel({ root: "C:\\loose", source: "misc", context: "Misc" });
+    await flush();
+    expect(within(filesRegion()).getByText("Misc")).toBeInTheDocument();
+    expect(within(filesRegion()).getByText("loose")).toBeInTheDocument();
+    view.unmount();
+
+    renderPanel({ root: "C:\\Users\\me", source: "home", context: "Home" });
+    await flush();
+    expect(within(filesRegion()).getByText("Home")).toBeInTheDocument();
+    expect(within(filesRegion()).getByText("me")).toBeInTheDocument();
+  });
+
+  it("R6: a very long context and folder are truncated, keep Up and Show hidden, and show full text on hover", async () => {
+    const app = "A".repeat(120);
+    const folder = "B".repeat(120);
+    renderPanel({ root: `C:\\${folder}`, source: "misc", context: app });
+    await flush();
+
+    expect(screen.getByRole("button", { name: "Up" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Show hidden" })).toBeInTheDocument();
+    expect(screen.getByTitle(`${app} / C:\\${folder}`)).toBeInTheDocument();
+    expect(within(filesRegion()).getByText(app)).toBeInTheDocument();
+    expect(within(filesRegion()).getByText(folder)).toBeInTheDocument();
+  });
+
+  it("R6: at a drive root and the drive list it names the context and keeps today's wording", async () => {
+    renderPanel({ root: "D:\\", source: "misc", context: "Misc" });
+    await flush();
+    expect(within(filesRegion()).getByText("Misc")).toBeInTheDocument();
+    expect(within(filesRegion()).getByText("D:")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Up" }));
+    await flush();
+    expect(within(filesRegion()).getByText("Misc")).toBeInTheDocument();
+    expect(within(filesRegion()).getByText("Drives")).toBeInTheDocument();
+  });
+
+  it("R6: with no root or no context it keeps today's Files wording and invents no context", async () => {
+    const view = render(<ExplorerPanel root={null} onOpenFile={vi.fn()} />);
+    await flush();
+    expect(screen.getByText("Files")).toBeInTheDocument();
+    expect(screen.queryByText("Misc")).toBeNull();
+    expect(screen.queryByText("Home")).toBeNull();
+    view.unmount();
+
+    let release: (value: ExplorerListing) => void = () => {};
+    const pending = new Promise<ExplorerListing>((resolve) => {
+      release = resolve;
+    });
+    api.list.mockImplementation(async () => pending);
+    renderPanel({ context: null });
+    await flush();
+    expect(screen.getByRole("status")).toHaveTextContent("Loading…");
+    expect(within(filesRegion()).getByText("proj")).toBeInTheDocument();
+    expect(screen.queryByText("Misc")).toBeNull();
+    await act(async () => {
+      release(listing(ROOT, []));
+      await pending;
+    });
+  });
+});
+
+describe("the Files tab keeps its place (R10)", () => {
+  it("R10: hiding and showing keeps expanded levels and scroll with no second listing", async () => {
+    api.list.mockImplementation(async (path: string) =>
+      path === ROOT ? listing(ROOT, [folder("src")]) : listing(path, [file("a.ts", path)]),
+    );
+    const props = { root: ROOT, source: "app" as const, context: "Qonsol", onOpenFile: vi.fn() };
+    const { rerender } = render(<ExplorerPanel {...props} active />);
+    await flush();
+    await userEvent.click(screen.getByTitle("C:\\proj\\src"));
+    await flush();
+    const body = screen.getByText("a.ts").closest<HTMLElement>('[class*="body"]')!;
+    body.scrollTop = 120;
+    fireEvent.scroll(body);
+    const calls = api.list.mock.calls.length;
+
+    rerender(<ExplorerPanel {...props} active={false} />);
+    rerender(<ExplorerPanel {...props} active />);
+    await flush();
+
+    expect(screen.getByText("a.ts")).toBeInTheDocument();
+    expect(screen.getByTitle("C:\\proj\\src")).toHaveAttribute("aria-expanded", "true");
+    expect(api.list.mock.calls.length).toBe(calls);
+    expect(screen.getByText("a.ts").closest<HTMLElement>('[class*="body"]')!.scrollTop).toBe(120);
+  });
+
+  it("R10: switching away while a folder is loading leaves that loading state intact", async () => {
+    let release: (value: ExplorerListing) => void = () => {};
+    const pending = new Promise<ExplorerListing>((resolve) => {
+      release = resolve;
+    });
+    api.list.mockImplementation(async (path: string) => (path === ROOT ? listing(ROOT, [folder("many")]) : pending));
+    const props = { root: ROOT, source: "app" as const, onOpenFile: vi.fn() };
+    const { rerender } = render(<ExplorerPanel {...props} active />);
+    await flush();
+    await userEvent.click(screen.getByTitle("C:\\proj\\many"));
+    expect(screen.getByRole("status")).toHaveTextContent("Loading…");
+
+    rerender(<ExplorerPanel {...props} active={false} />);
+    rerender(<ExplorerPanel {...props} active />);
+    expect(screen.getByRole("status")).toHaveTextContent("Loading…");
+
+    await act(async () => {
+      release(listing("C:\\proj\\many", [file("one.txt", "C:\\proj\\many")]));
+      await pending;
+    });
+    expect(screen.getByText("one.txt")).toBeInTheDocument();
+  });
+
+  it("R10: a genuine re-root still resets the tree", async () => {
+    api.list.mockImplementation(async (path: string) => {
+      if (path === "C:/a") return listing(path, [{ name: "src", path: "C:/a/src", isDir: true, locked: false }]);
+      if (path === "C:/a/src") return listing(path, [{ name: "a.ts", path: "C:/a/src/a.ts", isDir: false, locked: false }]);
+      return listing(path, []);
+    });
+    const { rerender } = render(<ExplorerPanel root="C:/a" source="app" resetKey="app:a" active onOpenFile={vi.fn()} />);
+    await flush();
+    await userEvent.click(screen.getByTitle("C:/a/src"));
+    await flush();
+    expect(screen.getByText("a.ts")).toBeInTheDocument();
+
+    rerender(<ExplorerPanel root="D:/b" source="app" resetKey="app:b" active onOpenFile={vi.fn()} />);
+    await flush();
+    expect(api.list).toHaveBeenLastCalledWith("D:/b", false);
+    expect(screen.queryByText("a.ts")).toBeNull();
+  });
+});
+
 const op = (path: string, extra: Partial<ExplorerOp> = {}): ExplorerOp => ({
   path,
   repaths: [],

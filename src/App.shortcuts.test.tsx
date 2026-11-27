@@ -550,6 +550,46 @@ describe("App app-level shortcuts", () => {
     expect(screen.queryByRole("complementary", { name: "Git" })).toBeNull();
     expect(screen.queryByRole("complementary", { name: "Consoles" })).toBeNull();
   });
+
+  it("R9: Ctrl+Shift+E shows Files, expanding a sidebar that started collapsed", async () => {
+    localStorage.setItem("td.sidebarCollapsed", "1");
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    expect(screen.getByRole("navigation", { name: "Apps (collapsed)" })).toBeInTheDocument();
+
+    const e = press("E", { ctrlKey: true, shiftKey: true });
+    expect(e.defaultPrevented).toBe(true);
+    expect(await screen.findByRole("navigation", { name: "Apps" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Files" })).toHaveAttribute("aria-selected", "true");
+    expect(await screen.findByRole("region", { name: "Files" })).toBeInTheDocument();
+  });
+
+  it("R9: Ctrl+Shift+E while already on Files changes nothing and raises no error", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    press("E", { ctrlKey: true, shiftKey: true });
+    await screen.findByRole("region", { name: "Files" });
+    expect(screen.getByRole("tab", { name: "Files" })).toHaveAttribute("aria-selected", "true");
+
+    press("E", { ctrlKey: true, shiftKey: true });
+    expect(screen.getByRole("tab", { name: "Files" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("region", { name: "Files" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("R9: the palette lists Show Files with Ctrl+Shift+E and choosing it opens Files", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+
+    fireEvent.keyDown(window, { key: "P", ctrlKey: true, shiftKey: true });
+    const dialog = await screen.findByRole("dialog", { name: "Command palette" }, { timeout: 5000 });
+    const showFiles = within(dialog).getByRole("button", { name: /Show Files/ });
+    expect(showFiles).toHaveTextContent("Ctrl+Shift+E");
+
+    await userEvent.click(showFiles);
+    expect(screen.getByRole("tab", { name: "Files" })).toHaveAttribute("aria-selected", "true");
+    expect(await screen.findByRole("region", { name: "Files" })).toBeInTheDocument();
+  });
 });
 
 const execView = (t1: boolean, t2: boolean): ConfigView => {

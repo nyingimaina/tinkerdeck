@@ -1,0 +1,20 @@
+{
+  "seriesId": "f205422c",
+  "revision": 2,
+  "predecessorRevision": 1,
+  "predecessorRunId": "20261127-045127",
+  "predecessorCommit": "3eddd42",
+  "scopeFiles": 18,
+  "touchedFiles": 8,
+  "touchedShare": 0.4444444444444444,
+  "touchedAfterBuildShare": 0,
+  "verdict": "amend",
+  "windowSeconds": 6248.907684899999,
+  "successorDesignSeconds": 2209.9929741,
+  "fullyHidden": true,
+  "hiddenShare": 0.35366068528108946,
+  "savedSeconds": 1227.7738745000001,
+  "trigger": "design-accepted",
+  "contractSource": "both",
+  "recordedAt": "2026-11-27T08:05:49.3027411+00:00"
+}

@@ -1,0 +1,13 @@
+{
+  "summary": "The design is buildable and matches R6, R7, R9 and R10, but R8 requires a second saved layout key that an earlier accepted requirement (20261125-202512:A2) explicitly forbids, so one of the two has to win.",
+  "conflicts": [
+    {
+      "requirement": "R8",
+      "against": "20261125-202512:A2",
+      "kind": "regression",
+      "owner": "requirements",
+      "why": "R8 (and the design's 'td.sidebarTab' addition) writes a new window-layout key to localStorage, while the earlier accepted requirement A2 promises that no new layout key is written and that td.sidebarCollapsed is the only saved layout value; both cannot be true, and the builder has no rule for whether to add and persist the new key.",
+      "evidence": "R8: \"The active sidebar tab is remembered across restarts in localStorage under the key 'td.sidebarTab' with the value 'projects' or 'files'\". Design adds: \"the 'td.sidebarTab' localStorage key ('projects' or 'files', default 'projects', unreadable values fall back to projects)\". 20261125-202512:A2: \"No new layout key or per-app layout field is written; the only saved layout value is the existing td.sidebarCollapsed flag.\""
+    }
+  ]
+}

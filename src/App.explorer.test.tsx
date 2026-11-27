@@ -819,3 +819,165 @@ describe("the Projects | Files sidebar tabs in the whole window", () => {
     expect(screen.getByRole("tab", { name: "Files" })).toHaveAttribute("aria-selected", "true");
   });
 });
+
+describe("the Files header context in the whole window (R6)", () => {
+  it("R6: an app root shows the app's name and the folder name", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    await openApp();
+    const files = await showFiles();
+    await waitFor(() => expect(h.ex.list).toHaveBeenCalledWith("E:\\q", false));
+
+    expect(within(files).getByText("Qonsol")).toBeInTheDocument();
+    expect(within(files).getByText("q")).toBeInTheDocument();
+  });
+
+  it("R6: a loose file's folder shows Misc and the folder name", async () => {
+    h.ed.list.mockResolvedValue({ open: [entry("C:\\loose\\notes.txt")], bin: [] });
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    await openEditor();
+    const files = await showFiles();
+    await waitFor(() => expect(h.ex.list).toHaveBeenCalledWith("C:\\loose", false));
+
+    expect(within(files).getByText("Misc")).toBeInTheDocument();
+    expect(within(files).getByText("loose")).toBeInTheDocument();
+  });
+
+  it("R6: the home folder shows Home and the folder name", async () => {
+    h.ex.home.mockResolvedValue("C:\\Users\\me");
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    const files = await showFiles();
+    await waitFor(() => expect(h.ex.list).toHaveBeenCalledWith("C:\\Users\\me", false));
+
+    expect(within(files).getByText("Home")).toBeInTheDocument();
+    expect(within(files).getByText("me")).toBeInTheDocument();
+  });
+});
+
+describe("the Files tab keeps its place across a tab switch (R10)", () => {
+  it("R10: the same folder stays expanded, the root is unchanged and nothing is listed twice", async () => {
+    h.ex.list.mockImplementation(async (path: string) =>
+      path === "E:\\q" ? listing(path, [folder("E:\\q\\src")]) : listing(path, [file(`${path}\\a.ts`)]),
+    );
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    await openApp();
+    const files = await showFiles();
+    await userEvent.click(within(files).getByTitle("E:\\q\\src"));
+    await waitFor(() => expect(h.ex.list).toHaveBeenCalledWith("E:\\q\\src", false));
+    const calls = h.ex.list.mock.calls.length;
+
+    await userEvent.click(screen.getByRole("tab", { name: "Projects" }));
+    await userEvent.click(screen.getByRole("tab", { name: "Files" }));
+
+    const back = screen.getByRole("region", { name: "Files" });
+    expect(within(back).getByTitle("E:\\q\\src")).toHaveAttribute("aria-expanded", "true");
+    expect(within(back).getByText("a.ts")).toBeInTheDocument();
+    expect(h.ex.list.mock.calls.length).toBe(calls);
+    expect(new Set(h.ex.list.mock.calls.map((c) => c[0]))).toEqual(new Set(["E:\\q", "E:\\q\\src"]));
+  });
+
+  it("R10: a change that genuinely re-roots the explorer still resets it", async () => {
+    h.ex.list.mockImplementation(async (path: string) => listing(path, []));
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    await openApp();
+    await showFiles();
+    await waitFor(() => expect(h.ex.list).toHaveBeenCalledWith("E:\\q", false));
+
+    await userEvent.click(screen.getByRole("tab", { name: "Projects" }));
+    await userEvent.click(screen.getByTitle("E:\\p"));
+    await waitFor(() => expect(h.ex.list).toHaveBeenCalledWith("E:\\p", false));
+
+    await userEvent.click(screen.getByRole("tab", { name: "Files" }));
+    const roots = h.ex.list.mock.calls.map((c) => c[0]);
+    expect(roots).toContain("E:\\p");
+    expect(new Set(roots)).not.toContain("E:\\q\\src");
+  });
+});
+
+describe("the sidebar tab is kept for the session (R8)", () => {
+  it("R8: it starts on Projects and shows Files again after collapsing and expanding", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    expect(screen.getByRole("tab", { name: "Projects" })).toHaveAttribute("aria-selected", "true");
+
+    await showFiles();
+    await userEvent.click(screen.getByRole("button", { name: "Collapse sidebar" }));
+    expect(screen.getByRole("navigation", { name: "Apps (collapsed)" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Expand sidebar" }));
+    expect(screen.getByRole("tab", { name: "Files" })).toHaveAttribute("aria-selected", "true");
+
+    // Ctrl+B collapses and expands too, and the chosen tab still survives both directions.
+    fireEvent.keyDown(window, { key: "b", ctrlKey: true });
+    expect(screen.getByRole("navigation", { name: "Apps (collapsed)" })).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "b", ctrlKey: true });
+    expect(screen.getByRole("tab", { name: "Files" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("region", { name: "Files" })).toBeInTheDocument();
+  });
+
+  it("R8: a reload starts on Projects again and no tab value is saved", async () => {
+    const first = render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    await showFiles();
+    expect(screen.getByRole("tab", { name: "Files" })).toHaveAttribute("aria-selected", "true");
+    expect(Object.keys(localStorage)).not.toContain("td.sidebarTab");
+    first.unmount();
+
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    expect(screen.getByRole("tab", { name: "Projects" })).toHaveAttribute("aria-selected", "true");
+    expect(Object.keys(localStorage)).not.toContain("td.sidebarTab");
+  });
+
+  it("R8: with storage throwing, startup and tab switching still work and no tab value is written", async () => {
+    const get = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("storage denied");
+    });
+    const set = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("storage denied");
+    });
+    try {
+      render(<App />);
+      await screen.findByRole("heading", { name: "Home", level: 2 });
+      expect(screen.getByRole("navigation", { name: "Apps" })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: "Projects" })).toHaveAttribute("aria-selected", "true");
+
+      await userEvent.click(screen.getByRole("tab", { name: "Files" }));
+      expect(screen.getByRole("tab", { name: "Files" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("region", { name: "Files" })).toBeInTheDocument();
+    } finally {
+      get.mockRestore();
+      set.mockRestore();
+    }
+  });
+
+  it("R8: choosing a file, an app or Home leaves the session tab on Files", async () => {
+    h.ex.list.mockImplementation(async (path: string) =>
+      path === "E:\\q" ? listing(path, [file("E:\\q\\README.md")]) : listing(path),
+    );
+    h.ed.open.mockResolvedValue(doc("E:\\q\\README.md"));
+    render(<App />);
+    await screen.findByRole("heading", { name: "Home", level: 2 });
+    await openApp();
+    const files = await showFiles();
+
+    // A file opened from Files keeps the tab.
+    await userEvent.click(within(files).getByTitle("E:\\q\\README.md"));
+    await screen.findByRole("tab", { name: /README\.md/ });
+    expect(screen.getByRole("tab", { name: "Files" })).toHaveAttribute("aria-selected", "true");
+
+    // Selecting an app from the rail and then Home still leaves Files selected.
+    await userEvent.click(screen.getByRole("button", { name: "Collapse sidebar" }));
+    await userEvent.click(screen.getByRole("button", { name: "Open pdfer" }));
+    await userEvent.click(screen.getByRole("button", { name: "Expand sidebar" }));
+    expect(screen.getByRole("tab", { name: "Files" })).toHaveAttribute("aria-selected", "true");
+
+    await userEvent.click(screen.getByRole("button", { name: "Collapse sidebar" }));
+    await userEvent.click(screen.getByRole("button", { name: "Home" }));
+    await userEvent.click(screen.getByRole("button", { name: "Expand sidebar" }));
+    expect(screen.getByRole("tab", { name: "Files" })).toHaveAttribute("aria-selected", "true");
+  });
+});

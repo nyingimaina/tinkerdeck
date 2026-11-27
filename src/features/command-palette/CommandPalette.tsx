@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Command } from "cmdk";
+import { shortcutKeys } from "../../shared/shortcuts";
 import type { UpdatePhase } from "../../state/useUpdates";
 import { Dialog } from "../apps/Dialog";
 import { UpdateSettingsBlock } from "../updates/UpdateUI";
@@ -269,6 +270,10 @@ export function HelpDialog({ version, autoCheck, phase, upToDate, available, err
         </li>
         <li>Pull is fast-forward only. For merges, rebases or force pushes use a console.</li>
         <li>Live state refreshes by itself while the window is visible. Press <b>⟳</b> to refresh now. Ctrl+B hides the sidebar.</li>
+        <li>
+          <b>Show Files</b>: press <b>{shortcutKeys("showFiles")}</b> to open the Files tab, expanding the sidebar if it is
+          collapsed.
+        </li>
         <li>A terminal owns everything it starts: background processes it launches end when it stops.</li>
         <li>Do not put passwords in commands. Use environment variables or a .env file.</li>
       </ul>

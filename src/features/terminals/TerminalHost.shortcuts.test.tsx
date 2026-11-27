@@ -81,9 +81,18 @@ describe("TerminalHost app shortcuts", () => {
       key({ key: "F5" }),
       key({ key: "p", ctrlKey: true, shiftKey: true }),
       key({ key: "t", ctrlKey: true, altKey: true }),
+      key({ key: "e", ctrlKey: true, shiftKey: true }),
     ]) {
       expect(handler(e)).toBe(false);
     }
+  });
+
+  it("R9: Ctrl+Shift+E is handed to the app instead of the focused shell", async () => {
+    const handler = await show();
+    expect(handler(key({ key: "e", ctrlKey: true, shiftKey: true }))).toBe(false);
+    // A plain or differently-modified e still belongs to the shell.
+    expect(handler(key({ key: "e" }))).toBe(true);
+    expect(handler(key({ key: "e", ctrlKey: true }))).toBe(true);
   });
 
   it("R4: leaves every other key, including the editor's, with the shell", async () => {

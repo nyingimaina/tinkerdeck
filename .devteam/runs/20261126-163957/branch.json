@@ -48,8 +48,8 @@
     "src/features/explorer/useExplorerOps.ts"
   ],
   "MadeRepository": false,
-  "Finished": false,
-  "Merged": false,
-  "MergeCommit": null,
+  "Finished": true,
+  "Merged": true,
+  "MergeCommit": "bfa56b36b42091bf181016d62b446ca6af7fb443",
   "BranchDeleted": false
 }

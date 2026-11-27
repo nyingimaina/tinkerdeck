@@ -549,3 +549,16 @@
 {"seq":549,"at":"2026-11-27T14:42:34.1751429+00:00","type":"evidence.recorded","stage":"challenge","message":"16 changed file(s) and 8 requirement(s) are written down after Challenge."}
 {"seq":550,"at":"2026-11-27T14:42:34.2346192+00:00","type":"stage.started","stage":"prove","message":"Engine assembles the proof report"}
 {"seq":551,"at":"2026-11-27T14:42:35.6368159+00:00","type":"browser.skipped","stage":"prove","message":"Browser journeys not run: this stack has no browser journeys"}
+{"seq":552,"at":"2026-11-27T14:42:36.4946051+00:00","type":"revision.sealed","stage":"prove","message":"Revision 1 is sealed: commit 6e613de, checkpoint a95de5f, evidence 9856794394926261, proof none."}
+{"seq":553,"at":"2026-11-27T14:42:36.5694973+00:00","type":"series.committed","stage":"prove","message":"Revision 1 of 3 is built and committed (6e613de)"}
+{"seq":554,"at":"2026-11-27T14:42:38.9193195+00:00","type":"contract.observed","stage":"prove","message":"Revision 1 offers 10 new names; 6 of 17 things the design named were found","data":{"added":"10","missing":"11","unanticipated":"7"}}
+{"seq":555,"at":"2026-11-27T14:42:39.0667796+00:00","type":"escalated","stage":"prove","message":"Needs your decision: Revision 1 of 3 is ready to try","data":{"card":"series-144236637","kind":"Series"}}
+{"seq":556,"at":"2026-11-27T14:42:56.917647+00:00","type":"decision.recorded","stage":"prove","message":"web:dashboard decided: Pause here","data":{"card":"series-144236637"}}
+{"seq":557,"at":"2026-11-27T14:42:57.1881874+00:00","type":"series.paused","stage":"prove","message":"Paused after this revision; nothing more is built until the person continues"}
+{"seq":558,"at":"2026-11-27T14:42:58.1370117+00:00","type":"run.resumed","message":"Resumed"}
+{"seq":559,"at":"2026-11-27T14:42:58.9558574+00:00","type":"stage.started","stage":"prove","message":"Engine assembles the proof report"}
+{"seq":560,"at":"2026-11-27T14:43:01.9810878+00:00","type":"facts.written","message":"Metrics and readiness saved: Not ready: something is still broken.","data":{"readiness":"Blocked"}}
+{"seq":561,"at":"2026-11-27T14:43:02.2170866+00:00","type":"workflows.learned","message":"1099 tool use(s) recorded."}
+{"seq":562,"at":"2026-11-27T14:43:02.4374876+00:00","type":"lessons.findings","message":"23 finding(s) taken into what this project has learned"}
+{"seq":563,"at":"2026-11-27T14:43:02.5791876+00:00","type":"proof.written","stage":"prove","message":"Proof report written","data":{"report":".devteam/runs/20261127-102350/proof-report.md"}}
+{"seq":564,"at":"2026-11-27T14:43:03.6108611+00:00","type":"run.completed","stage":"prove","message":"Feature complete in 259m 8s, $0.82"}

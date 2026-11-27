@@ -79,6 +79,17 @@
         "src/shared",
         "src/features/terminals"
       ]
+    },
+    {
+      "runId": "20261127-102350",
+      "feature": "(Window) A file that belongs to a registered workspace opens as an editor tab in\u2026 (and 4 more)",
+      "areas": [
+        "src/features/editor",
+        "src",
+        "src/state",
+        "src/features/terminals",
+        "src/features/apps"
+      ]
     }
   ]
 }

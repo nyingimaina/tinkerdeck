@@ -2,13 +2,14 @@
   "rules": [
     {
       "rule": "USR-003",
-      "count": 2,
+      "count": 3,
       "runs": [
         "20261126-075013",
-        "20261126-163957"
+        "20261126-163957",
+        "20261127-102350"
       ],
-      "lastDescription": "The row selection is not invalidated after an operation. Move (which has no confirmation prompt) will then silently move whatever file now sits at the stale old path: e.g. rename a.txt -\u003E b.txt, create a new a.txt, then press Move/Delete on",
-      "lastFile": "src/features/explorer/ExplorerPanel.tsx"
+      "lastDescription": "Infinite render/update loop (unbounded work, CPU and memory burn, UI becomes unresponsive and React aborts with a max-update-depth error) when the global editor view is shown while a workspace editor tab is still the remembered selection. G",
+      "lastFile": "src/App.tsx"
     },
     {
       "rule": "USR-006",
@@ -22,25 +23,45 @@
     },
     {
       "rule": "USR-004",
+      "count": 3,
+      "runs": [
+        "20261127-045127",
+        "20261127-102350"
+      ],
+      "lastDescription": "The workspace should not surface unrelated editor errors: restrict the banner to the open that just failed in that workspace (or update the existing App.features test to mock the editor API), so the pre-existing git-error test passes again ",
+      "lastFile": "src/App.tsx"
+    },
+    {
+      "rule": "A2",
       "count": 1,
       "runs": [
-        "20261127-045127"
+        "20261127-102350"
       ],
-      "lastDescription": "An existing, already-shipped sidebar behaviour regressed: collapse the pane and expand it again and every app is open again instead of keeping the user\u0027s folded state. USR-004 requires the existing behaviour to be frozen before adding the t",
-      "lastFile": "src/features/apps/Sidebar.tsx"
+      "lastDescription": "Opening the global editor view while a workspace editor tab is remembered and an unowned tab is open never settles: the workspace effect keeps reselecting the workspace-owned file and the global effect reselects the unowned one, so the glob",
+      "lastFile": "src/App.tsx"
+    },
+    {
+      "rule": "A1",
+      "count": 1,
+      "runs": [
+        "20261127-102350"
+      ],
+      "lastDescription": "A1\u0027s \u0027Showing a file tab does not stop, reset or remount any of the workspace\u0027s terminals\u0027 half has no test; a regression that unmounted or stopped the terminals when a file tab is shown would still pass the suite. Use a counted TerminalHos",
+      "lastFile": "src/App.editor.test.tsx"
     }
   ],
   "files": [
     {
       "path": "src/App.tsx",
-      "count": 5,
+      "count": 10,
       "runs": [
         "20261125-153618",
         "20261125-202512",
-        "20261126-075013"
+        "20261126-075013",
+        "20261127-102350"
       ],
-      "lastDescription": "The row memoisation that the A1/EFF-002 relaxation relies on is defeated by an unstable callback, so a large folder re-renders up to 1000 file rows on every App update (typing included). That is needless work and a responsiveness bug on the",
-      "lastRule": "USR-003"
+      "lastDescription": "The workspace should not surface unrelated editor errors: restrict the banner to the open that just failed in that workspace (or update the existing App.features test to mock the editor API), so the pre-existing git-error test passes again ",
+      "lastRule": "USR-004"
     },
     {
       "path": "docs/ui-tidy-up-plan.md",
@@ -195,6 +216,24 @@
       ],
       "lastDescription": "The one status indicator visible while Files is open is hidden from assistive technology, so the roll-up is conveyed to sighted users only; expose it without changing the tab/button names (e.g. reference the dot\u0027s label from the tab and rai",
       "lastRule": "USR-006"
+    },
+    {
+      "path": "src/state/workspaceTabs.test.ts",
+      "count": 1,
+      "runs": [
+        "20261127-102350"
+      ],
+      "lastDescription": "Add a test that re-points an open tab from a workspace path to an unowned path and back (and/or changes a workspace root), asserting one tab, the matching strip, and that its text and unsaved mark survive the move.",
+      "lastRule": ""
+    },
+    {
+      "path": "src/App.editor.test.tsx",
+      "count": 1,
+      "runs": [
+        "20261127-102350"
+      ],
+      "lastDescription": "A1\u0027s \u0027Showing a file tab does not stop, reset or remount any of the workspace\u0027s terminals\u0027 half has no test; a regression that unmounted or stopped the terminals when a file tab is shown would still pass the suite. Use a counted TerminalHos",
+      "lastRule": "A1"
     }
   ],
   "absorbed": [
@@ -204,7 +243,8 @@
     "20261126-115005",
     "20261126-163957",
     "20261127-045127",
-    "20261127-072115"
+    "20261127-072115",
+    "20261127-102350"
   ],
   "promotionAsked": {}
 }

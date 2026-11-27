@@ -66,9 +66,9 @@
   {
     "id": "20261127-102350",
     "startedAt": "2026-11-27T10:23:50.8379793+00:00",
-    "status": "Running",
+    "status": "Completed",
     "snippet": "(Window) A file that belongs to a registered workspace opens as an editor tab in\u2026 (and 4 m\u2026",
     "costUsd": 0.819144264,
-    "final": false
+    "final": true
   }
 ]

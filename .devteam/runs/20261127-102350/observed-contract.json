@@ -1,0 +1,472 @@
+{
+  "runId": "20261127-102350",
+  "seriesId": "569c7110",
+  "revision": 1,
+  "baseCommit": "6e613de^",
+  "headCommit": "6e613de",
+  "files": [
+    {
+      "path": "src/App.editor.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R1",
+        "R2",
+        "R4",
+        "R5"
+      ]
+    },
+    {
+      "path": "src/App.explorer.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R1",
+        "R3",
+        "R4",
+        "R2",
+        "R5",
+        "R9",
+        "R13",
+        "R6",
+        "R10",
+        "R8"
+      ]
+    },
+    {
+      "path": "src/App.module.css",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/App.tsx",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [
+        "App"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/apps/components.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R11",
+        "R1",
+        "R4",
+        "R5",
+        "R8"
+      ]
+    },
+    {
+      "path": "src/features/editor/EditorSurface.module.css",
+      "status": "added",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/features/editor/EditorSurface.test.tsx",
+      "status": "added",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R1",
+        "R2",
+        "R5"
+      ]
+    },
+    {
+      "path": "src/features/editor/EditorSurface.tsx",
+      "status": "added",
+      "isTest": false,
+      "added": [
+        {
+          "kind": "component",
+          "name": "EditorSurface",
+          "file": "src/features/editor/EditorSurface.tsx"
+        }
+      ],
+      "removed": [],
+      "symbols": [
+        "EditorSurface"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/editor/EditorView.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R2",
+        "R4",
+        "R5"
+      ]
+    },
+    {
+      "path": "src/features/editor/EditorView.tsx",
+      "status": "modified",
+      "isTest": false,
+      "added": [
+        {
+          "kind": "component",
+          "name": "GlobalEditorView",
+          "file": "src/features/editor/EditorView.tsx"
+        }
+      ],
+      "removed": [],
+      "symbols": [
+        "EditorView",
+        "GlobalEditorView"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/terminals/TabStrip.module.css",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/features/terminals/TabStrip.tsx",
+      "status": "modified",
+      "isTest": false,
+      "added": [
+        {
+          "kind": "interface",
+          "name": "TabStripEditor",
+          "file": "src/features/terminals/TabStrip.tsx"
+        }
+      ],
+      "removed": [],
+      "symbols": [
+        "TabStripEditor",
+        "TabStrip"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/state/useEditor.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R1",
+        "R2",
+        "R4",
+        "R9"
+      ]
+    },
+    {
+      "path": "src/state/useEditor.ts",
+      "status": "modified",
+      "isTest": false,
+      "added": [
+        {
+          "kind": "interface",
+          "name": "OpenedFile",
+          "file": "src/state/useEditor.ts"
+        }
+      ],
+      "removed": [],
+      "symbols": [
+        "EditorTab",
+        "ActiveDoc",
+        "OpenedFile",
+        "EditorController",
+        "useEditor"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/state/workspaceTabs.test.ts",
+      "status": "added",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R2",
+        "R3",
+        "R4",
+        "R1"
+      ]
+    },
+    {
+      "path": "src/state/workspaceTabs.ts",
+      "status": "added",
+      "isTest": false,
+      "added": [
+        {
+          "kind": "interface",
+          "name": "EditorTabOwnership",
+          "file": "src/state/workspaceTabs.ts"
+        },
+        {
+          "kind": "function",
+          "name": "partitionTabs",
+          "file": "src/state/workspaceTabs.ts"
+        },
+        {
+          "kind": "function",
+          "name": "editorsOf",
+          "file": "src/state/workspaceTabs.ts"
+        },
+        {
+          "kind": "interface",
+          "name": "WorkspaceTabSelection",
+          "file": "src/state/workspaceTabs.ts"
+        },
+        {
+          "kind": "function",
+          "name": "selectedWorkspaceTab",
+          "file": "src/state/workspaceTabs.ts"
+        },
+        {
+          "kind": "function",
+          "name": "globalActiveTab",
+          "file": "src/state/workspaceTabs.ts"
+        }
+      ],
+      "removed": [],
+      "symbols": [
+        "EditorTabOwnership",
+        "partitionTabs",
+        "editorsOf",
+        "WorkspaceTabSelection",
+        "selectedWorkspaceTab",
+        "globalActiveTab"
+      ],
+      "requirements": []
+    }
+  ],
+  "added": [
+    {
+      "kind": "component",
+      "name": "EditorSurface",
+      "file": "src/features/editor/EditorSurface.tsx"
+    },
+    {
+      "kind": "component",
+      "name": "GlobalEditorView",
+      "file": "src/features/editor/EditorView.tsx"
+    },
+    {
+      "kind": "interface",
+      "name": "TabStripEditor",
+      "file": "src/features/terminals/TabStrip.tsx"
+    },
+    {
+      "kind": "interface",
+      "name": "OpenedFile",
+      "file": "src/state/useEditor.ts"
+    },
+    {
+      "kind": "interface",
+      "name": "EditorTabOwnership",
+      "file": "src/state/workspaceTabs.ts"
+    },
+    {
+      "kind": "function",
+      "name": "partitionTabs",
+      "file": "src/state/workspaceTabs.ts"
+    },
+    {
+      "kind": "function",
+      "name": "editorsOf",
+      "file": "src/state/workspaceTabs.ts"
+    },
+    {
+      "kind": "interface",
+      "name": "WorkspaceTabSelection",
+      "file": "src/state/workspaceTabs.ts"
+    },
+    {
+      "kind": "function",
+      "name": "selectedWorkspaceTab",
+      "file": "src/state/workspaceTabs.ts"
+    },
+    {
+      "kind": "function",
+      "name": "globalActiveTab",
+      "file": "src/state/workspaceTabs.ts"
+    }
+  ],
+  "removed": [],
+  "routesAdded": [],
+  "tablesAdded": [],
+  "proven": {
+    "R1": [
+      "src/App.editor.test.tsx",
+      "src/App.explorer.test.tsx",
+      "src/features/apps/components.test.tsx",
+      "src/features/editor/EditorSurface.test.tsx",
+      "src/state/useEditor.test.tsx",
+      "src/state/workspaceTabs.test.ts"
+    ],
+    "R2": [
+      "src/App.editor.test.tsx",
+      "src/App.explorer.test.tsx",
+      "src/features/editor/EditorSurface.test.tsx",
+      "src/features/editor/EditorView.test.tsx",
+      "src/state/useEditor.test.tsx",
+      "src/state/workspaceTabs.test.ts"
+    ],
+    "R4": [
+      "src/App.editor.test.tsx",
+      "src/App.explorer.test.tsx",
+      "src/features/apps/components.test.tsx",
+      "src/features/editor/EditorView.test.tsx",
+      "src/state/useEditor.test.tsx",
+      "src/state/workspaceTabs.test.ts"
+    ],
+    "R5": [
+      "src/App.editor.test.tsx",
+      "src/App.explorer.test.tsx",
+      "src/features/apps/components.test.tsx",
+      "src/features/editor/EditorSurface.test.tsx",
+      "src/features/editor/EditorView.test.tsx"
+    ],
+    "R3": [
+      "src/App.explorer.test.tsx",
+      "src/state/workspaceTabs.test.ts"
+    ],
+    "R9": [
+      "src/App.explorer.test.tsx",
+      "src/state/useEditor.test.tsx"
+    ],
+    "R13": [
+      "src/App.explorer.test.tsx"
+    ],
+    "R6": [
+      "src/App.explorer.test.tsx"
+    ],
+    "R10": [
+      "src/App.explorer.test.tsx"
+    ],
+    "R8": [
+      "src/App.explorer.test.tsx",
+      "src/features/apps/components.test.tsx"
+    ],
+    "R11": [
+      "src/features/apps/components.test.tsx"
+    ]
+  },
+  "checks": [
+    {
+      "component": "EditorTabOwnership",
+      "path": "src/state/workspaceTabs.ts",
+      "status": "confirmed"
+    },
+    {
+      "component": "EditorTabOwnershipTests",
+      "path": "src/state/workspaceTabs.test.ts",
+      "status": "missing"
+    },
+    {
+      "component": "EditorState",
+      "path": "src/state/useEditor.ts",
+      "status": "missing"
+    },
+    {
+      "component": "EditorStateCharacterization",
+      "path": "src/state/useEditor.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "EditorSurface",
+      "path": "src/features/editor/EditorSurface.tsx",
+      "status": "confirmed"
+    },
+    {
+      "component": "EditorSurfaceStyles",
+      "path": "src/features/editor/EditorSurface.module.css",
+      "status": "confirmed"
+    },
+    {
+      "component": "EditorSurfaceTests",
+      "path": "src/features/editor/EditorSurface.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "GlobalEditorView",
+      "path": "src/features/editor/EditorView.tsx",
+      "status": "confirmed"
+    },
+    {
+      "component": "GlobalEditorStyles",
+      "path": "src/features/editor/EditorView.module.css",
+      "status": "missing"
+    },
+    {
+      "component": "GlobalEditorViewCharacterization",
+      "path": "src/features/editor/EditorView.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "WorkspaceTabStrip",
+      "path": "src/features/terminals/TabStrip.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "WorkspaceTabStripStyles",
+      "path": "src/features/terminals/TabStrip.module.css",
+      "status": "confirmed"
+    },
+    {
+      "component": "WorkspaceTabStripCharacterization",
+      "path": "src/features/apps/components.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "AppShell",
+      "path": "src/App.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "AppShellStyles",
+      "path": "src/App.module.css",
+      "status": "confirmed"
+    },
+    {
+      "component": "AppOpenCharacterization",
+      "path": "src/App.editor.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "ExplorerRoutingCharacterization",
+      "path": "src/App.explorer.test.tsx",
+      "status": "missing"
+    }
+  ],
+  "unanticipated": 7,
+  "recordedAt": "2026-11-27T14:42:36.7338882+00:00"
+}

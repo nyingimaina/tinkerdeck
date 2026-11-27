@@ -1,0 +1,10 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "REV-2",
+      "status": "fixed",
+      "evidence": "The per-app fold map is back in Sidebar: Sidebar.tsx:70-74 owns `collapsedApps` plus a stable `toggleAppCollapsed` useCallback, and Sidebar.tsx:147-148 passes both into SidebarProjects, so the `paneCollapsed` early return (Sidebar.tsx:87-118) no longer discards it. SidebarProjects.tsx:21-23/31-42 now takes `collapsed`/`onToggleCollapsed` as props instead of owning useState. Sidebar.collapse.test.tsx:61-89 pins the behaviour: it folds Qonsol, collapses and expands the pane, then asserts 'api' stays hidden and the chevron is labelled 'Expand Qonsol'. `npx vitest run src/features/apps/Sidebar.collapse.test.tsx` passes (5 tests), and the old probe at scratch/reviewer/probe.rev2.test.tsx now fails only because the app stays folded (its 'Collapse Qonsol' query no longer matches), confirming the fix. `npm run lint` (tsc --noEmit) is clean; the only full-suite failures are the pre-existing App.test.tsx/App.version.test.tsx 2.3.0-vs-2.4.0 assertions and the stale reviewer probe."
+    }
+  ]
+}

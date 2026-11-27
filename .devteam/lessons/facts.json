@@ -19,653 +19,6 @@
       ]
     },
     {
-      "text": "The design puts GitBarChip at src/features/git/GitBar.tsx.",
-      "role": "planchecker",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/features/git/GitBar.tsx",
-          "hash": "3771b5d9bf3e6c5f39b6"
-        }
-      ],
-      "at": "2026-11-25T22:02:16.3151132+00:00",
-      "runs": [
-        "20261125-153618",
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts AppEditorTestsUpdate at src/App.editor.test.tsx.",
-      "role": "planchecker",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/App.editor.test.tsx",
-          "hash": "46d9bfbd4be367d1fad9"
-        }
-      ],
-      "at": "2026-11-25T20:53:03.9632103+00:00",
-      "runs": [
-        "20261125-153618",
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts AppFeaturesTestsUpdate at src/App.features.test.tsx.",
-      "role": "planchecker",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/App.features.test.tsx",
-          "hash": "04bb78b344de5e890c22"
-        }
-      ],
-      "at": "2026-11-25T22:02:16.2563705+00:00",
-      "runs": [
-        "20261125-153618",
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts AppUpdateCheckTestsUpdate at src/App.updatecheck.test.tsx.",
-      "role": "planchecker",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/App.updatecheck.test.tsx",
-          "hash": "90a21e9296a16daca453"
-        }
-      ],
-      "at": "2026-11-25T20:53:03.995265+00:00",
-      "runs": [
-        "20261125-153618",
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts AppUpdatesTestsUpdate at src/App.updates.test.tsx.",
-      "role": "planchecker",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/App.updates.test.tsx",
-          "hash": "f4c63719cddc35122a64"
-        }
-      ],
-      "at": "2026-11-25T20:53:04.011914+00:00",
-      "runs": [
-        "20261125-153618",
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts AppThemesTestsUpdate at src/App.themes.test.tsx.",
-      "role": "planchecker",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/App.themes.test.tsx",
-          "hash": "1d01e13c069d8b01b7f2"
-        }
-      ],
-      "at": "2026-11-25T20:53:03.9800903+00:00",
-      "runs": [
-        "20261125-153618",
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts AppTestsUpdate at src/App.test.tsx.",
-      "role": "planchecker",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/App.test.tsx",
-          "hash": "6b0597c776deaf1d21aa"
-        }
-      ],
-      "at": "2026-11-25T22:02:16.2418369+00:00",
-      "runs": [
-        "20261125-153618",
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "vi.mock evaluation probes (54-82) set atImport false right after \u0060import { App }\u0060; the R5 test (339-352) fails if any on-demand module is imported eagerly.",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.test.tsx",
-          "hash": "91ae03a6e592892e03d2"
-        }
-      ],
-      "at": "2026-11-25T18:22:54.0352866+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "R1 plan tests (262-298) only use expect(plan).toContain(...) via import.meta.glob raw; they cannot detect a duplicated plan entry.",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.test.tsx",
-          "hash": "91ae03a6e592892e03d2"
-        }
-      ],
-      "at": "2026-11-25T18:22:54.0489056+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "the Switch branch popover is listed twice, at P9 (line 54) and D10 (line 82), against R1 \u0022exactly one place\u0022.",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "docs/ui-tidy-up-plan.md",
-          "hash": "bd9523903201f5854e17"
-        }
-      ],
-      "at": "2026-11-25T18:22:54.0637746+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "BranchMenu popover is now only P9 (line 54); D10 removed so the dialog table is D1-D9.",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "docs/ui-tidy-up-plan.md",
-          "hash": "c7f8ff1ae2050da3bad6"
-        }
-      ],
-      "at": "2026-11-25T18:30:53.3099883+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "R1 uniqueness test (325-341) parses S/P/D/B/numbered rows and asserts each *.tsx basename appears exactly once; re-adding a duplicate row fails it.",
-      "role": "qa",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.test.tsx",
-          "hash": "cc1c9b4a472771f94053"
-        }
-      ],
-      "at": "2026-11-25T18:30:53.3260387+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "also exports ConfirmDialogs; the six yes/no dialogs live there so their bodies share the palette\u0027s lazy chunk (App.test probe names it CommandPalette).",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/command-palette/CommandPalette.tsx",
-          "hash": "11dffeedbc82ac75969b"
-        }
-      ],
-      "at": "2026-11-25T18:41:29.2609662+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "confirmations now render via lazy ConfirmDialogs under Suspense; App.test\u0027s R5 case opens the quit dialog to prove the chunk is not in the initial view.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "8d605b2c78015f5dba73"
-        }
-      ],
-      "at": "2026-11-25T18:41:29.2765319+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "D2-D7 and the lazy table now say every dialog body is code-split; initial view carries no confirmation text.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "docs/ui-tidy-up-plan.md",
-          "hash": "5b330208d0a855f2bd08"
-        }
-      ],
-      "at": "2026-11-25T18:41:29.2921626+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "section 10 records real on-screen observations captured by rendering the built dist/ bundle at 1280x800 and 900x560 (scenes/ in the developer scratch); no merge-gate deferral remains.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "docs/ui-tidy-up-plan.md",
-          "hash": "474d3a17ea645aa8a280"
-        }
-      ],
-      "at": "2026-11-25T18:54:34.2145647+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "one registry (toggleSidebar Ctrl\u002BB, refresh F5, commandPalette Ctrl\u002BShift\u002BP, toggleTheme Ctrl\u002BAlt\u002BT); isAppShortcut lets TerminalHost release those keys to the window.",
-      "role": "security",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/shared/shortcuts.ts",
-          "hash": "70799bde5b2665706da5"
-        }
-      ],
-      "at": "2026-11-25T19:00:32.401914+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "global keydown effect registers once (empty deps) and preventDefault only for matched app shortcuts; only td.sidebarCollapsed is written to localStorage (no user data).",
-      "role": "security",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "8d605b2c78015f5dba73"
-        }
-      ],
-      "at": "2026-11-25T19:00:32.4176845+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "renders labels/shortcuts from internal constants as JSX text; no markup injection, no user-controlled HTML.",
-      "role": "security",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/command-palette/CommandPalette.tsx",
-          "hash": "11dffeedbc82ac75969b"
-        }
-      ],
-      "at": "2026-11-25T19:00:32.4328144+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "menu state/listeners local and cleaned up; renders props as text only, no dangerouslySetInnerHTML or external fetch.",
-      "role": "security",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/apps/UtilitiesMenu.tsx",
-          "hash": "2fbe6afa1b76d0cb5db0"
-        }
-      ],
-      "at": "2026-11-25T19:00:32.4507313+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "regrouped controls are plain JSX; no new network calls, secrets, or auth surface.",
-      "role": "security",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/apps/TopBar.tsx",
-          "hash": "dc2f04686ecff259bc79"
-        }
-      ],
-      "at": "2026-11-25T19:00:32.4657775+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "ConfirmDialogs, HelpDialog, UpdateDialog and UpdateBanner are now React.lazy (lines 47-52); a vite build puts none of the confirm/help/update body text in the entry index-*.js chunk, it lands in the CommandPalette chunk.",
-      "role": "reviewer",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "8d605b2c78015f5dba73"
-        }
-      ],
-      "at": "2026-11-25T19:03:20.4846716+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "ConfirmDialogs and HelpDialog live here (shared on-demand chunk); the palette still has no arrow-key selection or focus trap, only Escape.",
-      "role": "reviewer",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/command-palette/CommandPalette.tsx",
-          "hash": "11dffeedbc82ac75969b"
-        }
-      ],
-      "at": "2026-11-25T19:03:20.4993078+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "section 10 (lines 206-227) records the running-app pass per screen and says no check is left to a manual pass; no \u0022merge gate\u0022 text remains.",
-      "role": "reviewer",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "docs/ui-tidy-up-plan.md",
-          "hash": "474d3a17ea645aa8a280"
-        }
-      ],
-      "at": "2026-11-25T19:03:20.5142517+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "BranchMenu is inventoried only at P9 (line 54); the dialogs intro (lines 67-72) says it is not repeated in the D table.",
-      "role": "reviewer",
-      "stage": "Challenge",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "docs/ui-tidy-up-plan.md",
-          "hash": "474d3a17ea645aa8a280"
-        }
-      ],
-      "at": "2026-11-25T19:03:20.5275502+00:00",
-      "runs": [
-        "20261125-153618"
-      ]
-    },
-    {
-      "text": "only the sidebar preference is persisted, in localStorage key \u0022td.sidebarCollapsed\u0022 (lines 59-66, 125-133); gitTab/help/updateOpen/finderOpen are useState only.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "8d605b2c78015f5dba73"
-        }
-      ],
-      "at": "2026-11-25T20:40:59.4108284+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "openApp() calls setGitTab(null) on every app open (lines 239-244), so R9\u0027s per-app drawer restore must replace that reset.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "8d605b2c78015f5dba73"
-        }
-      ],
-      "at": "2026-11-25T20:40:59.434529+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "the footer shows only the version and has no toggle today; src/features/apps/AppFooter.test.tsx:13-17 currently forbids any footer button.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/apps/AppFooter.tsx",
-          "hash": "34675ae4c29d4e390ef2"
-        }
-      ],
-      "at": "2026-11-25T20:40:59.4492784+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "collapsible/defaultCollapsed exist but the tools open state is internal useState (lines 24, 74-86); add optional controlled props for R9.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/git/GitBar.tsx",
-          "hash": "3771b5d9bf3e6c5f39b6"
-        }
-      ],
-      "at": "2026-11-25T20:40:59.465636+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "the header has New console / shell menu but no hide control; R8 needs one.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/terminals/ConsoleNav.tsx",
-          "hash": "405649aa92db96fcf435"
-        }
-      ],
-      "at": "2026-11-25T20:40:59.4796156+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "openConsoleTab creates or selects a console (137-146), selectTerminal switches tabs (231-234), closeConsole removes; console entries are session-only.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/state/useLauncher.ts",
-          "hash": "5f3d9df6c1739be96704"
-        }
-      ],
-      "at": "2026-11-25T20:40:59.4955909+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "one xterm per opened terminal, hidden by CSS not unmounted (30-35, 132-134); App renders every console host (App.tsx:488-499), so hiding a console keeps its output.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/terminals/TerminalHost.tsx",
-          "hash": "2cd668bee9de53e7c78a"
-        }
-      ],
-      "at": "2026-11-25T20:40:59.5091816+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "hand-built list filters with includes() (44-47) and renders no \u0022no shortcut\u0022 note; revision 2 replaces it with cmdk.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/command-palette/CommandPalette.tsx",
-          "hash": "11dffeedbc82ac75969b"
-        }
-      ],
-      "at": "2026-11-25T20:40:59.5347508+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "jsdom gets ResizeObserver/IntersectionObserver/matchMedia/scrollTo/scrollIntoView shims; Radix Dialog may need pointer-capture shims here too.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/test/setup.ts",
-          "hash": "057185a9cc4da0f79907"
-        }
-      ],
-      "at": "2026-11-25T20:40:59.5504425+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "only jattac.libs.web.zest-tabs and jattac-web-poller are installed; no cmdk, Radix, react-hotkeys-hook or jattac overflow-menu.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "package.json",
-          "hash": "4e8da0405b6fe73dd932"
-        }
-      ],
-      "at": "2026-11-25T20:40:59.5642993+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "CSP (line 26) allows style-src \u0027self\u0027 \u0027unsafe-inline\u0027; no CSP change is needed for cmdk/Radix.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src-tauri/tauri.conf.json",
-          "hash": "3cec1a56d73da5a247e5"
-        }
-      ],
-      "at": "2026-11-25T20:40:59.5795807+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "beforeEach (74-80) does not clear localStorage; add localStorage.clear() there once layout persistence exists or tests can inherit a restored console/drawer.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.features.test.tsx",
-          "hash": "04bb78b344de5e890c22"
-        }
-      ],
-      "at": "2026-11-25T20:40:59.6208719+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts AppFooter at src/features/apps/AppFooter.tsx.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/features/apps/AppFooter.tsx",
-          "hash": "34675ae4c29d4e390ef2"
-        }
-      ],
-      "at": "2026-11-25T20:46:13.2609276+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts AppFooterStyles at src/features/apps/AppFooter.module.css.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/features/apps/AppFooter.module.css",
-          "hash": "6cee27b3a3124541a7df"
-        }
-      ],
-      "at": "2026-11-25T20:46:13.2750525+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts AppFooterTests at src/features/apps/AppFooter.test.tsx.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/features/apps/AppFooter.test.tsx",
-          "hash": "1d5a95a37365bf0820fa"
-        }
-      ],
-      "at": "2026-11-25T22:02:16.228091+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
       "text": "The design puts CommandPalette at src/features/command-palette/CommandPalette.tsx.",
       "role": "architect",
       "stage": "Design",
@@ -717,150 +70,6 @@
       ]
     },
     {
-      "text": "The design puts AppShortcutTestsUpdate at src/App.shortcuts.test.tsx.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/App.shortcuts.test.tsx",
-          "hash": "b0c7ba76c54187b666c0"
-        }
-      ],
-      "at": "2026-11-25T20:46:13.3798644+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts Dialog at src/features/apps/Dialog.tsx.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/features/apps/Dialog.tsx",
-          "hash": "abcbc6bc19b5ab9c070d"
-        }
-      ],
-      "at": "2026-11-25T20:46:13.4126+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts DialogStyles at src/features/apps/Dialog.module.css.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/features/apps/Dialog.module.css",
-          "hash": "2546c464e3a6c23d9317"
-        }
-      ],
-      "at": "2026-11-25T20:46:13.4277181+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts DialogTests at src/features/apps/components.test.tsx.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/features/apps/components.test.tsx",
-          "hash": "5c492a9fa2a64391e810"
-        }
-      ],
-      "at": "2026-11-25T20:46:13.4421296+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts ConsoleNavPanel at src/features/terminals/ConsoleNav.tsx.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/features/terminals/ConsoleNav.tsx",
-          "hash": "405649aa92db96fcf435"
-        }
-      ],
-      "at": "2026-11-25T20:46:13.4572275+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts ConsoleNavStyles at src/features/terminals/ConsoleNav.module.css.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/features/terminals/ConsoleNav.module.css",
-          "hash": "6c70210b5f710b826c4f"
-        }
-      ],
-      "at": "2026-11-25T20:46:13.473302+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts ConsoleNavTests at src/features/terminals/ConsoleNav.test.tsx.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/features/terminals/ConsoleNav.test.tsx",
-          "hash": "4abb764d7ca97e6c0577"
-        }
-      ],
-      "at": "2026-11-25T22:02:16.3018338+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts GitBarCollapseTests at src/features/git/GitBar.collapse.test.tsx.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/features/git/GitBar.collapse.test.tsx",
-          "hash": "cdf508580e9522cbbccd"
-        }
-      ],
-      "at": "2026-11-25T22:02:16.3316563+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "The design puts TestSetup at src/test/setup.ts.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/test/setup.ts",
-          "hash": "057185a9cc4da0f79907"
-        }
-      ],
-      "at": "2026-11-25T20:46:13.5338624+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
       "text": "The design puts PackageManifest at package.json.",
       "role": "architect",
       "stage": "Design",
@@ -892,22 +101,6 @@
       "runs": [
         "20261125-202512",
         "20261126-115005"
-      ]
-    },
-    {
-      "text": "The design puts TidyUpPlanRevision2 at docs/ui-tidy-up-plan.md.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "docs/ui-tidy-up-plan.md",
-          "hash": "474d3a17ea645aa8a280"
-        }
-      ],
-      "at": "2026-11-25T22:02:16.3467957+00:00",
-      "runs": [
-        "20261125-202512"
       ]
     },
     {
@@ -943,182 +136,6 @@
       "runs": [
         "20261125-202512",
         "20261126-163957"
-      ]
-    },
-    {
-      "text": "The design puts UpdatesTestsUpdate at src/features/updates/updates.test.tsx.",
-      "role": "planchecker",
-      "stage": "Design",
-      "source": "engine",
-      "anchors": [
-        {
-          "path": "src/features/updates/updates.test.tsx",
-          "hash": "2cea49a0611d37f35ed7"
-        }
-      ],
-      "at": "2026-11-25T20:53:04.027971+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "paletteActions currently has six entries and the palette is lazy; the footer has no toggle, and toggleSidebar writes localStorage td.sidebarCollapsed.",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "8d605b2c78015f5dba73"
-        }
-      ],
-      "at": "2026-11-25T21:32:04.4862026+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "footer renders only the product name and version; no toggle exists today.",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/apps/AppFooter.tsx",
-          "hash": "34675ae4c29d4e390ef2"
-        }
-      ],
-      "at": "2026-11-25T21:32:04.5025689+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "the first console\u0027s Close button is disabled; console entries are runtime-only.",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/terminals/ConsoleNav.tsx",
-          "hash": "405649aa92db96fcf435"
-        }
-      ],
-      "at": "2026-11-25T21:32:04.5173327+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "openApp() calls setGitTab(null) but does not reset the selected tab; with per-app restore dropped, R9 needs openApp to select the app\u0027s first terminal (or clear it when none) so the console starts hidden.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "8d605b2c78015f5dba73"
-        }
-      ],
-      "at": "2026-11-25T21:59:02.8575507+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "collapsible/defaultCollapsed exist but the tools open state is internal useState (lines 24, 74-86); add optional controlled open/onOpenChange props for Reset layout and the palette (R8), not for persistence.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/git/GitBar.tsx",
-          "hash": "3771b5d9bf3e6c5f39b6"
-        }
-      ],
-      "at": "2026-11-25T21:59:02.8773294+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "hand-built list filters with includes() (44-47) and renders no \u0022no shortcut\u0022 note; revision 2 swaps the list to cmdk inside the same lazy chunk (shouldFilter=false keeps the includes filter) and adds a No shortcut note and disabled reason; its ConfirmDialogs/HelpDialog exports must stay.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/features/command-palette/CommandPalette.tsx",
-          "hash": "11dffeedbc82ac75969b"
-        }
-      ],
-      "at": "2026-11-25T21:59:02.8952935+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "jsdom already shims ResizeObserver/IntersectionObserver/matchMedia/scrollTo/scrollIntoView; cmdk uses only these, so a new shim is needed only if a test shows otherwise.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/test/setup.ts",
-          "hash": "057185a9cc4da0f79907"
-        }
-      ],
-      "at": "2026-11-25T21:59:02.9122076+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "beforeEach (74-80) does not clear localStorage; add localStorage.clear() there and in App.test/App.layout so a saved sidebar state from another case cannot leak in.",
-      "role": "architect",
-      "stage": "Design",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.features.test.tsx",
-          "hash": "04bb78b344de5e890c22"
-        }
-      ],
-      "at": "2026-11-25T21:59:02.9465095+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "EmptyState (\u0022This app has no terminals.\u0022) shows only when app.terminals.length === 0 and no console tab is selected, so the console is the only workspace exactly when the app has no terminals and its console tab is selected (App.tsx:453).",
-      "role": "analyst",
-      "stage": "Define",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "8d605b2c78015f5dba73"
-        }
-      ],
-      "at": "2026-11-25T22:05:53.3580842+00:00",
-      "runs": [
-        "20261125-202512"
-      ]
-    },
-    {
-      "text": "palette actions are built just before \u0060return\u0060; app-only commands are gated by \u0060view === \u0022app\u0022 \u0026\u0026 app\u0060; openApp resets the per-app tab with \u0060L.selectTerminal(id, first?.id ?? \u0022\u0022)\u0060; resetLayout expands the sidebar, closes the drawer and hides a console without stopping anything.",
-      "role": "developer",
-      "stage": "Build",
-      "source": "agent",
-      "anchors": [
-        {
-          "path": "src/App.tsx",
-          "hash": "89d1f4494d43ab59b554"
-        }
-      ],
-      "at": "2026-11-26T04:17:22.8559733+00:00",
-      "runs": [
-        "20261125-202512"
       ]
     },
     {
@@ -5505,12 +4522,13 @@
       "anchors": [
         {
           "path": "src/App.tsx",
-          "hash": "1615042f0f96eaaa71bf"
+          "hash": "68056cdc3c79d8728703"
         }
       ],
-      "at": "2026-11-26T16:58:34.7403508+00:00",
+      "at": "2026-11-27T05:21:05.7647903+00:00",
       "runs": [
-        "20261126-163957"
+        "20261126-163957",
+        "20261127-045127"
       ]
     },
     {
@@ -5649,12 +4667,13 @@
       "anchors": [
         {
           "path": "src/features/apps/Sidebar.tsx",
-          "hash": "25b2860a1598195a75bc"
+          "hash": "ec54f339f5309413b35d"
         }
       ],
-      "at": "2026-11-26T16:58:34.9059226+00:00",
+      "at": "2026-11-27T05:21:05.7269385+00:00",
       "runs": [
-        "20261126-163957"
+        "20261126-163957",
+        "20261127-045127"
       ]
     },
     {
@@ -6423,6 +5442,982 @@
       "at": "2026-11-26T20:22:34.9464521+00:00",
       "runs": [
         "20261126-163957"
+      ]
+    },
+    {
+      "text": "one component renders both the collapsed rail (40-64) and the expanded list (67-116); the explorer ReactNode is rendered last inside the scrolling nav at line 114; appRollup is rollup(app.terminals.filter(isExecutable).map(stateOf)) at line 38.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "ec54f339f5309413b35d"
+        }
+      ],
+      "at": "2026-11-27T05:11:38.3695433+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": ".sidebar (1-8) is the single overflow-y:auto scroll container; .explorerSlot (131-136) is the last child with a top divider.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.module.css",
+          "hash": "ef9e1d2a6932abf32b58"
+        }
+      ],
+      "at": "2026-11-27T05:11:38.3889623+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "COLLAPSE_KEY \u0022td.sidebarCollapsed\u0022 with try/catch readCollapsed at 64-71; paneCollapsed useState at 94; window keydown dispatch by matchShortcut at 177-190; Sidebar rendered at 600-625 and receives the ExplorerPanel as its explorer prop.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "68056cdc3c79d8728703"
+        }
+      ],
+      "at": "2026-11-27T05:11:38.4063673+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "one APP_SHORTCUTS registry plus matchShortcut; only Ctrl\u002BB, F5, Ctrl\u002BShift\u002BP and Ctrl\u002BAlt\u002BT are matched today, so Ctrl\u002BShift\u002BE is free.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/shared/shortcuts.ts",
+          "hash": "e0bcacee8c4456435045"
+        }
+      ],
+      "at": "2026-11-27T05:11:38.4240458+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "explorerRoot returns source \u0022app\u0022 | \u0022misc\u0022 | \u0022home\u0022 | \u0022none\u0022 and the chosen root; this logic is to stay unchanged.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/root.ts",
+          "hash": "21f49b3dd33479e1e5c5"
+        }
+      ],
+      "at": "2026-11-27T05:11:38.4420496+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "header at 293-312 shows only nameFromPath(currentRoot), or \u0022Drives\u0022/\u0022Files\u0022; it receives root, source, resetKey, onOpenFile and editor only.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "3f2f94726c3a4286b782"
+        }
+      ],
+      "at": "2026-11-27T05:11:38.463085+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "rollup() at 135-142 (grey on empty, red if any failed, green if all up, amber if some up or stopping, else grey); isExecutable at 94 (false only when explicitly false).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/state/model.ts",
+          "hash": "f9714f4b47f74d2640fe"
+        }
+      ],
+      "at": "2026-11-27T05:11:38.4794092+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "rollup prop renders aria-label/title \u0022App status: \u003Crollup\u003E\u0022 and adds non-colour cues; reusable on the tab label.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/terminals/StatusDot.tsx",
+          "hash": "580335f255b3b7a63d28"
+        }
+      ],
+      "at": "2026-11-27T05:11:38.4960426+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "jattac.libs.web.zest-tabs ^0.5.0 and jattac.libs.web.zest-responsive-layout ^2.8.0 are already dependencies (USR-001 prefers them for the tab strip).",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "package.json",
+          "hash": "0c1467f628a98acf4c38"
+        }
+      ],
+      "at": "2026-11-27T05:11:38.5411988+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "one component renders the rail (40-64) and the expanded nav (67-116); the explorer prop is the last child at 114; appRollup is rollup(app.terminals.filter(isExecutable).map(stateOf)) at 38.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "ec54f339f5309413b35d"
+        }
+      ],
+      "at": "2026-11-27T05:18:55.0124498+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": ".sidebar is the single overflow-y:auto container (1-8); .rail is 93-104; .explorerSlot (131-136) is the last child of the scrolling nav.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.module.css",
+          "hash": "ef9e1d2a6932abf32b58"
+        }
+      ],
+      "at": "2026-11-27T05:18:55.0285918+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "COLLAPSE_KEY/readCollapsed at 64-71, paneCollapsed useState at 94, Sidebar rendered at 600-625 and receives ExplorerPanel as explorer; keydown dispatch at 177-190.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "68056cdc3c79d8728703"
+        }
+      ],
+      "at": "2026-11-27T05:18:55.0445537+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "the rail test at 44-63 asserts the collapsed rail never shows the Files region; it must change to the new rail icon behaviour.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.explorer.test.tsx",
+          "hash": "08d3bd3b315b76d3c441"
+        }
+      ],
+      "at": "2026-11-27T05:18:55.0599324+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "many tests query region \u0022Files\u0022 directly (helpers at 234 and 527), so they must switch to the Files tab first once it defaults to Projects.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.explorer.test.tsx",
+          "hash": "577aca6d640e6796d786"
+        }
+      ],
+      "at": "2026-11-27T05:18:55.0785039+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "ResizeObserver, IntersectionObserver, matchMedia, scrollTo and scrollIntoView stubs already exist for zest-tabs and framer-motion in jsdom.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/test/setup.ts",
+          "hash": "057185a9cc4da0f79907"
+        }
+      ],
+      "at": "2026-11-27T05:18:55.0932756+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "ZestTabs renders role=tablist/tab with aria-selected, ArrowLeft/Right selection and a focus ring, but no tabpanel and no Enter/Space activation; an adapter is needed.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "node_modules/jattac.libs.web.zest-tabs/dist/index.d.ts",
+          "hash": "7f6b9318bf41de88e831"
+        }
+      ],
+      "at": "2026-11-27T05:18:55.1081226+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "renders \u003Csection aria-label=\u0022Files\u0022\u003E; its header (295-297) shows only nameFromPath(currentRoot); root selection stays untouched.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "3f2f94726c3a4286b782"
+        }
+      ],
+      "at": "2026-11-27T05:18:55.1269322+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "reads the root once on mount, one folder per request, expands lazily, and caps cached levels at MAX_CACHED_LEVELS=100.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/useExplorer.ts",
+          "hash": "2cfad34f4b6b2033d3cf"
+        }
+      ],
+      "at": "2026-11-27T05:18:55.1424263+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": ".body is flex:1, min-height:0, display:flex, so .sidebar stretches to full height; no height rule is needed on the sidebar.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.module.css",
+          "hash": "2ca902960dc91a6835a5"
+        }
+      ],
+      "at": "2026-11-27T05:18:55.1609287+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "The design puts Sidebar styles at src/features/apps/Sidebar.module.css.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.module.css",
+          "hash": "ef9e1d2a6932abf32b58"
+        }
+      ],
+      "at": "2026-11-27T05:21:05.7374568+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "The design puts Sidebar explorer tests at src/features/apps/Sidebar.explorer.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.explorer.test.tsx",
+          "hash": "08d3bd3b315b76d3c441"
+        }
+      ],
+      "at": "2026-11-27T05:21:05.7913406+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "The design puts Sidebar collapse tests at src/features/apps/Sidebar.collapse.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.collapse.test.tsx",
+          "hash": "3525bc462a2d5806f85e"
+        }
+      ],
+      "at": "2026-11-27T05:21:05.8074745+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "The design puts App explorer tests at src/App.explorer.test.tsx.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "engine",
+      "anchors": [
+        {
+          "path": "src/App.explorer.test.tsx",
+          "hash": "577aca6d640e6796d786"
+        }
+      ],
+      "at": "2026-11-27T05:21:05.8240633+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "one component renders the collapsed rail (40-64) and the expanded sidebar (67-116); it already receives onTogglePane, so the rail tab choice can live in the sidebar area without the app shell owning tab state.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "ec54f339f5309413b35d"
+        }
+      ],
+      "at": "2026-11-27T05:29:13.6738883+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": ".sidebar is the single overflow-y:auto container (1-8); .rail at 93-104; .explorerSlot at 131-136.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.module.css",
+          "hash": "ef9e1d2a6932abf32b58"
+        }
+      ],
+      "at": "2026-11-27T05:29:13.7030324+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "tests query the \u0022Files\u0022 region directly and must select the Files tab first once Projects is the default.",
+      "role": "analyst",
+      "stage": "Define",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.explorer.test.tsx",
+          "hash": "577aca6d640e6796d786"
+        }
+      ],
+      "at": "2026-11-27T05:29:13.7522189+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "Sidebar is rendered whenever apps\u003E0 || explorer.root!==null (600) at a stable tree position across paneCollapsed toggles, so Sidebar-local tab state survives collapse/expand without app-shell state.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "68056cdc3c79d8728703"
+        }
+      ],
+      "at": "2026-11-27T05:35:16.5185487+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "explorer root is computed purely at 445-454 by explorerRoot(); homeFolder is fetched once at 204-210; only mounting ExplorerPanel calls explorerApi.list.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "68056cdc3c79d8728703"
+        }
+      ],
+      "at": "2026-11-27T05:35:16.5395895+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "onTogglePane is always provided by App as toggleSidebar (607), so a rail tab handler can set the tab and call it in one action.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "ec54f339f5309413b35d"
+        }
+      ],
+      "at": "2026-11-27T05:35:16.5586034+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "some tests select an app by its root title (350) inside the sidebar, which is hidden while the Files tab is active; those tests must choose Projects to select, then Files to assert.",
+      "role": "architect",
+      "stage": "Design",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.explorer.test.tsx",
+          "hash": "577aca6d640e6796d786"
+        }
+      ],
+      "at": "2026-11-27T05:35:16.5792252+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "its root is \u003Csection aria-label=\u0022Files\u0022\u003E with display:flex/column/min-height:0 and an inner .body that scrolls, so it fills the pane only when its flex parent gives it a bounded height.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "3f2f94726c3a4286b782"
+        }
+      ],
+      "at": "2026-11-27T05:56:42.095473+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "at 600-625 Sidebar always gets onTogglePane={toggleSidebar} and an ExplorerPanel explorer, so rail tab selection can live wholly in the sidebar; no app-shell tab state exists.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "68056cdc3c79d8728703"
+        }
+      ],
+      "at": "2026-11-27T05:56:42.1327457+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "ResizeObserver, IntersectionObserver, matchMedia, scrollTo and scrollIntoView stubs already cover zest-tabs and framer-motion in jsdom.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/test/setup.ts",
+          "hash": "057185a9cc4da0f79907"
+        }
+      ],
+      "at": "2026-11-27T05:56:42.1541366+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "tab state is local useState(\u0022projects\u0022) at line 64; rail expandOnto() sets the tab then calls onTogglePane, and Files mounts lazily via filesMounted.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "6be0aada6761a0d5ff1a"
+        }
+      ],
+      "at": "2026-11-27T06:07:35.2171693+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "adapter over jattac zest-tabs, names the tablist \u0022Sidebar sections\u0022 in an effect and handles Enter/Space from tab.dataset.value.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarTabs.tsx",
+          "hash": "49d79d052e279676dd16"
+        }
+      ],
+      "at": "2026-11-27T06:07:35.2402968+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "showFiles() clicks the Files tab before explorer assertions; HomeScreen repeats app names/Open \u003Capp\u003E, so scope sidebar queries with within(nav).",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.explorer.test.tsx",
+          "hash": "aab382e0ec9ba6595315"
+        }
+      ],
+      "at": "2026-11-27T06:07:35.2619237+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "the tab strip names its tablist by setAttribute(\u0022aria-label\u0022, \u0022Sidebar sections\u0022) in a mount effect against the library-rendered [role=\u0022tablist\u0022]; labels are static strings, no user data reaches the DOM.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarTabs.tsx",
+          "hash": "49d79d052e279676dd16"
+        }
+      ],
+      "at": "2026-11-27T06:15:57.1734084+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "tab state is local useState(\u0022projects\u0022) plus filesMounted; the explorer ReactNode is only mounted inside the Files tab, so no storage write and no folder read happens on startup.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "6be0aada6761a0d5ff1a"
+        }
+      ],
+      "at": "2026-11-27T06:15:57.1882422+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "renders app.name / app.root / terminal names through React text nodes and a title attribute; no dangerouslySetInnerHTML, innerHTML, HTML strings or URLs from config.",
+      "role": "security",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarProjects.tsx",
+          "hash": "c7472cd9bd4b2443c4a2"
+        }
+      ],
+      "at": "2026-11-27T06:15:57.2044684+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "tab state is local useState(\u0022projects\u0022) at 64; filesMounted lazy mount at 67; expandOnto (rail) at 75-78; topRow strip then Projects panel then Files panel at 115-139; no tab state or handlers in App.tsx.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "6be0aada6761a0d5ff1a"
+        }
+      ],
+      "at": "2026-11-27T06:25:55.0967502+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "thin zest-tabs adapter; names the tablist \u0022Sidebar sections\u0022 in a mount effect (30-32) and handles Enter/Space via tab.dataset.value (34-41).",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarTabs.tsx",
+          "hash": "49d79d052e279676dd16"
+        }
+      ],
+      "at": "2026-11-27T06:25:55.1164965+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "renders role=tablist/tab with aria-selected and roving tabindex (active 0), ArrowLeft/Right onChange then focus in rAF; no tabpanel and no aria-controls (103-126).",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "node_modules/jattac.libs.web.zest-tabs/dist/index.esm.js",
+          "hash": "cde087be6ed589f199eb"
+        }
+      ],
+      "at": "2026-11-27T06:25:55.1453004+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": ".topRow flex:none (12-18), .panel flex:1 min-height:0 overflow-y:auto (20-27), .filesPanel flex:1 1 auto plus .filesPanel\u003Esection flex:1 (29-42); no test asserts the strip\u0027s DOM order or the filesPanel flex.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.module.css",
+          "hash": "53a8c706e185a55a2c15"
+        }
+      ],
+      "at": "2026-11-27T06:25:55.1705277+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "R2 proof is containment outside the panel (163-174) plus CSS string checks (204-216); 1 vs 50 apps position is never compared and DOM order is never asserted.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tabs.test.tsx",
+          "hash": "254970a5c5f3c377e8ab"
+        }
+      ],
+      "at": "2026-11-27T06:25:55.2013559+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "showFiles() (125-129) waits only for the Files region; several callers then getByTitle immediately (242, 262, 283, 319, 563, 567, 591, 594, 809, 812) and race the async listing; rename/delete/image failed under doubled CPU load.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.explorer.test.tsx",
+          "hash": "5ecb2fe4b9e647cbd5b5"
+        }
+      ],
+      "at": "2026-11-27T06:25:55.2222274+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "rename test 547-578 never asserts the sidebar tab (the \u0022re-points\u0022 R4 edge case); the delete test\u0027s comment at 604 claims it.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.explorer.test.tsx",
+          "hash": "5ecb2fe4b9e647cbd5b5"
+        }
+      ],
+      "at": "2026-11-27T06:25:55.2469145+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "R1 test 715-737 opens a file from Files but asserts the sidebar tab only after manually clicking Projects then Files, so a tab switch on editor open would not be caught.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.explorer.test.tsx",
+          "hash": "5ecb2fe4b9e647cbd5b5"
+        }
+      ],
+      "at": "2026-11-27T06:25:55.2753959+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "root===null renders the hint \u0022Open an app or a file to browse its folder.\u0022 at 394; loading at 111, empty folder at 155; only panel-level tests cover loading/empty/hint, error/locked is covered inside the tab (App.explorer.test.tsx:404, 529).",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/ExplorerPanel.tsx",
+          "hash": "3f2f94726c3a4286b782"
+        }
+      ],
+      "at": "2026-11-27T06:25:55.3188352+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "memoised Home row \u002B apps \u002B terminals extracted from the old Sidebar; appRollup(app, stateOf) at 7-9.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarProjects.tsx",
+          "hash": "c7472cd9bd4b2443c4a2"
+        }
+      ],
+      "at": "2026-11-27T06:25:55.3439285+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "explorerRoot returns app/misc/home/none; home view with no home folder yields none, so with apps\u003E0 the sidebar still shows and the Files tab shows the hint.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/explorer/root.ts",
+          "hash": "21f49b3dd33479e1e5c5"
+        }
+      ],
+      "at": "2026-11-27T06:25:55.3638053+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "Sidebar rendered when apps.length\u003E0 || explorer.root!==null (600) and always receives an ExplorerPanel as explorer (613-622); explorerResetKey includes view|selectedAppId|root.",
+      "role": "qa",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/App.tsx",
+          "hash": "68056cdc3c79d8728703"
+        }
+      ],
+      "at": "2026-11-27T06:25:55.3884214+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "tab/filesMounted are local; the paneCollapsed early return (line 80) unmounts SidebarProjects, so its per-app \u0060collapsed\u0060 state (SidebarProjects.tsx:38) resets on rail collapse/expand (it did not at HEAD).",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "6be0aada6761a0d5ff1a"
+        }
+      ],
+      "at": "2026-11-27T06:25:59.4138292+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "adapter over jattac zest-tabs; library renders role=tablist/tab with aria-selected and roving tabindex but no id/aria-controls, so tab\u003C-\u003Etabpanel association must be added by id (Sidebar.tsx:123/136 panels are aria-label only).",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarTabs.tsx",
+          "hash": "49d79d052e279676dd16"
+        }
+      ],
+      "at": "2026-11-27T06:25:59.4286558+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "expanded layout is .topRow (flex:none) \u002B .panel (overflow-y:auto) \u002B .filesPanel (flex column), both panels toggled with the hidden attribute; Files panel is conditional on the \u0060explorer\u0060 prop.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "6be0aada6761a0d5ff1a"
+        }
+      ],
+      "at": "2026-11-27T06:25:59.4438364+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "reads Sidebar.module.css / SidebarTabs.module.css as text and asserts declarations; 500-row test counts stateOf calls to prove the memo skips the Projects list on a tab switch.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tabs.test.tsx",
+          "hash": "254970a5c5f3c377e8ab"
+        }
+      ],
+      "at": "2026-11-27T06:25:59.4624935+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "exports sidebarTabId/sidebarPanelId; effect sets tab id\u002Baria-controls, Sidebar.tsx panels use id\u002Baria-labelledby.",
+      "role": "developer",
+      "stage": "Build",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarTabs.tsx",
+          "hash": "e31163d8c464e1fb64a0"
+        }
+      ],
+      "at": "2026-11-27T06:44:47.8728466+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "tab \u002B filesMounted are local; the paneCollapsed early return (line 80) unmounts SidebarProjects, so its per-app \u0060collapsed\u0060 map (SidebarProjects.tsx:38) resets on rail collapse/expand (did not at HEAD) - REV-2 still open, probe at scratch/reviewer/probe.rev2.test.tsx.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "a1e91e796d78d12bf6af"
+        }
+      ],
+      "at": "2026-11-27T06:53:10.4688766+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "adapter over jattac zest-tabs; its mount effect sets each library tab id=sidebarTabId(value) \u002B aria-controls=sidebarPanelId(value); Sidebar.tsx panels (125-128 Projects, 144-148 Files) carry id \u002B aria-labelledby - REV-1 fixed.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/SidebarTabs.tsx",
+          "hash": "e31163d8c464e1fb64a0"
+        }
+      ],
+      "at": "2026-11-27T06:53:10.489003+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "expanded layout is .topRow (flex:none) \u002B .panel (overflow-y:auto) \u002B .filesPanel (flex column, child section flex:1); Files panel only renders when \u0060explorer\u0060 is truthy, so a Files tab can exist with no panel in test-only renders.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "a1e91e796d78d12bf6af"
+        }
+      ],
+      "at": "2026-11-27T06:53:10.508774+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "reads Sidebar.module.css / SidebarTabs.module.css as text and asserts declarations; the 500-row test counts stateOf calls to prove the memo skips Projects on a tab switch.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tabs.test.tsx",
+          "hash": "101b69fe96450166ed44"
+        }
+      ],
+      "at": "2026-11-27T06:53:10.5296247+00:00",
+      "runs": [
+        "20261127-045127"
+      ]
+    },
+    {
+      "text": "REV-2 fixed - collapsedApps \u002B stable toggleAppCollapsed live in Sidebar (lines 70-74) and are passed to SidebarProjects (147-148), so the paneCollapsed rail branch no longer resets the fold map; Sidebar.collapse.test.tsx:61-89 pins it.",
+      "role": "reviewer",
+      "stage": "Challenge",
+      "source": "agent",
+      "anchors": [
+        {
+          "path": "src/features/apps/Sidebar.tsx",
+          "hash": "58aeeb93dd54fcc25270"
+        }
+      ],
+      "at": "2026-11-27T07:20:33.1913772+00:00",
+      "runs": [
+        "20261127-045127"
       ]
     }
   ]

@@ -1,0 +1,29 @@
+{
+  "findings": [
+    {
+      "cites": "R5",
+      "severity": "blocking",
+      "file": "src/features/apps/Sidebar.tsx",
+      "line": 123,
+      "evidence": "Both panels are only named: Sidebar.tsx:123 (Projects) and Sidebar.tsx:136 (Files) render role=tabpanel with aria-label but no id and no aria-labelledby. The tabs come from jattac.libs.web.zest-tabs (SidebarTabs.tsx:44-57), whose output is role=tab with aria-selected/tabIndex/data-value but no id and no aria-controls (node_modules/jattac.libs.web.zest-tabs/dist/index.esm.js:121-127). Nothing programmatically links either tab to the panel it controls.",
+      "description": "R5 requires a tab list with tabs and a tab panel exposed to assistive technology, and the design said SidebarTabs adds the role=tabpanel wiring the library lacks. The panel role is present but the association is not, so a screen reader cannot tell which panel a selected tab controls. Give each tab a stable id plus aria-controls pointing at its panel, and give each panel aria-labelledby pointing back at its tab (the adapter already mutates the library DOM for the tablist name, so the same effect can add these)."
+    },
+    {
+      "cites": "USR-004",
+      "severity": "blocking",
+      "file": "src/features/apps/Sidebar.tsx",
+      "line": 80,
+      "evidence": "The per-app fold map moved out of Sidebar into SidebarProjects.tsx:38, but Sidebar.tsx:80 returns the collapsed rail before rendering SidebarProjects, so toggling the pane unmounts it and its useState map is discarded. At HEAD the map lived at the top of Sidebar, which is never unmounted by App, so folded apps stayed folded across Ctrl+B collapse/expand. No test pins this (Sidebar.collapse.test.tsx only checks that a fold works while expanded).",
+      "description": "An existing, already-shipped sidebar behaviour regressed: collapse the pane and expand it again and every app is open again instead of keeping the user's folded state. USR-004 requires the existing behaviour to be frozen before adding the tabs rather than broken. Lift the fold map back into Sidebar and pass it (plus its toggle) into SidebarProjects, or keep SidebarProjects mounted across the rail branch."
+    },
+    {
+      "cites": "R5",
+      "severity": "advisory",
+      "file": "src/features/apps/Sidebar.tsx",
+      "line": 135,
+      "evidence": "The Files panel is rendered only when `explorer` is truthy (`{explorer && filesMounted && (...)}`), while the Files tab is always rendered. Sidebar.explorer.test.tsx:56-63 even asserts two tabs with no explorer prop. In that state choosing Files leaves aria-selected=true on Files but there is no tabpanel for it.",
+      "description": "The component contract allows a Files tab with no Files panel. The real App always passes an ExplorerPanel, so this is not reachable today, but if explorer is ever absent the selected Files tab has no panel (R5) and no content (R1). Either hide the Files tab when there is nothing to show or render a named panel/hint."
+    }
+  ],
+  "verifications": []
+}

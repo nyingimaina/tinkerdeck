@@ -46,5 +46,13 @@
     "snippet": "1a. Sidebar file explorer: browsing and root rules (and 7 more)",
     "costUsd": 1.0565024579999998,
     "final": true
+  },
+  {
+    "id": "20261127-045127",
+    "startedAt": "2026-11-27T04:51:27.0270292+00:00",
+    "status": "Running",
+    "snippet": "The expanded left sidebar shows two tabs, Projects and Files, and only the\u2026 (and 4 more)",
+    "costUsd": 0.48168680999999997,
+    "final": false
   }
 ]

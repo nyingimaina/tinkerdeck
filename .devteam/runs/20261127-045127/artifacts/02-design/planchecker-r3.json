@@ -1,0 +1,13 @@
+{
+  "summary": "One scope issue: the design changes the old src/App.tsx for R1/R3/R4 without stating why the new sidebar code plus the existing toggle callback cannot meet them.",
+  "conflicts": [
+    {
+      "requirement": "R3",
+      "against": "design",
+      "kind": "scope",
+      "owner": "design",
+      "why": "R3 only needs the rail's Projects/Files click to expand the pane and select a tab in one action, which the new Sidebar/SidebarTabs can do with the expand callback Sidebar already receives; the design nevertheless puts the new tab state and handlers in the old src/App.tsx. The compatibility layer allows an old file only when the design says why new code plus an adapter cannot meet the requirement and freezes its current behaviour with tests first; this design gives neither for App.tsx (only its own test files get characterisation updates), and R8/R9, which genuinely need App, belong to later steps.",
+      "evidence": "Design scope: \"src/App.tsx\". Design impact.touches: \"src/App.tsx (active sidebar tab state plus set-tab-and-expand handlers passed to Sidebar; selection paths left untouched for R4)\". Compatibility layer: \"Everything in `src` outside `features/`, `shared/` and `api/` ... is old. Old files are changed only when a requirement cannot be met otherwise ... Old areas are touched only for a very valid technical reason: the design must say why the requirement cannot be met by new code plus an adapter in the new place ... and that the old behaviour gets tests first.\" Design reuses: \"the App collapse state and Ctrl+B path for expanding, so a rail icon reuses toggleSidebar\" (Sidebar already receives the toggle, so it does not show App must own the tab state)."
+    }
+  ]
+}

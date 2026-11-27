@@ -1,0 +1,85 @@
+{
+  "findings": [
+    {
+      "cites": "R2",
+      "severity": "blocking",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "line": 204,
+      "evidence": "The R2 proof only checks that the strip is outside the Projects tabpanel (Sidebar.tabs.test.tsx:163-174) and mirrors CSS text (.topRow flex:none, .panel overflow-y auto; :204-216). No test asserts the strip precedes the Projects panel in the DOM or that its position is the same with 1 app and with 50 apps. Moving the .topRow div (Sidebar.tsx:115) below both tab panels leaves every test green, and the strip would then sit at the bottom of a 500-row list.",
+      "description": "R2's 'stays fixed at the top of the expanded sidebar' and acceptance 'The tab strip keeps the same position with one app as with many' have no test that would fail if the strip were moved below the Projects list. Add an order assertion (topRow/tablist comes before the Projects tabpanel in the expanded nav) and assert the tablist's position is unchanged with many apps."
+    },
+    {
+      "cites": "R2",
+      "severity": "advisory",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "line": 163,
+      "evidence": "The 50x10 test (163-174) never scrolls the Projects panel, and the wide-label test (218-227) never uses a long app name: it only reads tab CSS and the fixed 240px width. Both R2 edge cases are inferred, not exercised.",
+      "description": "The edge cases 'tab strip remains visible while the Projects list is scrolled to its bottom' and 'stays inside the sidebar width when the app list is long and names are long' have no test with a scroll or with long names. A 500-row fixture with very long app names would close both."
+    },
+    {
+      "cites": "R1",
+      "severity": "advisory",
+      "file": "src/features/apps/Sidebar.module.css",
+      "line": 30,
+      "evidence": "The Files tab winning the pane height rests on .filesPanel { flex: 1 1 auto } and .filesPanel > section { flex: 1 1 auto }, but the CSS test only checks .filesPanel min-height:0 (Sidebar.tabs.test.tsx:215). Deleting the flex declaration leaves the explorer shrink-to-content and every test still passes.",
+      "description": "R1's acceptance 'Files shows the file explorer ... filling the sidebar's available height' has no test that would notice the fill being removed; assert the flex declaration (or a computed layout) on .filesPanel."
+    },
+    {
+      "cites": "R1",
+      "severity": "advisory",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "line": 89,
+      "evidence": "Every Sidebar.tabs test feeds a stub section as the explorer; the only real states proven inside the Files tab are the locked/error ones (App.explorer.test.tsx:404, 529). The explorer's loading (ExplorerPanel.tsx:111), empty-folder (:155) and no-folder hint (:394) are only tested at panel level, never through the Files tab.",
+      "description": "The R1 edge case 'The Files tab shows the explorer's existing loading, empty-folder, error and no-folder-hint states unchanged' is only partly covered. Add one case per state rendering the real ExplorerPanel in the Files tab, including root===null with apps present (home folder unknown), which is reachable in the app and is the hint state."
+    },
+    {
+      "cites": "R4",
+      "severity": "advisory",
+      "file": "src/App.explorer.test.tsx",
+      "line": 547,
+      "evidence": "The rename test asserts only the editor tab (b.txt) and never the sidebar tab; the delete test's comment at 604 claims 'Re-pointing ... never switches' but only the close case is asserted (605).",
+      "description": "The R4 edge case 'A file operation that closes or re-points an editor tab does not switch the sidebar tab' proves only the close half. Add the aria-selected Files assertion to the rename flow."
+    },
+    {
+      "cites": "R4",
+      "severity": "advisory",
+      "file": "src/App.explorer.test.tsx",
+      "line": 715,
+      "evidence": "The whole-app test opens README.md from Files (724) but then clicks Projects and Files again before asserting; a regression that switched the tab when the editor view opened would still pass. Only the stub-button test Sidebar.tabs.test.tsx:138 asserts the tab right after a click inside the Files content.",
+      "description": "R4's acceptance 'With Files active, a new file tab opening in the editor leaves the sidebar on Files' is proven only at Sidebar-stub level, not through the real editor open path. Assert aria-selected Files immediately after the open at App.explorer.test.tsx:726."
+    },
+    {
+      "cites": "R4",
+      "severity": "advisory",
+      "file": "src/App.explorer.test.tsx",
+      "line": 809,
+      "evidence": "showFiles (125-129) waits only for the Files region, then callers use getByTitle immediately (242, 262, 283, 319, 563, 567, 591, 594, 809, 812) while the listing (and a re-list after the view/root change) is still resolving. Two doubled-load full runs failed here with 'Unable to find an element with the title: E:/q/a.txt' and 'Unable to find role=dialog and name Rename'; the same file passes alone.",
+      "description": "The lazy Files mount made these App.explorer assertions race the async listing: the R4 delete/re-point proofs (which live in this file) are flaky under load. Wait for the row (findByTitle or waitFor) after showFiles and after an editor/view change."
+    },
+    {
+      "cites": "R5",
+      "severity": "advisory",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "line": 272,
+      "evidence": "The focus test calls tab(...).focus() programmatically and reads tabindex 0/-1; no test presses Tab from elsewhere in the sidebar to show focus arrives at the strip.",
+      "description": "The accessibility check 'With focus in the sidebar, Tab reaches the tab strip' is unproven behaviourally; a userEvent.tab() walk from the first sidebar control to the tablist would cover it."
+    },
+    {
+      "cites": "R5",
+      "severity": "advisory",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "line": 218,
+      "evidence": "The narrow-sidebar test asserts CSS strings only (flex 1 1 0, min-width 0, ellipsis) and even requires .list { overflow-x: auto } (225), i.e. it would pass if the labels were horizontally scrollable.",
+      "description": "The edge case 'Both tab labels stay legible and clickable when the sidebar is at its narrowest, without horizontal scrolling' has no behavioural proof, and the asserted overflow-x:auto is the opposite of the requirement. Render the strip in a 240px-wide container and assert both labels are fully visible and clickable with no horizontal overflow."
+    },
+    {
+      "cites": "USR-003",
+      "severity": "advisory",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "line": 176,
+      "evidence": "The 50-app/500-terminal proof counts stateOf reads instead of measuring time; nothing asserts the 100 ms budget, and nothing exercises scrolling the Projects list (jsdom cannot detect a freeze).",
+      "description": "The performance acceptance 'a tab switch completes within 100 ms ... and scrolling the Projects list shows no visible freeze' is only indirectly represented by the no-re-render test. The O(1) switch is well evidenced; state the measured budget or how it was checked, and note that the scroll-freeze half is unverified."
+    }
+  ],
+  "verifications": []
+}

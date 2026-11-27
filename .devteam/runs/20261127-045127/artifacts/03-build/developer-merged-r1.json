@@ -1,0 +1,329 @@
+{
+  "summary": "Added the Projects | Files tabs to the expanded left sidebar and the two rail tab icons. SidebarTabs is a thin adapter over jattac.libs.web.zest-tabs (USR-001) that adds Enter/Space activation, an accessible name for the tab list and its own tab/pill/focus CSS, keeping the library\u0027s role=tablist/tab, aria-selected, roving tabindex, ArrowLeft/Right selection and a visible focus ring. SidebarProjects is a memoised extraction of the existing Home row plus app and terminal rows, so a tab switch only flips a hidden flag and the pill and never reconciles the (up to 500-row) list. The strip sits in a fixed top row beside the existing collapse button, the panels below it scroll, and the Files panel is mounted lazily on first use and kept afterwards, so opening on Projects reads no folder and returning to Files does not list again. The sidebar owns its own tab state; src/App.tsx, the explorer root rules and every selection handler are untouched, so selecting an app, terminal, Home or file never switches the tab. The rail keeps Expand, Home and the app initials with their dots and gains Projects and Files icon buttons that expand and select their tab in one handler, with the existing rail-active style on the current tab. Existing sidebar tests were reworked to the new tab placement and Projects default, and App.explorer.test.tsx now selects the Files tab before asserting on the explorer. Note: the repo\u0027s own App.version.test.tsx and the App.test.tsx footer assertion expect v2.3.0 while package.json/Cargo/tauri are 2.4.0 at HEAD, so those two assertions fail independently of this change (both files are outside this design\u0027s scope); App.updates.test.tsx is timing-flaky in the full run but passes alone. Slice 2 of the build: added the whole-window (App.explorer.test.tsx) coverage that completes R1, R3, R4 and A2 for revision 1. A new describe block drives the real App and proves: Projects is the default tab with only the Home row/apps/terminals visible and Files shows only the explorer filling the pane; with no apps but a folder the two tabs are still there; with no apps and no folder the sidebar stays hidden as today; switching tabs never changes the selected app, starts/stops a terminal, or changes the active editor file/tab/text; the collapsed rail\u0027s new Projects and Files icons expand the pane straight onto their tab in one click while Home and app initials keep today\u0027s behaviour and leave the tab alone; choosing Home from the palette or an app from the Home screen never switches the tab; and a delete that closes an editor tab keeps the sidebar on Files. A2 characterisation also pins the expanded Home row, app/terminal rows and roll-up dots and the rail\u0027s Expand/Home/initials with dots. No production code had to change; slice 1\u0027s Sidebar/SidebarTabs/SidebarProjects already implement this behaviour and all tests pass.",
+  "tests": [
+    {
+      "name": "R1: the expanded sidebar opens on Projects, showing the Home row and apps but not the explorer",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: choosing Files shows only the explorer, filling the sidebar, and hides the Projects content",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: clicking a tab never selects an app, a terminal or Home",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: the chosen tab is not remembered, so reopening starts on Projects again",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R2: the strip sits outside the scrolling Projects panel, so it cannot scroll away",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2: switching tabs does not reconcile the 500-row Projects list",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2: CSS keeps the strip in a fixed row and lets only the panels scroll",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R2"
+      ]
+    },
+    {
+      "name": "R2: the two tabs stay inside the narrow sidebar without widening it",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R2",
+        "R5"
+      ]
+    },
+    {
+      "name": "R5: it exposes a named tab list with two labelled tabs, a tab panel and the selected tab",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5: Left and Right arrow keys move the selection between the tabs",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5: Enter and Space select the focused tab",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5: the selected tab is announced and also visually distinct, not shown by colour alone",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R5: the focused tab is reachable and shows a visible focus ring",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R5"
+      ]
+    },
+    {
+      "name": "R4: selecting an app or a terminal in Projects leaves the tab alone",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: choosing Home from the sidebar does not switch the tab",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: opening a file from the Files tab leaves the sidebar on Files",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R3: the rail keeps Expand, Home and the app initials and adds the Projects and Files icons",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: the rail shows both tab icons even with no apps",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: both rail icons carry an accessible name and a title",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: clicking the Projects rail icon expands the pane onto Projects in one action",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: clicking the Files rail icon expands the pane onto Files in one action",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: the rail visibly marks the active tab",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: clicking Home or an app initial in the rail does not change the active tab",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "A1: it is not mounted while Projects is shown, and stays mounted once opened",
+      "file": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "A2: Projects still lists the Home row, every app and every terminal with a roll-up dot",
+      "file": "src/features/apps/Sidebar.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: the explorer sits in the Files tab, not below the last app in Projects",
+      "file": "src/features/apps/Sidebar.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "A2: with no explorer prop the Projects content is exactly as before",
+      "file": "src/features/apps/Sidebar.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "A2: the collapsed rail keeps Expand, Home and every app initial and now adds the two tab icons",
+      "file": "src/features/apps/Sidebar.explorer.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R1: with no apps saved the sidebar still shows both tabs when the explorer has a folder",
+      "file": "src/features/apps/Sidebar.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "A2: expanded keeps the Home row and app rows beside the new Projects | Files strip",
+      "file": "src/features/apps/Sidebar.collapse.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R3: the collapsed rail marks the active tab and leaves the other one inactive",
+      "file": "src/features/apps/Sidebar.collapse.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "A1: starting on Projects reads no folder, Files lists once, and coming back keeps it",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R4: in the app view it is the selected app\u0027s root and follows a newly selected app",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R9: deleting an open file from the explorer closes its tab after one confirmation",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R1: the expanded sidebar still lists the Home row, every app and terminal with a roll-up dot",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: the collapsed rail still keeps Expand, Home and the app initials with their dots",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: it opens on Projects showing the Home row and apps, and Files shows only the explorer",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: with no apps but a folder to show, both tabs are there and Files shows the explorer",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: with no apps and no folder to root at, the sidebar stays hidden as it is today",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: switching tabs leaves the selected app and its terminals alone",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R1: switching tabs never changes the active editor file, its tab or its text",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "name": "R3: the rail Files and Projects icons expand the pane straight onto their tab",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R3: clicking Home or an app initial in the rail keeps today\u0027s behaviour and leaves the tab alone",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "name": "R4: choosing Home from the palette does not switch the sidebar tab",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: selecting an app from the Home screen leaves the sidebar tab alone",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    },
+    {
+      "name": "R4: a delete that closes an editor tab keeps the sidebar on Files",
+      "file": "src/App.explorer.test.tsx",
+      "requirements": [
+        "R4"
+      ]
+    }
+  ],
+  "kickbacks": []
+}

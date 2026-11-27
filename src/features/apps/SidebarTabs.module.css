@@ -1,0 +1,63 @@
+/* The Projects | Files strip: the tab row itself never scrolls and never widens the sidebar (R2). */
+.strip {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* The scroller the library renders: two equal tabs that stay inside 240px even at its narrowest (R5). */
+.list {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--panel-2);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.list::-webkit-scrollbar {
+  display: none;
+}
+.tab {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: calc(var(--radius) - 2px);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.tab:hover {
+  color: var(--text);
+}
+/* A visible focus ring that needs no colour of its own: it is also drawn when the tab is focused. */
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+/* The selected tab is bold and underlined, not just a different colour (R5). */
+.activeTab {
+  color: var(--text);
+  font-weight: 700;
+}
+.activeTab::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 2px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+}
+.pill {
+  background: var(--panel);
+  border-radius: calc(var(--radius) - 2px);
+  box-shadow: inset 0 0 0 1px var(--border);
+}

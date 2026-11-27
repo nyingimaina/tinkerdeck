@@ -1,0 +1,24 @@
+{
+  "findings": [
+    {
+      "cites": "R5",
+      "severity": "advisory",
+      "file": "src/features/apps/Sidebar.tsx",
+      "line": 142,
+      "evidence": "The Files panel renders only when `explorer` is truthy (`{explorer && filesMounted && (...)}` at Sidebar.tsx:142-153) while the Files tab is always rendered (SidebarTabs.tsx:17-20). Sidebar.explorer.test.tsx:56-63 renders the Sidebar with no explorer prop and asserts two tabs; selecting Files in that state would leave aria-selected=true on a tab whose aria-controls target does not exist. The real App always passes an ExplorerPanel (App.tsx:613-622), so this is not reachable in production today.",
+      "description": "The Sidebar contract allows a Files tab with no Files panel. If `explorer` is ever omitted, the selected Files tab controls no panel, contradicting the tab/tabpanel pairing R5 asks for. Either hide the Files tab when there is nothing to show, or render a named empty/hint panel in that case. Advisory because the app shell never renders Sidebar without an explorer."
+    }
+  ],
+  "verifications": [
+    {
+      "id": "REV-1",
+      "status": "fixed",
+      "evidence": "SidebarTabs.tsx:35-44 (mount effect) now gives each library-rendered tab id=sidebarTabId(value) and aria-controls=sidebarPanelId(value); Sidebar.tsx:125-128 (Projects) and Sidebar.tsx:144-148 (Files) give each role=tabpanel the matching id plus aria-labelledby=sidebarTabId. Sidebar.tabs.test.tsx:299-314 asserts the id/aria-controls/aria-labelledby round-trip for both tabs with distinct ids; the suite passes (npx vitest run src/features/apps/Sidebar.tabs.test.tsx: 26 tests pass)."
+    },
+    {
+      "id": "REV-2",
+      "status": "open",
+      "evidence": "Still regressed. Sidebar.tsx:80 returns the collapsed rail (`if (paneCollapsed) return (<nav ...>)`) before rendering SidebarProjects, and the per-app fold map still lives in SidebarProjects.tsx:38 (`useState<Record<string, boolean>>({})`), so collapsing the pane unmounts it and expanding remounts it with an empty map. At HEAD the map lived at the top of Sidebar (git show HEAD:src/features/apps/Sidebar.tsx), which App never unmounts across a Ctrl+B toggle. A probe (scratch/reviewer/probe.rev2.test.tsx) folds Qonsol, collapses and expands the pane, and fails: the chevron comes back aria-expanded=true and its 'api' terminal is visible again. No committed test pins this."
+    }
+  ]
+}

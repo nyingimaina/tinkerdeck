@@ -1,0 +1,85 @@
+{
+  "summary": "R1-R5 are a window-only change: App owns the active sidebar tab as plain state and Sidebar renders a fixed Projects | Files strip above one scrolling Projects panel and one Files panel that hosts the existing ExplorerPanel unchanged. The strip is the already-installed jattac.libs.web.zest-tabs (USR-001) reached through a thin SidebarTabs adapter; the library already renders role=tablist/role=tab with aria-selected, roving tabIndex, ArrowLeft/Right selection and a focus ring, so the adapter only adds the role=tabpanel wrappers and Enter/Space activation it lacks. The collapsed rail gains Projects and Files buttons that set the tab and expand the pane in one action (reusing toggleSidebar). Only the selected panel is visible; the Files panel is mounted on first use and then kept hidden, so a tab switch neither re-reads a folder nor resets the tree, keeping the switch constant-time with hundreds of apps. Scale is bounded by what the app already does: one explorer listing per opened folder, unchanged, and the strip is two fixed buttons regardless of app count. No Rust command, src/api call, permission, CSP change, dependency, version bump or localStorage key is added in this revision. All files this design may change or create are matched by the glob scope below (Sidebar* covers Sidebar.tsx, Sidebar.module.css, the new SidebarTabs.tsx and the three sidebar test files).",
+  "impact": {
+    "touches": [
+      "src/features/apps/Sidebar.tsx (expanded sidebar becomes fixed tab strip + Projects panel + Files panel; rail gains two icon buttons; prop comment and explorer prop semantics updated)",
+      "src/features/apps/Sidebar.module.css (fixed, non-scrolling tab strip; scrolling Projects panel; full-height Files panel; rail icon spacing; keep the old .explorerSlot rule only as a fallback)",
+      "src/App.tsx (active sidebar tab state plus set-tab-and-expand handlers passed to Sidebar; selection paths left untouched for R4)",
+      "src/features/apps/Sidebar.explorer.test.tsx, Sidebar.collapse.test.tsx and src/App.explorer.test.tsx (characterisation updates before the change, then new tab/rail assertions; the Files-region helpers must select the Files tab first because Projects is the default)"
+    ],
+    "reuses": [
+      "the existing Sidebar rail buttons, Home row, app rows, terminal rows and appRollup unchanged",
+      "the explorer ReactNode prop and ExplorerPanel as-is, so explorer/root.ts root rules stay untouched",
+      "jattac.libs.web.zest-tabs 0.5.0 and its framer-motion peer already in package.json, with no new package",
+      "the existing CSS tokens (--panel, --panel-2, --hover, --accent) and the 240px sidebar / 48px rail sizes",
+      "the App collapse state and Ctrl+B path for expanding, so a rail icon reuses toggleSidebar",
+      "the existing jsdom ResizeObserver/IntersectionObserver/matchMedia/scrollTo stubs in src/test/setup.ts that zest-tabs needs",
+      "the existing role=region aria-label='Files' heading contract of ExplorerPanel, which the tabpanel wrapper preserves"
+    ],
+    "adds": [
+      "src/features/apps/SidebarTabs.tsx: thin adapter over zest-tabs adding the role=tabpanel wrappers (with aria-label and tabIndex) and Enter/Space activation, plus the SidebarTab type",
+      "src/features/apps/Sidebar.tabs.test.tsx: tab strip, panel visibility, no-auto-switch, keyboard and rail-expand-onto-tab tests"
+    ]
+  },
+  "scope": [
+    "src/features/apps/Sidebar*",
+    "src/App.tsx",
+    "src/App.explorer.test.tsx"
+  ],
+  "components": [
+    {
+      "name": "SidebarTabs",
+      "path": "src/features/apps/SidebarTabs.tsx",
+      "requirements": ["R1", "R2", "R4", "R5"]
+    },
+    {
+      "name": "Sidebar",
+      "path": "src/features/apps/Sidebar.tsx",
+      "requirements": ["R1", "R2", "R3", "R4", "R5", "A1"]
+    },
+    {
+      "name": "Sidebar styles",
+      "path": "src/features/apps/Sidebar.module.css",
+      "requirements": ["R1", "R2", "R3", "R5"]
+    },
+    {
+      "name": "App",
+      "path": "src/App.tsx",
+      "requirements": ["R1", "R3", "R4"]
+    },
+    {
+      "name": "Sidebar tabs tests",
+      "path": "src/features/apps/Sidebar.tabs.test.tsx",
+      "requirements": ["R1", "R2", "R3", "R4", "R5", "A1"]
+    },
+    {
+      "name": "Sidebar explorer tests",
+      "path": "src/features/apps/Sidebar.explorer.test.tsx",
+      "requirements": ["R1", "R3"]
+    },
+    {
+      "name": "Sidebar collapse tests",
+      "path": "src/features/apps/Sidebar.collapse.test.tsx",
+      "requirements": ["R3"]
+    },
+    {
+      "name": "App explorer tests",
+      "path": "src/App.explorer.test.tsx",
+      "requirements": ["R1", "R3", "R4"]
+    }
+  ],
+  "additions": [
+    {
+      "id": "A1",
+      "title": "Mount the Files panel on first use and keep it once shown",
+      "why": "Opening the app on Projects should not read a folder for a tab nobody opened, and returning to Files should not cost the same folder read again.",
+      "parent": "R1",
+      "kind": "enabling",
+      "touches": ["ui", "tests"],
+      "acceptance": [
+        "Starting on the Projects tab issues no explorer listing request for the Files panel.",
+        "After Files has been shown once, switching to Projects and back with the pane still expanded shows the same folder and expanded levels without a new listing request."
+      ]
+    }
+  ]
+}

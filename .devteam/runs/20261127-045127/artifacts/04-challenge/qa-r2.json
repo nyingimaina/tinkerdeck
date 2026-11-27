@@ -1,0 +1,10 @@
+{
+  "findings": [],
+  "verifications": [
+    {
+      "id": "QA-1",
+      "status": "fixed",
+      "evidence": "src/features/apps/Sidebar.tabs.test.tsx:176-209 adds 'R2: the strip sits above the Projects list, at the same place however long that list is'. It asserts nav.children[0] contains the tablist, nav.children[1] is the Projects tabpanel, the tablist precedes Projects (compareDocumentPosition FOLLOWING == 4), and the strip's index is 0 with both 1 app and 50 apps/500 terminals. Moving .topRow (Sidebar.tsx:115) below the panels makes nav.children[0] the Projects panel, so toContainElement(tabsList) and children[1] both fail. The file passes; npm run lint (tsc --noEmit) passes."
+    }
+  ]
+}

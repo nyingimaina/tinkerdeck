@@ -1,0 +1,163 @@
+{
+  "summary": "This is revision 1 of 2 of a larger feature (R1 to R5). The left sidebar of Tinkerdeck gains two tabs. Projects keeps what the sidebar shows today (the Home row and each app with its terminals); Files shows the existing file-system explorer filling the panel, so users no longer scroll past every app to reach it. The collapsed rail gains Projects and Files icons that expand the pane straight onto that tab, the Files header now names the app (or Misc/Home) whose folder is shown, the Projects tab label carries one roll-up status dot so overall status stays visible while Files is open, the last tab is remembered across restarts, and Ctrl\u002BShift\u002BE jumps to Files. The explorer\u0027s root rules, file operations and the apps/terminals list are unchanged.",
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "The expanded left sidebar shows two tabs, Projects and Files, and only the selected tab\u0027s content is visible: Projects shows the existing Home row and each app with its terminals; Files shows only the files explorer, filling the sidebar\u0027s available height.",
+      "acceptance": [
+        "Choosing Projects shows the Home row and the app/terminal list and no file explorer.",
+        "Choosing Files shows the file explorer and not the Home row or the app/terminal list.",
+        "The file explorer is not rendered below the last app or terminal inside the Projects tab."
+      ],
+      "rationale": "The explorer currently sits at the bottom of the one scrolling sidebar, so it is pushed further down as apps are added; a tab makes it a direct destination while leaving the project list itself unchanged.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "A sidebar with no apps still shows both the Projects and Files tabs when the explorer has a folder to show.",
+        "The Files tab shows the explorer\u0027s existing loading, empty-folder, error and no-folder-hint states unchanged.",
+        "When there are no apps and no folder the explorer can root at, the app keeps hiding the sidebar exactly as it does today.",
+        "Moving between tabs never restarts a terminal, changes the selected app, or changes the active editor file."
+      ],
+      "pitfalls": [
+        "The explorer must not remain inside the Projects list at the bottom; that is the placement being removed.",
+        "Clicking a tab must not start or stop anything, open a file, or change the selected app."
+      ],
+      "rules": [
+        "USR-004",
+        "USR-005",
+        "USR-006",
+        "TAU-012"
+      ],
+      "facts": [
+        {
+          "subject": "sidebar tab",
+          "attribute": "count",
+          "op": "equals",
+          "value": "2",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "text": "The Projects | Files tab strip stays fixed at the top of the expanded sidebar and remains visible and clickable without vertical scrolling, however many apps and terminals the Projects list contains.",
+      "acceptance": [
+        "With more apps and terminals than fit in the sidebar, the Files tab is still visible and selectable without scrolling the sidebar.",
+        "The tab strip keeps the same position with one app as with many."
+      ],
+      "rationale": "The complaint is discoverability: the explorer moves further down with every app, so the tabs must not scroll away with the list.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "The tab strip remains visible while the Projects list is scrolled to its bottom.",
+        "The tab strip stays inside the sidebar width when the app list is long and names are long."
+      ],
+      "pitfalls": [
+        "The tab strip must not be placed inside the scrolling Projects content so that it can scroll away."
+      ],
+      "rules": [
+        "PERF-001",
+        "USR-002",
+        "USR-005"
+      ],
+      "facts": []
+    },
+    {
+      "id": "R3",
+      "text": "The collapsed sidebar rail keeps Expand, Home and the app initials with their status dots, and adds a Projects icon and a Files icon; clicking the Projects icon expands the pane on the Projects tab and clicking the Files icon expands it on the Files tab, in one action.",
+      "acceptance": [
+        "From the collapsed rail, clicking the Projects icon expands the sidebar and shows the Projects tab.",
+        "From the collapsed rail, clicking the Files icon expands the sidebar and shows the Files tab.",
+        "The collapsed rail still shows Expand, Home and every app initial alongside the two new icons."
+      ],
+      "rationale": "The rail currently has no way into Files, so the two icons close that gap and let the user choose a destination directly.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "The rail shows both new icons even when there are no apps.",
+        "The rail visibly indicates which tab is active, following the existing rail-active style.",
+        "Clicking Home or an app initial in the rail keeps today\u0027s behaviour and does not change the active tab.",
+        "Both rail icons carry an accessible name and a title."
+      ],
+      "pitfalls": [
+        "The new rail icons must not replace Expand, Home or the app initials.",
+        "Clicking a rail tab icon must expand and select its tab together, never one without the other.",
+        "The old Sidebar prop comment saying the explorer is never in the rail, and the test asserting the rail never shows Files, must be updated to the new behaviour rather than left contradicting it."
+      ],
+      "rules": [
+        "USR-004",
+        "USR-005",
+        "USR-006",
+        "TAU-012",
+        "USR-002"
+      ],
+      "facts": [
+        {
+          "subject": "collapsed rail tab icon",
+          "attribute": "count",
+          "op": "equals",
+          "value": "2",
+          "unit": "",
+          "scope": ""
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "text": "Selecting an app, a terminal, Home or a file never changes the active sidebar tab by itself; the tab changes only when the user clicks a tab, clicks a rail tab icon, uses the Files shortcut, or the remembered last tab is applied at startup.",
+      "acceptance": [
+        "With Files active, opening a file from the explorer leaves the sidebar on Files.",
+        "With Projects active, selecting an app or terminal leaves the sidebar on Projects.",
+        "With Files active, a new file tab opening in the editor leaves the sidebar on Files."
+      ],
+      "rationale": "Losing the Files tree because a file was opened, or losing Projects because a terminal was started, would fight the user\u0027s explicit choice.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "A file operation that closes or re-points an editor tab does not switch the sidebar tab.",
+        "Choosing Home from the palette or the sidebar does not switch the tab."
+      ],
+      "pitfalls": [
+        "Do not tie the active tab to the current view (home/app/editor), the selected app, or the active editor file."
+      ],
+      "rules": [
+        "USR-004",
+        "USR-005"
+      ],
+      "facts": []
+    },
+    {
+      "id": "R5",
+      "text": "The tab strip is operable by keyboard and assistive technology: it exposes a tab list with two tabs and a tab panel, marks the selected tab, gives each tab a text label, shows a visible focus, and supports Left/Right arrow keys between the tabs.",
+      "acceptance": [
+        "A screen reader announces a tab list with Projects and Files and which one is selected.",
+        "Tab moves focus into the tab strip, Left/Right arrow keys move between the two tabs, and Enter or Space selects.",
+        "The focused tab has a clearly visible focus ring."
+      ],
+      "rationale": "TAU-012 requires every control to work by keyboard with a visible focus and an accessible name, and a tab strip that works only with a mouse excludes people.",
+      "derivedFrom": "",
+      "edgeCases": [
+        "The roll-up dot on the Projects label does not replace or hide the word Projects for assistive technology.",
+        "The tab labels stay legible and clickable when app names or the sidebar is narrow, without horizontal scrolling."
+      ],
+      "pitfalls": [
+        "Do not implement the tabs as plain buttons with no announced selected state.",
+        "Do not rely on colour alone to show the selected tab."
+      ],
+      "rules": [
+        "TAU-012",
+        "USR-001",
+        "USR-002",
+        "USR-005",
+        "USR-006"
+      ],
+      "facts": []
+    }
+  ],
+  "questions": [],
+  "coverage": [],
+  "assumptions": [],
+  "roles": [],
+  "outOfScope": [],
+  "nonFunctional": [],
+  "risks": [],
+  "tensions": [],
+  "glossary": []
+}

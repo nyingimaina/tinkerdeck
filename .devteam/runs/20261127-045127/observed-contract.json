@@ -1,0 +1,264 @@
+{
+  "runId": "20261127-045127",
+  "seriesId": "f205422c",
+  "revision": 1,
+  "baseCommit": "3eddd42^",
+  "headCommit": "3eddd42",
+  "files": [
+    {
+      "path": "src/App.explorer.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R1",
+        "R3",
+        "R2",
+        "R4",
+        "R5",
+        "R9",
+        "R13"
+      ]
+    },
+    {
+      "path": "src/features/apps/Sidebar.collapse.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R3"
+      ]
+    },
+    {
+      "path": "src/features/apps/Sidebar.explorer.test.tsx",
+      "status": "modified",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R1"
+      ]
+    },
+    {
+      "path": "src/features/apps/Sidebar.module.css",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/features/apps/Sidebar.tabs.test.tsx",
+      "status": "added",
+      "isTest": true,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": [
+        "R1",
+        "R4",
+        "R2",
+        "R5",
+        "R3"
+      ]
+    },
+    {
+      "path": "src/features/apps/Sidebar.tsx",
+      "status": "modified",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [
+        "Sidebar"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/apps/SidebarProjects.tsx",
+      "status": "added",
+      "isTest": false,
+      "added": [
+        {
+          "kind": "function",
+          "name": "appRollup",
+          "file": "src/features/apps/SidebarProjects.tsx"
+        },
+        {
+          "kind": "component",
+          "name": "SidebarProjects",
+          "file": "src/features/apps/SidebarProjects.tsx"
+        }
+      ],
+      "removed": [],
+      "symbols": [
+        "appRollup",
+        "SidebarProjects"
+      ],
+      "requirements": []
+    },
+    {
+      "path": "src/features/apps/SidebarTabs.module.css",
+      "status": "added",
+      "isTest": false,
+      "added": [],
+      "removed": [],
+      "symbols": [],
+      "requirements": []
+    },
+    {
+      "path": "src/features/apps/SidebarTabs.tsx",
+      "status": "added",
+      "isTest": false,
+      "added": [
+        {
+          "kind": "type",
+          "name": "SidebarTab",
+          "file": "src/features/apps/SidebarTabs.tsx"
+        },
+        {
+          "kind": "const",
+          "name": "sidebarTabId",
+          "file": "src/features/apps/SidebarTabs.tsx"
+        },
+        {
+          "kind": "const",
+          "name": "sidebarPanelId",
+          "file": "src/features/apps/SidebarTabs.tsx"
+        },
+        {
+          "kind": "component",
+          "name": "SidebarTabs",
+          "file": "src/features/apps/SidebarTabs.tsx"
+        }
+      ],
+      "removed": [],
+      "symbols": [
+        "SidebarTab",
+        "sidebarTabId",
+        "sidebarPanelId",
+        "SidebarTabs"
+      ],
+      "requirements": []
+    }
+  ],
+  "added": [
+    {
+      "kind": "function",
+      "name": "appRollup",
+      "file": "src/features/apps/SidebarProjects.tsx"
+    },
+    {
+      "kind": "component",
+      "name": "SidebarProjects",
+      "file": "src/features/apps/SidebarProjects.tsx"
+    },
+    {
+      "kind": "type",
+      "name": "SidebarTab",
+      "file": "src/features/apps/SidebarTabs.tsx"
+    },
+    {
+      "kind": "const",
+      "name": "sidebarTabId",
+      "file": "src/features/apps/SidebarTabs.tsx"
+    },
+    {
+      "kind": "const",
+      "name": "sidebarPanelId",
+      "file": "src/features/apps/SidebarTabs.tsx"
+    },
+    {
+      "kind": "component",
+      "name": "SidebarTabs",
+      "file": "src/features/apps/SidebarTabs.tsx"
+    }
+  ],
+  "removed": [],
+  "routesAdded": [],
+  "tablesAdded": [],
+  "proven": {
+    "R1": [
+      "src/App.explorer.test.tsx",
+      "src/features/apps/Sidebar.explorer.test.tsx",
+      "src/features/apps/Sidebar.tabs.test.tsx"
+    ],
+    "R3": [
+      "src/App.explorer.test.tsx",
+      "src/features/apps/Sidebar.collapse.test.tsx",
+      "src/features/apps/Sidebar.tabs.test.tsx"
+    ],
+    "R2": [
+      "src/App.explorer.test.tsx",
+      "src/features/apps/Sidebar.tabs.test.tsx"
+    ],
+    "R4": [
+      "src/App.explorer.test.tsx",
+      "src/features/apps/Sidebar.tabs.test.tsx"
+    ],
+    "R5": [
+      "src/App.explorer.test.tsx",
+      "src/features/apps/Sidebar.tabs.test.tsx"
+    ],
+    "R9": [
+      "src/App.explorer.test.tsx"
+    ],
+    "R13": [
+      "src/App.explorer.test.tsx"
+    ]
+  },
+  "checks": [
+    {
+      "component": "SidebarTabs",
+      "path": "src/features/apps/SidebarTabs.tsx",
+      "status": "confirmed"
+    },
+    {
+      "component": "Sidebar tab styles",
+      "path": "src/features/apps/SidebarTabs.module.css",
+      "status": "confirmed"
+    },
+    {
+      "component": "SidebarProjects",
+      "path": "src/features/apps/SidebarProjects.tsx",
+      "status": "confirmed"
+    },
+    {
+      "component": "Sidebar",
+      "path": "src/features/apps/Sidebar.tsx",
+      "status": "confirmed"
+    },
+    {
+      "component": "Sidebar styles",
+      "path": "src/features/apps/Sidebar.module.css",
+      "status": "confirmed"
+    },
+    {
+      "component": "Sidebar tabs tests",
+      "path": "src/features/apps/Sidebar.tabs.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "Sidebar explorer tests",
+      "path": "src/features/apps/Sidebar.explorer.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "Sidebar collapse tests",
+      "path": "src/features/apps/Sidebar.collapse.test.tsx",
+      "status": "missing"
+    },
+    {
+      "component": "App explorer tests",
+      "path": "src/App.explorer.test.tsx",
+      "status": "missing"
+    }
+  ],
+  "unanticipated": 4,
+  "recordedAt": "2026-11-27T07:20:49.7696564+00:00"
+}

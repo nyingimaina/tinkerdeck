@@ -1,0 +1,117 @@
+{
+  "checks": [
+    {
+      "id": "no-secrets",
+      "name": "No secrets in code",
+      "status": "passed",
+      "seconds": 0.317784,
+      "output": ""
+    },
+    {
+      "id": "no-debug-leftovers",
+      "name": "No debugging leftovers",
+      "status": "passed",
+      "seconds": 0.1055984,
+      "output": ""
+    },
+    {
+      "id": "tauri-no-invoke-in-features",
+      "name": "Screens ask the core through src/api only",
+      "status": "passed",
+      "seconds": 0.0870285,
+      "output": ""
+    },
+    {
+      "id": "tauri-no-panics",
+      "name": "The Rust core does not panic",
+      "status": "passed",
+      "seconds": 0.0813575,
+      "output": ""
+    },
+    {
+      "id": "tauri-csp-set",
+      "name": "The window has a content security policy",
+      "status": "passed",
+      "seconds": 0.0870671,
+      "output": ""
+    },
+    {
+      "id": "tauri-least-privilege",
+      "name": "Permissions are small and specific",
+      "status": "passed",
+      "seconds": 0.0838456,
+      "output": ""
+    },
+    {
+      "id": "tauri-no-signing-key",
+      "name": "No signing keys in the project",
+      "status": "passed",
+      "seconds": 0.1295276,
+      "output": ""
+    },
+    {
+      "id": "tauri-versions",
+      "name": "One version number everywhere",
+      "status": "passed",
+      "seconds": 0.3225704,
+      "output": ""
+    },
+    {
+      "id": "tauri-web-typecheck",
+      "name": "Window: type check",
+      "status": "passed",
+      "seconds": 10.1838161,
+      "output": ""
+    },
+    {
+      "id": "tauri-rust-format",
+      "name": "Core: formatting",
+      "status": "passed",
+      "seconds": 1.4710879,
+      "output": ""
+    },
+    {
+      "id": "tauri-web-build",
+      "name": "Window: build",
+      "status": "passed",
+      "seconds": 43.5183892,
+      "output": ""
+    },
+    {
+      "id": "tauri-rust-lints",
+      "name": "Core: lints (clippy, warnings are errors)",
+      "status": "passed",
+      "seconds": 20.8040583,
+      "output": ""
+    },
+    {
+      "id": "tauri-rust-build",
+      "name": "Core: the app compiles",
+      "status": "passed",
+      "seconds": 10.7978629,
+      "output": ""
+    },
+    {
+      "id": "tauri-web-tests",
+      "name": "Window: tests, with coverage",
+      "status": "failed",
+      "seconds": 93.0897028,
+      "output": "\u2026\n        aria-label=\u0022Projects\u0022\r\n        aria-labelledby=\u0022sidebar-tab-projects\u0022\r\n        class=\u0022_panel_e88987\u0022\r\n        id=\u0022sidebar-panel-projects\u0022\r\n        role=\u0022tabpanel\u0022\r\n      \u003E\r\n        \u003Cbutton\r\n          class=\u0022_homeRow_e88987 \u0022\r\n        \u003E\r\n          \u2302 Home\r\n        \u003C/button\u003E\r\n        \u003Cdiv\r\n          class=\u0022_group_e88987\u0022\r\n        \u003E\r\n          \u003Cdiv\r\n            class=\u0022_appRow_e88987 _selected_e88987\u0022\r\n          \u003E\r\n            \u003Cbutton\r\n              aria-expanded=\u0022false\u0022\r\n              aria-label=\u0022Expand Qonsol\u0022\r\n              class=\u0022_chevron_e88987\u0022\r\n            \u003E\r\n              \u25B6\r\n            \u003C/button\u003E\r\n            \u003Cbutton\r\n              class=\u0022_appName_e88987\u0022\r\n              title=\u0022E:\\\\q\u0022\r\n            \u003E\r\n              \u003Cspan\r\n                class=\u0022_nameText_e88987\u0022\r\n              \u003E\r\n                Qonsol\r\n              \u003C/span\u003E\r\n              \u003Cspan\r\n                aria-label=\u0022App status: grey\u0022\r\n                class=\u0022_dot_a2ae62 _grey_a2ae62 \u0022\r\n                data-kind=\u0022grey\u0022\r\n                role=\u0022img\u0022\r\n                title=\u0022App status: grey\u0022\r\n              /\u003E\r\n            \u003C/button\u003E\r\n          \u003C/div\u003E\r\n        \u003C/div\u003E\r\n      \u003C/div\u003E\r\n    \u003C/nav\u003E\r\n  \u003C/div\u003E\r\n\u003C/body\u003E\r\n \u276F Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19\r\n \u276F node_modules/@testing-library/dom/dist/query-helpers.js:76:38\r\n \u276F node_modules/@testing-library/dom/dist/query-helpers.js:52:17\r\n \u276F node_modules/@testing-library/dom/dist/query-helpers.js:95:19\r\n \u276F .devteam/runs/20261127-045127/scratch/reviewer/probe.rev2.test.tsx:41:19\r\n     39|     await userEvent.click(screen.getByRole(\u0022button\u0022, { name: \u0022Expand s\u2026\r\n     40| \r\n     41|     expect(screen.getByRole(\u0022button\u0022, { name: /Collapse Qonsol/ })).to\u2026\r\n       |                   ^\r\n     42|     expect(screen.queryByText(\u0022api\u0022)).toBeNull();\r\n     43|   });\r\n\r\n\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF\u23AF[3/3]\u23AF"
+    },
+    {
+      "id": "tauri-web-build",
+      "name": "Window: build",
+      "status": "passed",
+      "seconds": 0,
+      "output": ""
+    },
+    {
+      "id": "tauri-rust-tests",
+      "name": "Core: tests",
+      "status": "flaky",
+      "seconds": 113.5739108,
+      "output": "This check is flaky: it failed on the first try and passed on the second. Treated as passed; the first failure was:\n\u2026\ntest runtime::tests::empty_command_opens_interactive_shell_that_accepts_input ... ok\r\ntest update::tests::a_release_published_hours_after_the_last_check_is_found_without_a_restart ... ok\r\ntest update::tests::a_valid_manifest_is_accepted_and_the_checksum_normalised ... ok\r\ntest update::tests::a_manifest_changed_after_signing_or_signed_by_someone_else_is_refused ... ok\r\ntest update::tests::auto_checks_are_rate_limited_and_respect_the_setting ... ok\r\ntest update::tests::download_refuses_urls_outside_the_allowed_prefixes_before_any_request ... ok\r\ntest update::tests::an_oversized_manifest_is_refused ... ok\r\ntest update::tests::installers_listed_under_the_old_project_name_are_still_accepted ... ok\r\ntest update::tests::manifests_that_could_lead_somewhere_else_are_refused ... ok\r\ntest update::tests::a_newer_signed_release_is_found ... ok\r\ntest runtime::tests::exit_zero_with_stop_command_is_detached_and_stop_runs_the_command ... ok\r\ntest update::tests::redirects_are_followed_like_github_release_downloads ... ok\r\ntest update::tests::the_cache_holds_the_latest_found_update ... ok\r\ntest update::tests::the_embedded_public_key_is_a_valid_ed25519_key ... ok\r\ntest update::tests::the_installer_runs_silently_closes_the_app_and_asks_to_relaunch ... ok\r\ntest update::tests::the_official_base_and_prefix_point_at_this_projects_releases ... ok\r\ntest update::tests::download_verifies_reports_progress_and_leaves_one_clean_file ... ok\r\ntest update::tests::versions_parse_and_compare ... ok\r\ntest update::tests::signatures_verify_only_for_the_right_key_and_the_exact_bytes ... ok\r\ntest themes::tests::there_is_a_limit_on_how_much_can_be_stored ... ok\r\ntest update::tests::verify_file_catches_truncation_and_corruption ... ok\r\ntest git::tests::push_is_rejected_when_behind_with_a_helpful_message_and_never_forces ... ok\r\ntest runtime::tests::git_bash_runs_commands_in_the_project_folder_with_real_exit_codes ... ok\r\ntest runtime::tests::t4_unknown_command_is_nonzero_and_error_visible ... ok\r\ntest git::tests::pull_never_merges_when_branches_diverged_and_changes_nothing ... ok\r\ntest runtime::tests::stopping_a_git_bash_terminal_kills_its_whole_tree ... ok\r\ntest git::tests::fetch_then_pull_brings_a_teammates_commit ... ok\r\ntest git::tests::sync_on_a_branch_without_upstream_just_pushes_it ... ok\r\ntest runtime::tests::t7_double_start_runs_one_process ... ok\r\ntest runtime::tests::the_terminal_shell_overrides_the_default_and_a_missing_shell_fails_clearly ... ok\r\ntest update::tests::missing_and_unreachable_servers_give_plain_messages ... ok\r\ntest git::tests::sync_stops_at_the_pull_when_diverged ... ok\r\ntest git::tests::sync_pulls_then_pushes ... ok\r\n\r\nfailures:\r\n\r\n---- engine::tests::up_with_wait_times_out_and_names_who_is_not_ready stdout ----\r\n\r\nthread \u0027engine::tests::up_with_wait_times_out_and_names_who_is_not_ready\u0027 (42868) panicked at src\\engine.rs:931:52:\r\ncalled \u0060Option::unwrap()\u0060 on a \u0060None\u0060 value\r\nnote: run with \u0060RUST_BACKTRACE=1\u0060 environment variable to display a backtrace\r\n\r\n---- engine::tests::up_with_wait_stops_early_and_explains_when_a_terminal_fails stdout ----\r\n\r\nthread \u0027engine::tests::up_with_wait_stops_early_and_explains_when_a_terminal_fails\u0027 (45340) panicked at src\\engine.rs:904:9:\r\nassertion \u0060left == right\u0060 failed: {\u0022elapsed_ms\u0022:7286,\u0022ready\u0022:true,\u0022terminals\u0022:[{\u0022name\u0022:\u0022db\u0022,\u0022ready\u0022:true,\u0022state\u0022:\u0022running\u0022},{\u0022name\u0022:\u0022api\u0022,\u0022ready\u0022:true,\u0022state\u0022:\u0022running\u0022}]}\r\n  left: (Some(true), None)\r\n right: (Some(false), Some(\u0022api\u0022))\r\n\r\n\r\nfailures:\r\n    engine::tests::up_with_wait_stops_early_and_explains_when_a_terminal_fails\r\n    engine::tests::up_with_wait_times_out_and_names_who_is_not_ready\r\n\r\ntest result: FAILED. 269 passed; 2 failed; 1 ignored; 0 measured; 0 filtered out; finished in 45.21s\r\n\r\n\n    Finished \u0060test\u0060 profile [unoptimized \u002B debuginfo] target(s) in 4.40s\r\n     Running unittests src\\lib.rs (src-tauri\\target\\debug\\build\\tinkerdeck/24e97c6b89d69b74\\out\\tinkerdeck_lib-24e97c6b89d69b74.exe)\r\nerror: test failed, to rerun pass \u0060--lib\u0060\n\n\u2026\ntest r2_children_are_fetched_only_when_their_level_is_requested ... ok\r\ntest r2_other_dot_named_entries_are_listed_normally ... ok\r\ntest r2_lists_one_level_and_tells_folders_from_files ... ok\r\ntest a1_folders_come_first_then_files_sorted_by_name ... ok\r\ntest r2_show_hidden_reveals_the_four_names_and_can_hide_them_again ... ok\r\ntest a1_scanning_stops_at_the_scan_limit ... ok\r\ntest r2_hides_the_four_noisy_names_by_default_at_any_depth ... ok\r\ntest r2_listing_a_level_never_opens_its_child_folders ... ok\r\ntest a1_a_large_level_is_capped_with_total_and_truncated ... ok\r\n\r\ntest result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.71s\r\n\r\n\r\nrunning 17 tests\r\ntest r9_a_move_between_drives_is_refused ... ok\r\ntest r9_create_refuses_empty_whitespace_and_windows_invalid_names ... ok\r\ntest r9_rename_of_a_missing_item_reports_it_is_gone ... ok\r\ntest r9_create_makes_a_new_file_and_a_new_folder ... ok\r\ntest r9_deleting_the_same_item_twice_reports_it_is_already_gone ... ok\r\ntest r9_delete_hands_the_item_to_the_recycle_bin_and_never_removes_it_itself ... ok\r\ntest r9_move_onto_the_folder_it_is_already_in_changes_nothing ... ok\r\ntest r9_delete_is_refused_when_the_recycle_bin_cannot_take_the_item ... ok\r\ntest r9_rename_refuses_an_invalid_name_and_changes_nothing ... ok\r\ntest r9_move_refuses_a_destination_that_is_not_a_folder ... ok\r\ntest r9_move_refuses_to_put_a_folder_inside_itself_or_a_descendant ... ok\r\ntest r9_rename_refuses_a_clash_and_leaves_both_items_untouched ... ok\r\ntest r9_create_refuses_a_name_clash_and_leaves_the_existing_file_untouched ... ok\r\ntest r9_rename_renames_a_file_and_a_folder ... ok\r\ntest r9_move_moves_a_file_and_a_folder_into_another_folder ... ok\r\ntest r9_move_refuses_a_name_clash_in_the_destination ... ok\r\ntest r9_delete_uses_the_real_recycle_bin ... ok\r\n\r\ntest result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.78s\r\n\r\n\r\nrunning 6 tests\r\ntest r11_when_every_terminal_is_non_executable_the_bulk_action_has_nothing_to_do ... ok\r\ntest r11_a_saved_terminal_without_the_flag_loads_as_executable ... ok\r\ntest r11_start_all_and_stop_all_skip_non_executable_terminals ... ok\r\ntest r11_the_flag_is_saved_so_it_survives_a_restart ... ok\r\ntest r11_stop_all_command_stops_executable_terminals_and_leaves_a_hand_started_non_executable_one_running ... ok\r\ntest r11_start_all_command_starts_executable_terminals_and_skips_non_executable_ones ... ok\r\n\r\ntest result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.80s\r\n\r\n\r\nrunning 0 tests\r\n\r\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\r\n\r\n\n    Finished \u0060test\u0060 profile [unoptimized \u002B debuginfo] target(s) in 2.16s\r\n     Running unittests src\\lib.rs (src-tauri\\target\\debug\\build\\tinkerdeck/24e97c6b89d69b74\\out\\tinkerdeck_lib-24e97c6b89d69b74.exe)\r\n     Running unittests src\\bin\\tdk\\main.rs (src-tauri\\target\\debug\\build\\tinkerdeck/82fe821036e5202c\\out\\tdk-82fe821036e5202c.exe)\r\n     Running unittests src\\main.rs (src-tauri\\target\\debug\\build\\tinkerdeck/d2fcbdba4ac7e37b\\out\\tinkerdeck-d2fcbdba4ac7e37b.exe)\r\n     Running tests\\editor_repath.rs (src-tauri\\target\\debug\\build\\tinkerdeck/dd94e16d5fd199c3\\out\\editor_repath-dd94e16d5fd199c3.exe)\r\n     Running tests\\explorer.rs (src-tauri\\target\\debug\\build\\tinkerdeck/27f69b6879aa959d\\out\\explorer-27f69b6879aa959d.exe)\r\n     Running tests\\explorer_ops.rs (src-tauri\\target\\debug\\build\\tinkerdeck/e845c804fdace2d5\\out\\explorer_ops-e845c804fdace2d5.exe)\r\n     Running tests\\terminal_executable.rs (src-tauri\\target\\debug\\build\\tinkerdeck/eec7c57584ff79d7\\out\\terminal_executable-eec7c57584ff79d7.exe)\r\n   Doc-tests tinkerdeck_lib"
+    }
+  ],
+  "tests": []
+}

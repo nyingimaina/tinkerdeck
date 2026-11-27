@@ -18,6 +18,15 @@
       ],
       "lastDescription": "Every dialog that moved to the side pane (confirmations, update, help, theme finder) is unreadable in the app\u0027s default dark theme: the package pane stays light while the dialog text keeps the app\u0027s light colours. USR-006 requires readable/",
       "lastFile": "src/features/apps/SidePane.tsx"
+    },
+    {
+      "rule": "USR-004",
+      "count": 1,
+      "runs": [
+        "20261127-045127"
+      ],
+      "lastDescription": "An existing, already-shipped sidebar behaviour regressed: collapse the pane and expand it again and every app is open again instead of keeping the user\u0027s folded state. USR-004 requires the existing behaviour to be frozen before adding the t",
+      "lastFile": "src/features/apps/Sidebar.tsx"
     }
   ],
   "files": [
@@ -157,6 +166,24 @@
       ],
       "lastDescription": "R11 acceptance \u0027Start all leaves non-executable terminals stopped and starts the executable ones\u0027 and edge \u0027Stop all does not stop a non-executable terminal the user started by hand\u0027 are unproven at the command. The same start_all is used b",
       "lastRule": ""
+    },
+    {
+      "path": "src/features/apps/Sidebar.tsx",
+      "count": 2,
+      "runs": [
+        "20261127-045127"
+      ],
+      "lastDescription": "An existing, already-shipped sidebar behaviour regressed: collapse the pane and expand it again and every app is open again instead of keeping the user\u0027s folded state. USR-004 requires the existing behaviour to be frozen before adding the t",
+      "lastRule": "USR-004"
+    },
+    {
+      "path": "src/features/apps/Sidebar.tabs.test.tsx",
+      "count": 1,
+      "runs": [
+        "20261127-045127"
+      ],
+      "lastDescription": "R2\u0027s \u0027stays fixed at the top of the expanded sidebar\u0027 and acceptance \u0027The tab strip keeps the same position with one app as with many\u0027 have no test that would fail if the strip were moved below the Projects list. Add an order assertion (top",
+      "lastRule": ""
     }
   ],
   "absorbed": [
@@ -164,7 +191,8 @@
     "20261125-202512",
     "20261126-075013",
     "20261126-115005",
-    "20261126-163957"
+    "20261126-163957",
+    "20261127-045127"
   ],
   "promotionAsked": {}
 }

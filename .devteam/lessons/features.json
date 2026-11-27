@@ -59,6 +59,14 @@
         "src/state",
         "src-tauri/tests"
       ]
+    },
+    {
+      "runId": "20261127-045127",
+      "feature": "The expanded left sidebar shows two tabs, Projects and Files, and only the\u2026 (and 4 more)",
+      "areas": [
+        "src/features/apps",
+        "src"
+      ]
     }
   ]
 }
